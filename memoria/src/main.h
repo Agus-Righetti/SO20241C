@@ -14,6 +14,7 @@ typedef struct
 
 //Arma un struct del tipo memoria_config con los datos del archivo config
 memoria_config* armar_config (void);
+void iterator(char* value);
 
 
 #endif

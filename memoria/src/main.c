@@ -5,7 +5,7 @@
 #include <main.h>
 
 t_log* log_memoria;
-memoria_config* config;
+memoria_config* config_memoria;
 
 int main(int argc, char* argv[]) {
     decir_hola("Memoria");
@@ -13,12 +13,35 @@ int main(int argc, char* argv[]) {
     
     log_memoria = log_create("memoria.log", "Memoria", 1, LOG_LEVEL_DEBUG);
 
-    config = armar_config();
+    config_memoria = armar_config();
     
-	int server_memoria = iniciar_servidor(config->puerto_escucha, log_memoria);
+	int server_memoria = iniciar_servidor(config_memoria->puerto_escucha, log_memoria);
 	log_info(log_memoria, "Memoria lista para recibir a CPU");
 	int client_cpu = esperar_cliente(server_memoria);
-    log_info(log_memoria, "AHORA RECIBI CPU");
+
+    t_list* lista;
+	while (1) {
+		int cod_op = recibir_operacion(client_cpu);
+		switch (cod_op) {
+		case MENSAJE:
+			recibir_mensaje(client_cpu);
+			break;
+		case PAQUETE:
+			lista = recibir_paquete(client_cpu);
+			log_info(log_memoria, "Me llegaron los siguientes valores:\n");
+			list_iterate(lista, (void*) iterator);
+			break;
+		case -1:
+			log_error(log_memoria, "el cliente se desconecto. Terminando servidor");
+			return EXIT_FAILURE;
+		default:
+			log_warning(log_memoria,"Operacion desconocida. No quieras meter la pata");
+			break;
+		}
+	}
+	return EXIT_SUCCESS;
+
+
 
     return 0;
 }
@@ -41,4 +64,8 @@ memoria_config* armar_config(void)
     config_destroy(config_aux);
 
     return aux_memoria_config;
+}
+
+void iterator(char* value) {
+	log_info(log_memoria,"%s", value);
 }

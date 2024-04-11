@@ -7,7 +7,6 @@ int iniciar_servidor(char* puerto, t_log* logger)
 	//preparamos al receptor para recibir mensajes
 
 	int socket_servidor;
-
 	struct addrinfo hints, *servinfo, *p;
 
 	memset(&hints, 0, sizeof(hints));
