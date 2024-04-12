@@ -1,8 +1,4 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <utils/hello.h>
-#include <utils/utils.h>
-#include <main.h>
+#include <mainCpu.h>
 
 t_log* log_cpu;
 cpu_config* config_cpu;
@@ -13,6 +9,7 @@ void iterator(char* value)
 }
 
 int main(int argc, char* argv[]) {
+    
     decir_hola("CPU");
     
     log_cpu = log_create("cpu.log", "CPU", 1, LOG_LEVEL_DEBUG);
@@ -21,8 +18,6 @@ int main(int argc, char* argv[]) {
     conexion_cpu_memoria = crear_conexion(config_cpu->ip_memoria,config_cpu->puerto_memoria);
     log_info(log_cpu , "Conexion con el servidor memoria creada");
     enviar_mensaje("Hola Memoria soy CPU",conexion_cpu_memoria);
-
-    //
 
 	int server_cpu = iniciar_servidor(config_cpu->puerto_escucha_dispatch, log_cpu);
 	log_info(log_cpu, "CPU listo para recibir a Kernel");
@@ -49,8 +44,6 @@ int main(int argc, char* argv[]) {
 		}
 	}
 	return EXIT_SUCCESS;
-
-    //
 
     log_destroy(log_cpu);
     return 0;

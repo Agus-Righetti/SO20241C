@@ -1,4 +1,4 @@
-#include <utils/utils.h>
+#include <utils/utilsShare.h>
 
 // Utils del server ---------------------------------------------------
 
@@ -7,7 +7,7 @@ int iniciar_servidor(char* puerto, t_log* logger)
 	//preparamos al receptor para recibir mensajes
 
 	int socket_servidor;
-	struct addrinfo hints, *servinfo, *p;
+	struct addrinfo hints, *servinfo;
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_INET;
@@ -132,7 +132,7 @@ int crear_conexion(char *ip, char* puerto)
 	// creamos el socket del cliente
 	int socket_cliente = socket(server_info->ai_family,
 								server_info->ai_socktype,
-								server_info->ai_protocol	);
+								server_info->ai_protocol);
 
 	//conectamos el socket del cliente con el del servidor
 	connect(socket_cliente, server_info->ai_addr, server_info->ai_addrlen);

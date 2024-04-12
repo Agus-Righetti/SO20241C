@@ -1,7 +1,8 @@
 #ifndef MEMORIA_MAIN_H_
 #define MEMORIA_MAIN_H_
 
-
+#include <utils/hello.h>
+#include <utils/utilsShare.h>
 
 
 typedef struct 
@@ -14,8 +15,5 @@ typedef struct
     //Todo esta como char pero hay que cambuarlo al tipo q sea necesario
     // cuando identifiquemos en que lo vamos a usar
 }memoria_config;
-
-void iterator(char* value);
-memoria_config* armar_config(void);
 
 #endif
