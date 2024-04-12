@@ -100,6 +100,7 @@ t_list* recibir_paquete(int socket_cliente)
 	return valores;
 }
 
+
 //utils del client ----------------------------------------------------
 
 void* serializar_paquete(t_paquete* paquete, int bytes)

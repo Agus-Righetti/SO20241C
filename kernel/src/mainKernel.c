@@ -5,7 +5,7 @@ kernel_config* config_kernel;
 
 void iterator(char* value) 
 {
-	log_info(log_kernel,"%s", value);
+	log_info(log_kernel, value);
 }
 
 //Armo el config del Kernel
@@ -38,12 +38,24 @@ int main(int argc, char* argv[])
 {
     decir_hola("Kernel");
 
+    // ************* Creo el log y el config del kernel para uso general *************
+    
     log_kernel = log_create("kernel.log", "Kernel", 1, LOG_LEVEL_DEBUG);
     config_kernel = armar_config();
-    int conexion_kernel_cpu;
-    conexion_kernel_cpu = crear_conexion(config_kernel->ip_cpu, config_kernel->puerto_cpu_dispatch);
+
+    // ************* Esto es para funcionar como cliente con el CPU *************
+    
+    int conexion_kernel_cpu = crear_conexion(config_kernel->ip_cpu, config_kernel->puerto_cpu_dispatch);
     log_info(log_kernel , "Conexion con el servidor CPU creada");
     enviar_mensaje("Hola CPU soy Kernel",conexion_kernel_cpu);
+    
+    // ************* Esto es para funcionar como cliente con la Memoria *************
+    
+    int conexion_kernel_memoria = crear_conexion(config_kernel->ip_memoria, config_kernel->puerto_memoria);
+    log_info(log_kernel, "Conexion con el servidor Memoria creada");
+    enviar_mensaje("Hola Memoria soy Kernel", conexion_kernel_memoria);
+
+    // ************* Esto es para funcionar como servidor para el I/O *************
 
     int server_kernel = iniciar_servidor(config_kernel->puerto_escucha, log_kernel);
 	log_info(log_kernel, "Kernel listo para recibir a IO");
@@ -62,7 +74,7 @@ int main(int argc, char* argv[])
 			list_iterate(lista, (void*) iterator);
 			break;
 		case -1:
-			log_error(log_kernel, "el cliente se desconecto. Terminando servidor");
+			log_error(log_kernel, "El cliente se desconecto. Terminando servidor");
 			return EXIT_FAILURE;
 		default:
 			log_warning(log_kernel,"Operacion desconocida. No quieras meter la pata");

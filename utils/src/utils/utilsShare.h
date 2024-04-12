@@ -30,7 +30,7 @@ int esperar_cliente(int);
 t_list* recibir_paquete(int);
 void recibir_mensaje(int, t_log*);
 int recibir_operacion(int);
-
+void iterator(char* value);
 
 // client
 
