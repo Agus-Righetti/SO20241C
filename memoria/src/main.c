@@ -24,7 +24,7 @@ int main(int argc, char* argv[]) {
 		int cod_op = recibir_operacion(client_cpu);
 		switch (cod_op) {
 		case MENSAJE:
-			recibir_mensaje(client_cpu);
+			recibir_mensaje(client_cpu, log_memoria);
 			break;
 		case PAQUETE:
 			lista = recibir_paquete(client_cpu);

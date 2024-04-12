@@ -15,8 +15,8 @@ int main(int argc, char* argv[]) {
     int conexion_cpu_memoria;
     conexion_cpu_memoria = crear_conexion(config_cpu->ip_memoria,config_cpu->puerto_memoria);
     log_info(log_cpu , "Conexion con el servidor memoria creada");
-    enviar_mensaje("Hola memoria como estas?",conexion_cpu_memoria);
-	paquete(conexion_cpu_memoria);
+    enviar_mensaje("Hola memoria soy cpu",conexion_cpu_memoria);
+	
 
 
     return 0;
@@ -42,29 +42,3 @@ cpu_config* armar_config(void)
     return aux_cpu_config;
 }
 
-// Esta funcion paquete es para capturar las lineas que escribamos en la consola y mandarla a 
-//memoria, es solo para probar si las recibe bien
-void paquete(int conexion)
-{
-	
-	char* leido;
-	t_paquete* paquete;
-
-	
-	leido = readline("< Escribi lo que quieras enviar a memoria... escribi vacio para terminar");
-	paquete = crear_paquete();
-	while(strcmp(leido,""))
-	{
-		agregar_a_paquete(paquete,leido,strlen(leido)+1);
-		free(leido);
-		leido = readline("< ");
-		
-	};
-	free(leido);
-
-	enviar_paquete(paquete,conexion);
-
-	eliminar_paquete(paquete);
-	
-	
-}
