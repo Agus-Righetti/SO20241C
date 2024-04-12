@@ -41,7 +41,7 @@ int main(int argc, char* argv[]) {
 	}
 	return EXIT_SUCCESS;
 
-
+	log_destroy(log_memoria);
 
     return 0;
 }
@@ -69,3 +69,4 @@ memoria_config* armar_config(void)
 void iterator(char* value) {
 	log_info(log_memoria,"%s", value);
 }
+

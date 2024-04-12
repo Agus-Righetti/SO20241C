@@ -1,6 +1,7 @@
 #ifndef CPU_MAIN_H_
 #define CPU_MAIN_H_
 
+
 typedef struct 
 {
     char* ip_memoria;
@@ -14,7 +15,7 @@ typedef struct
 }cpu_config;
 
 //Arma un struct del tipo memoria_config con los datos del archivo config
-cpu_config* armar_config (void);
+cpu_config* armar_config(void);
 
 
 #endif

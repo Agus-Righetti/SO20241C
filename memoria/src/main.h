@@ -1,6 +1,9 @@
 #ifndef MEMORIA_MAIN_H_
 #define MEMORIA_MAIN_H_
 
+
+
+
 typedef struct 
 {
     char* puerto_escucha;
@@ -12,9 +15,7 @@ typedef struct
     // cuando identifiquemos en que lo vamos a usar
 }memoria_config;
 
-//Arma un struct del tipo memoria_config con los datos del archivo config
-memoria_config* armar_config (void);
 void iterator(char* value);
-
+memoria_config* armar_config(void);
 
 #endif

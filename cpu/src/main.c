@@ -18,7 +18,7 @@ int main(int argc, char* argv[]) {
     enviar_mensaje("Hola memoria soy cpu",conexion_cpu_memoria);
 	
 
-
+    log_destroy(log_cpu);
     return 0;
 }
 
@@ -41,4 +41,6 @@ cpu_config* armar_config(void)
 
     return aux_cpu_config;
 }
+
+
 
