@@ -7,6 +7,11 @@
 t_log* log_cpu;
 cpu_config* config_cpu;
 
+void iterator(char* value) 
+{
+	log_info(log_cpu,"%s", value);
+}
+
 int main(int argc, char* argv[]) {
     decir_hola("CPU");
     
@@ -15,8 +20,37 @@ int main(int argc, char* argv[]) {
     int conexion_cpu_memoria;
     conexion_cpu_memoria = crear_conexion(config_cpu->ip_memoria,config_cpu->puerto_memoria);
     log_info(log_cpu , "Conexion con el servidor memoria creada");
-    enviar_mensaje("Hola memoria soy cpu",conexion_cpu_memoria);
-	
+    enviar_mensaje("Hola Memoria soy CPU",conexion_cpu_memoria);
+
+    //
+
+	int server_cpu = iniciar_servidor(config_cpu->puerto_escucha_dispatch, log_cpu);
+	log_info(log_cpu, "CPU listo para recibir a Kernel");
+    int client_kernel = esperar_cliente(server_cpu);
+
+    t_list* lista;
+	while (1) {
+		int cod_op = recibir_operacion(client_kernel);
+		switch (cod_op) {
+		case MENSAJE:
+			recibir_mensaje(client_kernel, log_cpu);
+			break;
+		case PAQUETE:
+			lista = recibir_paquete(client_kernel);
+			log_info(log_cpu, "Me llegaron los siguientes valores:\n");
+			list_iterate(lista, (void*) iterator);
+			break;
+		case -1:
+			log_error(log_cpu, "el cliente se desconecto. Terminando servidor");
+			return EXIT_FAILURE;
+		default:
+			log_warning(log_cpu,"Operacion desconocida. No quieras meter la pata");
+			break;
+		}
+	}
+	return EXIT_SUCCESS;
+
+    //
 
     log_destroy(log_cpu);
     return 0;
@@ -41,6 +75,3 @@ cpu_config* armar_config(void)
 
     return aux_cpu_config;
 }
-
-
-
