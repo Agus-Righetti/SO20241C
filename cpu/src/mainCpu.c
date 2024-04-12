@@ -21,7 +21,7 @@ int main(int argc, char* argv[]) {
 
 	int server_cpu = iniciar_servidor(config_cpu->puerto_escucha_dispatch, log_cpu);
 	log_info(log_cpu, "CPU listo para recibir a Kernel");
-    int client_kernel = esperar_cliente(server_cpu);
+    int client_kernel = esperar_cliente(server_cpu, log_cpu);
 
     t_list* lista;
 	while (1) {

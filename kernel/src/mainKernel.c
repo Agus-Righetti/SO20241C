@@ -59,30 +59,28 @@ int main(int argc, char* argv[])
 
     int server_kernel = iniciar_servidor(config_kernel->puerto_escucha, log_kernel);
 	log_info(log_kernel, "Kernel listo para recibir a IO");
-    int client_IO = esperar_cliente(server_kernel);
+    int client_IO = esperar_cliente(server_kernel, log_kernel);
 
     t_list* lista;
-	while (1) {
-		int cod_op = recibir_operacion(client_IO);
-		switch (cod_op) {
-		case MENSAJE:
-			recibir_mensaje(client_IO, log_kernel);
-			break;
-		case PAQUETE:
-			lista = recibir_paquete(client_IO);
-			log_info(log_kernel, "Me llegaron los siguientes valores:\n");
-			list_iterate(lista, (void*) iterator);
-			break;
-		case -1:
-			log_error(log_kernel, "El cliente se desconecto. Terminando servidor");
-			return EXIT_FAILURE;
-		default:
-			log_warning(log_kernel,"Operacion desconocida. No quieras meter la pata");
-			break;
-		}
+
+	int cod_op = recibir_operacion(client_IO);
+	switch (cod_op) {
+	case MENSAJE:
+		recibir_mensaje(client_IO, log_kernel);
+		break;
+	case PAQUETE:
+		lista = recibir_paquete(client_IO);
+		log_info(log_kernel, "Me llegaron los siguientes valores:\n");
+		list_iterate(lista, (void*) iterator);
+		break;
+	case -1:
+		log_error(log_kernel, "El cliente se desconecto. Terminando servidor");
+		return EXIT_FAILURE;
+	default:
+		log_warning(log_kernel,"Operacion desconocida. No quieras meter la pata");
+		break;
 	}
-	return EXIT_SUCCESS;
 
     log_destroy(log_kernel);
-    return 0;
+	return EXIT_SUCCESS;
 }

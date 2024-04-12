@@ -37,66 +37,59 @@ int main(int argc, char* argv[])
     config_memoria = armar_config();
     
 	// ********* Esto es para poder recibir mensajes del CPU *********
-	int server_memoria_Cpu = iniciar_servidor(config_memoria->puerto_escucha, log_memoria);
+	int server_memoria = iniciar_servidor(config_memoria->puerto_escucha, log_memoria);
 	log_info(log_memoria, "Memoria lista para recibir a CPU");
-	int client_cpu = esperar_cliente(server_memoria_Cpu);
+	int client_cpu = esperar_cliente(server_memoria, log_memoria);
 
     t_list* listaCpu;
 
-	while (1) {
-		int cod_op = recibir_operacion(client_cpu);
-		switch (cod_op) {
-		case MENSAJE:
-			recibir_mensaje(client_cpu, log_memoria);
-			break;
-		case PAQUETE:
-			listaCpu = recibir_paquete(client_cpu);
-			log_info(log_memoria, "Me llegaron los siguientes valores:\n");
-			list_iterate(listaCpu, (void*) iterator);
-			break;
-		case -1:
-			log_error(log_memoria, "el cliente se desconecto. Terminando servidor");
-			return EXIT_FAILURE;
-		default:
-			log_warning(log_memoria,"Operacion desconocida. No quieras meter la pata");
-			break;
-		}
+	int cod_op_cpu = recibir_operacion(client_cpu);
+	switch (cod_op_cpu) {
+	case MENSAJE:
+		recibir_mensaje(client_cpu, log_memoria);
+		break;
+	case PAQUETE:
+		listaCpu = recibir_paquete(client_cpu);
+		log_info(log_memoria, "Me llegaron los siguientes valores:\n");
+		list_iterate(listaCpu, (void*) iterator);
+		break;
+	case -1:
+		log_error(log_memoria, "el cliente se desconecto. Terminando servidor");
+		return EXIT_FAILURE;
+	default:
+		log_warning(log_memoria,"Operacion desconocida. No quieras meter la pata");
+		break;
 	}
-	return EXIT_SUCCESS;
+	
 
 	// ********* Esto es para recibir mensajes del Kernel *********
 
-	int server_memoria_Kernel = iniciar_servidor(config_memoria->puerto_escucha, log_memoria);
 	log_info(log_memoria, "Memoria lista para recibir a Kernel");
-	int client_kernel = esperar_cliente(server_memoria_Kernel);
+	int client_kernel = esperar_cliente(server_memoria, log_memoria);
     
 	t_list* listaKernel;
 
-
-	while (1) {
-		int cod_op = recibir_operacion(client_kernel);
-		switch (cod_op) {
-		case MENSAJE:
-			recibir_mensaje(client_kernel, log_memoria);
-			break;
-		case PAQUETE:
-			listaKernel = recibir_paquete(client_kernel);
-			log_info(log_memoria, "Me llegaron los siguientes valores:\n");
-			list_iterate(listaKernel, (void*) iterator);
-			break;
-		case -1:
-			log_error(log_memoria, "El cliente se desconecto. Terminando servidor");
-			return EXIT_FAILURE;
-		default:
-			log_warning(log_memoria,"Operacion desconocida. No quieras meter la pata");
-			break;
-		}
+	int cod_op_kernel = recibir_operacion(client_kernel);
+	switch (cod_op_kernel) {
+	case MENSAJE:
+		recibir_mensaje(client_kernel, log_memoria);
+		break;
+	case PAQUETE:
+		listaKernel = recibir_paquete(client_kernel);
+		log_info(log_memoria, "Me llegaron los siguientes valores:\n");
+		list_iterate(listaKernel, (void*) iterator);
+		break;
+	case -1:
+		log_error(log_memoria, "El cliente se desconecto. Terminando servidor");
+		return EXIT_FAILURE;
+	default:
+		log_warning(log_memoria,"Operacion desconocida. No quieras meter la pata");
+		break;
 	}
-	return EXIT_SUCCESS;
-	
+
 	log_destroy(log_memoria);
 
-    return 0;
+    return EXIT_SUCCESS;
 }
 
 

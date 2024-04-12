@@ -19,7 +19,7 @@ int iniciar_servidor(char* puerto, t_log* logger)
 	// Creamos el socket de escucha del servidor
 	socket_servidor = socket(servinfo->ai_family, 
 							servinfo->ai_socktype,
-							servinfo->ai_protocol	);
+							servinfo->ai_protocol);
 
 	// Asociamos el socket a un puerto
 
@@ -35,14 +35,14 @@ int iniciar_servidor(char* puerto, t_log* logger)
 	return socket_servidor;
 }
 
-int esperar_cliente(int socket_servidor)
+int esperar_cliente(int socket_servidor, t_log* logger)
 {
 	//una vez que se conecta el cliente
 
 	// Aceptamos un nuevo cliente
 	int socket_cliente = accept(socket_servidor,NULL,NULL);
 
-	//log_info(logger, "Se conecto un cliente!");
+	log_info(logger, "Se conecto un cliente!");
 
 	return socket_cliente;
 }
