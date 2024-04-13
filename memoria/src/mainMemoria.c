@@ -87,6 +87,32 @@ int main(int argc, char* argv[])
 		break;
 	}
 
+	// ********* Esto es para recibir mensajes de I/O *********
+
+	log_info(log_memoria, "Memoria lista para recibir a I/O");
+	int client_entradasalida = esperar_cliente(server_memoria, log_memoria);
+    
+	t_list* listaentradasalida;
+
+	int cod_op_entradasalida = recibir_operacion(client_entradasalida);
+	switch (cod_op_entradasalida) {
+	case MENSAJE:
+		recibir_mensaje(client_entradasalida, log_memoria);
+		break;
+	case PAQUETE:
+		listaentradasalida = recibir_paquete(client_entradasalida);
+		log_info(log_memoria, "Me llegaron los siguientes valores:\n");
+		list_iterate(listaentradasalida, (void*) iterator);
+		break;
+	case -1:
+		log_error(log_memoria, "El cliente se desconecto. Terminando servidor");
+		return EXIT_FAILURE;
+	default:
+		log_warning(log_memoria,"Operacion desconocida. No quieras meter la pata");
+		break;
+	}
+
+	
 	log_destroy(log_memoria);
 
     return EXIT_SUCCESS;
