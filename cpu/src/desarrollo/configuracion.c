@@ -1,11 +1,18 @@
 #include "../include/general.h"
 
+// ************* CONFIGURACION *************
 cpu_config* armar_config(t_log* log_cpu)
 {
     t_config* config_aux;
     cpu_config* aux_cpu_config = malloc(sizeof(cpu_config)); // Se inicializa la estructura que armamos 
 
     config_aux = config_create("cpu.config");
+    if (config_aux == NULL)
+    {
+        log_info(log_cpu, "Error: No se pudo crear el config de CPU");
+        exit(1);
+    }
+    
     aux_cpu_config->ip_memoria = strdup(config_get_string_value(config_aux, "IP_MEMORIA"));
     aux_cpu_config->puerto_memoria = strdup(config_get_string_value(config_aux, "PUERTO_MEMORIA"));
     aux_cpu_config->puerto_escucha_dispatch = strdup(config_get_string_value(config_aux, "PUERTO_ESCUCHA_DISPATCH"));

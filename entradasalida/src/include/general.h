@@ -1,8 +1,9 @@
-#ifndef ENTRADASALIDA_MAIN_H_
-#define ENTRADASALIDA_MAIN_H_
+#ifndef GENERAL_H_
+#define GENERAL_H_
 
-#include <utils/hello.h>
-#include <utils/utilsShare.h>
+#include "mainEntradaSalida.h"
+
+// ************* CONFIGURACION *************
 
 typedef struct 
 {
@@ -20,5 +21,16 @@ typedef struct
     // cuando identifiquemos en que lo vamos a usar
     
 }io_config;
+
+io_config* armar_config(t_log* log_io);
+
+// ************* CONEXION A MEMORIA *************
+
+int conexion_a_memoria(t_log* log_io, io_config* config_io);
+
+
+// ************* CONEXION A KERNEL *************
+
+int conexion_a_kernel(t_log* log_io, io_config* config_io);
 
 #endif

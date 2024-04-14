@@ -12,10 +12,14 @@ int main(int argc, char* argv[])
 {
     decir_hola("CPU");
     
+	// ************* LOG Y CONFIG DE USO GENERAL *************
     log_cpu = log_create("cpu.log", "CPU", 1, LOG_LEVEL_DEBUG);
     config_cpu = armar_config(log_cpu);
 
+    // ************* CONEXION CPU --> MEMORIA *************
     int conexion_cpu_memoria = conexion_a_memoria(log_cpu, config_cpu);
+
+    
 
 	int server_cpu = iniciar_servidor(config_cpu->puerto_escucha_dispatch, log_cpu);
 	log_info(log_cpu, "CPU listo para recibir a Kernel");

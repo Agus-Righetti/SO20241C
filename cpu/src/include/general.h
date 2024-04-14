@@ -3,6 +3,7 @@
 
 #include "mainCpu.h"
 
+// ************* CONFIGURACION *************
 typedef struct 
 {
     char* ip_memoria;
@@ -19,6 +20,8 @@ typedef struct
 
 cpu_config* armar_config(t_log* log_cpu);
 
+
+// ************* CONEXION A MEMORIA *************
 int conexion_a_memoria(t_log* log_cpu, cpu_config* config_cpu);
 
 #endif

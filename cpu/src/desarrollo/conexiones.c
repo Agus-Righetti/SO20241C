@@ -1,5 +1,6 @@
 #include "../include/general.h"
 
+// ************* CONEXION A MEMORIA *************
 int conexion_a_memoria(t_log* log_cpu, cpu_config* config_cpu)
 {    
     int conexion_cpu_memoria = crear_conexion(config_cpu->ip_memoria,config_cpu->puerto_memoria);

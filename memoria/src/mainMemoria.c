@@ -1,4 +1,4 @@
-#include <mainMemoria.h>
+#include <include/mainMemoria.h>
 
 t_log* log_memoria;
 memoria_config* config_memoria;
@@ -8,33 +8,15 @@ void iterator(char* value)
 	log_info(log_memoria, value);
 }
 
-memoria_config* armar_config(void)
-{
-    t_config* config_aux;
-    memoria_config* aux_memoria_config = malloc(sizeof(memoria_config)); // Se inicializa la estructura
 
-    config_aux = config_create("memoria.config");
-    aux_memoria_config->puerto_escucha = strdup(config_get_string_value(config_aux, "PUERTO_ESCUCHA"));
-    aux_memoria_config->tam_memoria = config_get_int_value(config_aux, "TAM_MEMORIA"); // Se usa config_get_int_value para obtener un entero
-    aux_memoria_config->tam_pagina = config_get_int_value(config_aux, "TAM_PAGINA"); // Se usa config_get_int_value para obtener un entero
-    aux_memoria_config->path_instrucciones = strdup(config_get_string_value(config_aux, "PATH_INSTRUCCIONES"));
-    aux_memoria_config->retardo_respuesta = config_get_string_value(config_aux, "RETARDO_RESPUESTA"); // Se usa config_get_int_value para obtener un entero
-    
-    log_info(log_memoria, "Se creo el struct config_memoria con exito");
-
-    config_destroy(config_aux);
-
-    return aux_memoria_config;
-}
 
 int main(int argc, char* argv[]) 
 {
 	decir_hola("Memoria");
     
-	// ********* Esto es de uso general, el log y el config *********
+	// ************* LOG Y CONFIG DE USO GENERAL *************
     log_memoria = log_create("memoria.log", "Memoria", 1, LOG_LEVEL_DEBUG);
-
-    config_memoria = armar_config();
+    config_memoria = armar_config(log_memoria);
     
 	// ********* Esto es para poder recibir mensajes del CPU *********
 	int server_memoria = iniciar_servidor(config_memoria->puerto_escucha, log_memoria);
