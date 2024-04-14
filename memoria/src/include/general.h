@@ -18,7 +18,14 @@ typedef struct
 memoria_config* armar_config(t_log* log_memoria);
 
 
-// ************* CONEXION A MEMORIA *************
-// int conexion_a_memoria(t_log* log_cpu, cpu_config* config_cpu);
+// ********* SERVER PARA RECIBIR A CPU *********
+void server_para_cpu(memoria_config* config_memoria, t_log* log_memoria);
+
+// ********* SERVER PARA RECIBIR A KERNEL *********
+void server_para_kernel(memoria_config* config_memoria,t_log* log_memoria);
+
+// ********* SERVER PARA RECIBIR A I/O *********
+void server_para_io(memoria_config* config_memoria,t_log* log_memoria);
+
 
 #endif

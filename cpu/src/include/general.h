@@ -20,8 +20,10 @@ typedef struct
 
 cpu_config* armar_config(t_log* log_cpu);
 
-
 // ************* CONEXION A MEMORIA *************
 int conexion_a_memoria(t_log* log_cpu, cpu_config* config_cpu);
+
+// ********* SERVER PARA RECIBIR A KERNEL *********
+void server_para_kernel(cpu_config* config_cpu,t_log* log_cpu);
 
 #endif

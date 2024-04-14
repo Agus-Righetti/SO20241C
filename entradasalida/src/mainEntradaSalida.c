@@ -21,5 +21,8 @@ int main(int argc, char* argv[])
     // ************* CONEXION I/O --> KERNEL *************
     int conexion_io_kernel = conexion_a_kernel(log_io, config_io);
 
+    // Podemos agregar una funcion para liberar todo de un saque
+    log_destroy(log_io);
+	free(config_io);
     return 0;
 }
