@@ -3,8 +3,6 @@
 t_log* log_cpu;
 cpu_config* config_cpu;
 
-
-
 int main(int argc, char* argv[]) 
 {
     decir_hola("CPU");

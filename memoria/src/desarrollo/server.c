@@ -34,7 +34,7 @@ void server_para_cpu(memoria_config* config_memoria, t_log* log_memoria){
 	// 	list_iterate(listaCpu, (void*) iterator);
 	// 	break;
 	case -1:
-		log_error(log_memoria, "el cliente se desconecto. Terminando servidor");
+		log_error(log_memoria, "El cliente se desconecto. Terminando servidor");
 		// return EXIT_FAILURE;
         exit(1);
 	default:

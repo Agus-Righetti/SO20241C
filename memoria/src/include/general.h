@@ -11,12 +11,10 @@ typedef struct
     int tam_pagina;
     char* path_instrucciones;
     char* retardo_respuesta;
-    //Todo esta como char pero hay que cambuarlo al tipo q sea necesario
-    // cuando identifiquemos en que lo vamos a usar
+    // Todo esta como char pero hay que cambuarlo al tipo q sea necesario cuando identifiquemos en que lo vamos a usar
 }memoria_config;
 
 memoria_config* armar_config(t_log* log_memoria);
-
 
 // ********* SERVER PARA RECIBIR A CPU *********
 void server_para_cpu(memoria_config* config_memoria, t_log* log_memoria);

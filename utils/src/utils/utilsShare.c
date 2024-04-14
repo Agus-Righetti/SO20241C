@@ -4,8 +4,7 @@
 
 int iniciar_servidor(char* puerto, t_log* logger)
 {
-	//preparamos al receptor para recibir mensajes
-
+	// Preparamos al receptor para recibir mensajes
 	int socket_servidor;
 	struct addrinfo hints, *servinfo;
 
@@ -17,16 +16,12 @@ int iniciar_servidor(char* puerto, t_log* logger)
 	getaddrinfo(NULL, puerto, &hints, &servinfo);
 
 	// Creamos el socket de escucha del servidor
-	socket_servidor = socket(servinfo->ai_family, 
-							servinfo->ai_socktype,
-							servinfo->ai_protocol);
+	socket_servidor = socket(servinfo->ai_family, servinfo->ai_socktype, servinfo->ai_protocol);
 
 	// Asociamos el socket a un puerto
-
 	bind(socket_servidor, servinfo->ai_addr, servinfo->ai_addrlen);
 
 	// Escuchamos las conexiones entrantes
-
 	listen(socket_servidor, SOMAXCONN);
 
 	freeaddrinfo(servinfo);
@@ -37,9 +32,9 @@ int iniciar_servidor(char* puerto, t_log* logger)
 
 int esperar_cliente(int socket_servidor, t_log* logger)
 {
-	//una vez que se conecta el cliente
-
+	// Una vez que se conecta el cliente
 	// Aceptamos un nuevo cliente
+
 	int socket_cliente = accept(socket_servidor,NULL,NULL);
 
 	log_info(logger, "Se conecto un cliente!");
@@ -74,7 +69,7 @@ void recibir_mensaje(int socket_cliente, t_log* logger)
 {
 	int size;
 	char* buffer = recibir_buffer(&size, socket_cliente);
-	log_info(logger, "Me llego el mensaje :%s", buffer);
+	log_info(logger, "Me llego el mensaje: %s", buffer);
 	free(buffer);
 }
 
@@ -101,7 +96,7 @@ t_list* recibir_paquete(int socket_cliente)
 }
 
 
-//utils del client ----------------------------------------------------
+// Utils del client ----------------------------------------------------
 
 void* serializar_paquete(t_paquete* paquete, int bytes)
 {
@@ -130,12 +125,12 @@ int crear_conexion(char *ip, char* puerto)
 
 	getaddrinfo(ip, puerto, &hints, &server_info);
 
-	// creamos el socket del cliente
+	// Creamos el socket del cliente
 	int socket_cliente = socket(server_info->ai_family,
 								server_info->ai_socktype,
 								server_info->ai_protocol);
 
-	//conectamos el socket del cliente con el del servidor
+	// Conectamos el socket del cliente con el del servidor
 	connect(socket_cliente, server_info->ai_addr, server_info->ai_addrlen);
 
 	freeaddrinfo(server_info);
@@ -162,7 +157,6 @@ void enviar_mensaje(char* mensaje, int socket_cliente)
 	free(a_enviar);
 	eliminar_paquete(paquete);
 }
-
 
 void crear_buffer(t_paquete* paquete)
 {
