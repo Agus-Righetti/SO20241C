@@ -131,7 +131,9 @@ int crear_conexion(char *ip, char* puerto)
 								server_info->ai_protocol);
 
 	//conectamos el socket del cliente con el del servidor
-	connect(socket_cliente, server_info->ai_addr, server_info->ai_addrlen);
+
+	// PARA PROBAR TODOS LOS MODULOS COMENTAR LA LINEA SIGUIENTE
+	//connect(socket_cliente, server_info->ai_addr, server_info->ai_addrlen);S
 
 	// COMENTAR LAS SIGUIENTES LINEAS SI QUEREMOS PROBAR UN MODULO SOLO
 	 if (connect(socket_cliente, server_info->ai_addr, server_info->ai_addrlen) == -1){
