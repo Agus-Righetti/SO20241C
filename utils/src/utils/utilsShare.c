@@ -125,13 +125,25 @@ int crear_conexion(char *ip, char* puerto)
 
 	getaddrinfo(ip, puerto, &hints, &server_info);
 
-	// Creamos el socket del cliente
+	// creamos el socket del cliente
 	int socket_cliente = socket(server_info->ai_family,
 								server_info->ai_socktype,
 								server_info->ai_protocol);
 
-	// Conectamos el socket del cliente con el del servidor
+	//conectamos el socket del cliente con el del servidor
 	connect(socket_cliente, server_info->ai_addr, server_info->ai_addrlen);
+
+	// COMENTAR LAS SIGUIENTES LINEAS SI QUEREMOS PROBAR UN MODULO SOLO
+	 if (connect(socket_cliente, server_info->ai_addr, server_info->ai_addrlen) == -1){
+	 	printf("ERROR DE CONEXION\n");
+	 	printf("Esperando 5 segundos para buscar al cliente...\n");
+     	sleep(5);
+	 	connect(socket_cliente, server_info->ai_addr, server_info->ai_addrlen);
+	 	if (connect(socket_cliente, server_info->ai_addr, server_info->ai_addrlen) == -1){
+	 		perror("Error al intentar conectar");
+         	exit(1);
+	 	}
+	 }
 
 	freeaddrinfo(server_info);
 
