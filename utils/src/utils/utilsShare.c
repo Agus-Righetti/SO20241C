@@ -132,11 +132,11 @@ int crear_conexion(char *ip, char* puerto)
 
 	//conectamos el socket del cliente con el del servidor
 
-	// PARA PROBAR TODOS LOS MODULOS COMENTAR LA LINEA SIGUIENTE
-	//connect(socket_cliente, server_info->ai_addr, server_info->ai_addrlen);S
-
+	
+	int conexion = connect(socket_cliente, server_info->ai_addr, server_info->ai_addrlen);
+	
 	// COMENTAR LAS SIGUIENTES LINEAS SI QUEREMOS PROBAR UN MODULO SOLO
-	 if (connect(socket_cliente, server_info->ai_addr, server_info->ai_addrlen) == -1){
+	 if (conexion == -1){
 	 	printf("ERROR DE CONEXION\n");
 	 	printf("Esperando 5 segundos para buscar al cliente...\n");
      	sleep(5);
