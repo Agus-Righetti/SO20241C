@@ -12,7 +12,19 @@ int conexion_a_cpu(t_log* log_kernel, kernel_config* config_kernel){
     return conexion_kernel_cpu;
 }
 
-//********* DESARROLLO DE LA CONEXIÓN KERNEL - CPU *****
+//********* DESARROLLO DE LA INTERRUPCION KERNEL - CPU *****
+int interrupcion_a_cpu(t_log* log_kernel, kernel_config* config_kernel){
+    int interrupcion_kernel_cpu = crear_conexion(config_kernel->ip_cpu, config_kernel->puerto_cpu_interrupt);
+    if(interrupcion_kernel_cpu == -1){
+        log_info(log_kernel , "ERROR: No se pudo establecer la interrupcion Kernel-CPU");
+        exit(1);
+    }
+    log_info(log_kernel , "Interrupcion de Kernel a CPU");
+    enviar_mensaje("Interrupcion de Kernel a CPU",interrupcion_kernel_cpu);
+    return interrupcion_kernel_cpu;
+}
+
+//********* DESARROLLO DE LA CONEXIÓN KERNEL - MEMORIA *****
  int conexion_a_memoria(t_log* log_kernel, kernel_config* config_kernel){
     int conexion_kernel_memoria = crear_conexion(config_kernel->ip_memoria, config_kernel->puerto_memoria);
     if(conexion_kernel_memoria == -1){

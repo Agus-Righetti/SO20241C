@@ -10,8 +10,7 @@ typedef struct
     int tam_memoria;
     int tam_pagina;
     char* path_instrucciones;
-    char* retardo_respuesta;
-    // Todo esta como char pero hay que cambuarlo al tipo q sea necesario cuando identifiquemos en que lo vamos a usar
+    int retardo_respuesta;
 }memoria_config;
 
 memoria_config* armar_config(t_log* log_memoria);

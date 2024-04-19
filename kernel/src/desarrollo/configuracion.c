@@ -20,9 +20,9 @@ kernel_config* armar_config(t_log* log_kernel)
      aux_kernel_config->puerto_cpu_dispatch = strdup(config_get_string_value(config_aux, "PUERTO_CPU_DISPATCH"));
      aux_kernel_config->puerto_cpu_interrupt = strdup(config_get_string_value(config_aux, "PUERTO_CPU_INTERRUPT"));
      aux_kernel_config->algoritmo_planificacion = strdup(config_get_string_value(config_aux, "ALGORITMO_PLANIFICACION"));
-     aux_kernel_config->quantum = strdup(config_get_string_value(config_aux, "QUANTUM"));
-     aux_kernel_config->recursos = strdup(config_get_string_value(config_aux, "RECURSOS"));
-     aux_kernel_config->instancias_recursos = strdup(config_get_string_value(config_aux, "INSTANCIAS_RECURSOS"));
+     aux_kernel_config->quantum = config_get_int_value(config_aux, "QUANTUM");
+     aux_kernel_config->recursos = config_get_array_value(config_aux, "RECURSOS"); 
+     aux_kernel_config->instancias_recursos = config_get_array_value(config_aux, "INSTANCIAS_RECURSOS");
      aux_kernel_config->grado_multiprogramacion = config_get_int_value(config_aux, "GRADO_MULTIPROGRAMACION");   
 
      log_info(log_kernel, "Se creo el struct config_kernel con exito");

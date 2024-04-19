@@ -16,7 +16,7 @@ memoria_config* armar_config(t_log* log_memoria)
     aux_memoria_config->tam_memoria = config_get_int_value(config_aux, "TAM_MEMORIA"); // Se usa config_get_int_value para obtener un entero
     aux_memoria_config->tam_pagina = config_get_int_value(config_aux, "TAM_PAGINA"); // Se usa config_get_int_value para obtener un entero
     aux_memoria_config->path_instrucciones = strdup(config_get_string_value(config_aux, "PATH_INSTRUCCIONES"));
-    aux_memoria_config->retardo_respuesta = config_get_string_value(config_aux, "RETARDO_RESPUESTA"); // Se usa config_get_int_value para obtener un entero
+    aux_memoria_config->retardo_respuesta = config_get_int_value(config_aux, "RETARDO_RESPUESTA"); // Se usa config_get_int_value para obtener un entero
     
     log_info(log_memoria, "Se creo el struct config_memoria con exito");
 
