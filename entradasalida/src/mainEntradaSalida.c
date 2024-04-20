@@ -1,4 +1,4 @@
-#include <include/mainEntradaSalida.h>
+#include <mainEntradaSalida.h>
 
 t_log* log_io;
 io_config* config_io;

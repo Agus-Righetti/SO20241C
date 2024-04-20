@@ -1,4 +1,4 @@
-#include "../include/general.h"
+#include "servidor.h"
 
 //********* DESARROLLO SERVER KERNEL PARA RECIBIR A IO *****
 void server_para_io(kernel_config* config_kernel,t_log* log_kernel){

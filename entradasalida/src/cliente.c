@@ -1,4 +1,4 @@
-#include "../include/general.h"
+#include "cliente.h"
 
 // ************* CONEXION A MEMORIA *************
 int conexion_a_memoria(t_log* log_io, io_config* config_io)

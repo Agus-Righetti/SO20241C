@@ -1,4 +1,4 @@
-#include <include/mainCpu.h>
+#include <mainCpu.h>
 
 t_log* log_cpu;
 cpu_config* config_cpu;

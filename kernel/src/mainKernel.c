@@ -1,4 +1,4 @@
-#include "include/mainKernel.h"
+#include "mainKernel.h"
 
 t_log* log_kernel;
 kernel_config* config_kernel;
@@ -13,7 +13,6 @@ int main(int argc, char* argv[])
     decir_hola("Kernel");
 
     // ************* Creo el log y el config del kernel para uso general *************
-    
     log_kernel = log_create("kernel.log", "Kernel", 1, LOG_LEVEL_DEBUG);
     config_kernel = armar_config(log_kernel);
 

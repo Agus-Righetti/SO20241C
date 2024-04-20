@@ -1,4 +1,4 @@
-#include "../include/general.h"
+#include "configuracion.h"
 
 // ************* CONFIGURACION *************
 memoria_config* armar_config(t_log* log_memoria)

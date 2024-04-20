@@ -1,4 +1,4 @@
-#include "../include/general.h"
+#include "servidor.h"
 
 int server_memoria;
 

@@ -3,8 +3,8 @@
 
 #include <utils/hello.h>
 #include <utils/utilsShare.h>
-#include "../include/general.h"
 
-
+#include "configuracion.h"
+#include "cliente.h"
 
 #endif
