@@ -7,5 +7,6 @@
 #include "configuracion.h"
 #include "cliente.h"
 #include "servidor.h"
+#include "pcb.h"
 
 #endif

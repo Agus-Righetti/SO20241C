@@ -25,4 +25,6 @@ cpu_config* armar_config(t_log* log_cpu)
     config_destroy(config_aux);
 
     return aux_cpu_config;
+
+    free(aux_cpu_config);
 }

@@ -5,6 +5,7 @@
 #include <utils/utilsShare.h>
 
 #include "configuracion.h"
+#include "pcb.h"
 
 // ************* DECLARACION DE FUNCIONES *************
 void server_para_kernel(cpu_config* config_cpu,t_log* log_cpu);
