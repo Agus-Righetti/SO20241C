@@ -14,5 +14,6 @@ typedef struct {
 //  *************** DECLARACIÓN DE FUNCIONES **********
 void leer_consola ();
 pthread_t hilo_consola (t_log* log_kernel, kernel_config* config_kernel);
+void iniciar_proceso(char* path );
 
 #endif

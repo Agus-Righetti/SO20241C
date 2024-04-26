@@ -72,12 +72,22 @@ typedef struct{
 }registros_cpu;
 
 // ************ ESTRUCTURA PCB DEL KERNEL, TIENE REGISTROS DEL CPU ************
+
+typedef enum {
+	READY,
+	BLOCKED,
+	EXECUTE,
+	NEW,
+	EXIT,
+}estados;
+
 typedef struct {
     int pid;
-	char* estado_del_proceso;
+	estados estado_del_proceso;
     int program_counter;
     int quantum;
     registros_cpu* registros; 
+	char* direccion_instrucciones;
 }pcb;
 
 #endif

@@ -2,6 +2,10 @@
 
 t_log* log_kernel;
 kernel_config* config_kernel;
+t_list* cola_de_new;
+t_list* cola_de_ready;
+int grado_multiprogramacion_actual; //dice cual es el grado actual de multip. hay que incrementarlo al pasar un proceso a ready y decrementarlo al pasar uno a exit 
+int pid_contador;
 
 void iterator(char* value) 
 {
@@ -11,6 +15,12 @@ void iterator(char* value)
 int main(int argc, char* argv[]) 
 {
     decir_hola("Kernel");
+    pid_contador = 0; //Va incrementando a meidda que arrancamos un nuevo proceso
+    
+    cola_de_new = list_create();
+    cola_de_ready = list_create();
+
+    grado_multiprogramacion_actual = 0;
 
     // ************* Creo el log y el config del kernel para uso general *************
     log_kernel = log_create("kernel.log", "Kernel", 1, LOG_LEVEL_DEBUG);
@@ -32,5 +42,7 @@ int main(int argc, char* argv[])
     pthread_join(thread_consola, NULL);
     //************* Destruyo el log y cierro programa *************
     log_destroy(log_kernel);
+    list_destroy(cola_de_new);
+    list_destroy(cola_de_ready);
 	return EXIT_SUCCESS;
 }
