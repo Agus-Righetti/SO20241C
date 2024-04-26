@@ -74,13 +74,11 @@ typedef struct{
 // ************ ESTRUCTURA PCB DEL KERNEL, TIENE REGISTROS DEL CPU ************
 typedef struct {
     int pid;
+	t_list* instrucciones;
+	int program_counter;
+	registros_cpu* registros; 
 	char* estado_del_proceso;
-    int program_counter;
     int quantum;
-    registros_cpu* registros; 
 }pcb;
-
-
-
 
 #endif
