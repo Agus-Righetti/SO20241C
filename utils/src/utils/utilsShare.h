@@ -80,7 +80,4 @@ typedef struct {
     registros_cpu* registros; 
 }pcb;
 
-
-
-
 #endif

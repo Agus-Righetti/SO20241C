@@ -8,7 +8,7 @@
 typedef struct {
     memoria_config* config_memoria;
     t_log* log_memoria;
-} thread_args;  //argumentos de los hilos
+} thread_args_memoria;  //argumentos de los hilos
 
 // *************** DECLARACIÓN DE FUNCIONES **********
 // ********* SERVER PARA RECIBIR A CPU *********

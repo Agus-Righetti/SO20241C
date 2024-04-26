@@ -17,14 +17,19 @@ int main(int argc, char* argv[])
     config_kernel = armar_config(log_kernel);
 
     // ************* Esto es para funcionar como cliente con el CPU *************
-    int conexion_kernel_cpu = conexion_a_cpu(log_kernel, config_kernel);
-    
+    //int conexion_kernel_cpu = conexion_a_cpu(log_kernel, config_kernel);
+
+
     // ************* Esto es para funcionar como cliente con la Memoria *************
     int conexion_kernel_memoria = conexion_a_memoria(log_kernel, config_kernel);
-
+    pthread_t thread_consola = hilo_consola (log_kernel, config_kernel);
     // ************* Esto es para funcionar como servidor para el I/O *************
     server_para_io(config_kernel, log_kernel);
 
+    //************* HILO CONSOLA *************
+    //pthread_t thread_consola = hilo_consola (log_kernel, config_kernel);
+
+    pthread_join(thread_consola, NULL);
     //************* Destruyo el log y cierro programa *************
     log_destroy(log_kernel);
 	return EXIT_SUCCESS;

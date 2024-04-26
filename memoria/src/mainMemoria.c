@@ -12,7 +12,7 @@ int main() {
 
     // ********* CREO HILOS PARA CREAR LAS CONEXIONES *********
     crear_hilos_servidor (log_memoria, config_memoria) ;
-  
+
     // ********* LIBERO TODO *********
 	log_destroy(log_memoria);
 	free(config_memoria);
