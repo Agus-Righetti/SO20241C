@@ -87,7 +87,7 @@ typedef struct {
     int program_counter;
     int quantum;
     registros_cpu* registros; 
-	char* direccion_instrucciones;
+	char* direccion_instrucciones; //es el path que me mandan por consola
 }pcb;
 
 #endif
