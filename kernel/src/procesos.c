@@ -7,6 +7,7 @@ extern t_list* cola_de_new;
 extern t_list* cola_de_ready;
 extern int grado_multiprogramacion_actual;
 extern int pid_contador; 
+extern int conexion_kernel_cpu;
 
 //Las extern son variables de otro archivo q quiero usar en este
 //Atencion con las variables cola de new, cola de ready y grado de multiprogramacion actual, habria que implementar semaforo
@@ -79,8 +80,10 @@ void iniciar_proceso(char* path )
     nuevo_pcb->registros->si= 0;
     nuevo_pcb->registros->di= 0;
 
+    //log obligatorio
     log_info(log_kernel, "Se crea el proceso %d en NEW", nuevo_pcb->pid);
 
+    
     if (config_kernel->grado_multiprogramacion > grado_multiprogramacion_actual)
     {   
         //chequeo si tengo lugar para aceptar otro proceso en base al grado de multiprogramacion actual q tengo
@@ -90,8 +93,8 @@ void iniciar_proceso(char* path )
         list_add(cola_de_ready, nuevo_pcb);
         
         grado_multiprogramacion_actual += 1; //aumento el grado de programacion actual, ya que agregue un proceso mas a ready
+        
 
     }else list_add(cola_de_new, nuevo_pcb); // no tengo espacio para un nuevo proceso en ready, lo mando a la cola de new
-
 
 }

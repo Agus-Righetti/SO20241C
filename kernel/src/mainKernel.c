@@ -6,6 +6,7 @@ t_list* cola_de_new;
 t_list* cola_de_ready;
 int grado_multiprogramacion_actual; //dice cual es el grado actual de multip. hay que incrementarlo al pasar un proceso a ready y decrementarlo al pasar uno a exit 
 int pid_contador;
+int conexion_kernel_cpu;
 
 void iterator(char* value) 
 {
@@ -27,7 +28,7 @@ int main(int argc, char* argv[])
     config_kernel = armar_config(log_kernel);
 
     // ************* Esto es para funcionar como cliente con el CPU *************
-    //int conexion_kernel_cpu = conexion_a_cpu(log_kernel, config_kernel);
+    //conexion_kernel_cpu = conexion_a_cpu(log_kernel, config_kernel);
 
 
     // ************* Esto es para funcionar como cliente con la Memoria *************
