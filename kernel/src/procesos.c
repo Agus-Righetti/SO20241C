@@ -11,47 +11,48 @@ typedef enum {
 
 // ****************** ACA ESTA HECHO PARA RECIBIR UN PROCESO COMO TAL, UN PCB ******************
 
-// void enviar_proceso_a_cpu(pcb* proceso_seleccionado, int socket_cliente){
-//     if (proceso_seleccionado->estado_del_proceso == READY) //Verifico que el estado del proceso sea ready
-//     {
-//         proceso_seleccionado->estado_del_proceso = EXEC; // Cambio el estado del proceso a Execute
-//         log_info(log_kernel, "PID: %d - Estado Anterior: READY - Estado Actual: EXECUTE", proceso_seleccionado->pid);
+void enviar_proceso_a_cpu(pcb* proceso_seleccionado, int socket_cliente){
+    if (proceso_seleccionado->estado_del_proceso == READY) //Verifico que el estado del proceso sea ready
+    {
+        proceso_seleccionado->estado_del_proceso = EXEC; // Cambio el estado del proceso a Execute
+        log_info(log_kernel, "PID: %d - Estado Anterior: READY - Estado Actual: EXECUTE", proceso_seleccionado->pid);
 
-//         enviar_pcb(socket_cliente, proceso_seleccionado); // Tengo que obtener el socket cliente de la conexion de dispatch, y envio el pcb a cpu
-//     }else
-//     {
-//         error_show("El estado seleccionado no se encuentra en estado 'READY'");
-//     }
-// }
+        enviar_pcb(socket_cliente, proceso_seleccionado); // Tengo que obtener el socket cliente de la conexion de dispatch, y envio el pcb a cpu
+    }else
+    {
+        error_show("El estado seleccionado no se encuentra en estado 'READY'");
+    }
+}
 
 // ****************** ACA ESTA HECHO PARA RECIBIR UN HILO, creo que hay que usarlo asi ******************
 
 // Entiendo que de donde se llame a la funcion tengo que ir creando los hilos que representan a cada proceso y ahi mando sus argumentos
 
-void* enviar_proceso_a_cpu(void* args) {
+// void* enviar_proceso_a_cpu(void* args) {
 
-    thread_args_procesos_kernel* proceso_hilo_args = (thread_args_procesos_kernel*)args; // Tomo los args del hilo-proceso
+//     thread_args_procesos_kernel* proceso_hilo_args = (thread_args_procesos_kernel*)args; // Tomo los args del hilo-proceso
 
-    // Creo las variables que quiero usar a partir de los argumentos del hilo
-    pcb* proceso = proceso_hilo_args->proceso;
-    int socket_cliente = proceso_hilo_args->socket_cliente;
-    t_log* log_kernel = proceso_hilo_args->log_kernel;
+//     // Creo las variables que quiero usar a partir de los argumentos del hilo
+//     pcb* proceso = proceso_hilo_args->proceso;
+//     int socket_cliente = proceso_hilo_args->socket_cliente;
+//     // t_log* log_kernel = proceso_hilo_args->log_kernel;
 
-    if (proceso->estado_del_proceso == READY) { // Verifico el estado del proceso actual
+//     if (proceso->estado_del_proceso == READY) { // Verifico el estado del proceso actual
 
-        proceso->estado_del_proceso = EXEC; // Si se encuentra en ready lo paso a execute
-        log_info(log_kernel, "PID: %d - Estado Anterior: READY - Estado Actual: EXECUTE", proceso->pid);
+//         proceso->estado_del_proceso = EXEC; // Si se encuentra en ready lo paso a execute
+//         log_info(log_kernel, "PID: %d - Estado Anterior: READY - Estado Actual: EXECUTE", proceso->pid);
 
-        enviar_pcb(socket_cliente, proceso); // Envio el proceso a cpu
-        recibir_pcb(socket_cliente, proceso); // Espero que cpu me devuelva el proceso con valores actualizados
-        log_info(log_kernel, "PID: %d - Estado Anterior: EXECUTE - Estado Actual: %s", proceso->pid, proceso->estado_del_proceso);
-    } 
-    else {
-        error_show("El estado seleccionado no se encuentra en estado 'READY'"); // Marco error si el proceso que ingresa no se encuentra en estado "READY"
-    }
+//         enviar_pcb(socket_cliente, proceso); // Envio el proceso a cpu
+//         recibir_pcb(socket_cliente, proceso); // Espero que cpu me devuelva el proceso con valores actualizados
+//         log_info(log_kernel, "PID: %d - Estado Anterior: EXECUTE - Estado Actual: %s", proceso->pid, proceso->estado_del_proceso);
+//         // Aca hay que seguir trabajando con el pcb segun sus valores actualizados
+//     } 
+//     else {
+//         error_show("El estado seleccionado no se encuentra en estado 'READY'"); // Marco error si el proceso que ingresa no se encuentra en estado "READY"
+//     }
 
-    pthread_exit(NULL); // Finalizo el hilo
-}
+//     pthread_exit(NULL); // Finalizo el hilo
+// }
 
 void enviar_pcb(int socket_cliente, pcb* proceso) {
     // Creo un paquete

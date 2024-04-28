@@ -11,10 +11,10 @@ typedef struct {
 
 //  *************** DECLARACIÓN DE FUNCIONES ***************
 
-typedef struct {
-    t_log* log_kernel;
-    pcb* proceso;
-    int socket_cliente;
-} thread_args_procesos_kernel; 
+// typedef struct {
+//     // t_log* log_kernel;
+//     pcb* proceso;
+//     int socket_cliente;
+// } thread_args_procesos_kernel; 
 
 #endif
