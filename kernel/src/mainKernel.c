@@ -33,12 +33,11 @@ int main(int argc, char* argv[])
 
     // ************* Esto es para funcionar como cliente con la Memoria *************
     int conexion_kernel_memoria = conexion_a_memoria(log_kernel, config_kernel);
-    pthread_t thread_consola = hilo_consola (log_kernel, config_kernel);
     // ************* Esto es para funcionar como servidor para el I/O *************
     server_para_io(config_kernel, log_kernel);
 
     //************* HILO CONSOLA *************
-    //pthread_t thread_consola = hilo_consola (log_kernel, config_kernel);
+    pthread_t thread_consola = hilo_consola (log_kernel, config_kernel);
 
     pthread_join(thread_consola, NULL);
     //************* Destruyo el log y cierro programa *************
