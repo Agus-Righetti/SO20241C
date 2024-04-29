@@ -8,6 +8,7 @@ extern t_list* cola_de_ready;
 extern int grado_multiprogramacion_actual;
 extern int pid_contador; 
 extern int conexion_kernel_cpu;
+extern int interrupcion_kernel_cpu;
 
 //Las extern son variables de otro archivo q quiero usar en este
 //Atencion con las variables cola de new, cola de ready y grado de multiprogramacion actual, habria que implementar semaforo
@@ -126,6 +127,43 @@ void enviar_proceso_a_cpu(){
     }
 }
 
+// Entiendo que por ahora unicamente puede desalojar RR por fin de quantum
+// Creo que hay que poner el proceso que se recibe al final de la cola de ready, pero creo que tambien iria en donde se llama a esta funcion
+void desalojar_proceso(pcb* proceso){
+   
+    //Esto capaz se puede poner desde donde se la llama a la funcion
+    log_info(log_kernel, "PID: <PID> - Desalojado por fin de Quantum", proceso_seleccionado->pid);
+    
+    // Creo un nuevo paquete
+    t_paquete* paquete = crear_paquete();
+
+    // Recibo el paquete a través del socket y los guardo en una lista
+    t_list* valores_recibidos = recibir_paquete(interrupcion_kernel_cpu);
+
+    // Verifico que se hayan recibidos valores
+    if (valores_recibidos == NULL) {
+        error_show("No se recibio el proceso por parte del CPU");
+        return;
+    }
+
+    // Antes de copiar los datos, verifico que vino el tamaño que corresponde a un pcb
+    if (paquete->buffer->size != sizeof(pcb)) {
+        error_show("El tamaño del buffer no coincide con el tamaño esperado del proceso");
+        eliminar_paquete(paquete);
+        list_destroy_and_destroy_elements(valores_recibidos, free);
+        return;
+    }
+
+    // Extraigo el struct pcb del paquete
+    memcpy(proceso, paquete->buffer->stream, sizeof(pcb));
+
+    // Libero el paquete
+    eliminar_paquete(paquete);
+
+    // Libero la lista y los elementos de la misma
+    list_destroy_and_destroy_elements(valores_recibidos, free);
+    return;
+}
 // ****************** ACA ESTA HECHO PARA RECIBIR UN HILO, pero no hay que usarlo asi ******************
 
 // void* enviar_proceso_a_cpu(void* args) {
@@ -163,20 +201,20 @@ void enviar_pcb(pcb* proceso) {
     agregar_a_paquete(paquete, proceso, sizeof(pcb));
 
     // Envio el paquete a través del socket
-    enviar_paquete(paquete, socket_cliente);
+    enviar_paquete(paquete, conexion_kernel_cpu);
 
     // Libero el paquete
     eliminar_paquete(paquete);
 }
 
-// No se si esta funcion para recibir el pcb capaz la tiene que llamar un algoritmo de planificacion, por lo que habria que sacarla de aca y dejar esta funcion grande solo para mandar el pcb a cpu y nada mas
+// No se si esta funcion para recibir el pcb capaz la tiene que llamar un algoritmo de planificacion, por lo que habria que sacarla de "enviar_proceso_a_cpu" y dejar la funcion grande solo para mandar el pcb a cpu y nada mas
 void recibir_pcb_(pcb* proceso) {
     
     // Creo un nuevo paquete
     t_paquete* paquete = crear_paquete();
 
     // Recibo el paquete a través del socket y los guardo en una lista
-    t_list* valores_recibidos = recibir_paquete(socket_cliente);
+    t_list* valores_recibidos = recibir_paquete(conexion_kernel_cpu);
 
     // Verifico que se hayan recibidos valores
     if (valores_recibidos == NULL) {

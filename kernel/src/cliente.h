@@ -8,6 +8,7 @@
 
 //  *************** DECLARACIÓN DE FUNCIONES **********
 int conexion_a_cpu(t_log* log_kernel, kernel_config* config_kernel);
+int interrupcion_a_cpu(t_log* log_kernel, kernel_config* config_kernel);
 int conexion_a_memoria(t_log* log_kernel, kernel_config* config_kernel);
 
 #endif

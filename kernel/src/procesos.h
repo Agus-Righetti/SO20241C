@@ -4,6 +4,7 @@
 #include <utils/hello.h>
 #include <utils/utilsShare.h>
 #include "configuracion.h"
+#include "cliente.h"
 
 typedef struct {
     kernel_config* config_kernel;
