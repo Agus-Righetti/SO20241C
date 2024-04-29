@@ -99,27 +99,34 @@ void iniciar_proceso(char* path )
 
 }
 
-
-// Entiendo que los algoritmos de planificacion me tienen que mandar el proceso seleccionado por referencia asi lo puedo modificar
-
 // ****************** ACA ESTA HECHO PARA RECIBIR UN PROCESO COMO TAL, UN PCB ******************
 
-void enviar_proceso_a_cpu(pcb* proceso_seleccionado, int socket_cliente){
+// Lo que entiendo es que hay que llamar a este 
+
+void enviar_proceso_a_cpu(){
+
+    pcb* proceso_seleccionado = queue_pop(cola_de_ready);
+
     if (proceso_seleccionado->estado_del_proceso == READY) //Verifico que el estado del proceso sea ready
     {
         proceso_seleccionado->estado_del_proceso = EXECUTE; // Cambio el estado del proceso a Execute
         log_info(log_kernel, "PID: %d - Estado Anterior: READY - Estado Actual: EXECUTE", proceso_seleccionado->pid);
 
-        enviar_pcb(socket_cliente, proceso_seleccionado); // Tengo que obtener el socket cliente de la conexion de dispatch, y envio el pcb a cpu
+        enviar_pcb(proceso_seleccionado); // Tengo que obtener el socket cliente de la conexion de dispatch, y envio el pcb a cpu
+
+        // Cuando hago el recibir, estoy esperando que CPU me devuelva el proceso con sus valores actualizados, aca se deberia bloquear el Kernel hasta que me devuelva el pcb, no deberia seguir avanzando
+        recibir_pcb(proceso_seleccionado); // Espero que cpu me devuelva el proceso con valores actualizados
+        log_info(log_kernel, "PID: %d - Estado Anterior: EXECUTE - Estado Actual: %s", proceso->pid, proceso->estado_del_proceso);
+        
+        // Aca hay que seguir trabajando con el pcb segun sus valores actualizados
+
     }else
     {
         error_show("El estado seleccionado no se encuentra en estado 'READY'");
     }
 }
 
-// ****************** ACA ESTA HECHO PARA RECIBIR UN HILO, creo que hay que usarlo asi ******************
-
-// Entiendo que de donde se llame a la funcion tengo que ir creando los hilos que representan a cada proceso y ahi mando sus argumentos
+// ****************** ACA ESTA HECHO PARA RECIBIR UN HILO, pero no hay que usarlo asi ******************
 
 // void* enviar_proceso_a_cpu(void* args) {
 
@@ -147,42 +154,52 @@ void enviar_proceso_a_cpu(pcb* proceso_seleccionado, int socket_cliente){
 //     pthread_exit(NULL); // Finalizo el hilo
 // }
 
-void enviar_pcb(int socket_cliente, pcb* proceso) {
+void enviar_pcb(pcb* proceso) {
+    
     // Creo un paquete
     t_paquete* paquete = crear_paquete();
 
     // Agrego el struct pcb al paquete
     agregar_a_paquete(paquete, proceso, sizeof(pcb));
 
-    // Envio el paquete a través del socket, tengo que ver como conseguir el socket del cliente en esta instancia, esta en el main pero creo que a estas funciones se acceden desde las de Maria
+    // Envio el paquete a través del socket
     enviar_paquete(paquete, socket_cliente);
 
-    //if (enviar_paquete(paquete, socket_cliente) == -1) { // Verifico que no haya problemas en el envío del paquete
-      //  error_show("Error al enviar el Proceso al CPU.");
-    //}
-
-    // Liberar el paquete
+    // Libero el paquete
     eliminar_paquete(paquete);
 }
 
-void recibir_pcb_(int socket_cliente, pcb* proceso) {
-    // Crear un nuevo paquete
+// No se si esta funcion para recibir el pcb capaz la tiene que llamar un algoritmo de planificacion, por lo que habria que sacarla de aca y dejar esta funcion grande solo para mandar el pcb a cpu y nada mas
+void recibir_pcb_(pcb* proceso) {
+    
+    // Creo un nuevo paquete
     t_paquete* paquete = crear_paquete();
 
-    // Recibir el paquete a través del socket
-    recibir_paquete(socket_cliente);
-    
-    // if (recibir_paquete(paquete, socket_cliente) == -1) { // Verificar si hay problemas al recibir el paquete
-    //     error_show("Error al recibir el paquete del CPU.");
-    //     eliminar_paquete(paquete);
-        
-    // }
+    // Recibo el paquete a través del socket y los guardo en una lista
+    t_list* valores_recibidos = recibir_paquete(socket_cliente);
 
-    // Extraer el struct pcb del paquete
+    // Verifico que se hayan recibidos valores
+    if (valores_recibidos == NULL) {
+        error_show("No se recibio el proceso por parte del CPU");
+        return;
+    }
+
+    // Antes de copiar los datos, verifico que vino el tamaño que corresponde a un pcb
+    if (paquete->buffer->size != sizeof(pcb)) {
+        error_show("El tamaño del buffer no coincide con el tamaño esperado del proceso");
+        eliminar_paquete(paquete);
+        list_destroy_and_destroy_elements(valores_recibidos, free);
+        return;
+    }
+
+    // Extraigo el struct pcb del paquete
     memcpy(proceso, paquete->buffer->stream, sizeof(pcb));
 
-    // Liberar el paquete
+    // Libero el paquete
     eliminar_paquete(paquete);
+
+    // Libero la lista y los elementos de la misma
+    list_destroy_and_destroy_elements(valores_recibidos, free);
     return;
 }
 
