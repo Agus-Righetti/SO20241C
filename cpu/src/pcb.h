@@ -1,9 +1,9 @@
 #ifndef PCB_H_
 #define PCB_H_
 
-#include "utilsShare.h"
+#include "utils/utilsShare.h"
 
-void recibir_pcb(t_list *lista, pcb *proceso); // Tendria que ir en el utils?
+// void recibir_pcb(t_list *lista, pcb *proceso); // Tendria que ir en el utils?
 
 #endif
 
