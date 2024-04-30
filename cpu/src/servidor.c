@@ -8,6 +8,22 @@ int server_cpu;
 // }
 
 // ********* SERVER PARA RECIBIR A KERNEL *********
+
+int esperar_cliente_de_kernel(int socket_servidor, t_log* logger)
+{
+	while(1) // Servidor en un estado de espera constante
+	{
+		pthread_t thread; // Almacenar el identificador del hilo que se creará más adelante.
+		int socket_cliente = malloc(sizeof(int)); // Reservo espacio en memoria para el socket del cliente 
+		socket_cliente = accept(socket_servidor, NULL, NULL);
+		recv_handshake(socket_cliente);
+		pthread_create(&thread, NULL,(void*) server_para_kernel,socket_cliente);
+		log_info(logger, "Se conecto un cliente!");
+		pthread_detach(thread); // El hilo creado no necesita ser esperado o unido al hilo principal. Los recursos asociados se liberarán automáticamente
+	}
+	return socket_cliente;
+}
+
 void server_para_kernel(cpu_config* config_cpu,t_log* log_cpu){
 
     server_cpu = iniciar_servidor(config_cpu->puerto_escucha_dispatch, log_cpu);
@@ -18,9 +34,9 @@ void server_para_kernel(cpu_config* config_cpu,t_log* log_cpu){
     }
 
 	log_info(log_cpu, "CPU listo para recibir a Kernel");
-    int client_kernel = esperar_cliente(server_cpu, log_cpu);
+    int client_kernel = esperar_cliente_de_kernel(server_cpu, log_cpu);
 
-//    t_list* lista;
+   t_list* lista;
     
 	int cod_op = recibir_operacion(client_kernel);
 	switch (cod_op) 
@@ -28,23 +44,23 @@ void server_para_kernel(cpu_config* config_cpu,t_log* log_cpu){
 	case MENSAJE:
 		recibir_mensaje(client_kernel, log_cpu);
 		break;
-	// case PAQUETE:
-	// 	lista = recibir_paquete(client_kernel);
-	// 	log_info(log_cpu, "Me llegaron los siguientes valores:\n");
-	// 	list_iterate(lista, (void*) iterator);
-	// 	break;
-	// case EXECUTE:
-	// 	lista = recibir_paquete(client_kernel);
-	// 	proceso = malloc(sizeof(pcb));
-	// 	proceso->instruccion = NULL;
-	// 	recibir_pcb(lista, proceso); // FALTA HACERLA
-	// 	interpretar_instrucciones(); // FALTA HACERLA
-	// 	list_destroy_and_destroy_elements(lista, free);
-	// 	break;
-	// case EXIT:
-	// 	error_exit(EXIT); // FALTA HACERLA
-	// 	list_destroy_and_destroy_elements(lista, free); // PREGUNTAR!!!
-	// 	break;
+	case PAQUETE:
+		lista = recibir_paquete(client_kernel);
+		log_info(log_cpu, "Me llegaron los siguientes valores:\n");
+		list_iterate(lista, (void*) iterator);
+		break;
+	case EXECUTE:
+		lista = recibir_paquete(client_kernel);
+		proceso = malloc(sizeof(pcb));
+		proceso->instruccion = NULL;
+		recibir_pcb(lista, proceso);
+		interpretar_instrucciones(); // FALTA HACERLA
+		list_destroy_and_destroy_elements(lista, free);
+		break;
+	case EXIT:
+		error_exit(EXIT); // FALTA HACERLA
+		list_destroy_and_destroy_elements(lista, free); // PREGUNTAR!!!
+		break;
 	case -1:
 		log_error(log_cpu, "El cliente se desconecto. Terminando servidor");
 		return EXIT_FAILURE;
@@ -66,7 +82,7 @@ void interrupcion_para_kernel(cpu_config* config_cpu,t_log* log_cpu){
     }
 
 	log_info(log_cpu, "CPU listo para recibir interrupcion de Kernel");
-    int client_kernel = esperar_cliente(server_cpu, log_cpu);
+    int client_kernel = esperar_cliente_de_kernel(server_cpu, log_cpu);
 
     // t_list* lista;
     
