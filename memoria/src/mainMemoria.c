@@ -1,17 +1,19 @@
 #include <mainMemoria.h>
 
-// void iterator(char* value) 
-// {
-// 	log_info(log_memoria, "%s", value);
-// }
-
 int main() {
     // ************* LOG Y CONFIG DE USO GENERAL *************
-    t_log* log_memoria = log_create("memoria.log", "Memoria", 1, LOG_LEVEL_DEBUG); 
-    memoria_config* config_memoria = armar_config(log_memoria);
+    log_memoria = log_create("memoria.log", "Memoria", 1, LOG_LEVEL_DEBUG); 
+    config_memoria = armar_config();
 
-    // ********* CREO HILOS PARA CREAR LAS CONEXIONES *********
-    crear_hilos_servidor (log_memoria, config_memoria) ;
+    // ********* INICIALIZO MEMORIA COMO SERVIDOR *********
+    inicializar_servidor();
+
+    // ************* ESPERO QUE CPU SE CONECTE COMO CLIENTE Y CREO HILO PARA ESCUCHA ACTIVA *************
+    recibir_escuchar_cpu();
+
+    recibir_escuchar_kernel();
+    recibir_escuchar_io();
+
   
     // ********* LIBERO TODO *********
 	log_destroy(log_memoria);
