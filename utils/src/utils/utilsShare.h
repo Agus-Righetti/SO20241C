@@ -33,7 +33,6 @@ int recibir_operacion(int);
 void iterator(char* value);
 void recv_handshake(int socket_cliente);
 
-
 // Client
 
 typedef struct
@@ -48,7 +47,6 @@ typedef struct
 	t_buffer* buffer;
 } t_paquete;
 
-
 int crear_conexion(char* ip, char* puerto);
 void enviar_mensaje(char* mensaje, int socket_cliente);
 t_paquete* crear_paquete(void);
@@ -60,17 +58,17 @@ void send_handshake(int socket_cliente);
 
 // ************ ESTRUCTURA REGISTROS DEL CPU ************
 typedef struct{
-	uint32_t pc; //Program Counter
-	uint8_t ax; //Acumulador
-	uint8_t bx; //Base
-	uint8_t cx; //Counter
-	uint8_t dx; //Data
+	uint32_t pc; // Program Counter
+	uint8_t ax; // Acumulador
+	uint8_t bx; // Base
+	uint8_t cx; // Counter
+	uint8_t dx; // Data
 	uint32_t eax;
 	uint32_t ebx;
 	uint32_t ecx;
 	uint32_t edx;
-	uint32_t si; //Contiene la direccion logica de memoria de origen desde donde se va a copiar un string
-	uint32_t di; //Contiene la direccion logica de memoria de destino a donde se va a copiar un string
+	uint32_t si; // Contiene la direccion logica de memoria de origen desde donde se va a copiar un string
+	uint32_t di; // Contiene la direccion logica de memoria de destino a donde se va a copiar un string
 }registros_cpu;
 
 // ************ ESTRUCTURA PCB DEL KERNEL, TIENE REGISTROS DEL CPU ************

@@ -5,6 +5,7 @@
 
 void recibir_pcb(t_list *lista, pcb *proceso); // Tendria que ir en el utils?
 void interpretar_instrucciones(void);
+void recibir_instruccion(t_list *paquete, t_instruccion *proceso);
 
 typedef enum
 {
@@ -28,6 +29,14 @@ typedef enum
     IO_FS_READ,
 	EXIT
 }enum_instrucciones;
+
+// Ver que mas le falta a la estructura de instrucciones 
+typedef struct 
+{
+    int pid;
+    char* instruccion;
+    int tamanio;
+} t_instruccion;
 
 #endif
 

@@ -17,7 +17,7 @@ int main(int argc, char* argv[])
 	// ********* SERVER PARA RECIBIR A KERNEL *********
 	server_para_kernel(config_cpu, log_cpu);
 
-	//Se puede hacer funcion y liberar todas las memorias
+	// Se puede hacer funcion y liberar todas las memorias
     log_destroy(log_cpu);
 	free(config_cpu);
 

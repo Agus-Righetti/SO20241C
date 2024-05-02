@@ -1,46 +1,61 @@
 #include "pcb.h"
 
+extern int server_para_kernel;
+extern int conexion_cpu_memoria;
+
 pcb* proceso;
 
-void recibir_pcb(t_list *lista, pcb *proceso)
+void recibir_pcb(t_list *paquete, pcb *proceso)
 {
-    // void memcpy(destino, elemento que obtenemos de la lista, size);
+    // void memcpy(destino, elemento que obtenemos del paquete, size);
     
-    // De la lista, obtengo el pid
+    // Del paquete, obtengo el pid
     int i = 0;
-	memcpy(&(proceso->pid), list_get(lista, i++), sizeof(int));
+	memcpy(&(proceso->pid), list_get(paquete, i++), sizeof(int));
 
     // Obtenemos las instrucciones
 	int cantidad_instrucciones;
-	memcpy(&(cantidad_instrucciones), list_get(lista, i++), sizeof(int));
+	memcpy(&(cantidad_instrucciones), list_get(paquete, i++), sizeof(int));
 
-    // Si proceso->instruccion es == NULL, destruye la lista y sus elementos (del pcb) 
+    // Si proceso->instruccion es distinto de NULL, destruye el paquete y sus elementos (del pcb) 
 	if(proceso->instrucciones) 
     {
-		list_destroy_and_destroy_elements(proceso->instrucciones, free);
+		list_destroy_and_destroy_elements(proceso->instrucciones, free); // Para asegurar que no haya fuga de memoria
 	}
 
-	proceso->instrucciones = list_slice_and_remove(lista, i, cantidad_instrucciones);
+    // Obtenemos las intrucciones
+	proceso->instrucciones = list_slice_and_remove(paquete, i, cantidad_instrucciones);
 
     // Obtenemos el program counter
-	memcpy(&(proceso->program_counter), list_get(lista, i++), sizeof(int));
+	memcpy(&(proceso->program_counter), list_get(paquete, i++), sizeof(int));
 	
     // Obtenemos los registros
-    memcpy(proceso->registros.ax, list_get(lista, i++), 8);
-	memcpy(proceso->registros.bx, list_get(lista, i++), 8);
-	memcpy(proceso->registros.cx, list_get(lista, i++), 8);
-	memcpy(proceso->registros.dx, list_get(lista, i++), 8);
-	memcpy(proceso->registros.eax, list_get(lista, i++), 32);
-	memcpy(proceso->registros.ebx, list_get(lista, i++), 32);
-	memcpy(proceso->registros.ecx, list_get(lista, i++), 32);
-	memcpy(proceso->registros.edx, list_get(lista, i++), 32);
-	memcpy(proceso->registros.si, list_get(lista, i++), 32);
-	memcpy(proceso->registros.di, list_get(lista, i++), 32);
+    memcpy(proceso->registros.ax, list_get(paquete, i++), 8);
+	memcpy(proceso->registros.bx, list_get(paquete, i++), 8);
+	memcpy(proceso->registros.cx, list_get(paquete, i++), 8);
+	memcpy(proceso->registros.dx, list_get(paquete, i++), 8);
+	memcpy(proceso->registros.eax, list_get(paquete, i++), 32);
+	memcpy(proceso->registros.ebx, list_get(paquete, i++), 32);
+	memcpy(proceso->registros.ecx, list_get(paquete, i++), 32);
+	memcpy(proceso->registros.edx, list_get(paquete, i++), 32);
+	memcpy(proceso->registros.si, list_get(paquete, i++), 32);
+	memcpy(proceso->registros.di, list_get(paquete, i++), 32);
+}
+
+void recibir_instruccion(t_list *paquete, t_instruccion *proceso)
+{
+    int i = 0;
+
+    // Obtenemos el pid del paquete (a partir de una copia de memoria)
+    memcpy(&(proceso->pid), list_get(paquete, i++), sizeof(int));
+
+    // Obtenemos la instruccion, la sacamos del paquete y la asignamos a nuestra estructura
+	proceso->instruccion = (char*)list_remove(paquete, i);
 }
 
 void interpretar_instrucciones(void)
 {
-    switch (expression)
+    switch (expresion)
     {
     case SET:
         instruccion_set(registro, valor);
@@ -113,7 +128,7 @@ void instruccion_set(registros_cpu* registro, int valor)
 {
     registro->ax = valor;
 }
-//
+
 void instruccion_sum()
 {
 
