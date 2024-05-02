@@ -6,20 +6,19 @@
 #include "configuracion.h"
 #include "cliente.h"
 
-// Esto habria que sacarlo por lo mismo que dice en el .c
-typedef struct {
-    kernel_config* config_kernel;
-    t_log* log_kernel;
-} thread_args_kernel; 
 
 //  *************** DECLARACIÓN DE FUNCIONES **********
 void leer_consola ();
-pthread_t hilo_consola (t_log* log_kernel, kernel_config* config_kernel);
+pthread_t hilo_consola ();
 void iniciar_proceso(char* path );
 void enviar_proceso_a_cpu();
 void enviar_pcb(pcb* proceso);
-void recibir_pcb_(nte, pcb* proceso);
+void recibir_pcb(pcb* proceso);
 void desalojar_proceso(pcb* proceso);
+void crear_hilo_proceso(pcb* proceso);
+void algoritmo_round_robin (void* arg);
+void accionar_segun_estado (pcb* proceso);
+void recibir_pcb_hilo(void* arg);
 
 
 //  *************** DECLARACIÓN DE FUNCIONES ***************

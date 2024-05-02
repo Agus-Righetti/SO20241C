@@ -8,12 +8,14 @@
 #include<netdb.h>
 #include<commons/log.h>
 #include<commons/collections/list.h>
+#include<commons/collections/queue.h>
 #include<string.h>
 #include<assert.h>
 #include<commons/string.h>
 #include<commons/config.h>
 #include<readline/readline.h>
 #include<pthread.h> //Biblioteca para hilos
+#include <semaphore.h> //Biblioteca para semaforos
 
 // Server
 
@@ -88,6 +90,7 @@ typedef struct {
     int quantum;
     registros_cpu* registros; 
 	char* direccion_instrucciones; //es el path que me mandan por consola
+	pthread_mutex_t mutex_pcb;
 }pcb;
 
 #endif

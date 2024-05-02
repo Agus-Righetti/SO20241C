@@ -2,12 +2,16 @@
 
 t_log* log_kernel;
 kernel_config* config_kernel;
-t_list* cola_de_new;
-t_list* cola_de_ready;
+t_queue* cola_de_new;
+t_queue* cola_de_ready;
 int grado_multiprogramacion_actual; //dice cual es el grado actual de multip. hay que incrementarlo al pasar un proceso a ready y decrementarlo al pasar uno a exit 
 int pid_contador;
 int conexion_kernel_cpu;
 int interrupcion_kernel_cpu;
+pthread_mutex_t mutex_cola_de_ready;
+pthread_mutex_t mutex_cola_de_new;
+pthread_mutex_t mutex_grado_programacion;
+
 
 void iterator(char* value) 
 {
@@ -19,8 +23,10 @@ int main(int argc, char* argv[])
     decir_hola("Kernel");
     pid_contador = 0; //Va incrementando a meidda que arrancamos un nuevo proceso
     
-    cola_de_new = list_create();
-    cola_de_ready = list_create();
+    pthread_mutex_init(&mutex_cola_de_new,NULL);
+    pthread_mutex_init(&mutex_cola_de_ready,NULL);
+    cola_de_new = queue_create();
+    cola_de_ready = queue_create();
 
     grado_multiprogramacion_actual = 0;
 
@@ -43,7 +49,10 @@ int main(int argc, char* argv[])
     pthread_join(thread_consola, NULL);
     //************* Destruyo el log y cierro programa *************
     log_destroy(log_kernel);
-    list_destroy(cola_de_new);
-    list_destroy(cola_de_ready);
+    queue_destroy(cola_de_new);
+    queue_destroy(cola_de_ready);
+    pthread_mutex_destroy(&mutex_cola_de_new);
+    pthread_mutex_destroy(&mutex_cola_de_ready);
+
 	return EXIT_SUCCESS;
 }
