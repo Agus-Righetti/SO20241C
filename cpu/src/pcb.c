@@ -4,7 +4,10 @@ extern int server_para_kernel;
 extern int conexion_cpu_memoria;
 
 pcb* proceso;
+t_dictionary* instrucciones;
+t_dictionary* registros;
 
+// Creemos que deberia ir en utilsShare.c
 void recibir_pcb(t_list *paquete, pcb *proceso)
 {
     // void memcpy(destino, elemento que obtenemos del paquete, size);
@@ -42,6 +45,7 @@ void recibir_pcb(t_list *paquete, pcb *proceso)
 	memcpy(proceso->registros.di, list_get(paquete, i++), 32);
 }
 
+// Creemos que deberia ir en utilsShare.c
 void recibir_instruccion(t_list *paquete, t_instruccion *proceso)
 {
     int i = 0;
@@ -51,6 +55,56 @@ void recibir_instruccion(t_list *paquete, t_instruccion *proceso)
 
     // Obtenemos la instruccion, la sacamos del paquete y la asignamos a nuestra estructura
 	proceso->instruccion = (char*)list_remove(paquete, i);
+}
+
+void iniciar_diccionario_instrucciones(void)
+{
+	instrucciones = dictionary_create(); // Creo el diccionario
+
+    // dictionary_put(diccionario al que se agrega el par clave-valor, clave para acceder al valor en el diccionario, valor que se va a asociar con la clave en el diccionario);
+	dictionary_put(instrucciones, "SET", (void*)(intptr_t)I_SET);
+	dictionary_put(instrucciones, "MOV_IN", (void*)(intptr_t)I_MOV_IN);
+	dictionary_put(instrucciones, "MOV_OUT", (void*)(intptr_t)I_MOV_OUT);
+	dictionary_put(instrucciones, "SUM", (void*)(intptr_t)I_SUM);
+	dictionary_put(instrucciones, "SUB", (void*)(intptr_t)I_SUB);
+	dictionary_put(instrucciones, "JNZ", (void*)(intptr_t)I_JNZ);
+	dictionary_put(instrucciones, "RESIZE", (void*)(intptr_t)I_RESIZE);
+	dictionary_put(instrucciones, "COPY_STRING", (void*)(intptr_t)I_COPY_STRING);
+    dictionary_put(instrucciones, "WAIT", (void*)(intptr_t)I_WAIT);
+    dictionary_put(instrucciones, "COPY_STRING", (void*)(intptr_t)I_COPY_STRING);
+	dictionary_put(instrucciones, "WAIT", (void*)(intptr_t)I_WAIT);
+	dictionary_put(instrucciones, "SIGNAL", (void*)(intptr_t)I_SIGNAL);
+	dictionary_put(instrucciones, "IO_GEN_SLEEP", (void*)(intptr_t)I_IO_GEN_SLEEP);
+	dictionary_put(instrucciones, "IO_STDIN_READ", (void*)(intptr_t)I_IO_STDIN_READ);
+	dictionary_put(instrucciones, "IO_STDOUT_WRITE", (void*)(intptr_t)I_IO_STDOUT_WRITE);
+    dictionary_put(instrucciones, "IO_FS_CREATE,", (void*)(intptr_t)I_IO_FS_CREATE);
+    dictionary_put(instrucciones, "IO_FS_DELETE,", (void*)(intptr_t)I_IO_FS_DELETE);
+    dictionary_put(instrucciones, "IO_FS_TRUNCATE,", (void*)(intptr_t)I_IO_FS_TRUNCATE);
+    dictionary_put(instrucciones, "IO_FS_WRITE,", (void*)(intptr_t)I_IO_FS_WRITE);
+    dictionary_put(instrucciones, "IO_FS_READ,", (void*)(intptr_t)I_IO_FS_READ);
+    dictionary_put(instrucciones, "EXIT,", (void*)(intptr_t)I_EXIT);
+}
+
+void iniciar_diccionario_registros(registros_cpu* registro)
+{
+	registros = dictionary_create();
+	dictionary_put(registros, "PC", (void*)registro->pc);
+	dictionary_put(registros, "AX", (void*)registro->ax);
+	dictionary_put(registros, "BX", (void*)registro->bx);
+	dictionary_put(registros, "CX", (void*)registro->cx);
+	dictionary_put(registros, "DX", (void*)registro->dx);
+	dictionary_put(registros, "EAX", (void*)registro->eax);
+	dictionary_put(registros, "EBX", (void*)registro->ebx);
+	dictionary_put(registros, "ECX", (void*)registro->ecx);
+	dictionary_put(registros, "EDX", (void*)registro->edx);
+	dictionary_put(registros, "SI", (void*)registro->si);
+	dictionary_put(registros, "DI", (void*)registro->di);
+}
+
+void destruir_diccionarios(void) 
+{
+	dictionary_destroy(instrucciones);
+	dictionary_destroy(registros);
 }
 
 void interpretar_instrucciones(void)
