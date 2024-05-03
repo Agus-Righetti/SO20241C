@@ -8,6 +8,7 @@ int grado_multiprogramacion_actual; //dice cual es el grado actual de multip. ha
 int pid_contador;
 int conexion_kernel_cpu;
 int interrupcion_kernel_cpu;
+int conexion_kernel_memoria;
 pthread_mutex_t mutex_cola_de_ready;
 pthread_mutex_t mutex_cola_de_new;
 pthread_mutex_t mutex_grado_programacion;
@@ -39,7 +40,7 @@ int main(int argc, char* argv[])
     // interrupcion_kernel_cpu = interrupcion_a_cpu(log_kernel, config_kernel);
 
     // ************* Esto es para funcionar como cliente con la Memoria *************
-    int conexion_kernel_memoria = conexion_a_memoria(log_kernel, config_kernel);
+    conexion_kernel_memoria = conexion_a_memoria(log_kernel, config_kernel);
     // ************* Esto es para funcionar como servidor para el I/O *************
     server_para_io(config_kernel, log_kernel);
 

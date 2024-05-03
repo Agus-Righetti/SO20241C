@@ -9,6 +9,7 @@ extern int grado_multiprogramacion_actual;
 extern int pid_contador; 
 extern int conexion_kernel_cpu;
 extern int interrupcion_kernel_cpu;
+extern int conexion_kernel_memoria;
 extern pthread_mutex_t mutex_cola_de_ready;
 extern pthread_mutex_t mutex_cola_de_new;
 extern pthread_mutex_t mutex_grado_programacion;
@@ -59,12 +60,13 @@ void leer_consola(void* arg){
 void iniciar_proceso(char* path )
 {    
     
-
+    //le mando a memoria el path ingresado en consola
+    enviar_mensaje(path , conexion_kernel_memoria); 
     pcb* nuevo_pcb = malloc(sizeof(pcb)); //HAY QUE LIBERAR EN EXIT
     pid_contador += 1;
     nuevo_pcb->estado_del_proceso = NEW;
     nuevo_pcb->program_counter = 0;
-    nuevo_pcb->direccion_instrucciones = path; // hay que mandarselo a memoria
+    nuevo_pcb->direccion_instrucciones = path; 
     nuevo_pcb->pid = pid_contador;
     nuevo_pcb->quantum = 0;
     nuevo_pcb->registros = malloc(sizeof(registros_cpu)); //HAY QUE LIBERARLO
