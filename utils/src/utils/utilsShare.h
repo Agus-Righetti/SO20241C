@@ -14,8 +14,9 @@
 #include<commons/string.h>
 #include<commons/config.h>
 #include<readline/readline.h>
-#include<pthread.h> //Biblioteca para hilos
-#include <semaphore.h> //Biblioteca para semaforos
+#include<pthread.h> // Biblioteca para hilos
+#include<semaphore.h> // Biblioteca para semaforos
+#include<unistd.h> // Para la función sleep()
 
 // Server
 

@@ -3,7 +3,8 @@
 
 #include "cpu_gestor.h"
 
-// ************* DECLARACION DE FUNCIONES *************
+// Declaracion de funciones ----------------------------------------------------------------------------------------------------------
+
 cpu_config* armar_config();
 
 #endif

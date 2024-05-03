@@ -2,18 +2,16 @@
 #define CPU_MAIN_H_
 
 #include "cpu_gestor.h"
-
 #include "configuracion.h"
 #include "cliente.h"
 #include "servidor.h"
 #include "pcb.h"
 
-// **************** VARIABLES GLOBALES **********************
 t_log* log_cpu;
 cpu_config* config_cpu;
 
-//int server_para_kernel;//SOCKET SERVIDOR CPU
-int conexion_cpu_memoria; // SOCKET CLIENTE MEMORIA
+int conexion_cpu_kernel; // Socket servidor-cpu
+int conexion_cpu_memoria; // Socket cliente-memoria
 int server_cpu;
 
 pcb* proceso;

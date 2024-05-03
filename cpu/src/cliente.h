@@ -3,7 +3,8 @@
 
 #include "cpu_gestor.h"
 
-// ************* DECLARACION DE FUNCIONES *************
+// Declaracion de funciones ----------------------------------------------------------------------------------------------------------
+
 int conexion_a_memoria();
 
 #endif

@@ -1,6 +1,7 @@
 #include "cliente.h"
 
-// ************* CONEXION A MEMORIA *************
+// Conexion a memoria ----------------------------------------------------------------------------------------------------------------
+
 int conexion_a_memoria()
 {    
     int conexion_cpu_memoria = crear_conexion(config_cpu->ip_memoria,config_cpu->puerto_memoria);

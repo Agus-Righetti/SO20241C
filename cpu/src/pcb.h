@@ -39,6 +39,11 @@ typedef struct
 } t_instruccion;
 
 void recibir_pcb(t_list *lista, pcb *proceso); // Creemos que deberia ir el el utilsShare.h
+void enviar_pcb(int conexion, pcb *proceso, op_code codigo);
+void recibir_instruccion(t_list *paquete, t_instruccion *proceso);
+void iniciar_diccionario_instrucciones(void);
+
+
 void recibir_instruccion(t_list *paquete, t_instruccion *proceso); // Creemos que deberia ir el el utilsShare.h
 
 #endif
