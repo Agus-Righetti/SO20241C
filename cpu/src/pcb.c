@@ -293,4 +293,3 @@ void error_exit(char** parte)
 	list_destroy_and_destroy_elements(proceso->instrucciones, free);
 	free(proceso);
 }
-
