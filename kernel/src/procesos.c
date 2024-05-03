@@ -18,9 +18,9 @@ extern pthread_mutex_t mutex_grado_programacion;
 
 
 pthread_t hilo_consola (){ 
+
     // Creo lel hilo de consola
     pthread_t thread_consola;
-
             
     // ********* CREO EL HILO SERVER PARA RECIBIR A CPU *********
     pthread_create(&thread_consola, NULL, (void*)leer_consola, NULL); // Si saco lo de arriba el ultimo parametro == NULL
@@ -58,13 +58,13 @@ void leer_consola(void* arg){
 
 void iniciar_proceso(char* path )
 {    
-    //aca creo el pcb solamente, ver si hay que madnarlo a memoria entero o que partes
+    
 
     pcb* nuevo_pcb = malloc(sizeof(pcb)); //HAY QUE LIBERAR EN EXIT
     pid_contador += 1;
     nuevo_pcb->estado_del_proceso = NEW;
     nuevo_pcb->program_counter = 0;
-    nuevo_pcb->direccion_instrucciones = path;
+    nuevo_pcb->direccion_instrucciones = path; // hay que mandarselo a memoria
     nuevo_pcb->pid = pid_contador;
     nuevo_pcb->quantum = 0;
     nuevo_pcb->registros = malloc(sizeof(registros_cpu)); //HAY QUE LIBERARLO
@@ -108,16 +108,7 @@ void iniciar_proceso(char* path )
         pthread_mutex_unlock(&mutex_cola_de_new);
     } // no tengo espacio para un nuevo proceso en ready, lo mando a la cola de new
 
-    // Funcion que realice el algoritmo correspondiente
-    // ...
-    // ...
-    // ...
-    // Y aca habria que llamar a enviar_proceso_a_cpu segun el algoritmo
-    // Y aca quizas hacer una condicion, y dependiendo de si es por desalojo o fin de ejecucion normal recibir el pcb normal o por interrupcion
-    // Pero esto hacerlo creando un hilo para que no se bloquee todo el modulo mientras espera la respuesta
-
-// Cuando se reciba el proceso (sea normal o por interrupcion) hay que poner este log obligatorio:
-//log_info(log_kernel, "PID: %d - Estado Anterior: EXECUTE - Estado Actual: %s", proceso->pid, proceso->estado_del_proceso);
+    
 
 }
 
@@ -140,7 +131,7 @@ void enviar_proceso_a_cpu(){
 
         enviar_pcb(proceso_seleccionado); // Envio el pcb a CPU
 
-        //aca creamos la funcion crear_hilo_proceso
+        crear_hilo_proceso (proceso_seleccionado); //inicio un hilo que maneje la ejecucion del proceso
 
     }else
     {
@@ -168,11 +159,15 @@ void crear_hilo_proceso(pcb* proceso){
 
 void algoritmo_round_robin (void* arg){
 
-    usleep(config_kernel->quantum);
     thread_args_procesos_kernel* args = (thread_args_procesos_kernel*)arg;
+    usleep(config_kernel->quantum);
     desalojar_proceso_hilo(args);
 
+    
     accionar_segun_estado(args->proceso); //si esta en exit elimina las estructuras, si vuelve en ready lo pone en la cola
+    
+    //-------------------falta destruir el hilo----------------
+    
     return;
 }
 
@@ -294,6 +289,7 @@ void recibir_pcb_hilo(void* arg){
     pcb* proceso = args->proceso;
 
     recibir_pcb(proceso);
+    //-------------------------falta destruir el hilo-----------
 }
 
 
