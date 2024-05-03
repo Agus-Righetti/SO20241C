@@ -13,9 +13,10 @@ int main(int argc, char* argv[])
 
     // ************* CONEXION CPU --> MEMORIA *************
     int conexion_cpu_memoria = conexion_a_memoria(log_cpu, config_cpu);
-	
+
+
 	// ********* SERVER PARA RECIBIR A KERNEL *********
-	server_para_kernel(config_cpu, log_cpu);
+	//server_para_kernel(config_cpu, log_cpu);
 
 	//Se puede hacer funcion y liberar todas las memorias
     log_destroy(log_cpu);

@@ -1,4 +1,4 @@
-#include "atender.h"
+#include "escucha.h"
 
 // ************* ESCUCHA ACTIVA DE CPU *************
 void atender_cpu(){

@@ -20,7 +20,8 @@
 typedef enum
 {
 	MENSAJE,
-	PAQUETE
+	PAQUETE,
+	INSTRUCCION
 }op_code;
 
 
@@ -55,6 +56,10 @@ void agregar_a_paquete(t_paquete* paquete, void* valor, int tamanio);
 void enviar_paquete(t_paquete* paquete, int socket_cliente);
 void liberar_conexion(int socket_cliente);
 void eliminar_paquete(t_paquete* paquete);
+
+// t_paquete* crear_paquete_personalizado(op_code code_op);
+// void cargar_string_a_paquete_personalizado(t_paquete* paquete, char* string);
+
 
 // ************ ESTRUCTURA REGISTROS DEL CPU ************
 typedef struct{

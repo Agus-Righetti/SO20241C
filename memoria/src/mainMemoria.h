@@ -5,7 +5,8 @@
 
 #include "configuracion.h"
 #include "servidor.h"
-#include "atender.h"
+#include "escucha.h"
+#include "atenderCPU.h"
 
 //************** VARIABLES GLOBALES *******************
 //************** CONFIG Y LOG ******************

@@ -7,13 +7,9 @@
 // ********* INICIO MEMORIA COMO SERVIDOR *********
 void inicializar_servidor();
 
-// ********* ESPERO QUE CPU SE CONECTE COMO CLIENTE *********
+// ********* ESPERO QUE MODULOS SE CONECTEN COMO CLIENTES *********
 void server_para_cpu();
-
-// ********* ESPERO QUE KERNEL SE CONECTE COMO CLIENTE *********
 void server_para_kernel();
-
-// ********* ESPERO QUE IO SE CONECTE COMO CLIENTE *********
 void server_para_io();
 
 #endif

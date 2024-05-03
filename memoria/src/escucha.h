@@ -1,5 +1,5 @@
-#ifndef ATENDER_H_
-#define ATENDER_H_
+#ifndef ESCUCHA_H_
+#define ESCUCHA_H_
 
 #include "m_gestor.h"
 #include "servidor.h"

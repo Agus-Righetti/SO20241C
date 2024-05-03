@@ -15,6 +15,15 @@ typedef struct
     int retardo_respuesta;
 }memoria_config;
 
+typedef struct{
+	char* mnemonico;
+    char* primero_parametro;
+    char* segundo_parametro;
+    char* tercero_parametro;
+    char* cuarto_parametro;
+    char* quinto_parametro;
+}t_instruccion_codigo;
+
 // ************* VARIABLES GLOBALES *************
 extern t_log* log_memoria;
 extern memoria_config* config_memoria;
