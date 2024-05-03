@@ -1,7 +1,7 @@
 #include "configuracion.h"
 
 // ************* CONFIGURACION *************
-cpu_config* armar_config(t_log* log_cpu)
+cpu_config* armar_config()
 {
     t_config* config_aux;
     cpu_config* aux_cpu_config = malloc(sizeof(cpu_config)); // Se inicializa la estructura que armamos 

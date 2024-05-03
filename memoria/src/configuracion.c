@@ -23,4 +23,6 @@ memoria_config* armar_config()
     config_destroy(config_aux);
 
     return aux_memoria_config;
+
+    free(aux_memoria_config);
 }
