@@ -10,7 +10,7 @@ void server_para_io(kernel_config* config_kernel,t_log* log_kernel){
     }
 
     log_info(log_kernel, "Kernel listo para recibir a IO");
-    int client_io= esperar_cliente(server_kernel, log_kernel);
+    int client_io = esperar_cliente(server_kernel, log_kernel);
 
     t_list* lista;
 

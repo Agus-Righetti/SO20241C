@@ -187,13 +187,6 @@ t_paquete* crear_paquete(void)
 	return paquete;
 }
 
-// t_paquete* crear_paquete_personalizado(op_code code_op){
-// 	t_paquete* paquete_personalizado = malloc(sizeof(t_paquete));
-// 	paquete_personalizado->codigo_operacion = code_op;
-// 	crear_buffer(paquete_personalizado);
-// 	return  paquete_personalizado;
-// }
-
 void agregar_a_paquete(t_paquete* paquete, void* valor, int tamanio)
 {
 	paquete->buffer->stream = realloc(paquete->buffer->stream, paquete->buffer->size + tamanio + sizeof(int));
@@ -203,32 +196,6 @@ void agregar_a_paquete(t_paquete* paquete, void* valor, int tamanio)
 
 	paquete->buffer->size += tamanio + sizeof(int);
 }
-
-// void cargar_string_a_paquete_personalizado(t_paquete* paquete, char* string){
-// 	int tamanio_string = strlen(string)+1;
-
-// 	if(paquete->buffer->size == 0){
-// 		paquete->buffer->stream = malloc(sizeof(int) + sizeof(char)*tamanio_string);
-// 		memcpy(paquete->buffer->stream, &tamanio_string, sizeof(int));
-// 		memcpy(paquete->buffer->stream + sizeof(int), string, sizeof(char)*tamanio_string);
-
-// 	}else {
-// 		paquete->buffer->stream = realloc(paquete->buffer->stream, paquete->buffer->size + sizeof(int) + sizeof(char)*tamanio_string);
-// 		memcpy(paquete->buffer->stream + paquete->buffer->size, &tamanio_string, sizeof(int));
-// 		memcpy(paquete->buffer->stream + paquete->buffer->size + sizeof(int), string, sizeof(char)*tamanio_string);
-
-// 	}
-// 	paquete->buffer->size += sizeof(int);
-// 	paquete->buffer->size += sizeof(char)*tamanio_string;
-// }
-
-// t_buffer* recibiendo_paquete_personalizado(int conexion){
-// 	t_buffer* unBuffer = malloc(sizeof(t_buffer));
-// 	int size;
-// 	unBuffer->stream = recibir_buffer(&size, conexion);
-// 	unBuffer->size = size;
-// 	return unBuffer;
-// }
 
 void enviar_paquete(t_paquete* paquete, int socket_cliente)
 {

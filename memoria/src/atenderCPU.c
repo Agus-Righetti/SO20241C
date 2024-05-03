@@ -9,6 +9,7 @@ t_list* leer_archivo_y_cargar_instrucciones(const char* archivo_pseudocodigo) {
     FILE* archivo = fopen(archivo_pseudocodigo, "r");
 
     t_list* instrucciones = list_create(); //Creo una lista para almacenar todas las instrucciones
+    
     char* instruccion_formateada = NULL;
     int i = 0;
     if (archivo == NULL) {

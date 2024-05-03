@@ -20,7 +20,7 @@ int interrupcion_a_cpu(t_log* log_kernel, kernel_config* config_kernel){
         exit(1);
     }
     log_info(log_kernel , "Interrupcion de Kernel a CPU");
-    enviar_mensaje("Interrupcion de Kernel a CPU",interrupcion_kernel_cpu);
+    enviar_mensaje("Se establecio conexion con CPU a traves del puerto Interrupt",interrupcion_kernel_cpu);
     return interrupcion_kernel_cpu;
 }
 

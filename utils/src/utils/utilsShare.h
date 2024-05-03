@@ -8,12 +8,14 @@
 #include<netdb.h>
 #include<commons/log.h>
 #include<commons/collections/list.h>
+#include<commons/collections/queue.h>
 #include<string.h>
 #include<assert.h>
 #include<commons/string.h>
 #include<commons/config.h>
 #include<readline/readline.h>
 #include<pthread.h> //Biblioteca para hilos
+#include <semaphore.h> //Biblioteca para semaforos
 
 // Server
 
@@ -57,9 +59,6 @@ void enviar_paquete(t_paquete* paquete, int socket_cliente);
 void liberar_conexion(int socket_cliente);
 void eliminar_paquete(t_paquete* paquete);
 
-// t_paquete* crear_paquete_personalizado(op_code code_op);
-// void cargar_string_a_paquete_personalizado(t_paquete* paquete, char* string);
-
 
 // ************ ESTRUCTURA REGISTROS DEL CPU ************
 typedef struct{
@@ -77,15 +76,23 @@ typedef struct{
 }registros_cpu;
 
 // ************ ESTRUCTURA PCB DEL KERNEL, TIENE REGISTROS DEL CPU ************
+
+typedef enum {
+	READY,
+	BLOCKED,
+	EXECUTE,
+	NEW,
+	EXIT,
+}estados;
+
 typedef struct {
     int pid;
-	char* estado_del_proceso;
+	estados estado_del_proceso;
     int program_counter;
     int quantum;
     registros_cpu* registros; 
+	char* direccion_instrucciones; //es el path que me mandan por consola
+	pthread_mutex_t mutex_pcb;
 }pcb;
-
-
-
 
 #endif

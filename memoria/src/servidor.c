@@ -1,10 +1,10 @@
 #include "servidor.h"
 
+
 // ********* INICIALIZO MEMORIA COMO SERVIDOR *********
 void inicializar_servidor(){
     socket_servidor_memoria = iniciar_servidor(config_memoria->puerto_escucha, log_memoria);
-    if (socket_servidor_memoria == -1)
-    {
+    if (socket_servidor_memoria == -1){
         log_info(log_memoria, "Error: No se pudo iniciar Memoria como servidor");
         exit(1);
     }
@@ -30,7 +30,8 @@ void server_para_cpu() {
     }
 }
 
-// // ********* SERVER PARA RECIBIR A KERNEL *********
+
+// ********* SERVER PARA RECIBIR A KERNEL *********
 void server_para_kernel() {
     log_info(log_memoria, "Esperando a KERNEL...");
     socket_cliente_kernel = esperar_cliente(socket_servidor_memoria, log_memoria);
@@ -49,7 +50,8 @@ void server_para_kernel() {
     }
 }
 
-// // ********* SERVER PARA RECIBIR A I/O *********  
+
+// ********* SERVER PARA RECIBIR A I/O *********  
 void server_para_io() {
     log_info(log_memoria, "Esperando a I/O...");
     socket_cliente_io = esperar_cliente(socket_servidor_memoria, log_memoria);
@@ -66,5 +68,5 @@ void server_para_io() {
             log_warning(log_memoria,"Operacion desconocida. No quieras meter la pata");
             break;
     }
-
+    return NULL;
 }
