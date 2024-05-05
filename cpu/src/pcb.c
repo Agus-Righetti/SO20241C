@@ -287,9 +287,102 @@ void instruccion_exit(char** parsed)
 	free(proceso);
 }
 
+void intruccion_io_fs_create(char **parte)
+{
+
+}
+
+void intruccion_io_fs_delete(char **parte)
+{
+    
+}
+
+void intruccion_io_fs_truncate(char **parte)
+{
+    
+}
+
+void intruccion_io_fs_write(char **parte)
+{
+    
+}
+
+void intruccion_io_fs_read(char **parte)
+{
+    
+}
+
+void instruccion_wait(char** parsed)
+{
+	log_info(logger, "PID: %d - Ejecutando: %s - %s", proceso->pid, parsed[0], parsed[1]);
+	proceso->program_counter++;
+    
+    // Indico al kernel que el proceso está esperando algo
+	enviar_pcb(conexion_cpu_kernel, proceso, WAIT);
+	
+    list_destroy_and_destroy_elements(proceso->instrucciones, free);
+	free(proceso);
+}
+
+void intruccion_signal(char **parte)
+{
+    // Verificar que se haya pasado el nombre del recurso como argumento
+    if (parsed[1] == NULL) {
+        log_error(logger, "No se ha proporcionado el nombre del recurso.");
+        return;
+    }
+
+    // Log de ejecución de la instrucción
+	log_info(logger, "PID: %d - Ejecutando: %s - %s", proceso->pid, parsed[0], parsed[1]);
+
+    // Enviar solicitud de SIGNAL al kernel
+    enviar_pcb(conexion_cpu_kernel, proceso, SIGNAL);
+
+    list_destroy_and_destroy_elements(proceso->instrucciones, free);
+    free(proceso);
+}
+
 void error_exit(char** parte) 
 {
 	enviar_pcb(conexion_cpu_kernel, proceso, codigo);
 	list_destroy_and_destroy_elements(proceso->instrucciones, free);
 	free(proceso);
 }
+
+void solicitar_instrucciones_a_memoria(int conexion_cpu_memoria, int direccion_inicio, int cantidad_instrucciones) 
+{   
+    // Creo el paquete
+    t_paquete* paquete = crear_paquete(); 
+
+    // Envio el paquete a memoria
+    enviar_paquete(paquete, conexion_cpu_memoria);
+
+    // Espero la respuesta de memoria
+    t_paquete *respuesta = recibir_paquete(conexion_cpu_memoria);
+
+    // Verifico que se hayan recibidos valores
+    if ( respuesta == NULL) 
+    {
+        error_show("No se recibio el proceso por parte del CPU");
+        return;
+    }
+
+    // PREGUNTA: sabemos el tamanio del paquete de instrucciones?
+    // ver que va en sizeof del memcpy a continuacion
+    // ver si deberiamos hacer dos funciones dist. una con el envio del paquete a memoria y la otra con las instrucciones de memeoria, en esta funcion estan las dos en una
+    
+    // Extraigo las instrucciones del paquete
+    memcpy(proceso, paquete->buffer->stream, sizeof(paquete));
+
+    eliminar_paquete(respuesta);
+    list_destroy_and_destroy_elements(respuesta, free);
+}
+
+
+// 3er checkpoint
+// MOV_IN EDX ECX
+// MOV_OUT EDX ECX
+// RESIZE 128
+// COPY_STRING 8
+// IO_STDIN_READ Int2 EAX AX
+// IO_STDOUT_WRITE Int3 BX EAX

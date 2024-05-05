@@ -15,7 +15,13 @@ typedef struct
     char* algoritmo_tlb;
 }cpu_config;
 
-// ************* VARIABLES GLOBALES *************
+typedef enum
+{
+    OK, 
+    WAIT,
+    SIGNAL // Debe entenderlo kernel
+}op_code_cpu; // Van en el utilsshare
+
 extern t_log* log_cpu;
 extern cpu_config* config_cpu;
 

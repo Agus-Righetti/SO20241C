@@ -1,10 +1,5 @@
 #include "servidor.h"
 
-// void iterator(char* value) 
-// {
-// 	log_info(log_cpu,"%s", value);
-// }
-
 // Server para recibir a kernel ------------------------------------------------------------------------------------------------------- 
 
 int esperar_cliente_de_kernel()
@@ -22,8 +17,8 @@ int esperar_cliente_de_kernel()
 	return socket_cliente;
 }
 
-void server_para_kernel(){
-
+void server_para_kernel() // Atiendo al cliente
+{
     server_cpu = iniciar_servidor(config_cpu->puerto_escucha_dispatch, log_cpu);
     if (server_cpu == -1)
     {
@@ -45,6 +40,7 @@ void server_para_kernel(){
 		lista = recibir_paquete(client_kernel);
 		log_info(log_cpu, "Me llegaron los siguientes valores:\n");
 		list_iterate(lista, (void*) iterator);
+		list_destroy_and_destroy_elements(lista, free);
 		break;
 	case EXECUTE:
 		lista = recibir_paquete(client_kernel);

@@ -6,5 +6,6 @@
 // Declaracion de funciones ----------------------------------------------------------------------------------------------------------
 
 cpu_config* armar_config();
+void iterator(char* value); 
 
 #endif
