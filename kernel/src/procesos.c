@@ -1,47 +1,33 @@
 #include "procesos.h"
-#include "configuracion.h"
 
-extern t_log* log_kernel;
-extern kernel_config* config_kernel;
-extern t_queue* cola_de_new;
-extern t_queue* cola_de_ready;
-extern int grado_multiprogramacion_actual;
-extern int pid_contador; 
-extern int conexion_kernel_cpu;
-extern int interrupcion_kernel_cpu;
-extern int conexion_kernel_memoria;
-extern pthread_mutex_t mutex_cola_de_ready;
-extern pthread_mutex_t mutex_cola_de_new;
-extern pthread_mutex_t mutex_grado_programacion;
-
-//Las extern son variables de otro archivo q quiero usar en este
-//Atencion con las variables cola de new, cola de ready y grado de multiprogramacion actual, habria que implementar semaforo
-
-
+// ************* Funcion que crea un hilo para mantener la consola siempre abierta *************
 pthread_t hilo_consola (){ 
 
-    // Creo lel hilo de consola
+    // Creo el hilo de consola
     pthread_t thread_consola;
             
     // ********* CREO EL HILO SERVER PARA RECIBIR A CPU *********
-    pthread_create(&thread_consola, NULL, (void*)leer_consola, NULL); // Si saco lo de arriba el ultimo parametro == NULL
+    pthread_create(&thread_consola, NULL, (void*)leer_consola, NULL);
 
     return thread_consola;
 }
 
+// ************* Funcion que utiliza un hilo para mantener la consola siempre abierta *************
 void leer_consola(void* arg){
     
      while(1) {
+        // Pido que ingresen un comando
         char* lectura = readline("Ingrese comando: ");
 
-        char **partes = string_split(lectura, " "); 
         // partes me separa segun los espacios lo que hay, en partes[0] esta INICIAR_PROCESO
         // en partes[1] va a estar el path
+        char **partes = string_split(lectura, " "); 
 
+        // Si el comando es "INCIAR_PROCESO entonces llamo a la funcion correspondiente"
         if (strcmp(partes[0], "INICIAR_PROCESO") == 0) {
 
             printf("Ha seleccionado la opción INICIAR_PROCESO\n");
-            iniciar_proceso(partes[1]);
+            iniciar_proceso(partes[1]);// Esta es la funcion a la que llamo
 
         } else if (strcmp(lectura, "FINALIZAR_PROCESO") == 0) {
 
@@ -57,11 +43,12 @@ void leer_consola(void* arg){
     }
 }
 
+// ************* Funcion que sirve para iniciar un proceso considerando la multiprogramacion *************
 void iniciar_proceso(char* path )
 {    
-    
-    //le mando a memoria el path ingresado en consola
+    //Le mando a memoria el path ingresado en consola
     enviar_mensaje(path , conexion_kernel_memoria); 
+    // Creo una estructura de pcb e inicializo todos los campos
     pcb* nuevo_pcb = malloc(sizeof(pcb)); //HAY QUE LIBERAR EN EXIT
     pid_contador += 1;
     nuevo_pcb->estado_del_proceso = NEW;
@@ -83,77 +70,101 @@ void iniciar_proceso(char* path )
     nuevo_pcb->registros->di= 0;
     pthread_mutex_init(&nuevo_pcb->mutex_pcb,NULL);
 
-    //log obligatorio
+    //Log obligatorio
     log_info(log_kernel, "Se crea el proceso %d en NEW", nuevo_pcb->pid);
 
-    
+    // Si el grado de multiprogramacion me lo permite, modifico el estado a READY
     if (config_kernel->grado_multiprogramacion > grado_multiprogramacion_actual)
     {   
-        //chequeo si tengo lugar para aceptar otro proceso en base al grado de multiprogramacion actual q tengo
+        //Chequeo si tengo lugar para aceptar otro proceso en base al grado de multiprogramacion actual q tengo
         
+        // Modifico el estado del proceso - Uso semaforo porque es una variable que tocan muchos hilos
         pthread_mutex_lock(&nuevo_pcb->mutex_pcb);
         nuevo_pcb->estado_del_proceso = READY; 
         pthread_mutex_unlock(&nuevo_pcb->mutex_pcb);
 
+        // Ingreso el proceso a la cola de READY - Tambien semaforo porque es seccion critica 
         pthread_mutex_lock(&mutex_cola_de_ready);
         queue_push(cola_de_ready, nuevo_pcb);
         pthread_mutex_unlock(&mutex_cola_de_ready);
         
-
+        //Aumento el grado de programacion actual, ya que agregue un proceso mas a ready - Semaforo, SC
         pthread_mutex_lock(&mutex_grado_programacion);
-        grado_multiprogramacion_actual += 1; //aumento el grado de programacion actual, ya que agregue un proceso mas a ready
+        grado_multiprogramacion_actual += 1; 
         pthread_mutex_unlock(&mutex_grado_programacion);
 
     }else {
+        // Si no hay espacio para un nuevo proceso en ready lo sumo a la cola de NEW - Semaforo SC
         pthread_mutex_lock(&mutex_cola_de_new);
         queue_push(cola_de_new, nuevo_pcb);
         pthread_mutex_unlock(&mutex_cola_de_new);
-    } // no tengo espacio para un nuevo proceso en ready, lo mando a la cola de new
-
-    
-
+    }
 }
 
-// ****************** ACA ESTA HECHO PARA RECIBIR UN PROCESO COMO TAL, UN PCB ******************
-
-// Funcion para enviar un proceso a cpu
+// ************* Funcion para enviar un proceso a cpu *************
+// Creo que todavia falta llamar a esta funcion
 void enviar_proceso_a_cpu(){
 
+    // Saco el proceso siguiente de la cola de READY
     pthread_mutex_lock(&mutex_cola_de_ready);
     pcb* proceso_seleccionado = queue_pop(cola_de_ready);
     pthread_mutex_unlock(&mutex_cola_de_ready);
 
-    if (proceso_seleccionado->estado_del_proceso == READY) //Verifico que el estado del proceso sea ready
+    //Verifico que el estado del proceso sea READY
+    if (proceso_seleccionado->estado_del_proceso == READY) 
     {
-        // ACA HAY QUE USAR SEMAFORO PARA CAMBIAR LOS ESTADOS DE UN PROCESO
+        // Cambio el estado del proceso sacado de la cola de READY
         pthread_mutex_lock(&proceso_seleccionado->mutex_pcb);
-        proceso_seleccionado->estado_del_proceso = EXECUTE; // Cambio el estado del proceso a Execute
+        proceso_seleccionado->estado_del_proceso = EXECUTE; 
         pthread_mutex_unlock(&proceso_seleccionado->mutex_pcb);
-        log_info(log_kernel, "PID: %d - Estado Anterior: READY - Estado Actual: EXECUTE", proceso_seleccionado->pid); // Log obligatorio
 
-        enviar_pcb(proceso_seleccionado); // Envio el pcb a CPU
+        // Hago un log obligatorio
+        log_info(log_kernel, "PID: %d - Estado Anterior: READY - Estado Actual: EXECUTE", proceso_seleccionado->pid); 
 
-        crear_hilo_proceso (proceso_seleccionado); //inicio un hilo que maneje la ejecucion del proceso
+        // Envio el pcb a CPU
+        enviar_pcb(proceso_seleccionado); 
+
+        // Inicio un hilo que maneje la ejecucion del proceso
+        crear_hilo_proceso (proceso_seleccionado); 
 
     }else
     {
+        // Si el proceso seleccionado no se encuentra en READY muestro un error
         error_show("El estado seleccionado no se encuentra en estado 'READY'");
     }
 }
 
+// ************* Funcion que sirve para enviar el pcb como tal al CPU *************
+void enviar_pcb(pcb* proceso) {
+    
+    // Creo un paquete
+    t_paquete* paquete = crear_paquete();
 
+    // Agrego el struct pcb al paquete
+    agregar_a_paquete(paquete, proceso, sizeof(pcb));
+
+    // Envio el paquete a través del socket
+    enviar_paquete(paquete, conexion_kernel_cpu);
+
+    // Libero el paquete
+    eliminar_paquete(paquete);
+}
+
+// ************* Funcion que sirve para crear un hilo por el proceso enviado, y segun el algoritmo recibirlo por FIFO o RR *************
 void crear_hilo_proceso(pcb* proceso){
 
-    //chequeamos el algoritmo a usar (VRR, RR, FIFO)
-    //segun el algoritmo armamos un hilo
-
+    // Creo un hilo
     pthread_t hilo_proceso;
     thread_args_procesos_kernel args_hilo = {proceso};
-    if(config_kernel->algoritmo_planificacion == "FIFO")
+
+    // Si el algoritmo de planificacion es FIFO entonces recibo el pcb normalmente desde CPU
+    if(strcmp(config_kernel->algoritmo_planificacion, "FIFO") == 0)
     {
         pthread_create(&hilo_proceso, NULL, (void*)recibir_pcb_hilo,(void*)&args_hilo); 
 
-    }else if(config_kernel->algoritmo_planificacion == "RR")
+    }
+    // Si el algoritmo es RR, lo recibo por una interrupcion contra CPU
+    else if(strcmp(config_kernel->algoritmo_planificacion, "RR") == 0)
     {
         pthread_create(&hilo_proceso, NULL, (void*)algoritmo_round_robin,(void*)&args_hilo); 
     }
@@ -162,7 +173,7 @@ void crear_hilo_proceso(pcb* proceso){
 void algoritmo_round_robin (void* arg){
 
     thread_args_procesos_kernel* args = (thread_args_procesos_kernel*)arg;
-    usleep(config_kernel->quantum);
+    usleep(*config_kernel->quantum);
     desalojar_proceso_hilo(args);
 
     
@@ -185,32 +196,16 @@ void accionar_segun_estado (pcb* proceso)
     return;
 
 }
-// Funcion que sirve para enviar el pcb como tal al CPU
-void enviar_pcb(pcb* proceso) {
-    
-    // Creo un paquete
-    t_paquete* paquete = crear_paquete();
 
-    // Agrego el struct pcb al paquete
-    agregar_a_paquete(paquete, proceso, sizeof(pcb));
 
-    // Envio el paquete a través del socket
-    enviar_paquete(paquete, conexion_kernel_cpu);
-
-    // Libero el paquete
-    eliminar_paquete(paquete);
-}
-
-// Entiendo que por ahora unicamente puede desalojar RR por fin de quantum
-// Creo que hay que poner el proceso que se recibe al final de la cola de ready, pero creo que tambien iria en donde se llama a esta funcion
-// Esta es para recibir el pcb en caso de que se lo interrumpa (a traves del puerto INTERRUPT)
+// ************* Funcion que sirve para obtener de regreso un proceso a traves de una interrupcion *************
 void desalojar_proceso(pcb* proceso){
    
     //Esto capaz se puede poner desde donde se la llama a la funcion
-    log_info(log_kernel, "PID: <PID> - Desalojado por fin de Quantum", proceso_seleccionado->pid);
+    log_info(log_kernel, "PID: %d - Desalojado por fin de Quantum", proceso->pid);
     
     //en cpu deberiamos hacer que si se llega este mensaje deben devolver el pcb
-    enviar_mensaje("FIN DE QUANTUM",interrupcion_a_cpu);
+    enviar_mensaje("FIN DE QUANTUM", interrupcion_kernel_cpu);
     
     // Creo un nuevo paquete
     t_paquete* paquete = crear_paquete();
@@ -243,15 +238,16 @@ void desalojar_proceso(pcb* proceso){
     return;
 }
 
-// Esto es lo mismo que la de arriba, solo que adaptada para poder llamarla por un hilo
+// ************* Funcion que llama a la de arriba a traves de un hilo *************
 void desalojar_proceso_hilo(void* arg){
     thread_args_procesos_kernel* args = (thread_args_procesos_kernel*)arg;
     pcb* proceso = args->proceso;
 
     desalojar_proceso(proceso); 
+    // Falta destruir el hilo
 }
 
-// Funcion para recibir el pcb desde CPU si termina su ejecucion sin interrupcion
+// ************* Funcion para recibir el pcb desde CPU si termina su ejecucion sin interrupcion *************
 void recibir_pcb(pcb* proceso) {
     
     // Creo un nuevo paquete
@@ -285,7 +281,7 @@ void recibir_pcb(pcb* proceso) {
     return;
 }
 
-// Adaptado para poder recibir un pcb usando hilos
+// ************* Funcion que llama a la de arriba a traves de un hilo *************
 void recibir_pcb_hilo(void* arg){
     thread_args_procesos_kernel* args = (thread_args_procesos_kernel*)arg;
     pcb* proceso = args->proceso;
@@ -293,33 +289,3 @@ void recibir_pcb_hilo(void* arg){
     recibir_pcb(proceso);
     //-------------------------falta destruir el hilo-----------
 }
-
-
-// ****************** ACA ESTA HECHO PARA RECIBIR UN HILO, pero no hay que usarlo asi ******************
-// No borrar por ahora pero creo que no voy a usar esto
-
-// void* enviar_proceso_a_cpu(void* args) {
-
-//     thread_args_procesos_kernel* proceso_hilo_args = (thread_args_procesos_kernel*)args; // Tomo los args del hilo-proceso
-
-//     // Creo las variables que quiero usar a partir de los argumentos del hilo
-//     pcb* proceso = proceso_hilo_args->proceso;
-//     int socket_cliente = proceso_hilo_args->socket_cliente;
-//     // t_log* log_kernel = proceso_hilo_args->log_kernel;
-
-//     if (proceso->estado_del_proceso == READY) { // Verifico el estado del proceso actual
-
-//         proceso->estado_del_proceso = EXEC; // Si se encuentra en ready lo paso a execute
-//         log_info(log_kernel, "PID: %d - Estado Anterior: READY - Estado Actual: EXECUTE", proceso->pid);
-
-//         enviar_pcb(socket_cliente, proceso); // Envio el proceso a cpu
-//         recibir_pcb(socket_cliente, proceso); // Espero que cpu me devuelva el proceso con valores actualizados
-//         log_info(log_kernel, "PID: %d - Estado Anterior: EXECUTE - Estado Actual: %s", proceso->pid, proceso->estado_del_proceso);
-//         // Aca hay que seguir trabajando con el pcb segun sus valores actualizados
-//     } 
-//     else {
-//         error_show("El estado seleccionado no se encuentra en estado 'READY'"); // Marco error si el proceso que ingresa no se encuentra en estado "READY"
-//     }
-
-//     pthread_exit(NULL); // Finalizo el hilo
-// }

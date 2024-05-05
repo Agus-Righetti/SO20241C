@@ -16,7 +16,7 @@ pthread_mutex_t mutex_grado_programacion;
 
 void iterator(char* value) 
 {
-	log_info(log_kernel, value);
+	log_info(log_kernel, "%s", value);
 }
 
 int main(int argc, char* argv[]) 
