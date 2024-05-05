@@ -278,6 +278,8 @@ void instruccion_io_gen_sleep(char **parte)
     proceso->program_counter++;
 }
 
+// TO DO
+
 void instruccion_exit(char** parsed) 
 {
 	log_info(logger, "PID: %d - Ejecutando: %s", proceso->pid, parte[0]);

@@ -4,7 +4,8 @@
 #include <utils/hello.h>
 #include <utils/utilsShare.h>
 
-// Estructuras globales ---------------------------------------
+// Estructuras globales ---------------------------------------------------------------------------------------------------------------
+
 typedef struct 
 {
     char* ip_memoria;
@@ -15,7 +16,8 @@ typedef struct
     char* algoritmo_tlb;
 }cpu_config;
 
-// ************* VARIABLES GLOBALES *************
+// Variables globales -----------------------------------------------------------------------------------------------------------------
+
 extern t_log* log_cpu;
 extern cpu_config* config_cpu;
 
@@ -26,6 +28,5 @@ extern int conexion_cpu_memoria;
 extern pcb* proceso;
 extern t_dictionary* instrucciones;
 extern t_dictionary* registros;
-
 
 #endif

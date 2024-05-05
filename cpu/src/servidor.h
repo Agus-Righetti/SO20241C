@@ -3,7 +3,8 @@
 
 #include "cpu_gestor.h"
 
-// ************* DECLARACION DE FUNCIONES *************
+// Declaracion de funciones -----------------------------------------------------------------------------------------------------------
+
 void server_para_kernel();
 void interrupcion_para_kernel();
 int esperar_cliente_de_kernel();

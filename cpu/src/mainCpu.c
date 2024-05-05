@@ -3,16 +3,18 @@
 int main(int argc, char* argv[]) {
     decir_hola("CPU");
     
-	// ************* LOG Y CONFIG DE USO GENERAL *************
+	// Log y config de uso general ----------------------------------------------------------------------------------------------------
+
     log_cpu = log_create("cpu.log", "CPU", 1, LOG_LEVEL_DEBUG);
     config_cpu = armar_config(log_cpu);
 
-    // ************* CONEXION CPU --> MEMORIA *************
+    // Conexion CPU --> Memoria -------------------------------------------------------------------------------------------------------
+
     int conexion_cpu_memoria = conexion_a_memoria(log_cpu, config_cpu);
 
+	// Server para recibir a Kernel ---------------------------------------------------------------------------------------------------
 
-	// ********* SERVER PARA RECIBIR A KERNEL *********
-	//server_para_kernel(config_cpu, log_cpu);
+	// server_para_kernel(config_cpu, log_cpu);
 
 	// Se puede hacer funcion y liberar todas las memorias
     log_destroy(log_cpu);

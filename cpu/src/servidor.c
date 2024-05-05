@@ -5,7 +5,7 @@
 // 	log_info(log_cpu,"%s", value);
 // }
 
-// Server para recibir a kernel ------------------------------------------------------------------------------------------------------- 
+// Server para recibir a Kernel ------------------------------------------------------------------------------------------------------- 
 
 int esperar_cliente_de_kernel()
 {
@@ -68,7 +68,7 @@ void server_para_kernel(){
 	}
 }
 
-// Server para recibir interrupciones de kernel --------------------------------------------------------------------------------------
+// Server para recibir interrupciones de Kernel ---------------------------------------------------------------------------------------
 
 void interrupcion_para_kernel(){
 
