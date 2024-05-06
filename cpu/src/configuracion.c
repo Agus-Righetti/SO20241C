@@ -29,3 +29,8 @@ cpu_config* armar_config()
 
     free(aux_cpu_config);
 }
+
+void iterator(char* value) 
+{
+	log_info(log_cpu,"%s", value);
+}

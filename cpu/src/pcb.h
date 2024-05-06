@@ -3,10 +3,6 @@
 
 #include "cpu_gestor.h"
 
-void iniciar_diccionario_instrucciones(void);
-void iniciar_diccionario_registros(registros_cpu* registro);
-void destruir_diccionarios(void);
-
 typedef enum
 {
 	I_SET,
@@ -38,12 +34,21 @@ typedef struct
     int tamanio;
 } t_instruccion;
 
-void recibir_pcb(t_list *lista, pcb *proceso);
+void recibir_pcb(t_list *lista, pcb *proceso); 
 void enviar_pcb(int conexion, pcb *proceso, op_code codigo);
 void recibir_instruccion(t_list *paquete, t_instruccion *proceso);
 void iniciar_diccionario_instrucciones(void);
-
-void recibir_instruccion(t_list *paquete, t_instruccion *proceso);
+void iniciar_diccionario_registros(registros_cpu* registro);
+void destruir_diccionarios(void); 
+void interpretar_instrucciones(void);
+void instruccion_set(char **parte);
+void instruccion_sum(char **parte);
+void instruccion_sub(char **parte);
+void instruccion_jnz(char **parte);
+void instruccion_io_gen_sleep(char **parte);
+void instruccion_exit(char** parsed); 
+void error_exit(char** parte);
+void solicitar_instrucciones_a_memoria(int conexion_cpu_memoria); 
 
 #endif
 

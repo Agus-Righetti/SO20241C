@@ -40,7 +40,7 @@ void recibir_pcb(t_list *paquete, pcb *proceso)
 void enviar_pcb(int conexion, pcb *proceso, op_code codigo)
 {
     // Creamos un paquete
-	t_paquete *paquete = crear_paquete(codigo);
+	t_paquete *paquete = crear_paquete();
 
     // Agregamos el pid al paquete
 	agregar_a_paquete(paquete, &(proceso->pid), sizeof(unsigned int));
@@ -59,20 +59,19 @@ void enviar_pcb(int conexion, pcb *proceso, op_code codigo)
 	agregar_a_paquete(paquete, &(proceso->program_counter), sizeof(int));
 
     // Agregamos los registros al paquete
-	agregar_a_paquete(paquete, proceso->registros.AX, 4);
-	agregar_a_paquete(paquete, proceso->registros.BX, 4);
-	agregar_a_paquete(paquete, proceso->registros.CX, 4);
-	agregar_a_paquete(paquete, proceso->registros.DX, 4);
-	agregar_a_paquete(paquete, proceso->registros.EAX, 8);
-	agregar_a_paquete(paquete, proceso->registros.EBX, 8);
-	agregar_a_paquete(paquete, proceso->registros.ECX, 8);
-	agregar_a_paquete(paquete, proceso->registros.EDX, 8);
-	agregar_a_paquete(paquete, proceso->registros.RAX, 16);
-	agregar_a_paquete(paquete, proceso->registros.RBX, 16);
-	agregar_a_paquete(paquete, proceso->registros.RCX, 16);
-	agregar_a_paquete(paquete, proceso->registros.RDX, 16);
-	
-	enviar_paquete(paquete, conexion);
+	agregar_a_paquete(paquete, proceso->registros->ax, 8);
+	agregar_a_paquete(paquete, proceso->registros->bx, 8);
+	agregar_a_paquete(paquete, proceso->registros->cx, 8);
+	agregar_a_paquete(paquete, proceso->registros->dx, 8);
+	agregar_a_paquete(paquete, proceso->registros->eax, 32);
+	agregar_a_paquete(paquete, proceso->registros->ebx, 32);
+	agregar_a_paquete(paquete, proceso->registros->ecx, 32);
+	agregar_a_paquete(paquete, proceso->registros->edx, 32);
+	agregar_a_paquete(paquete, proceso->registros->si, 32);
+   	agregar_a_paquete(paquete, proceso->registros->di, 32);
+
+    enviar_paquete(paquete, conexion);
+    
 	eliminar_paquete(paquete);
 }
 
@@ -138,7 +137,7 @@ void destruir_diccionarios(void)
 void interpretar_instrucciones(void)
 {   
     iniciar_diccionario_instrucciones();
-    iniciar_diccionario_registros(&proceso->registro);
+    iniciar_diccionario_registros(&proceso->registros);
     
     char** parte = string_split((char*)list_get(proceso->instrucciones, proceso->program_counter), " "); // Partes de la instruccion actual
 	int instruccion_enum = (int)(intptr_t)dictionary_get(instrucciones, parte[0]);
@@ -148,12 +147,12 @@ void interpretar_instrucciones(void)
     case I_SET:
         instruccion_set(parte);
         break;
-    case I_MOV_IN:
-        instruccion_mov_in(parte);
-        break;
-    case I_MOV_OUT:
-        instruccion_mov_out(parte);
-        break;
+    // case I_MOV_IN:
+    //     instruccion_mov_in(parte);
+    //     break;
+    // case I_MOV_OUT:
+    //     instruccion_mov_out(parte);
+    //     break;
     case I_SUM:
         instruccion_sum(parte);
         break;
@@ -163,12 +162,12 @@ void interpretar_instrucciones(void)
     case I_JNZ:
         instruccion_jnz(parte);
         break;
-    case I_RESIZE:
-        instruccion_resize(parte);
-        break;
-    case I_COPY_STRING:
-        instruccion_copy_string(parte);
-        break;
+    // case I_RESIZE:
+    //     instruccion_resize(parte);
+    //     break;
+    // case I_COPY_STRING:
+    //     instruccion_copy_string(parte);
+    //     break;
     case I_WAIT:
         instruccion_wait(parte);
         break;
@@ -178,27 +177,27 @@ void interpretar_instrucciones(void)
     case I_IO_GEN_SLEEP:
         instruccion_io_gen_sleep(parte);
         break;
-    case I_IO_STDIN_READ:
-        instruccion_io_stdin_read(parte);
-        break;
-    case I_IO_STDOUT_WRITE:
-        instruccion_io_stdout_write(parte);
-        break;
-    case I_IO_FS_CREATE:
-        instruccion_io_fs_create(parte);
-        break;
-    case I_IO_FS_DELETE:
-        instruccion_io_fs_delete(parte);
-        break;
-    case I_IO_FS_TRUNCATE:
-        instruccion_io_fs_truncate(parte);
-        break;
-    case I_IO_FS_WRITE:
-        instruccion_io_fs_write(parte);
-        break;
-    case I_IO_FS_READ:
-        instruccion_io_fs_read(parte);
-        break;
+    // case I_IO_STDIN_READ:
+    //     instruccion_io_stdin_read(parte);
+    //     break;
+    // case I_IO_STDOUT_WRITE:
+    //     instruccion_io_stdout_write(parte);
+    //     break;
+    // case I_IO_FS_CREATE:
+    //     instruccion_io_fs_create(parte);
+    //     break;
+    // case I_IO_FS_DELETE:
+    //     instruccion_io_fs_delete(parte);
+    //     break;
+    // case I_IO_FS_TRUNCATE:
+    //     instruccion_io_fs_truncate(parte);
+    //     break;
+    // case I_IO_FS_WRITE:
+    //     instruccion_io_fs_write(parte);
+    //     break;
+    // case I_IO_FS_READ:
+    //     instruccion_io_fs_read(parte);
+    //     break;
     case I_EXIT:
         instruccion_exit(parte);
         break;
@@ -278,20 +277,116 @@ void instruccion_io_gen_sleep(char **parte)
     proceso->program_counter++;
 }
 
-// TO DO
-
-void instruccion_exit(char** parsed) 
+void instruccion_exit(char** parte) 
 {
-	log_info(logger, "PID: %d - Ejecutando: %s", proceso->pid, parte[0]);
+	log_info(log_cpu, "PID: %d - Ejecutando: %s", proceso->pid, parte[0]);
 	proceso->program_counter++;
 	enviar_pcb(conexion_cpu_kernel, proceso, EXIT);
 	list_destroy_and_destroy_elements(proceso->instrucciones, free);
 	free(proceso);
 }
 
+// void intruccion_io_fs_create(char **parte)
+// {
+
+// }
+
+// void intruccion_io_fs_delete(char **parte)
+// {
+    
+// }
+
+// void intruccion_io_fs_truncate(char **parte)
+// {
+    
+// }
+
+// void intruccion_io_fs_write(char **parte)
+// {
+    
+// }
+
+// void intruccion_io_fs_read(char **parte)
+// {
+    
+// }
+
+void instruccion_wait(char** parte)
+{
+	log_info(log_cpu, "PID: %d - Ejecutando: %s - %s", proceso->pid, parte[0], parte[1]);
+	proceso->program_counter++;
+    
+    // Indico al kernel que el proceso está esperando algo
+	enviar_pcb(conexion_cpu_kernel, proceso, WAIT);
+	
+    list_destroy_and_destroy_elements(proceso->instrucciones, free);
+	free(proceso);
+}
+
+void instruccion_signal(char **parte)
+{
+    // Verificar que se haya pasado el nombre del recurso como argumento
+    if (parte[1] == NULL) 
+    {
+        log_error(log_cpu, "No se ha proporcionado el nombre del recurso.");
+        return;
+    }
+
+    // Log de ejecución de la instrucción
+	log_info(log_cpu, "PID: %d - Ejecutando: %s - %s", proceso->pid, parte[0], parte[1]);
+
+    // Enviar solicitud de SIGNAL al kernel
+    enviar_pcb(conexion_cpu_kernel, proceso, SIGNAL);
+
+    list_destroy_and_destroy_elements(proceso->instrucciones, free);
+    free(proceso);
+}
+
 void error_exit(char** parte) 
 {
-	enviar_pcb(conexion_cpu_kernel, proceso, codigo);
+	enviar_pcb(conexion_cpu_kernel, proceso, CODIGO);
 	list_destroy_and_destroy_elements(proceso->instrucciones, free);
 	free(proceso);
 }
+
+void solicitar_instrucciones_a_memoria(int conexion_cpu_memoria) 
+{   
+    // Creo el paquete
+    t_paquete* paquete = crear_paquete(); 
+
+    // Agregamos el pc y el pid al paquete
+    agregar_a_paquete(paquete, proceso->program_counter, sizeof(int));
+    agregar_a_paquete(paquete, proceso->pid, sizeof(int));
+
+    // Envio el paquete a memoria
+    enviar_paquete(paquete, conexion_cpu_memoria);
+
+    eliminar_paquete(paquete);
+}
+
+void recibir_instruccion_de_memoria(int conexion_cpu_memoria)
+{
+    // Espero la respuesta de memoria
+    t_paquete *respuesta = recibir_paquete(conexion_cpu_memoria);
+
+    // Verifico que se hayan recibidos valores
+    if (respuesta == NULL) 
+    {
+        error_show("No se recibio el proceso por parte del CPU");
+        return;
+    }
+
+    // Extraigo las instrucciones del paquete
+    memcpy(proceso, respuesta->buffer->stream, sizeof(respuesta));
+
+    eliminar_paquete(respuesta);
+    list_destroy_and_destroy_elements(respuesta, free);
+}
+
+// 3er checkpoint
+// MOV_IN EDX ECX
+// MOV_OUT EDX ECX
+// RESIZE 128
+// COPY_STRING 8
+// IO_STDIN_READ Int2 EAX AX
+// IO_STDOUT_WRITE Int3 BX EAX

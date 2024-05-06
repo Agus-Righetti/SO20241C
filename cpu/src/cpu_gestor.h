@@ -16,8 +16,6 @@ typedef struct
     char* algoritmo_tlb;
 }cpu_config;
 
-// Variables globales -----------------------------------------------------------------------------------------------------------------
-
 extern t_log* log_cpu;
 extern cpu_config* config_cpu;
 

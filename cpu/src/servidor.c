@@ -1,18 +1,14 @@
 #include "servidor.h"
 
-// void iterator(char* value) 
-// {
-// 	log_info(log_cpu,"%s", value);
-// }
+// Server para recibir a kernel ------------------------------------------------------------------------------------------------------- 
 
-// Server para recibir a Kernel ------------------------------------------------------------------------------------------------------- 
-
-int esperar_cliente_de_kernel()
+int esperar_cliente_de_kernel(int socket_servidor, t_log * log_cpu)
 {
+	int socket_cliente = malloc(sizeof(int)); // Reservo espacio en memoria para el socket del cliente 
+
 	while(1) // Servidor en un estado de espera constante
 	{
 		pthread_t thread; // Almacenar el identificador del hilo que se creará más adelante.
-		int socket_cliente = malloc(sizeof(int)); // Reservo espacio en memoria para el socket del cliente 
 		socket_cliente = accept(socket_servidor, NULL, NULL);
 		recv_handshake(socket_cliente);
 		pthread_create(&thread, NULL,(void*) server_para_kernel,socket_cliente);
@@ -22,8 +18,8 @@ int esperar_cliente_de_kernel()
 	return socket_cliente;
 }
 
-void server_para_kernel(){
-
+void server_para_kernel() // Atiendo al cliente
+{
     server_cpu = iniciar_servidor(config_cpu->puerto_escucha_dispatch, log_cpu);
     if (server_cpu == -1)
     {
@@ -45,11 +41,12 @@ void server_para_kernel(){
 		lista = recibir_paquete(client_kernel);
 		log_info(log_cpu, "Me llegaron los siguientes valores:\n");
 		list_iterate(lista, (void*) iterator);
+		list_destroy_and_destroy_elements(lista, free);
 		break;
 	case EXECUTE:
 		lista = recibir_paquete(client_kernel);
 		proceso = malloc(sizeof(pcb));
-		proceso->instruccion = NULL;
+		proceso->instrucciones = NULL;
 		recibir_pcb(lista, proceso);
 		interpretar_instrucciones();
 		list_destroy_and_destroy_elements(lista, free);
