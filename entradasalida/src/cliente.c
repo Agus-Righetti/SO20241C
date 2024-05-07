@@ -1,6 +1,7 @@
 #include "cliente.h"
 
-// ************* CONEXION A MEMORIA *************
+// Conexion a memoria -----------------------------------------------------------------------------------------------------------------
+
 int conexion_a_memoria(t_log* log_io, io_config* config_io)
 {    
     int conexion_io_memoria = crear_conexion(config_io->ip_memoria,config_io->puerto_memoria);
@@ -16,7 +17,8 @@ int conexion_a_memoria(t_log* log_io, io_config* config_io)
     return conexion_io_memoria;
 }
 
-// ************* CONEXION A KERNEL *************
+// Conexion a Kernel ------------------------------------------------------------------------------------------------------------------
+
 int conexion_a_kernel(t_log* log_io, io_config* config_io)
 {    
     int conexion_io_kernel = crear_conexion(config_io->ip_kernel,config_io->puerto_kernel);

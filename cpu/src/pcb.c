@@ -364,10 +364,10 @@ void solicitar_instrucciones_a_memoria(int conexion_cpu_memoria)
     eliminar_paquete(paquete);
 }
 
-void recibir_instruccion_de_memoria(int conexion_cpu_memoria)
+void recibir_instruccion_de_memoria(int socket_servidor_memoria)
 {
     // Espero la respuesta de memoria
-    t_paquete *respuesta = recibir_paquete(conexion_cpu_memoria);
+    t_paquete *respuesta = recibir_paquete(socket_servidor_memoria);
 
     // Verifico que se hayan recibidos valores
     if (respuesta == NULL) 

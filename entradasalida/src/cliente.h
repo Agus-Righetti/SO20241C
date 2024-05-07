@@ -6,11 +6,9 @@
 
 #include "configuracion.h"
 
-// ************* DECLARACIÓN DE FUNCIONES *************
-// ************* CONEXION A MEMORIA (CLIENTE) *************
-int conexion_a_memoria(t_log* log_io, io_config* config_io);
+// Declaracion de funciones ----------------------------------------------------------------------------------------------------------
 
-// ************* CONEXION A KERNEL (CLIENTE) *************
+int conexion_a_memoria(t_log* log_io, io_config* config_io);
 int conexion_a_kernel(t_log* log_io, io_config* config_io);
 
 #endif

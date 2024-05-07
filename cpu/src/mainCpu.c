@@ -1,6 +1,7 @@
 #include <mainCpu.h>
 
-int main(int argc, char* argv[]) {
+int main(int argc, char* argv[]) 
+{
     decir_hola("CPU");
     
 	// Log y config de uso general ----------------------------------------------------------------------------------------------------
@@ -10,14 +11,15 @@ int main(int argc, char* argv[]) {
 
     // Conexion CPU --> Memoria -------------------------------------------------------------------------------------------------------
 
-    int conexion_cpu_memoria = conexion_a_memoria(log_cpu, config_cpu);
+	escuchar_memoria();
 
 	// Server para recibir a Kernel ---------------------------------------------------------------------------------------------------
     
-	server_para_kernel(config_cpu, log_cpu);
+	escuchar_kernel();
 
     // liberar_cliente(conexion_cpu_memoria); -> VER
-    terminar_programa(log_cpu, config_cpu);
+    // terminar_programa(log_cpu, config_cpu);
+
 	return EXIT_SUCCESS;
 }
 

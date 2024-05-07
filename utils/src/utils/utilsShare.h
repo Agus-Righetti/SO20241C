@@ -28,7 +28,8 @@ typedef enum
 	OK, 
     WAIT,
     SIGNAL, // Debe entenderlo kernel
-    CODIGO
+    CODIGO,
+	CPU
 }op_code;
 
 // typedef enum

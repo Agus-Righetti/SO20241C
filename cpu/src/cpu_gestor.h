@@ -21,7 +21,8 @@ extern cpu_config* config_cpu;
 
 extern int server_cpu;
 extern int conexion_cpu_kernel;
-extern int conexion_cpu_memoria;
+extern int socket_cliente_kernel;
+extern int socket_servidor_memoria;
 
 extern pcb* proceso;
 extern t_dictionary* instrucciones;

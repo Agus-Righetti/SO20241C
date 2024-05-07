@@ -1,6 +1,7 @@
 #include "configuracion.h"
 
-// ************* CONFIGURACION *************
+// Configuracion ----------------------------------------------------------------------------------------------------------------------
+
 io_config* armar_config(t_log* log_io) {
 
     t_config* config_aux;

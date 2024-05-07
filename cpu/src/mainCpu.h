@@ -11,7 +11,7 @@ t_log* log_cpu;
 cpu_config* config_cpu;
 
 int conexion_cpu_kernel; // Socket servidor-cpu
-int conexion_cpu_memoria; // Socket cliente-memoria
+int socket_servidor_memoria; // Socket cliente-memoria
 int server_cpu;
 
 pcb* proceso;

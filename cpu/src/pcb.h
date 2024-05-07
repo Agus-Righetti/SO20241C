@@ -48,7 +48,7 @@ void instruccion_jnz(char **parte);
 void instruccion_io_gen_sleep(char **parte);
 void instruccion_exit(char** parsed); 
 void error_exit(char** parte);
-void solicitar_instrucciones_a_memoria(int conexion_cpu_memoria); 
+void solicitar_instrucciones_a_memoria(int socket_servidor_memoria); 
 
 #endif
 
