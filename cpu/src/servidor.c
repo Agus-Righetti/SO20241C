@@ -44,27 +44,32 @@ void server_para_kernel() // Atiendo al cliente
 void interrupcion_para_kernel()
 {	
     socket_servidor_cpu = iniciar_servidor(config_cpu->puerto_escucha_interrupt, log_cpu);
-    if (socket_servidor_cpu == -1)
+    if(socket_servidor_cpu == -1)
     {
 	    log_info(log_cpu, "Error: No se pudo iniciar CPU como servidor para Kernel");
         exit(1);
     }
 
 	log_info(log_cpu, "CPU listo para recibir interrupcion de Kernel");
-    int client_kernel = esperar_cliente(socket_servidor_cpu, log_cpu);
+    int cliente_kernel = esperar_cliente(socket_servidor_cpu, log_cpu);
 
     t_list* lista;
     
-	int cod_op = recibir_operacion(client_kernel);
+	int cod_op = recibir_operacion(cliente_kernel);
 	switch (cod_op) 
     {
         case MENSAJE:
-            recibir_mensaje(client_kernel, log_cpu);
+            recibir_mensaje(cliente_kernel, log_cpu);
             break;
         case PAQUETE:
-            lista = recibir_paquete(client_kernel);
+            lista = recibir_paquete(cliente_kernel);
             log_info(log_cpu, "Me llegaron los siguientes valores:\n");
             list_iterate(lista, (void*) iterator);
+            break;
+        case INTERRUPCION:
+            log_info(log_cpu, "Me llego una interrupcion de KERNEL");
+            proceso->program_counter++;
+            enviar_pcb(socket_servidor_cpu, proceso, DESALOJO);
             break;
         case -1:
             log_error(log_cpu, "El cliente se desconecto. Terminando servidor");
@@ -75,4 +80,3 @@ void interrupcion_para_kernel()
             break;
 	}
 }
-

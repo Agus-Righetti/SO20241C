@@ -16,7 +16,7 @@ int conexion_a_memoria()
     enviar_mensaje("Hola MEMORIA soy CPU", conexion_cpu_memoria);
 
     // Solicito las instrucciones 
-    //int cod_op = solicitar_instrucciones_a_memoria(conexion_cpu_memoria);
+    // solicitar_instrucciones_a_memoria(conexion_cpu_memoria);
 
     return conexion_cpu_memoria;
 }

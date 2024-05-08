@@ -8,6 +8,7 @@ void atender_memoria()
     t_list* lista;
     t_instruccion* instruccion;
 
+    // Ver que recibe recibir_operacion(socket_servidor_memoria);
     int cod_op_memoria = recibir_operacion(socket_servidor_memoria);
     while(1)
     {
@@ -25,16 +26,13 @@ void atender_memoria()
         case INSTRUCCION:
             lista = recibir_paquete(socket_servidor_memoria);
             instruccion = malloc(sizeof(t_instruccion));
-            recibir_instruccion(lista, instruccion);
+            recibir_instruccion_de_memoria(socket_servidor_memoria);
+            proceso->program_counter++;
+            log_info(log_cpu, "PID: %d - FETCH - Program Counter: %d", proceso->pid, proceso->program_counter);
             interpretar_instrucciones();
             list_destroy_and_destroy_elements(lista, free);
             free(instruccion);
             break;
-        case OK:
-			proceso->program_counter++; // Avanza a la siguiente instrucción
-			interpretar_instrucciones();
-			list_destroy_and_destroy_elements(lista, free);
-			break;
         case EXIT:
             error_exit(EXIT);
             list_destroy_and_destroy_elements(lista, free); 
@@ -108,15 +106,13 @@ void esperar_memoria(int conexion)
 
 void escuchar_memoria()
 {
-    int socket_cliente_cpu = conexion_a_memoria();
-
-    // No se si tenemos que hacer un atender_memoria
-    // Pensar donde pedir las instrucciones -> ver case INSTRUCCION
-    // esperar_memoria(socket_cliente_cpu);
+    solicitar_instrucciones_a_memoria(socket_cliente_cpu);
+    esperar_memoria(socket_cliente_cpu);
 }
 
 void escuchar_kernel()
 {
     server_para_kernel();
     atender_kernel();
+    interrupcion_para_kernel();
 }

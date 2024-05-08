@@ -40,7 +40,7 @@ void recibir_pcb(t_list *paquete, pcb *proceso)
 void enviar_pcb(int conexion, pcb *proceso, op_code codigo)
 {
     // Creamos un paquete
-	t_paquete *paquete = crear_paquete();
+	t_paquete *paquete = crear_paquete(codigo);
 
     // Agregamos el pid al paquete
 	agregar_a_paquete(paquete, &(proceso->pid), sizeof(unsigned int));
@@ -75,16 +75,16 @@ void enviar_pcb(int conexion, pcb *proceso, op_code codigo)
 	eliminar_paquete(paquete);
 }
 
-void recibir_instruccion(t_list *paquete, t_instruccion *proceso)
-{
-    int i = 0;
+// void recibir_instruccion(t_list *paquete, t_instruccion *proceso)
+// {
+//     int i = 0;
 
-    // Obtenemos el pid del paquete (a partir de una copia de memoria)
-    memcpy(&(proceso->pid), list_get(paquete, i++), sizeof(int));
+//     // Obtenemos el pid del paquete (a partir de una copia de memoria)
+//     memcpy(&(proceso->pid), list_get(paquete, i++), sizeof(int));
 
-    // Obtenemos la instruccion, la sacamos del paquete y la asignamos a nuestra estructura
-	proceso->instruccion = (char*)list_remove(paquete, i);
-}
+//     // Obtenemos la instruccion, la sacamos del paquete y la asignamos a nuestra estructura
+// 	proceso->instruccion = (char*)list_remove(paquete, i);
+// }
 
 void iniciar_diccionario_instrucciones(void)
 {
@@ -372,7 +372,7 @@ void recibir_instruccion_de_memoria(int socket_servidor_memoria)
     // Verifico que se hayan recibidos valores
     if (respuesta == NULL) 
     {
-        error_show("No se recibio el proceso por parte del CPU");
+        error_show("No se recibio el proceso por parte de MEMORIA");
         return;
     }
 

@@ -1,17 +1,5 @@
 #include <mainCpu.h>
 
-void terminar_programa(t_log* log_cpu, t_config* config_cpu)
-{
-	if (log_cpu != NULL) 
-    {
-		log_destroy(log_cpu);
-	}
-	if (config_cpu != NULL) 
-    {
-		config_destroy(config_cpu);
-	}
-}
-
 int main(int argc, char* argv[]) 
 {
     decir_hola("CPU");
@@ -23,14 +11,28 @@ int main(int argc, char* argv[])
 
     // Conexion CPU --> Memoria -------------------------------------------------------------------------------------------------------
 
-	escuchar_memoria();
+	int socket_cliente_cpu = conexion_a_memoria();
 
 	// Server para recibir a Kernel ---------------------------------------------------------------------------------------------------
     
 	escuchar_kernel();
 
-    // liberar_cliente(conexion_cpu_memoria); -> VER
-    // terminar_programa(log_cpu, config_cpu);
+	// Instrucciones con memoria
+	escuchar_memoria();
+   	
+	terminar_programa(log_cpu, config_cpu);
 
 	return EXIT_SUCCESS;
+}
+
+void terminar_programa(t_log* log_cpu, t_config* config_cpu)
+{
+	if (log_cpu != NULL) 
+    {
+		log_destroy(log_cpu);
+	}
+	if (config_cpu != NULL) 
+    {
+		config_destroy(config_cpu);
+	}
 }
