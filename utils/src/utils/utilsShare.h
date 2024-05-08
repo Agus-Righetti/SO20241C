@@ -24,21 +24,14 @@ typedef enum
 {
 	MENSAJE,
 	PAQUETE,
-	INSTRUCCION,
-	OK, 
+	INSTRUCCION, 
     WAIT,
-    SIGNAL, // Debe entenderlo kernel
+    SIGNAL, 
     CODIGO,
-	CPU
+	INTERRUPCION,
+	CPU,
+	DESALOJO
 }op_code;
-
-// typedef enum
-// {
-//     // OK, 
-//     WAIT,
-//     SIGNAL, // Debe entenderlo kernel
-//     CODIGO
-// }op_code_cpu; // Van en el utilsshare
 
 void* recibir_buffer(int*, int);
 int iniciar_servidor(char*, t_log*);

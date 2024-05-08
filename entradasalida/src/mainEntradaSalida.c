@@ -1,15 +1,8 @@
 #include <mainEntradaSalida.h>
 
-t_log* log_io;
-io_config* config_io;
-
-void iterator(char* value) {
-	log_info(log_io, "%s", value);
-}
-
 int main(int argc, char* argv[]) 
 {
-    decir_hola("una Interfaz de Entrada/Salida");
+    decir_hola("Una Interfaz de IO");
    
     // Log y config de uso general ----------------------------------------------------------------------------------------------------
 
@@ -24,8 +17,19 @@ int main(int argc, char* argv[])
     
     int conexion_io_kernel = conexion_a_kernel(log_io, config_io);
 
-    // Podemos agregar una funcion para liberar todo de un saque
-    log_destroy(log_io);
-	free(config_io);
+    terminar_programa(log_io, config_io);
+
     return 0;
+}
+
+void terminar_programa(t_log* log_cpu, t_config* config_cpu)
+{
+	if (log_cpu != NULL) 
+    {
+		log_destroy(log_cpu);
+	}
+	if (config_cpu != NULL) 
+    {
+		config_destroy(config_cpu);
+	}
 }

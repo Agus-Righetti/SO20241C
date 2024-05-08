@@ -16,9 +16,21 @@ typedef struct
     int block_size;
     int block_count;
     int retraso_compactacion;
-    
 }io_config;
 
+typedef struct 
+{
+    char* nombre;
+    io_config* archivo;
+} Interfaz;
+
+typedef struct 
+{
+    Interfaz interfaz;
+    int tiempo_unidad_trabajo;
+} InterfazGenerica;
+
 io_config* armar_config(t_log* log_io);
+void iterator(char* value);
 
 #endif

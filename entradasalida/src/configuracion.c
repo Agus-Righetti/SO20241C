@@ -31,3 +31,8 @@ io_config* armar_config(t_log* log_io) {
 
     return aux_io_config;
 }
+
+void iterator(char* value) 
+{
+	log_info(log_io, "%s", value);
+}

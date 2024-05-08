@@ -7,4 +7,9 @@
 #include "configuracion.h"
 #include "cliente.h"
 
+t_log* log_io;
+io_config* config_io;
+
+void terminar_programa(log_io, config_io);
+
 #endif
