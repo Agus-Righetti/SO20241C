@@ -1,5 +1,17 @@
 #include <mainCpu.h>
 
+void terminar_programa(t_log* log_cpu, t_config* config_cpu)
+{
+	if (log_cpu != NULL) 
+    {
+		log_destroy(log_cpu);
+	}
+	if (config_cpu != NULL) 
+    {
+		config_destroy(config_cpu);
+	}
+}
+
 int main(int argc, char* argv[]) 
 {
     decir_hola("CPU");
@@ -21,16 +33,4 @@ int main(int argc, char* argv[])
     // terminar_programa(log_cpu, config_cpu);
 
 	return EXIT_SUCCESS;
-}
-
-void terminar_programa(t_log* log_cpu, t_config* config_cpu)
-{
-	if (log_cpu != NULL) 
-    {
-		log_destroy(log_cpu);
-	}
-	if (config_cpu != NULL) 
-    {
-		config_destroy(config_cpu);
-	}
 }

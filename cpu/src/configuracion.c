@@ -21,7 +21,7 @@ cpu_config* armar_config()
     aux_cpu_config->cantidad_entradas_tlb = config_get_int_value(config_aux, "CANTIDAD_ENTRADAS_TLB");
     aux_cpu_config->algoritmo_tlb = strdup(config_get_string_value(config_aux, "ALGORITMO_TLB"));
 
-    log_info(log_cpu, "Se creo el struct config_cpu con exito");
+    // log_info(log_cpu, "Se creo el struct config_cpu con exito");
 
     config_destroy(config_aux);
 

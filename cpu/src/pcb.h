@@ -37,18 +37,25 @@ typedef struct
 void recibir_pcb(t_list *lista, pcb *proceso); 
 void enviar_pcb(int conexion, pcb *proceso, op_code codigo);
 void recibir_instruccion(t_list *paquete, t_instruccion *proceso);
+
 void iniciar_diccionario_instrucciones(void);
 void iniciar_diccionario_registros(registros_cpu* registro);
 void destruir_diccionarios(void); 
 void interpretar_instrucciones(void);
+
 void instruccion_set(char **parte);
 void instruccion_sum(char **parte);
 void instruccion_sub(char **parte);
 void instruccion_jnz(char **parte);
 void instruccion_io_gen_sleep(char **parte);
 void instruccion_exit(char** parsed); 
+void instruccion_wait(char** parte);
+void instruccion_signal(char **parte);
+
 void error_exit(char** parte);
 void solicitar_instrucciones_a_memoria(int socket_servidor_memoria); 
+void recibir_instruccion_de_memoria(int socket_servidor_memoria);
+
 
 #endif
 

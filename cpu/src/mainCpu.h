@@ -10,9 +10,11 @@
 t_log* log_cpu;
 cpu_config* config_cpu;
 
-int conexion_cpu_kernel; // Socket servidor-cpu
-int socket_servidor_memoria; // Socket cliente-memoria
-int server_cpu;
+int conexion_cpu_kernel; 
+int socket_servidor_memoria; 
+int socket_servidor_cpu;
+int socket_cliente_kernel;
+int socket_cliente_cpu;
 
 pcb* proceso;
 t_dictionary* instrucciones;

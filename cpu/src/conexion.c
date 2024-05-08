@@ -58,12 +58,11 @@ void atender_memoria()
 void atender_kernel()
 {
    	t_list* lista;
-    
-    int socket_cliente_kernel = esperar_cliente(server_cpu, log_cpu);
-    int cod_op_kernel = recibir_operacion(socket_cliente_kernel);
 
     while(1)
     { 
+        int cod_op_kernel = recibir_operacion(socket_cliente_kernel);
+
         switch (cod_op_kernel) 
         {
             case MENSAJE:
@@ -112,7 +111,7 @@ void escuchar_memoria()
     int socket_cliente_cpu = conexion_a_memoria();
 
     // No se si tenemos que hacer un atender_memoria
-    // Quizas en esta parte se pueden pedir las instrucciones -> ver case INSTRUCCION
+    // Pensar donde pedir las instrucciones -> ver case INSTRUCCION
     // esperar_memoria(socket_cliente_cpu);
 }
 
