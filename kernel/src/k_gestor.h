@@ -27,7 +27,6 @@ extern t_log* log_kernel;
 extern kernel_config* config_kernel;
 extern t_queue* cola_de_new;
 extern t_queue* cola_de_ready;
-extern int grado_multiprogramacion_actual;
 extern int pid_contador; 
 extern int conexion_kernel_cpu;
 extern int interrupcion_kernel_cpu;
@@ -35,7 +34,9 @@ extern int conexion_kernel_memoria;
 extern pthread_mutex_t mutex_cola_de_ready;
 extern pthread_mutex_t mutex_cola_de_new;
 extern pthread_mutex_t mutex_grado_programacion;
-
+extern sem_t sem_cola_de_ready;
+extern sem_t sem_cola_de_new;
+extern sem_t sem_multiprogramacion;
 
 
 

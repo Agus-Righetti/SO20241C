@@ -4,7 +4,6 @@ t_log* log_kernel;
 kernel_config* config_kernel;
 t_queue* cola_de_new;
 t_queue* cola_de_ready;
-int grado_multiprogramacion_actual; //dice cual es el grado actual de multip. hay que incrementarlo al pasar un proceso a ready y decrementarlo al pasar uno a exit 
 int pid_contador;
 int conexion_kernel_cpu;
 int interrupcion_kernel_cpu;
@@ -12,6 +11,9 @@ int conexion_kernel_memoria;
 pthread_mutex_t mutex_cola_de_ready;
 pthread_mutex_t mutex_cola_de_new;
 pthread_mutex_t mutex_grado_programacion;
+extern sem_t sem_cola_de_ready;
+extern sem_t sem_cola_de_new;
+extern sem_t sem_multiprogramacion;
 
 
 void iterator(char* value) 
@@ -28,12 +30,15 @@ int main(int argc, char* argv[])
     pthread_mutex_init(&mutex_cola_de_ready,NULL);
     cola_de_new = queue_create();
     cola_de_ready = queue_create();
-
-    grado_multiprogramacion_actual = 0;
+    sem_init(&sem_cola_de_new,0,0);
+    sem_init(&sem_cola_de_ready,0,0);
 
     // ************* Creo el log y el config del kernel para uso general *************
     log_kernel = log_create("kernel.log", "Kernel", 1, LOG_LEVEL_DEBUG);
     config_kernel = armar_config(log_kernel);
+
+    //semaforo para manejar el grado de multiprogramacion
+    sem_init(&sem_multiprogramacion,0,config_kernel->grado_multiprogramacion); 
 
     // ************* Esto es para funcionar como cliente con el CPU *************
     // conexion_kernel_cpu = conexion_a_cpu(log_kernel, config_kernel);
@@ -45,9 +50,13 @@ int main(int argc, char* argv[])
     server_para_io(config_kernel, log_kernel);
 
     //************* HILO CONSOLA *************
-    pthread_t thread_consola = hilo_consola (log_kernel, config_kernel);
+    pthread_t thread_consola = hilo_consola ();
 
     pthread_join(thread_consola, NULL);
+    //*************HILO GESTOR DE LOS PROCESOS A ENVIAR A CPU*************
+
+    pthread_t thread_enviar_procesos_cpu = hilo_enviar_procesos_cpu();
+
     //************* Destruyo el log y cierro programa *************
     log_destroy(log_kernel);
     queue_destroy(cola_de_new);

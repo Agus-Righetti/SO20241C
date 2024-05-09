@@ -12,6 +12,17 @@ pthread_t hilo_consola (){
     return thread_consola;
 }
 
+pthread_t hilo_enviar_procesos_cpu (){ 
+
+    // Creo el hilo de consola
+    pthread_t thread_enviar_procesos_cpu;
+            
+    // ********* CREO EL HILO SERVER PARA RECIBIR A CPU *********
+    pthread_create(&thread_enviar_procesos_cpu, NULL, (void*)enviar_proceso_a_cpu, NULL);
+
+    return thread_enviar_procesos_cpu;
+}
+
 // ************* Funcion que utiliza un hilo para mantener la consola siempre abierta *************
 void leer_consola(void* arg){
     
@@ -74,7 +85,9 @@ void iniciar_proceso(char* path )
     log_info(log_kernel, "Se crea el proceso %d en NEW", nuevo_pcb->pid);
 
     // Si el grado de multiprogramacion me lo permite, modifico el estado a READY
-    if (config_kernel->grado_multiprogramacion > grado_multiprogramacion_actual)
+    int multiprogramacion_actual;
+    sem_getvalue(&sem_multiprogramacion, &multiprogramacion_actual);
+    if (multiprogramacion_actual > 0)
     {   
         //Chequeo si tengo lugar para aceptar otro proceso en base al grado de multiprogramacion actual q tengo
         
@@ -87,17 +100,17 @@ void iniciar_proceso(char* path )
         pthread_mutex_lock(&mutex_cola_de_ready);
         queue_push(cola_de_ready, nuevo_pcb);
         pthread_mutex_unlock(&mutex_cola_de_ready);
+        sem_post(&sem_cola_de_ready); //agrego 1 al semaforo contador
         
-        //Aumento el grado de programacion actual, ya que agregue un proceso mas a ready - Semaforo, SC
-        pthread_mutex_lock(&mutex_grado_programacion);
-        grado_multiprogramacion_actual += 1; 
-        pthread_mutex_unlock(&mutex_grado_programacion);
+        //bajo el grado de programacion actual, ya que agregue un proceso mas a ready
+        sem_wait(&sem_multiprogramacion); //resto 1 al grado de multiprogramacion
 
     }else {
         // Si no hay espacio para un nuevo proceso en ready lo sumo a la cola de NEW - Semaforo SC
         pthread_mutex_lock(&mutex_cola_de_new);
         queue_push(cola_de_new, nuevo_pcb);
         pthread_mutex_unlock(&mutex_cola_de_new);
+        sem_post(&sem_cola_de_new); //agrego 1 al semaforo contador
     }
 }
 
@@ -105,32 +118,36 @@ void iniciar_proceso(char* path )
 // Creo que todavia falta llamar a esta funcion
 void enviar_proceso_a_cpu(){
 
-    // Saco el proceso siguiente de la cola de READY
-    pthread_mutex_lock(&mutex_cola_de_ready);
-    pcb* proceso_seleccionado = queue_pop(cola_de_ready);
-    pthread_mutex_unlock(&mutex_cola_de_ready);
+    while(1){
 
-    //Verifico que el estado del proceso sea READY
-    if (proceso_seleccionado->estado_del_proceso == READY) 
-    {
-        // Cambio el estado del proceso sacado de la cola de READY
-        pthread_mutex_lock(&proceso_seleccionado->mutex_pcb);
-        proceso_seleccionado->estado_del_proceso = EXECUTE; 
-        pthread_mutex_unlock(&proceso_seleccionado->mutex_pcb);
+        sem_wait(&sem_cola_de_ready); //hago que haya algo dentro de la cola de ready
+        // Saco el proceso siguiente de la cola de READY
+        pthread_mutex_lock(&mutex_cola_de_ready);
+        pcb* proceso_seleccionado = queue_pop(cola_de_ready);
+        pthread_mutex_unlock(&mutex_cola_de_ready);
 
-        // Hago un log obligatorio
-        log_info(log_kernel, "PID: %d - Estado Anterior: READY - Estado Actual: EXECUTE", proceso_seleccionado->pid); 
+        //Verifico que el estado del proceso sea READY
+        if (proceso_seleccionado->estado_del_proceso == READY) 
+        {
+            // Cambio el estado del proceso sacado de la cola de READY
+            pthread_mutex_lock(&proceso_seleccionado->mutex_pcb);
+            proceso_seleccionado->estado_del_proceso = EXECUTE; 
+            pthread_mutex_unlock(&proceso_seleccionado->mutex_pcb);
 
-        // Envio el pcb a CPU
-        enviar_pcb(proceso_seleccionado); 
+            // Hago un log obligatorio
+            log_info(log_kernel, "PID: %d - Estado Anterior: READY - Estado Actual: EXECUTE", proceso_seleccionado->pid); 
 
-        // Inicio un hilo que maneje la ejecucion del proceso
-        crear_hilo_proceso (proceso_seleccionado); 
+            // Envio el pcb a CPU
+            enviar_pcb(proceso_seleccionado); 
 
-    }else
-    {
-        // Si el proceso seleccionado no se encuentra en READY muestro un error
-        error_show("El estado seleccionado no se encuentra en estado 'READY'");
+            // Inicio un hilo que maneje la ejecucion del proceso
+            crear_hilo_proceso (proceso_seleccionado); 
+
+        }else
+        {
+            // Si el proceso seleccionado no se encuentra en READY muestro un error
+            error_show("El estado seleccionado no se encuentra en estado 'READY'");
+        }
     }
 }
 
