@@ -115,7 +115,7 @@ void iniciar_proceso(char* path )
 }
 
 // ************* Funcion para enviar un proceso a cpu *************
-// Creo que todavia falta llamar a esta funcion
+// Es llamada por un hilo especifico para esto
 void enviar_proceso_a_cpu(){
 
     while(1){

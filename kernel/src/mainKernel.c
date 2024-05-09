@@ -63,6 +63,10 @@ int main(int argc, char* argv[])
     queue_destroy(cola_de_ready);
     pthread_mutex_destroy(&mutex_cola_de_new);
     pthread_mutex_destroy(&mutex_cola_de_ready);
+    sem_destroy(&sem_cola_de_ready);
+    sem_destroy(&sem_cola_de_new);
+    sem_destroy(&sem_multiprogramacion);
+
 
 	return EXIT_SUCCESS;
 }

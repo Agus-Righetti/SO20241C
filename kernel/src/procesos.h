@@ -8,6 +8,7 @@
 //  *************** DECLARACIÓN DE FUNCIONES **********
 void leer_consola ();
 pthread_t hilo_consola ();
+pthread_t hilo_enviar_procesos_cpu ();
 void iniciar_proceso(char* path );
 void enviar_proceso_a_cpu();
 void enviar_pcb(pcb* proceso);
