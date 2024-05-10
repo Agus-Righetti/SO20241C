@@ -40,7 +40,7 @@ void recibir_pcb(t_list *paquete, pcb *proceso)
 void enviar_pcb(int conexion, pcb *proceso, op_code codigo)
 {
     // Creamos un paquete
-	t_paquete *paquete = crear_paquete(codigo);
+	t_paquete *paquete = crear_paquete();
 
     // Agregamos el pid al paquete
 	agregar_a_paquete(paquete, &(proceso->pid), sizeof(unsigned int));
@@ -174,18 +174,18 @@ void interpretar_instrucciones(void)
     case I_SIGNAL:
         instruccion_signal(parte);
         break;
-    case I_IO_GEN_SLEEP:
-        instruccion_io_gen_sleep(parte);
-        break;
+    // case I_IO_GEN_SLEEP:
+    //     instruccion_io_gen_sleep(parte);
+    //     break;
     // case I_IO_STDIN_READ:
     //     instruccion_io_stdin_read(parte);
     //     break;
     // case I_IO_STDOUT_WRITE:
     //     instruccion_io_stdout_write(parte);
     //     break;
-    case I_IO_FS_CREATE:
-        instruccion_io_fs_create(parte);
-        break;
+    // case I_IO_FS_CREATE:
+    //     instruccion_io_fs_create(parte);
+    //     break;
     // case I_IO_FS_DELETE:
     //     instruccion_io_fs_delete(parte);
     //     break;
@@ -263,19 +263,19 @@ void instruccion_jnz(char **parte)
     }
 }
 
-void instruccion_io_gen_sleep(char **parte)
-{
-    // IO_GEN_SLEEP Int1 10
-    char *interfaz = parte[1];
-    int unidades_trabajo = atoi(parte[2]);
+// void instruccion_io_gen_sleep(char **parte)
+// {
+//     // IO_GEN_SLEEP Int1 10
+//     char *interfaz = parte[1];
+//     int unidades_trabajo = atoi(parte[2]);
 
-    printf("Solicitando a la interfaz %s que realice un sleep por %d unidades de trabajo...\n", interfaz, parte[2]);
-    log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s", proceso->pid, parte[0], parte[1], parte[2]);
-    //sleep(unidades_trabajo);
-    // solicitar_sleep_io(parte[1], unidades_trabajo); // Esta función enviará la solicitud de sleep al Kernel
-    printf("El sleep en la interfaz %s se ha completado.\n", interfaz);
-    proceso->program_counter++;
-}
+//     printf("Solicitando a la interfaz %s que realice un sleep por %d unidades de trabajo...\n", interfaz, parte[2]);
+//     log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s", proceso->pid, parte[0], parte[1], parte[2]);
+//     sleep(unidades_trabajo);
+//     // solicitar_sleep_io(parte[1], unidades_trabajo); // Esta función enviará la solicitud de sleep al Kernel
+//     printf("El sleep en la interfaz %s se ha completado.\n", interfaz);
+//     proceso->program_counter++;
+// }
 
 void instruccion_exit(char** parte) 
 {
@@ -286,22 +286,22 @@ void instruccion_exit(char** parte)
 	free(proceso);
 }
 
-void intruccion_io_fs_create(char **parte)
-{
-    // IO_FS_CREATE Interfaz NombreArchivo
-    char *interfaz = parte[1];
-    char *nombre_archivo = parte[2];
+// void intruccion_io_fs_create(char **parte)
+// {
+//     // IO_FS_CREATE Interfaz NombreArchivo
+//     char *interfaz = parte[1];
+//     char *nombre_archivo = parte[2];
 
-    printf("Solicitando al Kernel que cree un archivo '%s' en la interfaz '%s' del sistema de archivos...\n", nombre_archivo, interfaz);
-    log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s", proceso->pid, parte[0], parte[1], parte[2]);
+//     printf("Solicitando al Kernel que cree un archivo '%s' en la interfaz '%s' del sistema de archivos...\n", nombre_archivo, interfaz);
+//     log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s", proceso->pid, parte[0], parte[1], parte[2]);
 
-    // Aquí debes enviar la solicitud al Kernel para que cree el archivo en la interfaz especificada
-    // Por ejemplo:
-    // solicitar_creacion_archivo(interfaz, nombre_archivo);
+//     // Aquí debes enviar la solicitud al Kernel para que cree el archivo en la interfaz especificada
+//     // Por ejemplo:
+//     // solicitar_creacion_archivo(interfaz, nombre_archivo);
 
-    printf("La solicitud de creación del archivo '%s' en la interfaz '%s' se ha enviado al Kernel.\n", nombre_archivo, interfaz);
-    proceso->program_counter++;
-}
+//     printf("La solicitud de creación del archivo '%s' en la interfaz '%s' se ha enviado al Kernel.\n", nombre_archivo, interfaz);
+//     proceso->program_counter++;
+// }
 
 // void intruccion_io_fs_delete(char **parte)
 // {
