@@ -1,10 +1,7 @@
 #ifndef CLIENTE_H_
 #define CLIENTE_H_
 
-#include <utils/hello.h>
-#include <utils/utilsShare.h>
-
-#include "configuracion.h"
+#include "io_gestor.h"
 
 // Declaracion de funciones ----------------------------------------------------------------------------------------------------------
 

@@ -2,7 +2,7 @@
 
 int main(int argc, char* argv[]) 
 {
-    decir_hola("Una Interfaz de IO");
+    decir_hola("IO");
    
     // Log y config de uso general ----------------------------------------------------------------------------------------------------
 
@@ -11,25 +11,26 @@ int main(int argc, char* argv[])
 
     // Conexion IO --> Memoria --------------------------------------------------------------------------------------------------------
 
-    int conexion_io_memoria = conexion_a_memoria(log_io, config_io); 
+    // escuchar_memoria(); 
 
     // Conexion IO --> Kernel ---------------------------------------------------------------------------------------------------------
     
-    int conexion_io_kernel = conexion_a_kernel(log_io, config_io);
-
-    terminar_programa(log_io, config_io);
+    // escuchar_kernel();
+    leer_configuracion();
+    
+    // terminar_programa(log_io, config_io);
 
     return 0;
 }
 
-void terminar_programa(t_log* log_cpu, t_config* config_cpu)
+void terminar_programa(t_log* log_io, t_config* config_io)
 {
-	if (log_cpu != NULL) 
+    if (log_io != NULL) 
     {
-		log_destroy(log_cpu);
-	}
-	if (config_cpu != NULL) 
+		log_destroy(log_io);
+    }
+    if (config_io != NULL) 
     {
-		config_destroy(config_cpu);
-	}
+		config_destroy(config_io);
+    }
 }

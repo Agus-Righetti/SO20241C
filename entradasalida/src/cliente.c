@@ -7,12 +7,12 @@ int conexion_a_memoria(t_log* log_io, io_config* config_io)
     int conexion_io_memoria = crear_conexion(config_io->ip_memoria,config_io->puerto_memoria);
     if(conexion_io_memoria == -1)
     {
-        log_info(log_io, "Error: No se pudo crear conexion I/O --> Memoria");
+        log_info(log_io, "Error: No se pudo crear conexion IO --> MEMORIA");
         exit(1);
     }
     
-    log_info(log_io, "Conexion con el servidor Memoria creada");
-    enviar_mensaje("Hola Memoria soy I/O",conexion_io_memoria);
+    log_info(log_io, "Conexion con el servidor MEMORIA creada");
+    enviar_mensaje("Hola MEMORIA soy IO",conexion_io_memoria);
 
     return conexion_io_memoria;
 }
@@ -24,12 +24,12 @@ int conexion_a_kernel(t_log* log_io, io_config* config_io)
     int conexion_io_kernel = crear_conexion(config_io->ip_kernel,config_io->puerto_kernel);
     if(conexion_io_kernel == -1)
     {
-        log_info(log_io, "Error: No se pudo crear conexion I/O --> Kernel");
+        log_info(log_io, "Error: No se pudo crear conexion IO --> KERNEL");
         exit(1);
     }
     
-    log_info(log_io, "Conexion con el servidor Kernel creada");
-    enviar_mensaje("Hola Kernel soy I/O",conexion_io_kernel);
+    log_info(log_io, "Conexion con el servidor KERNEL creada");
+    enviar_mensaje("Hola KERNEL soy IO",conexion_io_kernel);
 
     return conexion_io_kernel;
 }

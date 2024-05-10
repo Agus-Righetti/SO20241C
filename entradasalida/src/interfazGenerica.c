@@ -1,106 +1,46 @@
 #include "interfazGenerica.h"
 
-io_config* leer_configuracion(const char* nombre_archivo) 
+void recibir_operacion_generica_de_kernel(const char* configuracion, op_code codigo)
 {
-    FILE* archivo = fopen(nombre_archivo, "r");
-    if (archivo == NULL) 
+    int unidades_trabajo;
+
+    // Verificar si la operación es para una interfaz genérica
+    if (codigo != IO_GEN_SLEEP) 
     {
-        // Manejar error si no se puede abrir el archivo
-        perror("Error al abrir el archivo de configuración");
-        return NULL;
+        log_warning(log_io, "Operacion recibida no es para una interfaz generica.\n");
     }
 
-    io_config* configuracion = malloc(sizeof(io_config));
-    if (configuracion == NULL) 
-    {
-        // Manejar error si no se puede asignar memoria
-        perror("Error de asignación de memoria");
-        fclose(archivo);
-        return NULL;
-    }
+    // Recibir la cantidad de unidades de trabajo 
+    // unidades_trabajo = recibir_unidades_trabajo();
 
-    // Inicializar las propiedades a valores predeterminados o nulos
-    configuracion->tipo_interfaz = NULL;
-    configuracion->tiempo_unidad_trabajo = 0;
-    configuracion->ip_kernel = NULL;
-    configuracion->puerto_kernel = 0;
-    configuracion->ip_memoria = NULL;
-    configuracion->puerto_memoria = 0;
-    configuracion->path_base_dialfs = NULL;
-    configuracion->block_size = 0;
-    configuracion->block_count = 0;
-    configuracion->retraso_compactacion = 0;
+    // Simular el procesamiento de las unidades de trabajo
+    // usleep(unidades_trabajo * configuracion->tiempo_unidad_trabajo);
 
-    char linea[100]; // Tamaño suficiente para leer cada línea del archivo
-
-    // Leer cada línea del archivo
-    while (fgets(linea, sizeof(linea), archivo) != NULL) 
-    {
-        // Analizar la línea y extraer las propiedades
-        char propiedad[50]; // Tamaño suficiente para el nombre de la propiedad
-        if (sscanf(linea, "%[^=]=%s", propiedad, valor) != 2) {
-            // Ignorar líneas que no tengan el formato correcto (propiedad=valor)
-            continue;
-        }
-
-        // Comparar el nombre de la propiedad y asignar el valor correspondiente
-        if (strcmp(propiedad, "TIPO_INTERFAZ") == 0) {
-            configuracion->tipo_interfaz = strdup(valor);
-        } else if (strcmp(propiedad, "TIEMPO_UNIDAD_TRABAJO") == 0) {
-            configuracion->tiempo_unidad_trabajo = atoi(valor);
-        } else if (strcmp(propiedad, "IP_KERNEL") == 0) {
-            configuracion->ip_kernel = strdup(valor);
-        } else if (strcmp(propiedad, "PUERTO_KERNEL") == 0) {
-            configuracion->puerto_kernel = atoi(valor);
-        } else if (strcmp(propiedad, "IP_MEMORIA") == 0) {
-            configuracion->ip_memoria = strdup(valor);
-        } else if (strcmp(propiedad, "PUERTO_MEMORIA") == 0) {
-            configuracion->puerto_memoria = atoi(valor);
-        } else if (strcmp(propiedad, "PATH_BASE_DIALFS") == 0) {
-            configuracion->path_base_dialfs = strdup(valor);
-        } else if (strcmp(propiedad, "BLOCK_SIZE") == 0) {
-            configuracion->block_size = atoi(valor);
-        } else if (strcmp(propiedad, "BLOCK_COUNT") == 0) {
-            configuracion->block_count = atoi(valor);
-        } else if (strcmp(propiedad, "RETRASO_COMPACTACION") == 0) {
-            configuracion->retraso_compactacion = atoi(valor);
-        }
-    }
-
-    fclose(archivo);
-    return configuracion;
+    // Registrar en el log la operación y la cantidad de unidades de trabajo
+    log_info(log_io, "Operacion generica recibida: IO_GEN_SLEEP. Unidades de trabajo: %d", unidades_trabajo);
 }
 
+Interfaz* iniciar_config(void)
+{
+	Interfaz* nuevo_config = config_create("./io.config");
+	if(nuevo_config == NULL)
+    {
+		printf("No se puede crear la config\n");
+		exit(2);
+	}
+	return nuevo_config;
+}
 
-// Función para configurar la interfaz genérica
-int configurar_interfaz_generica(const char* nombre_archivo) {
-    // Leer la configuración desde el archivo
-    io_config* configuracion = leer_configuracion(nombre_archivo);
+void leer_configuracion(Interfaz *configuracion)
+{   
+    configuracion = iniciar_config();
 
-    if (configuracion == NULL) {
-        // Manejar error de lectura de configuración
-        return EXIT_FAILURE;
-    }
+	// Usando el config creado previamente, leemos los valores del config y los dejamos en las variables 'ip', 'puerto' y 'valor'
+	char* tipo_interfaz = config_get_string_value(configuracion, "TIPO_INTERFAZ");
+	int tiempo_unidad_trabajo = config_get_int_value(configuracion, "TIEMPO_UNIDAD_TRABAJO");
+    char* ip_kernel = config_get_string_value(configuracion, "IP_KERNEL");
+    int puerto_kernel = config_get_int_value(configuracion, "PUERTO_KERNEL");
 
-    // Inicializar la estructura InterfazGenerica
-    InterfazGenerica* interfaz_generica = malloc(sizeof(InterfazGenerica));
-    
-    if (interfaz_generica == NULL) {
-        // Manejar error de asignación de memoria
-        free(configuracion);
-        return EXIT_FAILURE;
-    }
-
-    // Asignar el nombre y la configuración a la interfaz genérica
-    interfaz_generica->interfaz.nombre = "Interfaz Genérica";
-    interfaz_generica->interfaz.archivo = configuracion;
-    interfaz_generica->tiempo_unidad_trabajo = configuracion->tiempo_unidad_trabajo;
-
-    // Aquí puedes realizar cualquier operación adicional necesaria para configurar la interfaz
-
-    // Liberar la memoria asignada
-    free(configuracion);
-    free(interfaz_generica);
-    
-    return EXIT_SUCCESS;
+	// Loggeamos el valor de config
+	log_info(log_io, "Lei el TIPO_INTERFAZ %s, el TIEMPO_UNIDAD_TRABAJO %d, el IP_KERNEL %s y el PUERTO_KERNEL %d.", tipo_interfaz, tiempo_unidad_trabajo, ip_kernel, puerto_kernel);
 }
