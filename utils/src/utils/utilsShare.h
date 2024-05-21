@@ -31,16 +31,12 @@ typedef enum
 	INTERRUPCION,
 	CPU,
 	DESALOJO,
-	IO_GEN_SLEEP
-}op_code;
-
-typedef enum
-{
-    GENERICA,
+	IO_GEN_SLEEP,
+	GENERICA,
     STDIN,
     STDOUT,
     DIALFS
-} enum_interfaz;
+}op_code;
 
 void* recibir_buffer(int*, int);
 int iniciar_servidor(char*, t_log*);

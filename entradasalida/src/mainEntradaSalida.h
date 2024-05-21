@@ -9,8 +9,10 @@
 
 t_log* log_io;
 io_config* config_io;
+pcb* proceso;
 
 int socket_servidor_kernel;
+Interfaz *configuracion;
 
 void terminar_programa(log_io, config_io);
 

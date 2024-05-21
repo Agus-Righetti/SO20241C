@@ -1,46 +1,88 @@
 #include "interfazGenerica.h"
 
-void recibir_operacion_generica_de_kernel(const char* configuracion, op_code codigo)
+void recibir_operacion_generica_de_kernel(InterfazGenerica* interfaz_generica, op_code codigo)
 {
-    int unidades_trabajo;
-
     // Verificar si la operación es para una interfaz genérica
-    if (codigo != IO_GEN_SLEEP) 
+    if (codigo == IO_GEN_SLEEP) 
     {
+        int unidades_trabajo = recibir_unidades_trabajo(socket_servidor_kernel);
+        realizar_sleep(unidades_trabajo * interfaz_generica->tiempo_unidad_trabajo);
+        log_info(log_io, "Operacion generica recibida: IO_GEN_SLEEP. Unidades de trabajo: %d", unidades_trabajo);
+    } else if (codigo == -1) {
+        log_error(log_io, "KERNEL se desconecto. Terminando servidor");
+        exit(1);
+    } else {
         log_warning(log_io, "Operacion recibida no es para una interfaz generica.\n");
     }
-
-    // Recibir la cantidad de unidades de trabajo 
-    // unidades_trabajo = recibir_unidades_trabajo();
-
-    // Simular el procesamiento de las unidades de trabajo
-    // usleep(unidades_trabajo * configuracion->tiempo_unidad_trabajo);
-
-    // Registrar en el log la operación y la cantidad de unidades de trabajo
-    log_info(log_io, "Operacion generica recibida: IO_GEN_SLEEP. Unidades de trabajo: %d", unidades_trabajo);
 }
 
-Interfaz* iniciar_config(void)
-{
-	Interfaz* nuevo_config = config_create("./io.config");
-	if(nuevo_config == NULL)
-    {
-		printf("No se puede crear la config\n");
-		exit(2);
-	}
-	return nuevo_config;
-}
-
-void leer_configuracion(Interfaz *configuracion)
+void iniciar_config(Interfaz *configuracion)
 {   
-    configuracion = iniciar_config();
+    if (configuracion == NULL) 
+    {
+        printf("El puntero de configuración es NULL\n");
+        exit(2);
+    }
 
-	// Usando el config creado previamente, leemos los valores del config y los dejamos en las variables 'ip', 'puerto' y 'valor'
-	char* tipo_interfaz = config_get_string_value(configuracion, "TIPO_INTERFAZ");
-	int tiempo_unidad_trabajo = config_get_int_value(configuracion, "TIEMPO_UNIDAD_TRABAJO");
-    char* ip_kernel = config_get_string_value(configuracion, "IP_KERNEL");
-    int puerto_kernel = config_get_int_value(configuracion, "PUERTO_KERNEL");
+    // Asignar memoria para configuracion->archivo
+    configuracion->archivo = malloc(sizeof(io_config));
+    if (configuracion->archivo == NULL) 
+    {
+        printf("No se puede crear la config archivo\n");
+        exit(2);
+    }
 
-	// Loggeamos el valor de config
-	log_info(log_io, "Lei el TIPO_INTERFAZ %s, el TIEMPO_UNIDAD_TRABAJO %d, el IP_KERNEL %s y el PUERTO_KERNEL %d.", tipo_interfaz, tiempo_unidad_trabajo, ip_kernel, puerto_kernel);
+    // Inicializa la estructura del archivo de configuración desde el archivo de configuración
+    t_config* config = config_create("./io.config");
+    if (config == NULL) 
+    {
+        printf("No se puede leer el archivo de config\n");
+        free(configuracion->archivo);
+        exit(2);
+    }
+    
+    configuracion->archivo->tipo_interfaz = strdup(config_get_string_value(config, "TIPO_INTERFAZ"));
+    configuracion->archivo->tiempo_unidad_trabajo = config_get_int_value(config, "TIEMPO_UNIDAD_TRABAJO");
+    configuracion->archivo->ip_kernel = strdup(config_get_string_value(config, "IP_KERNEL"));
+    configuracion->archivo->puerto_kernel = strdup(config_get_string_value(config, "PUERTO_KERNEL"));
+
+    // Liberar el t_config
+    config_destroy(config);
+}
+
+void leer_configuracion_generica(Interfaz *configuracion)
+{
+    iniciar_config(configuracion);
+
+    // Loggeamos el valor de config
+    log_info(log_io, "Lei el TIPO_INTERFAZ %s, el TIEMPO_UNIDAD_TRABAJO %d, el IP_KERNEL %s y el PUERTO_KERNEL %s.", 
+             configuracion->archivo->tipo_interfaz, 
+             configuracion->archivo->tiempo_unidad_trabajo, 
+             configuracion->archivo->ip_kernel, 
+             configuracion->archivo->puerto_kernel);
+}
+
+int recibir_unidades_trabajo(int socket)
+{
+    // Implementa la lógica para recibir la cantidad de unidades de trabajo desde el Kernel
+    int unidades_trabajo;
+    recv(socket, &unidades_trabajo, sizeof(unidades_trabajo), 0);
+    return unidades_trabajo;
+}
+
+void realizar_sleep(int tiempo) 
+{
+    // Implementa la lógica para dormir la cantidad de tiempo especificado
+    log_info(log_io, "PID: %d - Operacion: Sleep", proceso->pid);
+    usleep(tiempo * 1000); // Convertir de milisegundos a microsegundos
+}
+
+void liberar_configuracion(Interfaz* configuracion)
+{
+    if(configuracion) {
+        free(configuracion->archivo->tipo_interfaz);
+        free(configuracion->archivo->ip_kernel);
+        free(configuracion->archivo->puerto_kernel);
+        free(configuracion->archivo);
+    }
 }

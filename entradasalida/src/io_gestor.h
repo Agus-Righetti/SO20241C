@@ -26,9 +26,14 @@ typedef struct
     io_config* archivo;
 } Interfaz;
 
+typedef struct {
+    Interfaz interfaz;
+    int tiempo_unidad_trabajo;
+} InterfazGenerica;
+
 extern t_log* log_io;
 extern io_config* config_io;
-
+extern pcb* proceso;
 extern int socket_servidor_kernel;
 
 #endif

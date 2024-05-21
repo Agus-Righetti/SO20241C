@@ -263,19 +263,35 @@ void instruccion_jnz(char **parte)
     }
 }
 
-// void instruccion_io_gen_sleep(char **parte)
-// {
-//     // IO_GEN_SLEEP Int1 10
-//     char *interfaz = parte[1];
-//     int unidades_trabajo = atoi(parte[2]);
+void instruccion_io_gen_sleep(char **parte)
+{
+    // IO_GEN_SLEEP Int1 10
+    char *interfaz = parte[1];
+    int unidades_trabajo = atoi(parte[2]);
 
-//     printf("Solicitando a la interfaz %s que realice un sleep por %d unidades de trabajo...\n", interfaz, parte[2]);
-//     log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s", proceso->pid, parte[0], parte[1], parte[2]);
-//     sleep(unidades_trabajo);
-//     // solicitar_sleep_io(parte[1], unidades_trabajo); // Esta función enviará la solicitud de sleep al Kernel
-//     printf("El sleep en la interfaz %s se ha completado.\n", interfaz);
-//     proceso->program_counter++;
-// }
+    printf("Solicitando a la interfaz %s que realice un sleep por %d unidades de trabajo...\n", interfaz, parte[2]);
+    log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s", proceso->pid, parte[0], parte[1], parte[2]);
+    solicitar_sleep_io(parte[1], unidades_trabajo, proceso->pid); // Esta función enviará la solicitud de sleep al Kernel
+    printf("El sleep en la interfaz %s se ha completado.\n", interfaz);
+    proceso->program_counter++;
+}
+
+void solicitar_sleep_io(const char *interfaz, int unidades_trabajo, int pid)
+{
+    // Crear y enviar el paquete al Kernel
+    t_paquete *paquete = crear_paquete(IO_GEN_SLEEP);
+
+    // Agregar la información necesaria al paquete
+    agregar_a_paquete(paquete, &pid, sizeof(int));
+    agregar_a_paquete(paquete, &unidades_trabajo, sizeof(int));
+    agregar_a_paquete(paquete, interfaz, strlen(interfaz) + 1);
+
+    // Enviar el paquete al Kernel
+    enviar_paquete(paquete, socket_cliente_kernel);
+
+    // Liberar el paquete
+    eliminar_paquete(paquete);
+}
 
 void instruccion_exit(char** parte) 
 {
