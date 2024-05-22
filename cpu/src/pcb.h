@@ -56,6 +56,4 @@ void error_exit(char** parte);
 void solicitar_instrucciones_a_memoria(int socket_servidor_memoria); 
 void recibir_instruccion_de_memoria(int socket_servidor_memoria);
 
-
 #endif
-

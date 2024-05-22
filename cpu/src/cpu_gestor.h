@@ -29,4 +29,10 @@ extern pcb* proceso;
 extern t_dictionary* instrucciones;
 extern t_dictionary* registros;
 
+typedef struct {
+    uint32_t pid;
+    uint32_t pagina;
+    uint32_t marco;
+} tlb;
+
 #endif

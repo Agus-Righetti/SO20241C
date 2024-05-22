@@ -15,14 +15,14 @@ void escuchar_kernel()
 
     while(1)
     {
-        Interfaz *configuracion;
+        Interfaz configuracion;
 
         switch(cod_op_io)
         {
             case GENERICA:
-                leer_configuracion_generica(configuracion);
+                leer_configuracion_generica(&configuracion);
                 recibir_operacion_generica_de_kernel(GENERICA, cod_op_io);
-                liberar_configuracion(configuracion);
+                liberar_configuracion(&configuracion);
                 break;
             // case STDIN:
             //     leer_configuracion_stdin(configuracion);

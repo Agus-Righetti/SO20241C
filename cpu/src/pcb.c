@@ -75,17 +75,6 @@ void enviar_pcb(int conexion, pcb *proceso, op_code codigo)
 	eliminar_paquete(paquete);
 }
 
-// void recibir_instruccion(t_list *paquete, t_instruccion *proceso)
-// {
-//     int i = 0;
-
-//     // Obtenemos el pid del paquete (a partir de una copia de memoria)
-//     memcpy(&(proceso->pid), list_get(paquete, i++), sizeof(int));
-
-//     // Obtenemos la instruccion, la sacamos del paquete y la asignamos a nuestra estructura
-// 	proceso->instruccion = (char*)list_remove(paquete, i);
-// }
-
 void iniciar_diccionario_instrucciones(void)
 {
 	instrucciones = dictionary_create(); // Creo el diccionario
@@ -279,7 +268,7 @@ void instruccion_io_gen_sleep(char **parte)
 void solicitar_sleep_io(const char *interfaz, int unidades_trabajo, int pid)
 {
     // Crear y enviar el paquete al Kernel
-    t_paquete *paquete = crear_paquete(IO_GEN_SLEEP);
+    t_paquete *paquete = crear_paquete();
 
     // Agregar la información necesaria al paquete
     agregar_a_paquete(paquete, &pid, sizeof(int));
@@ -302,22 +291,22 @@ void instruccion_exit(char** parte)
 	free(proceso);
 }
 
-// void intruccion_io_fs_create(char **parte)
-// {
-//     // IO_FS_CREATE Interfaz NombreArchivo
-//     char *interfaz = parte[1];
-//     char *nombre_archivo = parte[2];
+void intruccion_io_fs_create(char **parte)
+{
+    // IO_FS_CREATE Interfaz NombreArchivo
+    char *interfaz = parte[1];
+    char *nombre_archivo = parte[2];
 
-//     printf("Solicitando al Kernel que cree un archivo '%s' en la interfaz '%s' del sistema de archivos...\n", nombre_archivo, interfaz);
-//     log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s", proceso->pid, parte[0], parte[1], parte[2]);
+    printf("Solicitando al Kernel que cree un archivo '%s' en la interfaz '%s' del sistema de archivos...\n", nombre_archivo, interfaz);
+    log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s", proceso->pid, parte[0], parte[1], parte[2]);
 
-//     // Aquí debes enviar la solicitud al Kernel para que cree el archivo en la interfaz especificada
-//     // Por ejemplo:
-//     // solicitar_creacion_archivo(interfaz, nombre_archivo);
+    // Aquí debes enviar la solicitud al Kernel para que cree el archivo en la interfaz especificada
+    // Por ejemplo:
+    // solicitar_creacion_archivo(interfaz, nombre_archivo);
 
-//     printf("La solicitud de creación del archivo '%s' en la interfaz '%s' se ha enviado al Kernel.\n", nombre_archivo, interfaz);
-//     proceso->program_counter++;
-// }
+    printf("La solicitud de creación del archivo '%s' en la interfaz '%s' se ha enviado al Kernel.\n", nombre_archivo, interfaz);
+    proceso->program_counter++;
+}
 
 // void intruccion_io_fs_delete(char **parte)
 // {
@@ -416,5 +405,6 @@ void recibir_instruccion_de_memoria(int socket_servidor_memoria)
 // MOV_OUT EDX ECX
 // RESIZE 128
 // COPY_STRING 8
+
 // IO_STDIN_READ Int2 EAX AX
 // IO_STDOUT_WRITE Int3 BX EAX

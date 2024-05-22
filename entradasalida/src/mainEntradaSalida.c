@@ -11,16 +11,13 @@ int main(int argc, char* argv[])
 
     // Conexion IO --> Memoria --------------------------------------------------------------------------------------------------------
 
-    // escuchar_memoria(); 
+    escuchar_memoria(); 
 
     // Conexion IO --> Kernel ---------------------------------------------------------------------------------------------------------
     
-    // escuchar_kernel();
-    Interfaz configuracion;
-    leer_configuracion_generica(&configuracion);
-    liberar_configuracion(&configuracion);
+    escuchar_kernel();
   
-    //terminar_programa(log_io, config_io);
+    terminar_programa(log_io, config_io);
 
     return 0;
 }

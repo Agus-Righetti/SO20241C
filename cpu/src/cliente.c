@@ -15,9 +15,6 @@ int conexion_a_memoria()
     log_info(log_cpu , "Conexion con el servidor MEMORIA creada");
     enviar_mensaje("Hola MEMORIA soy CPU", conexion_cpu_memoria);
 
-    // Solicito las instrucciones 
-    // solicitar_instrucciones_a_memoria(conexion_cpu_memoria);
-
     return conexion_cpu_memoria;
 }
 
