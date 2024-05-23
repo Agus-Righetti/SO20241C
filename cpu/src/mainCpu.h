@@ -23,6 +23,6 @@ pcb* proceso;
 t_dictionary* instrucciones;
 t_dictionary* registros;
 
-void terminar_programa(t_log* log_cpu, t_config* config_cpu);
+void terminar_programa();
 
 #endif

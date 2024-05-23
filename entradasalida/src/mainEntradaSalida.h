@@ -11,7 +11,9 @@ t_log* log_io;
 io_config* config_io;
 pcb* proceso;
 
-int socket_servidor_kernel;
+// int socket_servidor_kernel;
+int conexion_io_kernel;
+int conexion_io_memoria;
 Interfaz *configuracion;
 
 void terminar_programa(log_io, config_io);

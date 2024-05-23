@@ -24,6 +24,7 @@ void atender_cpu(){
 void atender_kernel(){
     bool control = 1;
     while(control){
+        log_info(log_memoria, "Si anda");
         int cod_op_kernel = recibir_operacion(socket_cliente_kernel);
         switch (cod_op_kernel) {
             case MENSAJE:

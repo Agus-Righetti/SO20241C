@@ -366,20 +366,20 @@ void error_exit(char** parte)
 	free(proceso);
 }
 
-void solicitar_instrucciones_a_memoria(int conexion_cpu_memoria) 
-{   
-    // Creo el paquete
-    t_paquete* paquete = crear_paquete(); 
+// void solicitar_instrucciones_a_memoria(int conexion_cpu_memoria) 
+// {   
+//     // Creo el paquete
+//     t_paquete* paquete = crear_paquete(); 
 
-    // Agregamos el pc y el pid al paquete
-    agregar_a_paquete(paquete, proceso->program_counter, sizeof(int));
-    agregar_a_paquete(paquete, proceso->pid, sizeof(int));
+//     // Agregamos el pc y el pid al paquete
+//     agregar_a_paquete(paquete, proceso->program_counter, sizeof(int));
+//     agregar_a_paquete(paquete, proceso->pid, sizeof(int));
 
-    // Envio el paquete a memoria
-    enviar_paquete(paquete, conexion_cpu_memoria);
+//     // Envio el paquete a memoria
+//     enviar_paquete(paquete, conexion_cpu_memoria);
 
-    eliminar_paquete(paquete);
-}
+//     eliminar_paquete(paquete);
+// }
 
 void recibir_instruccion_de_memoria(int socket_servidor_memoria)
 {

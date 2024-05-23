@@ -10,7 +10,6 @@ int main() {
     iniciar_estructura_para_un_proceso_nuevo();
     // ************* ESPERO QUE CPU SE CONECTE COMO CLIENTE Y CREO HILO PARA ESCUCHA ACTIVA *************
     recibir_escuchar_cpu();
-    
 
     // ************* ESPERO QUE KERNEL SE CONECTE COMO CLIENTE Y CREO HILO PARA ESCUCHA ACTIVA *************
     recibir_escuchar_kernel();

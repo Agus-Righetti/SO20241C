@@ -148,7 +148,7 @@ void esperar_memoria(int conexion)
 
 void escuchar_memoria()
 {
-    solicitar_instrucciones_a_memoria(socket_cliente_cpu);
+    // solicitar_instrucciones_a_memoria(socket_cliente_cpu);
     esperar_memoria(socket_cliente_cpu);
 }
 
@@ -159,6 +159,6 @@ void escuchar_kernel()
     interrupcion_para_kernel();
     pthread_create(&hilo_dispatch, NULL,(void*)atender_kernel, NULL);
     pthread_create(&hilo_interrupt, NULL, (void*)atender_interrupcion, NULL);
-    pthread_detach(hilo_dispatch);
-    pthread_detach(hilo_interrupt);
+    pthread_join(hilo_dispatch, NULL);
+    pthread_join(hilo_interrupt, NULL);
 }

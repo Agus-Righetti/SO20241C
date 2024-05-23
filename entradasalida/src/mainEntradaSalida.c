@@ -17,7 +17,7 @@ int main(int argc, char* argv[])
     
     escuchar_kernel();
   
-    terminar_programa(log_io, config_io);
+    // terminar_programa(log_io, config_io);
 
     return 0;
 }
