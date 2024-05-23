@@ -221,6 +221,7 @@ void liberar_conexion(int socket_cliente)
 }
 
 //************ SERIALIZACION PERSONALIZADA *******************
+
 t_paquete* crear_paquete_personalizado(op_code code_op){
 	t_paquete* paquete_personalizado = malloc(sizeof(t_paquete));
 	// indicamos el codigo de operacion que queramos
