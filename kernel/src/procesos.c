@@ -55,10 +55,8 @@ void leer_consola(void* arg){
 }
 
 // ************* Funcion que sirve para iniciar un proceso considerando la multiprogramacion *************
-void iniciar_proceso(char* path )
-{    
-    //Le mando a memoria el path ingresado en consola
-    enviar_mensaje(path , conexion_kernel_memoria); 
+void iniciar_proceso(char* path ){    
+
     // Creo una estructura de pcb e inicializo todos los campos
     pcb* nuevo_pcb = malloc(sizeof(pcb)); //HAY QUE LIBERAR EN EXIT
     pid_contador += 1;
@@ -83,6 +81,10 @@ void iniciar_proceso(char* path )
 
     //Log obligatorio
     log_info(log_kernel, "Se crea el proceso %d en NEW", nuevo_pcb->pid);
+    t_paquete* paquete_path = crear_paquete_personalizado(CREACION_PROCESO_KERNEL_A_MEMORIA);
+    agregar_string_al_paquete_personalizado(paquete_path, path);
+    agregar_int_al_paquete_personalizado(paquete_path, nuevo_pcb->pid);
+    enviar_paquete(paquete_path, conexion_kernel_memoria);
 
     // Si el grado de multiprogramacion me lo permite, modifico el estado a READY
     int multiprogramacion_actual;
@@ -113,6 +115,7 @@ void iniciar_proceso(char* path )
         sem_post(&sem_cola_de_new); //agrego 1 al semaforo contador
     }
 }
+
 
 // ************* Funcion para enviar un proceso a cpu *************
 // Es llamada por un hilo especifico para esto

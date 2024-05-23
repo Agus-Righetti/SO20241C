@@ -24,17 +24,20 @@ void atender_cpu(){
 void atender_kernel(){
     bool control = 1;
     while(control){
-        log_info(log_memoria, "Si anda");
         int cod_op_kernel = recibir_operacion(socket_cliente_kernel);
         switch (cod_op_kernel) {
             case MENSAJE:
                 recibir_mensaje(socket_cliente_kernel, log_memoria);
                 break;
-            // case CREACION_PROCESO_KERNEL_A_MEMORIA: //me pasa el path, y el PID? O lo crea memoria?
-            //     log_info(log_memoria, "Kernel pide creacion de un nuevo proceso");
-			//     //buffer = recibiendo_paquete_personalizado(socket_cliente_kernel);
-			// 	iniciar_estructura_para_un_proceso_nuevo(); //REVISAR
-            //     break;
+
+            case CREACION_PROCESO_KERNEL_A_MEMORIA: //me pasa el path, y el PID? O lo crea memoria?
+                log_info(log_memoria, "Kernel pide creacion de un nuevo proceso");
+                t_buffer* buffer = recibiendo_paquete_personalizado(socket_cliente_kernel);
+                int pid_prueba = recibir_int_del_buffer(buffer);
+                log_info(log_memoria, "El PID ES %d", pid_prueba);
+				//iniciar_estructura_para_un_proceso_nuevo();
+                break;
+
             case -1:
                 log_error(log_memoria, "KERNEL se desconecto.");
                 control = 0;
