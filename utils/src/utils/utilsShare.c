@@ -221,3 +221,128 @@ void liberar_conexion(int socket_cliente)
 }
 
 //************ SERIALIZACION PERSONALIZADA *******************
+t_paquete* crear_paquete_personalizado(op_code code_op){
+	t_paquete* paquete_personalizado = malloc(sizeof(t_paquete));
+	// indicamos el codigo de operacion que queramos
+	paquete_personalizado->codigo_operacion = code_op;
+
+	crear_buffer(paquete_personalizado);
+	return  paquete_personalizado;
+}
+
+void agregar_int_al_paquete_personalizado(t_paquete* paquete, int valor){
+	if(paquete->buffer->size == 0){
+		paquete->buffer->stream = malloc(sizeof(int));
+		memcpy(paquete->buffer->stream, &valor, sizeof(int));
+	}else{
+		paquete->buffer->stream = realloc(paquete->buffer->stream, paquete->buffer->size + sizeof(int));
+		memcpy(paquete->buffer->stream + paquete->buffer->size, &valor, sizeof(int));
+	}
+	paquete->buffer->size += sizeof(int);
+}
+
+void agregar_string_al_paquete_personalizado(t_paquete* paquete, char* string){
+	int size_string = strlen(string)+1;
+
+	//si esta vacio el paquete
+	if(paquete->buffer->size == 0){
+		paquete->buffer->stream = malloc(sizeof(int) + sizeof(char)*size_string);
+		memcpy(paquete->buffer->stream, &size_string, sizeof(int));
+		memcpy(paquete->buffer->stream + sizeof(int), string, sizeof(char)*size_string);
+
+	//el paquete no esta vacio
+	}else {
+		paquete->buffer->stream = realloc(paquete->buffer->stream,
+										paquete->buffer->size + sizeof(int) + sizeof(char)*size_string);
+		/**/
+		memcpy(paquete->buffer->stream + paquete->buffer->size, &size_string, sizeof(int));
+		memcpy(paquete->buffer->stream + paquete->buffer->size + sizeof(int), string, sizeof(char)*size_string);
+
+	}
+	paquete->buffer->size += sizeof(int);
+	paquete->buffer->size += sizeof(char)*size_string;
+}
+
+t_buffer* recibiendo_paquete_personalizado(int socket_conexion){
+	t_buffer* unBuffer = malloc(sizeof(t_buffer));
+	int size;
+	unBuffer->stream = recibir_buffer(&size, socket_conexion);
+	unBuffer->size = size;
+	return unBuffer;
+}
+
+int recibir_int_del_buffer(t_buffer* buffer){
+	if(buffer->size == 0){
+		printf("\n[ERROR] Al intentar extraer un INT de un t_buffer vacio\n\n");
+		exit(EXIT_FAILURE);
+	}
+
+	if(buffer->size < 0){
+		printf("\n[ERROR] Esto es raro. El t_buffer contiene un size NEGATIVO \n\n");
+		exit(EXIT_FAILURE);
+	}
+
+	int valor_a_devolver;
+	memcpy(&valor_a_devolver, buffer->stream, sizeof(int));
+
+	int nuevo_size = buffer->size - sizeof(int);
+	if(nuevo_size == 0){
+		free(buffer->stream);
+		buffer->stream = NULL;
+		buffer->size = 0;
+		return valor_a_devolver;
+	}
+	if(nuevo_size < 0){
+		printf("\n[ERROR_INT]: BUFFER CON TAMAÑO NEGATIVO\n\n");
+		//free(valor_a_devolver);
+		//return 0;
+		exit(EXIT_FAILURE);
+	}
+	void* nuevo_buffer = malloc(nuevo_size);
+	memcpy(nuevo_buffer, buffer->stream + sizeof(int), nuevo_size);
+	free(buffer->stream);
+	buffer->stream = nuevo_buffer;
+	buffer->size = nuevo_size;
+
+	return valor_a_devolver;
+}
+
+char* recibir_string_del_buffer(t_buffer* buffer){
+	if(buffer->size == 0){
+		printf("\n[ERROR] Al intentar extraer un contenido de un t_buffer vacio\n\n");
+		exit(EXIT_FAILURE);
+	}
+
+	if(buffer->size < 0){
+		printf("\n[ERROR] Esto es raro. El t_buffer contiene un size NEGATIVO \n\n");
+		exit(EXIT_FAILURE);
+	}
+
+	int size_string;
+	char* string;
+	memcpy(&size_string, buffer->stream, sizeof(int));
+	//string = malloc(sizeof(size_string));
+	string = malloc(size_string);
+	memcpy(string, buffer->stream + sizeof(int), size_string);
+
+	int nuevo_size = buffer->size - sizeof(int) - size_string;
+	if(nuevo_size == 0){
+		free(buffer->stream);
+		buffer->stream = NULL;
+		buffer->size = 0;
+		return string;
+	}
+	if(nuevo_size < 0){
+		printf("\n[ERROR_STRING]: BUFFER CON TAMAÑO NEGATIVO\n\n");
+		free(string);
+		//return "[ERROR]: BUFFER CON TAMAÑO NEGATIVO";
+		exit(EXIT_FAILURE);
+	}
+	void* nuevo_buffer = malloc(nuevo_size);
+	memcpy(nuevo_buffer, buffer->stream + sizeof(int) + size_string, nuevo_size);
+	free(buffer->stream);
+	buffer->stream = nuevo_buffer;
+	buffer->size = nuevo_size;
+
+	return string;
+}
