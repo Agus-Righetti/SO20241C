@@ -24,6 +24,12 @@ typedef struct{
     char* quinto_parametro;
 }t_instruccion_codigo;
 
+typedef struct{
+	int pid;
+    char* path;
+	t_list* instrucciones;
+}t_proceso;
+
 // ************* VARIABLES GLOBALES *************
 extern t_log* log_memoria;
 extern memoria_config* config_memoria;
@@ -32,5 +38,7 @@ extern int socket_servidor_memoria;
 extern int socket_cliente_cpu;
 extern int socket_cliente_kernel;
 extern int socket_cliente_io;
+
+extern t_list* lista_procesos_recibidos;
 
 #endif

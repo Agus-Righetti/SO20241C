@@ -36,6 +36,13 @@ typedef enum
     STDIN,
     STDOUT,
     DIALFS
+	// KERNEL A MEMORIA
+	CREACION_PROCESO_KERNEL_A_MEMORIA,
+
+	//CPU A MEMORIA
+	//MEMORIA A CPU
+	CPU_RECIBE_INSTRUCCION_DE_MEMORIA,
+	INSTRUCCION
 }op_code;
 
 void* recibir_buffer(int*, int);
@@ -45,7 +52,6 @@ t_list* recibir_paquete(int);
 void recibir_mensaje(int, t_log*);
 int recibir_operacion(int);
 void iterator(char* value);
-void recv_handshake(int socket_cliente);
 
 // Client
 
@@ -68,7 +74,6 @@ void agregar_a_paquete(t_paquete* paquete, void* valor, int tamanio);
 void enviar_paquete(t_paquete* paquete, int socket_cliente);
 void liberar_conexion(int socket_cliente);
 void eliminar_paquete(t_paquete* paquete);
-void send_handshake(int socket_cliente);
 
 
 // ************ ESTRUCTURA REGISTROS DEL CPU ************
@@ -106,5 +111,13 @@ typedef struct {
 	pthread_mutex_t mutex_pcb;
 	t_list* instrucciones;
 }pcb;
+
+//******* DECLARACION REVISAR
+t_paquete* crear_paquete_personalizado(op_code code_op);
+void agregar_int_al_paquete_personalizado(t_paquete* paquete, int valor);
+void agregar_string_al_paquete_personalizado(t_paquete* paquete, char* string);
+t_buffer* recibiendo_paquete_personalizado(int socket_conexion);
+int recibir_int_del_buffer(t_buffer* buffer);
+char* recibir_string_del_buffer(t_buffer* buffer);
 
 #endif

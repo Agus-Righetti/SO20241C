@@ -68,5 +68,4 @@ void server_para_io() {
             log_warning(log_memoria,"Operacion desconocida. No quieras meter la pata");
             break;
     }
-    return NULL;
 }

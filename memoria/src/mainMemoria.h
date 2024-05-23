@@ -7,6 +7,7 @@
 #include "servidor.h"
 #include "escucha.h"
 #include "atenderCPU.h"
+#include "atenderKERNEL.h"
 
 //************** VARIABLES GLOBALES *******************
 //************** CONFIG Y LOG ******************
@@ -20,5 +21,8 @@ int socket_servidor_memoria;
 int socket_cliente_cpu;
 int socket_cliente_kernel;
 int socket_cliente_io;
+
+//******** PROCESOS ***********
+t_list* lista_procesos_recibidos;
 
 #endif

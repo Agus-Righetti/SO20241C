@@ -29,6 +29,11 @@ void atender_kernel(){
             case MENSAJE:
                 recibir_mensaje(socket_cliente_kernel, log_memoria);
                 break;
+            // case CREACION_PROCESO_KERNEL_A_MEMORIA: //me pasa el path, y el PID? O lo crea memoria?
+            //     log_info(log_memoria, "Kernel pide creacion de un nuevo proceso");
+			//     //buffer = recibiendo_paquete_personalizado(socket_cliente_kernel);
+			// 	iniciar_estructura_para_un_proceso_nuevo(); //REVISAR
+            //     break;
             case -1:
                 log_error(log_memoria, "KERNEL se desconecto.");
                 control = 0;
