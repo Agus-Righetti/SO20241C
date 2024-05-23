@@ -1,17 +1,21 @@
 #include "atenderKERNEL.h"
 
 //******************* CREACIÓN DE PROCESO **************************
-void iniciar_estructura_para_un_proceso_nuevo(){ //t_buffer* buffer
-	// char* path = recibir_string_del_buffer(buffer);
-	// int pid = recibir_int_del_buffer(buffer);
-	char* path = "path_instrucciones.txt";
-	int pid = 10;
-    log_info(log_memoria, "%s", path);
+void iniciar_estructura_para_un_proceso_nuevo(t_buffer* buffer){
+	char* path = recibir_string_del_buffer(buffer);
+	int pid = recibir_int_del_buffer(buffer);
+            
+            // char* path = "path_instrucciones.txt";
+            // int pid = 10;
+            
+    log_info(log_memoria, "Proceso %d recibido, direccion del path: %s", pid, path);
+
 	//Crear un proceso
 	t_proceso* proceso_nuevo = crear_proceso(pid, path);
 
-	//Agregar a la lista de procesos  -> REVISAR
-	//list_add(lista_procesos_recibidos, proceso_nuevo);
+	//Agregar a la lista de procesos 
+	list_add(lista_procesos_recibidos, proceso_nuevo);
+    log_info(log_memoria, "Agregue el proceso a lista");
 
 	log_info(log_memoria, "PROCESO CREADO CON ÉXITO");
 

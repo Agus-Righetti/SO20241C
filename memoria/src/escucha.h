@@ -3,6 +3,8 @@
 
 #include "m_gestor.h"
 #include "servidor.h"
+#include "atenderKERNEL.h"
+#include "atenderCPU.h"
 
 // ****************** DECLARACIÓN DE FUNCIONES ************************** 
 // ******* DESARROLLO DE FUNCIONES DE ESCUCHA ACTIVA PARA LOS MODULOS *********

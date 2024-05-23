@@ -11,7 +11,7 @@ void inicializar_servidor(){
     log_info(log_memoria, "Memoria lista para recibir clientes");
 }
 
-//********* SERVER PARA RECIBIR A CPU *********
+// ********* SERVER PARA RECIBIR A CPU *********
 void server_para_cpu() {
     log_info(log_memoria, "Esperando a CPU...");
     socket_cliente_cpu = esperar_cliente(socket_servidor_memoria, log_memoria);
@@ -49,7 +49,6 @@ void server_para_kernel() {
             break;
     }
 }
-
 
 // ********* SERVER PARA RECIBIR A I/O *********  
 void server_para_io() {

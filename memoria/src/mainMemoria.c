@@ -7,7 +7,7 @@ int main() {
 
     // ********* INICIALIZO MEMORIA COMO SERVIDOR *********
     inicializar_servidor();
-    //iniciar_estructura_para_un_proceso_nuevo();
+
     // ************* ESPERO QUE CPU SE CONECTE COMO CLIENTE Y CREO HILO PARA ESCUCHA ACTIVA *************
     recibir_escuchar_cpu();
 
@@ -17,11 +17,9 @@ int main() {
     // ************* ESPERO QUE IO SE CONECTE COMO CLIENTE Y CREO HILO PARA ESCUCHA ACTIVA *************
     recibir_escuchar_io();
 
-    // CPU SOLICITA UNA INSTRUCCION INDICANDO PROGRAM COUNTER
-    //cpu_pide_instruccion(instrucciones);
-
     // ********* LIBERO TODO *********
 	log_destroy(log_memoria);
+    list_destroy(lista_procesos_recibidos);
 	free(config_memoria);
 	
     return EXIT_SUCCESS;

@@ -59,7 +59,7 @@ void iniciar_proceso(char* path ){
 
     // Creo una estructura de pcb e inicializo todos los campos
     pcb* nuevo_pcb = malloc(sizeof(pcb)); //HAY QUE LIBERAR EN EXIT
-    pid_contador += 1;
+    pid_contador == 999;
     nuevo_pcb->estado_del_proceso = NEW;
     nuevo_pcb->program_counter = 0;
     nuevo_pcb->direccion_instrucciones = path; 
@@ -85,6 +85,7 @@ void iniciar_proceso(char* path ){
     agregar_string_al_paquete_personalizado(paquete_path, path);
     agregar_int_al_paquete_personalizado(paquete_path, nuevo_pcb->pid);
     enviar_paquete(paquete_path, conexion_kernel_memoria);
+    eliminar_paquete(paquete_path);
 
     // Si el grado de multiprogramacion me lo permite, modifico el estado a READY
     int multiprogramacion_actual;

@@ -1,21 +1,17 @@
 #include "atenderCPU.h"
 
 //************ DESARROLLO DE TODAS LAS FUNCIONES QUE NECESITA CPU **************
-void cpu_pide_instruccion(){//t_buffer* un_buffer){
-    //ESTE BUFFER VA A SER DE LA FORMA [PID, IP]
-    //                                  Int  Int
-	//int pid = recibir_int_del_buffer(un_buffer);
-	//int ip = recibir_int_del_buffer(un_buffer);
-    int pid = 1;
-	int ip = 10;
+void cpu_pide_instruccion(t_buffer* un_buffer){        //[PID, IP]
+	int pid = recibir_int_del_buffer(un_buffer);
+	int ip = recibir_int_del_buffer(un_buffer);
+				// int pid = 1;
+				// int ip = 10;
 
     //tengo que obtener proceso buscando con los PID
     t_proceso* un_proceso = obtener_proceso_por_id(pid);
 
 	//Obtener Instruccion especifica
-	char* instruccion = obtener_instruccion_por_indice(un_proceso->instrucciones, ip);
-
-	log_info(log_memoria, "<IP:%d> <%s>", ip, instruccion);
+	t_instruccion_codigo* instruccion = obtener_instruccion_por_indice(un_proceso->instrucciones, ip);
     
 	//Enviar_instruccion a CPU
 	enviar_una_instruccion_a_cpu(instruccion);
@@ -35,8 +31,8 @@ t_proceso* obtener_proceso_por_id(int pid){
 	return un_proceso;
 }
 
-char* obtener_instruccion_por_indice(t_list* instrucciones, int indice_instruccion){
-	char* instruccion_actual;
+t_instruccion_codigo* obtener_instruccion_por_indice(t_list* instrucciones, int indice_instruccion){
+	t_instruccion_codigo* instruccion_actual;
 	if(indice_instruccion >= 0 && indice_instruccion < list_size(instrucciones)){
 		instruccion_actual = list_get(instrucciones, indice_instruccion);
 		return instruccion_actual;
@@ -48,13 +44,25 @@ char* obtener_instruccion_por_indice(t_list* instrucciones, int indice_instrucci
 	}
 }
 
-void enviar_una_instruccion_a_cpu(char* instruccion){
+void enviar_una_instruccion_a_cpu(t_instruccion_codigo* instruccion){
 	usleep(config_memoria->retardo_respuesta *1000); //Espero el retardo de respuesta -> hago el pasaje de milisegundos a microsegundos
 	t_paquete* paquete = crear_paquete_personalizado(CPU_RECIBE_INSTRUCCION_DE_MEMORIA);
 
 	// EN REALIDAD DEBO ENVIAR UN BUFFER DE LA FORMA [MNEMONICO, PARAMETRO1, PARAMETRO2, PARAMETRO3, PARAMETRO4, PARAMETRO5]
     //                                                  CHAR*       CHAR*       CHAR*       CHAR*       CHAR*       CHAR* 
-    // FALTA ARMAR PAQUETE
+	agregar_string_al_paquete_personalizado(paquete, instruccion->mnemonico);
+	if(instruccion->primero_parametro != NULL){
+		agregar_string_al_paquete_personalizado(paquete, instruccion->primero_parametro);
+		if(instruccion->segundo_parametro != NULL){
+			agregar_string_al_paquete_personalizado(paquete, instruccion->segundo_parametro);
+			if(instruccion->tercero_parametro != NULL){
+				agregar_string_al_paquete_personalizado(paquete, instruccion->tercero_parametro);
+				if(instruccion->cuarto_parametro != NULL)
+					agregar_string_al_paquete_personalizado(paquete, instruccion->cuarto_parametro);
+			}	
+		}
+	}
+
 	enviar_paquete(paquete, socket_cliente_cpu);
 	eliminar_paquete(paquete);
 }

@@ -30,6 +30,7 @@ typedef struct{
 	t_list* instrucciones;
 }t_proceso;
 
+
 // ************* VARIABLES GLOBALES *************
 extern t_log* log_memoria;
 extern memoria_config* config_memoria;
