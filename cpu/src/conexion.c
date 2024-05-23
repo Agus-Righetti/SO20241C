@@ -95,6 +95,48 @@ void atender_kernel()
     }
 }
 
+void atender_interrupcion()
+{
+   	t_list* lista;
+
+    while(1)
+    { 
+        int cod_op_kernel = recibir_operacion(socket_interrupt_kernel);
+
+        switch (cod_op_kernel) 
+        {
+            case MENSAJE:
+                recibir_mensaje(socket_interrupt_kernel, log_cpu);
+                break;
+            case PAQUETE:
+                lista = recibir_paquete(socket_cliente_kernel);
+                log_info(log_cpu, "Me llegaron los siguientes valores:\n");
+                list_iterate(lista, (void*) iterator);
+                list_destroy_and_destroy_elements(lista, free);
+                break;
+            case EXECUTE:
+                lista = recibir_paquete(socket_cliente_kernel);
+                proceso = malloc(sizeof(pcb));
+                proceso->instrucciones = NULL;
+                recibir_pcb(lista, proceso);
+                interpretar_instrucciones();
+                list_destroy_and_destroy_elements(lista, free);
+                break;
+            case EXIT:
+                error_exit(EXIT);
+                list_destroy_and_destroy_elements(lista, free); 
+                break;
+            case -1:
+                log_error(log_cpu, "KERNEL se desconecto. Terminando servidor");
+                return EXIT_FAILURE;
+                exit(1);
+            default:
+                log_warning(log_cpu, "Operacion desconocida. No quieras meter la pata");
+                break;
+        }
+    }
+}
+
 void esperar_memoria(int conexion)
 {
 	pthread_t thread;
@@ -112,7 +154,11 @@ void escuchar_memoria()
 
 void escuchar_kernel()
 {
+    pthread_t hilo_dispatch, hilo_interrupt;
     server_para_kernel();
-    atender_kernel();
     interrupcion_para_kernel();
+    pthread_create(&hilo_dispatch, NULL,(void*)atender_kernel, NULL);
+    pthread_create(&hilo_interrupt, NULL, (void*)atender_interrupcion, NULL);
+    pthread_detach(hilo_dispatch);
+    pthread_detach(hilo_interrupt);
 }

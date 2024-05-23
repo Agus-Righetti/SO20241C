@@ -27,7 +27,7 @@
 
 void server_para_kernel() // Atiendo al cliente
 {
-    int socket_servidor_cpu = iniciar_servidor(config_cpu->puerto_escucha_dispatch, log_cpu);
+    socket_servidor_cpu = iniciar_servidor(config_cpu->puerto_escucha_dispatch, log_cpu);
     if (socket_servidor_cpu == -1)
     {
 	    log_info(log_cpu, "ERROR: No se pudo iniciar CPU como servidor para KERNEL");
@@ -36,7 +36,7 @@ void server_para_kernel() // Atiendo al cliente
 
 	log_info(log_cpu, "Esperando a KERNEL...");
 
-    int socket_cliente_kernel = esperar_cliente(socket_servidor_cpu, log_cpu);
+    socket_cliente_kernel = esperar_cliente(socket_servidor_cpu, log_cpu);
 }
 
 // Server para recibir interrupciones de Kernel ---------------------------------------------------------------------------------------
@@ -51,32 +51,32 @@ void interrupcion_para_kernel()
     }
 
 	log_info(log_cpu, "CPU listo para recibir interrupcion de Kernel");
-    int cliente_kernel = esperar_cliente(socket_servidor_cpu, log_cpu);
+    socket_interrupt_kernel = esperar_cliente(socket_servidor_cpu, log_cpu);
 
-    t_list* lista;
+    // t_list* lista;
     
-	int cod_op = recibir_operacion(cliente_kernel);
-	switch (cod_op) 
-    {
-        case MENSAJE:
-            recibir_mensaje(cliente_kernel, log_cpu);
-            break;
-        case PAQUETE:
-            lista = recibir_paquete(cliente_kernel);
-            log_info(log_cpu, "Me llegaron los siguientes valores:\n");
-            list_iterate(lista, (void*) iterator);
-            break;
-        case INTERRUPCION:
-            log_info(log_cpu, "Me llego una interrupcion de KERNEL");
-            proceso->program_counter++;
-            enviar_pcb(socket_servidor_cpu, proceso, DESALOJO);
-            break;
-        case -1:
-            log_error(log_cpu, "El cliente se desconecto. Terminando servidor");
-            return EXIT_FAILURE;
-            exit(1);
-        default:
-            log_warning(log_cpu, "Operacion desconocida. No quieras meter la pata");
-            break;
-	}
+	// int cod_op = recibir_operacion(cliente_kernel);
+	// switch (cod_op) 
+    // {
+    //     case MENSAJE:
+    //         recibir_mensaje(cliente_kernel, log_cpu);
+    //         break;
+    //     case PAQUETE:
+    //         lista = recibir_paquete(cliente_kernel);
+    //         log_info(log_cpu, "Me llegaron los siguientes valores:\n");
+    //         list_iterate(lista, (void*) iterator);
+    //         break;
+    //     case INTERRUPCION:
+    //         log_info(log_cpu, "Me llego una interrupcion de KERNEL");
+    //         proceso->program_counter++;
+    //         enviar_pcb(socket_servidor_cpu, proceso, DESALOJO);
+    //         break;
+    //     case -1:
+    //         log_error(log_cpu, "El cliente se desconecto. Terminando servidor");
+    //         return EXIT_FAILURE;
+    //         exit(1);
+    //     default:
+    //         log_warning(log_cpu, "Operacion desconocida. No quieras meter la pata");
+    //         break;
+	// }
 }

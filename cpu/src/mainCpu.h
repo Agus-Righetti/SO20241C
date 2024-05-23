@@ -16,6 +16,8 @@ int socket_servidor_memoria;
 int socket_servidor_cpu;
 int socket_cliente_kernel;
 int socket_cliente_cpu;
+int socket_interrupt_kernel;
+
 
 pcb* proceso;
 t_dictionary* instrucciones;

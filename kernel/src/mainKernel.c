@@ -11,9 +11,9 @@ int conexion_kernel_memoria;
 pthread_mutex_t mutex_cola_de_ready;
 pthread_mutex_t mutex_cola_de_new;
 pthread_mutex_t mutex_grado_programacion;
-extern sem_t sem_cola_de_ready;
-extern sem_t sem_cola_de_new;
-extern sem_t sem_multiprogramacion;
+sem_t sem_cola_de_ready;
+sem_t sem_cola_de_new;
+sem_t sem_multiprogramacion;
 
 
 void iterator(char* value) 
@@ -41,8 +41,8 @@ int main(int argc, char* argv[])
     sem_init(&sem_multiprogramacion,0,config_kernel->grado_multiprogramacion); 
 
     // ************* Esto es para funcionar como cliente con el CPU *************
-    // conexion_kernel_cpu = conexion_a_cpu(log_kernel, config_kernel);
-    // interrupcion_kernel_cpu = interrupcion_a_cpu(log_kernel, config_kernel);
+    conexion_kernel_cpu = conexion_a_cpu(log_kernel, config_kernel);
+    interrupcion_kernel_cpu = interrupcion_a_cpu(log_kernel, config_kernel);
 
     // ************* Esto es para funcionar como cliente con la Memoria *************
     conexion_kernel_memoria = conexion_a_memoria(log_kernel, config_kernel);
