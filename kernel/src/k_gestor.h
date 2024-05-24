@@ -37,6 +37,7 @@ extern pthread_mutex_t mutex_grado_programacion;
 extern sem_t sem_cola_de_ready;
 extern sem_t sem_cola_de_new;
 extern sem_t sem_multiprogramacion;
+extern sem_t destruir_hilo_interrupcion;
 
 
 

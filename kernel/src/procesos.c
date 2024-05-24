@@ -175,32 +175,38 @@ void enviar_pcb(pcb* proceso) {
 void crear_hilo_proceso(pcb* proceso){
 
     // Creo un hilo
-    pthread_t hilo_proceso;
+    pthread_t hilo_recibe_proceso, hilo_interrupcion;
     thread_args_procesos_kernel args_hilo = {proceso};
 
     // Si el algoritmo de planificacion es FIFO entonces recibo el pcb normalmente desde CPU
     if(strcmp(config_kernel->algoritmo_planificacion, "FIFO") == 0)
     {
-        pthread_create(&hilo_proceso, NULL, (void*)recibir_pcb_hilo,(void*)&args_hilo); 
-
+        pthread_create(&hilo_recibe_proceso, NULL, (void*)recibir_pcb_hilo,(void*)&args_hilo); 
+        pthread_join(&hilo_recibe_proceso, NULL);
     }
     // Si el algoritmo es RR, lo recibo por una interrupcion contra CPU
     else if(strcmp(config_kernel->algoritmo_planificacion, "RR") == 0)
     {
-        pthread_create(&hilo_proceso, NULL, (void*)algoritmo_round_robin,(void*)&args_hilo); 
+        pthread_create(&hilo_recibe_proceso, NULL, (void*)recibir_pcb_hilo,(void*)&args_hilo); 
+        pthread_create(&hilo_interrupcion, NULL, (void*)algoritmo_round_robin,(void*)&args_hilo); 
+        
+        pthread_join(&hilo_recibe_proceso, NULL);
+        wait(&destruir_hilo_interrupcion);
+        pthread_cancel(&hilo_interrupcion, NULL);
+
     }
 }
 
 void algoritmo_round_robin (void* arg){
 
+    //aca vamos a armar dos hilos, uno que maneje solo cuando mandarle
+    //la interrupcion y otro que siemp este esperando a q cpu le mande el pcb
     thread_args_procesos_kernel* args = (thread_args_procesos_kernel*)arg;
+
     usleep(*config_kernel->quantum);
     desalojar_proceso_hilo(args);
-
     
-    accionar_segun_estado(args->proceso); //si esta en exit elimina las estructuras, si vuelve en ready lo pone en la cola
-    
-    //-------------------falta destruir el hilo----------------
+    accionar_segun_estado(args->proceso);
     
     return;
 }
@@ -224,38 +230,21 @@ void desalojar_proceso(pcb* proceso){
    
     //Esto capaz se puede poner desde donde se la llama a la funcion
     log_info(log_kernel, "PID: %d - Desalojado por fin de Quantum", proceso->pid);
-    
-    //en cpu deberiamos hacer que si se llega este mensaje deben devolver el pcb
-    enviar_mensaje("FIN DE QUANTUM", interrupcion_kernel_cpu);
-    
+
     // Creo un nuevo paquete
-    t_paquete* paquete = crear_paquete();
+    t_paquete* paquete_a_enviar = crear_paquete_personalizado(INTERRUPCION);
+    enviar_paquete(paquete_a_enviar, interrupcion_kernel_cpu);
+
+    eliminar_paquete(paquete_a_enviar);
 
     // Recibo el paquete a través del socket y los guardo en una lista
-    t_list* valores_recibidos = recibir_paquete(interrupcion_kernel_cpu);
+    // t_paquete* paquete_recibido = crear_paquete_personalizado(PCB_CPU_A_KERNEL);
+    // paquete_recibido->buffer = recibiendo_paquete_personalizado(interrupcion_kernel_cpu);
 
-    // Verifico que se hayan recibidos valores
-    if (valores_recibidos == NULL) {
-        error_show("No se recibio el proceso por parte del CPU");
-        return;
-    }
+    // proceso = recibir_estructura_del_buffer(paquete_recibido->buffer);
 
-    // Antes de copiar los datos, verifico que vino el tamaño que corresponde a un pcb
-    if (paquete->buffer->size != sizeof(pcb)) {
-        error_show("El tamaño del buffer no coincide con el tamaño esperado del proceso");
-        eliminar_paquete(paquete);
-        list_destroy_and_destroy_elements(valores_recibidos, free);
-        return;
-    }
+    // eliminar_paquete(paquete_recibido);
 
-    // Extraigo el struct pcb del paquete
-    memcpy(proceso, paquete->buffer->stream, sizeof(pcb));
-
-    // Libero el paquete
-    eliminar_paquete(paquete);
-
-    // Libero la lista y los elementos de la misma
-    list_destroy_and_destroy_elements(valores_recibidos, free);
     return;
 }
 
@@ -272,33 +261,24 @@ void desalojar_proceso_hilo(void* arg){
 void recibir_pcb(pcb* proceso) {
     
     // Creo un nuevo paquete
-    t_paquete* paquete = crear_paquete();
+
+    t_paquete* paquete = crear_paquete_personalizado(PCB_CPU_A_KERNEL);
 
     // Recibo el paquete a través del socket y los guardo en una lista
-    t_list* valores_recibidos = recibir_paquete(conexion_kernel_cpu);
 
-    // Verifico que se hayan recibidos valores
-    if (valores_recibidos == NULL) {
-        error_show("No se recibio el proceso por parte del CPU");
-        return;
+    paquete->buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu);
+
+    if(strcmp(config_kernel->algoritmo_planificacion, "RR") == 0)
+    {
+        signal(&destruir_hilo_interrupcion);
     }
 
-    // Antes de copiar los datos, verifico que vino el tamaño que corresponde a un pcb
-    if (paquete->buffer->size != sizeof(pcb)) {
-        error_show("El tamaño del buffer no coincide con el tamaño esperado del proceso");
-        eliminar_paquete(paquete);
-        list_destroy_and_destroy_elements(valores_recibidos, free);
-        return;
-    }
+    proceso = recibir_estructura_del_buffer(paquete->buffer);
 
-    // Extraigo el struct pcb del paquete
-    memcpy(proceso, paquete->buffer->stream, sizeof(pcb));
-
+    //cambiar_estado_a_exit(proceso);
     // Libero el paquete
     eliminar_paquete(paquete);
 
-    // Libero la lista y los elementos de la misma
-    list_destroy_and_destroy_elements(valores_recibidos, free);
     return;
 }
 

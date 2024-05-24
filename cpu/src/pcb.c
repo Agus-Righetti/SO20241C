@@ -126,7 +126,24 @@ void destruir_diccionarios(void)
 	dictionary_destroy(registros);
 }
 
-void interpretar_instrucciones(void)
+//********************************************************************
+
+void recibir_instruccion_de_memoria(t_buffer* buffer)
+{
+    // el buffer tiene un struct INSTRUCCION DENTRO 
+    // [char* mnemonico, char* primero_parametro, char* segundo_parametro, char* tercero_parametro, char* cuarto_parametro, char* quinto_parametro]
+
+    // Verifico que se hayan recibidos valores
+    if (buffer == NULL) {
+        error_show("No se recibio el proceso por parte de MEMORIA");
+        exit(1);
+    }
+
+    mnemonico = recibir_string_del_buffer(buffer);
+    primero_parametro = recibir_string_del_buffer(buffer)
+}
+
+void interpretar_instruccion_de_memoria(buffer)
 {   
     iniciar_diccionario_instrucciones();
     iniciar_diccionario_registros(&proceso->registros);
@@ -136,67 +153,67 @@ void interpretar_instrucciones(void)
 
     switch (instruccion_enum) 
     {
-    case I_SET:
-        instruccion_set(parte);
-        break;
-    // case I_MOV_IN:
-    //     instruccion_mov_in(parte);
-    //     break;
-    // case I_MOV_OUT:
-    //     instruccion_mov_out(parte);
-    //     break;
-    case I_SUM:
-        instruccion_sum(parte);
-        break;
-    case I_SUB:
-        instruccion_sub(parte);
-        break;
-    case I_JNZ:
-        instruccion_jnz(parte);
-        break;
-    // case I_RESIZE:
-    //     instruccion_resize(parte);
-    //     break;
-    // case I_COPY_STRING:
-    //     instruccion_copy_string(parte);
-    //     break;
-    case I_WAIT:
-        instruccion_wait(parte);
-        break;
-    case I_SIGNAL:
-        instruccion_signal(parte);
-        break;
-    // case I_IO_GEN_SLEEP:
-    //     instruccion_io_gen_sleep(parte);
-    //     break;
-    // case I_IO_STDIN_READ:
-    //     instruccion_io_stdin_read(parte);
-    //     break;
-    // case I_IO_STDOUT_WRITE:
-    //     instruccion_io_stdout_write(parte);
-    //     break;
-    // case I_IO_FS_CREATE:
-    //     instruccion_io_fs_create(parte);
-    //     break;
-    // case I_IO_FS_DELETE:
-    //     instruccion_io_fs_delete(parte);
-    //     break;
-    // case I_IO_FS_TRUNCATE:
-    //     instruccion_io_fs_truncate(parte);
-    //     break;
-    // case I_IO_FS_WRITE:
-    //     instruccion_io_fs_write(parte);
-    //     break;
-    // case I_IO_FS_READ:
-    //     instruccion_io_fs_read(parte);
-    //     break;
-    case I_EXIT:
-        instruccion_exit(parte);
-        break;
-    case -1:
-		log_warning(log_cpu, "PID: %d - Advertencia: No se pudo interpretar la instrucción - Ejecutando: EXIT", proceso->pid);
-		error_exit(EXIT);
-		return;
+        case I_SET:
+            instruccion_set(parte);
+            break;
+        // case I_MOV_IN:
+        //     instruccion_mov_in(parte);
+        //     break;
+        // case I_MOV_OUT:
+        //     instruccion_mov_out(parte);
+        //     break;
+        case I_SUM:
+            instruccion_sum(parte);
+            break;
+        case I_SUB:
+            instruccion_sub(parte);
+            break;
+        case I_JNZ:
+            instruccion_jnz(parte);
+            break;
+        // case I_RESIZE:
+        //     instruccion_resize(parte);
+        //     break;
+        // case I_COPY_STRING:
+        //     instruccion_copy_string(parte);
+        //     break;
+        case I_WAIT:
+            instruccion_wait(parte);
+            break;
+        case I_SIGNAL:
+            instruccion_signal(parte);
+            break;
+        // case I_IO_GEN_SLEEP:
+        //     instruccion_io_gen_sleep(parte);
+        //     break;
+        // case I_IO_STDIN_READ:
+        //     instruccion_io_stdin_read(parte);
+        //     break;
+        // case I_IO_STDOUT_WRITE:
+        //     instruccion_io_stdout_write(parte);
+        //     break;
+        // case I_IO_FS_CREATE:
+        //     instruccion_io_fs_create(parte);
+        //     break;
+        // case I_IO_FS_DELETE:
+        //     instruccion_io_fs_delete(parte);
+        //     break;
+        // case I_IO_FS_TRUNCATE:
+        //     instruccion_io_fs_truncate(parte);
+        //     break;
+        // case I_IO_FS_WRITE:
+        //     instruccion_io_fs_write(parte);
+        //     break;
+        // case I_IO_FS_READ:
+        //     instruccion_io_fs_read(parte);
+        //     break;
+        case I_EXIT:
+            instruccion_exit(parte);
+            break;
+        case -1:
+            log_warning(log_cpu, "PID: %d - Advertencia: No se pudo interpretar la instrucción - Ejecutando: EXIT", proceso->pid);
+            error_exit(EXIT);
+            return;
     }
     log_warning(log_cpu, "PID: %d - Advertencia: Sin instrucciones por ejecutar - Ejecutando: EXIT", proceso->pid);
 	error_exit(EXIT);
@@ -383,24 +400,6 @@ void solicitar_instrucciones_a_memoria(int conexion_cpu_memoria)
 
     eliminar_paquete(paquete);
 }
-
-// void recibir_instruccion_de_memoria(int socket_servidor_memoria){
-//     // Espero la respuesta de memoria
-//     t_buffer* buffer = recibiendo_paquete_personalizado(socket_servidor_memoria);
-
-//     // Verifico que se hayan recibidos valores
-//     if (respuesta == NULL) 
-//     {
-//         error_show("No se recibio el proceso por parte de MEMORIA");
-//         return;
-//     }
-
-//     // Extraigo las instrucciones del paquete
-//     memcpy(proceso, respuesta->buffer->stream, sizeof(respuesta));
-
-//     eliminar_paquete(respuesta);
-//     list_destroy_and_destroy_elements(respuesta, free);
-// }
 
 // 3er checkpoint
 // MOV_IN EDX ECX

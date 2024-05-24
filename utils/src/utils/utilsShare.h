@@ -100,7 +100,6 @@ typedef struct{
 }registros_cpu;
 
 // ************ ESTRUCTURA PCB DEL KERNEL, TIENE REGISTROS DEL CPU ************
-
 typedef enum {
 	READY,
 	BLOCKED,
@@ -119,6 +118,17 @@ typedef struct {
 	pthread_mutex_t mutex_pcb;
 	t_list* instrucciones;
 }pcb;
+
+// ************ ESTRUCTURA DE UNA INSTRUCCION *******
+// ************** USADO POR MEMORIA Y CPU **********
+typedef struct{
+	char* mnemonico;
+    char* primero_parametro;
+    char* segundo_parametro;
+    char* tercero_parametro;
+    char* cuarto_parametro;
+    char* quinto_parametro;
+}t_instruccion_codigo;
 
 //******* PAQUETES PERSONALIZADOS **********
 t_paquete* crear_paquete_personalizado(op_code code_op);
