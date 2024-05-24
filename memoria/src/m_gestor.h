@@ -20,6 +20,15 @@ typedef struct{
     char* path;
 	t_list* instrucciones;
 }t_proceso;
+// ************ ESTRUCTURA DE UNA INSTRUCCION *******
+typedef struct{
+	char* mnemonico;
+    char* primero_parametro;
+    char* segundo_parametro;
+    char* tercero_parametro;
+    char* cuarto_parametro;
+    char* quinto_parametro;
+}t_instruccion_codigo;
 
 
 // ************* VARIABLES GLOBALES *************

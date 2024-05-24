@@ -19,8 +19,8 @@
 #include<semaphore.h> // Biblioteca para semaforos
 #include<unistd.h> // Para la función sleep()
 
-// Server
-
+// ************* ESTRUCTURAS GLOBALES *************
+// ************* CODIGOS DE OPERACION *************
 typedef enum
 {
 	MENSAJE,
@@ -56,16 +56,7 @@ typedef enum
 	CPU_TERMINA_EJECUCION_PCB //Flag para ver si el proceso ya se ejecuto del todo (1 o 0)
 }op_code;
 
-void* recibir_buffer(int*, int);
-int iniciar_servidor(char*, t_log*);
-int esperar_cliente(int, t_log*);
-t_list* recibir_paquete(int);
-void recibir_mensaje(int, t_log*);
-int recibir_operacion(int);
-void iterator(char* value);
-
-// Client
-
+// ************* SERIALIZACION *************
 typedef struct
 {
 	int size;
@@ -78,16 +69,8 @@ typedef struct
 	t_buffer* buffer;
 } t_paquete;
 
-int crear_conexion(char* ip, char* puerto);
-void enviar_mensaje(char* mensaje, int socket_cliente);
-t_paquete* crear_paquete(void);
-void agregar_a_paquete(t_paquete* paquete, void* valor, int tamanio);
-void enviar_paquete(t_paquete* paquete, int socket_cliente);
-void liberar_conexion(int socket_cliente);
-void eliminar_paquete(t_paquete* paquete);
 
-
-// ************ ESTRUCTURA REGISTROS DEL CPU ************
+// ************ REGISTROS DEL CPU ************
 typedef struct{
 	uint32_t pc; // Program Counter
 	uint8_t ax; // Acumulador
@@ -109,7 +92,7 @@ typedef enum {
 	EXECUTE,
 	NEW,
 	EXIT,
-}estados;
+} estados;
 
 typedef struct {
     int pid;
@@ -120,24 +103,32 @@ typedef struct {
 	char* direccion_instrucciones; //es el path que me mandan por consola
 	pthread_mutex_t mutex_pcb;
 	t_list* instrucciones;
-}pcb;
+} pcb;
 
-// ************ ESTRUCTURA DE UNA INSTRUCCION *******
-// ************** USADO POR MEMORIA Y CPU **********
-typedef struct{
-	char* mnemonico;
-    char* primero_parametro;
-    char* segundo_parametro;
-    char* tercero_parametro;
-    char* cuarto_parametro;
-    char* quinto_parametro;
-}t_instruccion_codigo;
+// ************ DECLARACION DE FUNCIONES ************
+// ************ SERIALIZACION Y CONEXIONES GENERALES ************
+void* recibir_buffer(int*, int);
+int iniciar_servidor(char*, t_log*);
+int esperar_cliente(int, t_log*);
+t_list* recibir_paquete(int);
+void recibir_mensaje(int, t_log*);
+int recibir_operacion(int);
+void iterator(char* value);
+
+int crear_conexion(char* ip, char* puerto);
+void enviar_mensaje(char* mensaje, int socket_cliente);
+t_paquete* crear_paquete(void);
+void agregar_a_paquete(t_paquete* paquete, void* valor, int tamanio);
+void enviar_paquete(t_paquete* paquete, int socket_cliente);
+void liberar_conexion(int socket_cliente);
+void eliminar_paquete(t_paquete* paquete);
 
 //******* PAQUETES PERSONALIZADOS **********
 t_paquete* crear_paquete_personalizado(op_code code_op);
 void agregar_int_al_paquete_personalizado(t_paquete* paquete, int valor);
 void agregar_string_al_paquete_personalizado(t_paquete* paquete, char* string);
 void agregar_estructura_al_paquete_personalizado(t_paquete* paquete, void* estructura, int size);
+
 t_buffer* recibiendo_paquete_personalizado(int socket_conexion);
 int recibir_int_del_buffer(t_buffer* buffer);
 char* recibir_string_del_buffer(t_buffer* buffer);

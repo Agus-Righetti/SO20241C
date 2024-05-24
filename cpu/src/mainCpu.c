@@ -22,7 +22,7 @@ int main(int argc, char* argv[])
 
 	// Instrucciones con memoria
 	escuchar_memoria();
-   	
+   
 	// terminar_programa();
 
 	return EXIT_SUCCESS;

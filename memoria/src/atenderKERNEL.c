@@ -97,6 +97,7 @@ t_list* leer_archivo_y_cargar_instrucciones(char* archivo_pseudocodigo) {
         }
 
         list_add(instrucciones, instruccion_formateada);
+        
         for (int j = 0; j < i; j++) {
             free(l_instrucciones[j]);
         }

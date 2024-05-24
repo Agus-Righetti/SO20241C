@@ -9,13 +9,14 @@ void cpu_pide_instruccion(t_buffer* un_buffer){        //[PID, IP]
     t_proceso* un_proceso = obtener_proceso_por_id(pid);
 
 	//Obtener Instruccion especifica
-	t_instruccion_codigo* instruccion = obtener_instruccion_por_indice(un_proceso->instrucciones, ip);
+	char* instruccion = obtener_instruccion_por_indice(un_proceso->instrucciones, ip);
     
 	//Enviar_instruccion a CPU
 	enviar_una_instruccion_a_cpu(instruccion);
 
     log_info(log_memoria, "Instruccion enviada a CPU");
 }
+
 t_proceso* obtener_proceso_por_id(int pid){
 	bool _buscar_el_pid(t_proceso* proceso){
 		return proceso->pid == pid;
@@ -28,8 +29,8 @@ t_proceso* obtener_proceso_por_id(int pid){
 	return un_proceso;
 }
 
-t_instruccion_codigo* obtener_instruccion_por_indice(t_list* instrucciones, int indice_instruccion){
-	t_instruccion_codigo* instruccion_actual;
+char* obtener_instruccion_por_indice(t_list* instrucciones, int indice_instruccion){
+	char* instruccion_actual;
 	if(indice_instruccion >= 0 && indice_instruccion < list_size(instrucciones)){
 		instruccion_actual = list_get(instrucciones, indice_instruccion);
 		return instruccion_actual;
@@ -41,13 +42,11 @@ t_instruccion_codigo* obtener_instruccion_por_indice(t_list* instrucciones, int 
 	}
 }
 
-void enviar_una_instruccion_a_cpu(t_instruccion_codigo* instruccion){
+void enviar_una_instruccion_a_cpu(char* instruccion){
 	usleep(config_memoria->retardo_respuesta *1000); //Espero el retardo de respuesta -> hago el pasaje de milisegundos a microsegundos
 	t_paquete* paquete = crear_paquete_personalizado(CPU_RECIBE_INSTRUCCION_DE_MEMORIA);
 
-	// EN REALIDAD DEBO ENVIAR UN BUFFER DE LA FORMA [MNEMONICO, PARAMETRO1, PARAMETRO2, PARAMETRO3, PARAMETRO4, PARAMETRO5]
-    //                                                  CHAR*       CHAR*       CHAR*       CHAR*       CHAR*       CHAR* 
-	agregar_estructura_al_paquete_personalizado(paquete, instruccion, sizeof(instruccion));
+	agregar_string_al_paquete_personalizado(paquete, instruccion);
 
 	enviar_paquete(paquete, socket_cliente_cpu);
 	eliminar_paquete(paquete);

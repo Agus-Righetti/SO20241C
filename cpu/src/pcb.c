@@ -358,18 +358,16 @@ void error_exit(char** parte)
 	free(proceso);
 }
 
-void solicitar_instrucciones_a_memoria(int conexion_cpu_memoria) 
-{   
+void solicitar_instrucciones_a_memoria(int conexion_cpu_memoria) {   // ¿no tendriamos que pasarle por parametro el pcb del proceso?
     // Creo el paquete
     t_paquete* paquete = crear_paquete_personalizado(CPU_PIDE_INSTRUCCION_A_MEMORIA); 
 
     // Agregamos el pc y el pid al paquete
-    agregar_int_al_paquete_personalizado(paquete, proceso->pid);
+    agregar_int_al_paquete_personalizado(paquete, proceso->pid); 
     agregar_int_al_paquete_personalizado(paquete, proceso->program_counter);
 
     // Envio el paquete a memoria
     enviar_paquete(paquete, conexion_cpu_memoria);
-
     eliminar_paquete(paquete);
 }
 

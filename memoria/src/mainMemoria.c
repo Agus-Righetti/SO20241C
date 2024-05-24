@@ -7,7 +7,7 @@ int main() {
 
     // ********* INICIALIZO MEMORIA COMO SERVIDOR *********
     inicializar_servidor();
-
+    
     // ************* ESPERO QUE CPU SE CONECTE COMO CLIENTE Y CREO HILO PARA ESCUCHA ACTIVA *************
     recibir_escuchar_cpu();
 
