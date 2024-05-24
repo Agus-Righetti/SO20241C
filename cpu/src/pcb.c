@@ -2,12 +2,11 @@
 
 void recibir_pcb(t_buffer* buffer)
 {
-    // void memcpy(destino, elemento que obtenemos del paquete, size);
     pcb* pcb_recibido = recibir_estructura_del_buffer(buffer);
 
     log_info(log_cpu, "El PID es: %d", pcb_recibido->pid);
     log_info(log_cpu, "El PC es: %d", pcb_recibido->program_counter);
-    log_info(log_cpu, "El registro AX es: %d", pcb_recibido->registros->ax);
+    // log_info(log_cpu, "El registro AX es: %d", pcb_recibido->registros->ax);
 }
 
 void enviar_pcb(int conexion, pcb *proceso, op_code codigo)
@@ -15,35 +14,14 @@ void enviar_pcb(int conexion, pcb *proceso, op_code codigo)
     // Creamos un paquete
 	t_paquete *paquete = crear_paquete_personalizado(PCB_CPU_A_KERNEL);
     agregar_estructura_al_paquete_personalizado(paquete, proceso, sizeof(pcb));
+    enviar_paquete(paquete, conexion);
+	eliminar_paquete(paquete);
+}
 
-    // // Agregamos el pid al paquete
-	// agregar_int_al_paquete_personalizado(paquete, &(proceso->pid));
-
-	// int cantidad_instrucciones = list_size(proceso->instrucciones);
-	// // agregar_a_paquete(paquete, &cantidad_instrucciones, sizeof(int));
-
-    // // Agregamos las instrucciones al paquete
-	// for (int i = 0; i < cantidad_instrucciones; i++)
-	// {
-	// 	char *instruccion = list_get(proceso->instrucciones, i);
-	// 	agregar_a_paquete(paquete, instruccion, strlen(instruccion) + 1);
-	// }
-
-    // // Agregamos el program counter al paquete
-	// agregar_int_al_paquete_personalizado(paquete, &(proceso->program_counter));
-
-    // // Agregamos los registros al paquete
-	// agregar_a_paquete(paquete, proceso->registros->ax, 8);
-	// agregar_a_paquete(paquete, proceso->registros->bx, 8);
-	// agregar_a_paquete(paquete, proceso->registros->cx, 8);
-	// agregar_a_paquete(paquete, proceso->registros->dx, 8);
-	// agregar_a_paquete(paquete, proceso->registros->eax, 32);
-	// agregar_a_paquete(paquete, proceso->registros->ebx, 32);
-	// agregar_a_paquete(paquete, proceso->registros->ecx, 32);
-	// agregar_a_paquete(paquete, proceso->registros->edx, 32);
-	// agregar_a_paquete(paquete, proceso->registros->si, 32);
-   	// agregar_a_paquete(paquete, proceso->registros->di, 32);
-
+void enviar_flag(int conexion, int estado)
+{
+    t_paquete *paquete = crear_paquete_personalizado(CPU_TERMINA_EJECUCION_PCB);
+    agregar_int_al_paquete_personalizado(paquete, estado);
     enviar_paquete(paquete, conexion);
 	eliminar_paquete(paquete);
 }
@@ -96,8 +74,6 @@ void destruir_diccionarios(void)
 	dictionary_destroy(registros);
 }
 
-//********************************************************************
-
 // void recibir_instruccion_de_memoria(t_buffer* buffer)
 // {
 //     // el buffer tiene un struct INSTRUCCION DENTRO 
@@ -114,20 +90,23 @@ void destruir_diccionarios(void)
 // }
 
 void interpretar_instruccion_de_memoria(buffer)
-{   //t_instruccion_codigo;
+{   
+    //t_instruccion_codigo;
     //[String, String, String, String, String, String]
+
     if (buffer == NULL) 
     {
         error_show("No se recibio el proceso por parte de MEMORIA");
         exit(1);
     }
 
-    t_instruccion_codigo instruccion_recibida = recibir_estructura_del buffer(buffer);
-    parte[0] = instruccion_recibida->mnemonico;
+    // t_instruccion_codigo instruccion_recibida = recibir_estructura_del buffer(buffer);
+    // parte[0] = instruccion_recibida->mnemonico;
 
-    iniciar_diccionario_instrucciones();
-    iniciar_diccionario_registros(&proceso->registros);
+    // iniciar_diccionario_instrucciones();
+    // iniciar_diccionario_registros(&proceso->registros);
     
+    // [MOV_IN EAX EBX] -> UNA instruccion la recibimos como una lista de string
     char** parte = string_split((char*)list_get(proceso->instrucciones, proceso->program_counter), " "); // Partes de la instruccion actual
 	int instruccion_enum = (int)(intptr_t)dictionary_get(instrucciones, parte[0]);
 
@@ -204,7 +183,9 @@ void instruccion_set(char **parte)
 {
     // SET AX 1
     log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s", proceso->pid, parte[0], parte[1], parte[2]);
-	memcpy(dictionary_get(registros, parte[1]), parte[2], strlen(parte[2]));
+    
+	// Obtiene el valor del registro desde el diccionario 'registros' usando 'parte[1]' como clave y copia el valor de 'parte[2]' en el registro encontrado.
+    memcpy(dictionary_get(registros, parte[1]), parte[2], strlen(parte[2]));
 	proceso->program_counter++; 
 }
 
@@ -287,6 +268,7 @@ void instruccion_exit(char** parte)
 	log_info(log_cpu, "PID: %d - Ejecutando: %s", proceso->pid, parte[0]);
 	proceso->program_counter++;
 	enviar_pcb(conexion_cpu_kernel, proceso, EXIT);
+    enviar_flag(conexion_cpu_kernel, 1);
 	list_destroy_and_destroy_elements(proceso->instrucciones, free);
 	free(proceso);
 }
@@ -330,11 +312,19 @@ void intruccion_io_fs_create(char **parte)
 
 void instruccion_wait(char** parte)
 {
+    // Verificar que se haya pasado el nombre del recurso como argumento
+    if (parte[1] == NULL) 
+    {
+        log_error(log_cpu, "No se ha proporcionado el nombre del recurso.");
+        return;
+    }
+
 	log_info(log_cpu, "PID: %d - Ejecutando: %s - %s", proceso->pid, parte[0], parte[1]);
 	proceso->program_counter++;
     
     // Indico al kernel que el proceso está esperando algo
 	enviar_pcb(conexion_cpu_kernel, proceso, WAIT);
+    enviar_flag(conexion_cpu_kernel, 0);
 	
     list_destroy_and_destroy_elements(proceso->instrucciones, free);
 	free(proceso);
@@ -354,6 +344,7 @@ void instruccion_signal(char **parte)
 
     // Enviar solicitud de SIGNAL al kernel
     enviar_pcb(conexion_cpu_kernel, proceso, SIGNAL);
+    enviar_flag(conexion_cpu_kernel, 0);
 
     list_destroy_and_destroy_elements(proceso->instrucciones, free);
     free(proceso);
@@ -362,6 +353,7 @@ void instruccion_signal(char **parte)
 void error_exit(char** parte) 
 {
 	enviar_pcb(conexion_cpu_kernel, proceso, CODIGO);
+    enviar_flag(conexion_cpu_kernel, 1); 
 	list_destroy_and_destroy_elements(proceso->instrucciones, free);
 	free(proceso);
 }

@@ -104,8 +104,8 @@ void atender_interrupcion()
             break;
         case INTERRUPCION:
             log_info(log_cpu, "Me llego una interrupcion de KERNEL");
-            proceso->program_counter++;
             enviar_pcb(socket_servidor_cpu, proceso, DESALOJO);
+            enviar_flag(socket_servidor_cpu, 0);
             break;
         case -1:
             log_error(log_cpu, "El cliente se desconecto. Terminando servidor");

@@ -297,7 +297,9 @@ void recibir_pcb(pcb* proceso) {
     }
 
     proceso = recibir_estructura_del_buffer(paquete->buffer);
-
+    
+    log_info(log_kernel, "Recibi PID: %d", proceso->pid);
+    
     eliminar_paquete(paquete);
 
     //Este paquete es para recibir el flag, el flag esta en 1 si el proceso ta ejecuto todo y en 0 si aun le falta
