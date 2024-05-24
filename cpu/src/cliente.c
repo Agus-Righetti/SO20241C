@@ -17,8 +17,3 @@ int conexion_a_memoria()
 
     return conexion_cpu_memoria;
 }
-
-// void liberar_cliente(int conexion_cpu_memoria)
-// {
-
-// }

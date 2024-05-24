@@ -6,75 +6,45 @@ void recibir_pcb(t_buffer* buffer)
     pcb* pcb_recibido = recibir_estructura_del_buffer(buffer);
 
     log_info(log_cpu, "El PID es: %d", pcb_recibido->pid);
-    
-    // Del paquete, obtengo el pid
-    // int i = 0;
-	// memcpy(&(proceso->pid), list_get(paquete, i++), sizeof(int));
-
-    // // Obtenemos las instrucciones
-	// int cantidad_instrucciones;
-	// memcpy(&(cantidad_instrucciones), list_get(paquete, i++), sizeof(int));
-
-    // // Si proceso->instruccion es distinto de NULL, destruye el paquete y sus elementos (del pcb) 
-	// if(proceso->instrucciones) 
-    // {
-	// 	list_destroy_and_destroy_elements(proceso->instrucciones, free); // Para asegurar que no haya fuga de memoria
-	// }
-
-    // // Obtenemos las intrucciones
-	// proceso->instrucciones = list_slice_and_remove(paquete, i, cantidad_instrucciones);
-
-    // // Obtenemos el program counter
-	// memcpy(&(proceso->program_counter), list_get(paquete, i++), sizeof(int));
-	
-    // // Obtenemos los registros
-    // memcpy(proceso->registros->ax, list_get(paquete, i++), 8);
-	// memcpy(proceso->registros->bx, list_get(paquete, i++), 8);
-	// memcpy(proceso->registros->cx, list_get(paquete, i++), 8);
-	// memcpy(proceso->registros->dx, list_get(paquete, i++), 8);
-	// memcpy(proceso->registros->eax, list_get(paquete, i++), 32);
-	// memcpy(proceso->registros->ebx, list_get(paquete, i++), 32);
-	// memcpy(proceso->registros->ecx, list_get(paquete, i++), 32);
-	// memcpy(proceso->registros->edx, list_get(paquete, i++), 32);
-	// memcpy(proceso->registros->si, list_get(paquete, i++), 32);
-	// memcpy(proceso->registros->di, list_get(paquete, i++), 32);
+    log_info(log_cpu, "El PC es: %d", pcb_recibido->program_counter);
+    log_info(log_cpu, "El registro AX es: %d", pcb_recibido->registros->ax);
 }
 
 void enviar_pcb(int conexion, pcb *proceso, op_code codigo)
 {
     // Creamos un paquete
-	t_paquete *paquete = crear_paquete();
+	t_paquete *paquete = crear_paquete_personalizado(PCB_CPU_A_KERNEL);
+    agregar_estructura_al_paquete_personalizado(paquete, proceso, sizeof(pcb));
 
-    // Agregamos el pid al paquete
-	agregar_a_paquete(paquete, &(proceso->pid), sizeof(unsigned int));
+    // // Agregamos el pid al paquete
+	// agregar_int_al_paquete_personalizado(paquete, &(proceso->pid));
 
-	int cantidad_instrucciones = list_size(proceso->instrucciones);
-	agregar_a_paquete(paquete, &cantidad_instrucciones, sizeof(int));
+	// int cantidad_instrucciones = list_size(proceso->instrucciones);
+	// // agregar_a_paquete(paquete, &cantidad_instrucciones, sizeof(int));
 
-    // Agregamos las instrucciones al paquete
-	for (int i = 0; i < cantidad_instrucciones; i++)
-	{
-		char *instruccion = list_get(proceso->instrucciones, i);
-		agregar_a_paquete(paquete, instruccion, strlen(instruccion) + 1);
-	}
+    // // Agregamos las instrucciones al paquete
+	// for (int i = 0; i < cantidad_instrucciones; i++)
+	// {
+	// 	char *instruccion = list_get(proceso->instrucciones, i);
+	// 	agregar_a_paquete(paquete, instruccion, strlen(instruccion) + 1);
+	// }
 
-    // Agregamos el program counter al paquete
-	agregar_a_paquete(paquete, &(proceso->program_counter), sizeof(int));
+    // // Agregamos el program counter al paquete
+	// agregar_int_al_paquete_personalizado(paquete, &(proceso->program_counter));
 
-    // Agregamos los registros al paquete
-	agregar_a_paquete(paquete, proceso->registros->ax, 8);
-	agregar_a_paquete(paquete, proceso->registros->bx, 8);
-	agregar_a_paquete(paquete, proceso->registros->cx, 8);
-	agregar_a_paquete(paquete, proceso->registros->dx, 8);
-	agregar_a_paquete(paquete, proceso->registros->eax, 32);
-	agregar_a_paquete(paquete, proceso->registros->ebx, 32);
-	agregar_a_paquete(paquete, proceso->registros->ecx, 32);
-	agregar_a_paquete(paquete, proceso->registros->edx, 32);
-	agregar_a_paquete(paquete, proceso->registros->si, 32);
-   	agregar_a_paquete(paquete, proceso->registros->di, 32);
+    // // Agregamos los registros al paquete
+	// agregar_a_paquete(paquete, proceso->registros->ax, 8);
+	// agregar_a_paquete(paquete, proceso->registros->bx, 8);
+	// agregar_a_paquete(paquete, proceso->registros->cx, 8);
+	// agregar_a_paquete(paquete, proceso->registros->dx, 8);
+	// agregar_a_paquete(paquete, proceso->registros->eax, 32);
+	// agregar_a_paquete(paquete, proceso->registros->ebx, 32);
+	// agregar_a_paquete(paquete, proceso->registros->ecx, 32);
+	// agregar_a_paquete(paquete, proceso->registros->edx, 32);
+	// agregar_a_paquete(paquete, proceso->registros->si, 32);
+   	// agregar_a_paquete(paquete, proceso->registros->di, 32);
 
     enviar_paquete(paquete, conexion);
-    
 	eliminar_paquete(paquete);
 }
 
@@ -128,23 +98,33 @@ void destruir_diccionarios(void)
 
 //********************************************************************
 
-void recibir_instruccion_de_memoria(t_buffer* buffer)
-{
-    // el buffer tiene un struct INSTRUCCION DENTRO 
-    // [char* mnemonico, char* primero_parametro, char* segundo_parametro, char* tercero_parametro, char* cuarto_parametro, char* quinto_parametro]
+// void recibir_instruccion_de_memoria(t_buffer* buffer)
+// {
+//     // el buffer tiene un struct INSTRUCCION DENTRO 
+//     // [char* mnemonico, char* primero_parametro, char* segundo_parametro, char* tercero_parametro, char* cuarto_parametro, char* quinto_parametro]
 
-    // Verifico que se hayan recibidos valores
-    if (buffer == NULL) {
+//     // Verifico que se hayan recibidos valores
+//     if (buffer == NULL) {
+//         error_show("No se recibio el proceso por parte de MEMORIA");
+//         exit(1);
+//     }
+
+//     mnemonico = recibir_string_del_buffer(buffer);
+//     primero_parametro = recibir_string_del_buffer(buffer);
+// }
+
+void interpretar_instruccion_de_memoria(buffer)
+{   //t_instruccion_codigo;
+    //[String, String, String, String, String, String]
+    if (buffer == NULL) 
+    {
         error_show("No se recibio el proceso por parte de MEMORIA");
         exit(1);
     }
 
-    mnemonico = recibir_string_del_buffer(buffer);
-    primero_parametro = recibir_string_del_buffer(buffer)
-}
+    t_instruccion_codigo instruccion_recibida = recibir_estructura_del buffer(buffer);
+    parte[0] = instruccion_recibida->mnemonico;
 
-void interpretar_instruccion_de_memoria(buffer)
-{   
     iniciar_diccionario_instrucciones();
     iniciar_diccionario_registros(&proceso->registros);
     

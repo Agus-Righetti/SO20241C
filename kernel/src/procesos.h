@@ -17,8 +17,10 @@ void desalojar_proceso(pcb* proceso);
 void desalojar_proceso_hilo(void* arg);
 void crear_hilo_proceso(pcb* proceso);
 void algoritmo_round_robin (void* arg);
-void accionar_segun_estado (pcb* proceso);
+void accionar_segun_estado(pcb* proceso, int flag);
 void recibir_pcb_hilo(void* arg);
+void pasar_proceso_a_exit(pcb* proceso);
+
 
 
 //  *************** DECLARACIÓN DE ESTRUCTURAS ***************

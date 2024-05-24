@@ -16,7 +16,6 @@ void cpu_pide_instruccion(t_buffer* un_buffer){        //[PID, IP]
 
     log_info(log_memoria, "Instruccion enviada a CPU");
 }
-
 t_proceso* obtener_proceso_por_id(int pid){
 	bool _buscar_el_pid(t_proceso* proceso){
 		return proceso->pid == pid;

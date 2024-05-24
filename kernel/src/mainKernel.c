@@ -13,8 +13,15 @@ int main(int argc, char* argv[])
     
     pthread_mutex_init(&mutex_cola_de_new,NULL);
     pthread_mutex_init(&mutex_cola_de_ready,NULL);
+    pthread_mutex_init(&mutex_cola_de_execute,NULL);
+    pthread_mutex_init(&mutex_cola_de_exit,NULL);
+    pthread_mutex_init(&mutex_cola_de_blocked,NULL);
     cola_de_new = queue_create();
     cola_de_ready = queue_create();
+    cola_de_execute = queue_create();
+    cola_de_exit = queue_create();
+    cola_de_blocked = queue_create();
+
     sem_init(&sem_cola_de_new,0,0);
     sem_init(&sem_cola_de_ready,0,0);
     sem_init(&destruir_hilo_interrupcion,0,0);
@@ -45,14 +52,21 @@ int main(int argc, char* argv[])
 
 
     //************* Destruyo el log y cierro programa *************
+    //Podriamos ahcer una funcion q termine el programa con todo esto
+    //faltaria hacer el free de todos los procesos
     log_destroy(log_kernel);
     queue_destroy(cola_de_new);
     queue_destroy(cola_de_ready);
     pthread_mutex_destroy(&mutex_cola_de_new);
     pthread_mutex_destroy(&mutex_cola_de_ready);
+    pthread_mutex_destroy(&mutex_cola_de_exit);
+    pthread_mutex_destroy(&mutex_cola_de_blocked);
+    pthread_mutex_destroy(&mutex_cola_de_execute);
     sem_destroy(&sem_cola_de_ready);
     sem_destroy(&sem_cola_de_new);
     sem_destroy(&sem_multiprogramacion);
+    sem_destroy(&destruir_hilo_interrupcion);
+
 
 
 	return EXIT_SUCCESS;

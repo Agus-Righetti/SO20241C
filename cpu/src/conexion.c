@@ -7,7 +7,6 @@ void atender_memoria() {
     t_list* lista;
     t_instruccion* instruccion;
 
-    // Ver que recibe recibir_operacion(socket_servidor_memoria);
     int cod_op_memoria = recibir_operacion(socket_servidor_memoria);
     while(1)
     {
@@ -25,9 +24,9 @@ void atender_memoria() {
         case CPU_RECIBE_INSTRUCCION_DE_MEMORIA:
             log_info(log_cpu, "Recibi una instruccion de memoria");
             t_buffer* buffer = recibiendo_paquete_personalizado(socket_servidor_memoria);
+            log_info(log_cpu, "PID: %d - FETCH - Program Counter: %d", proceso->pid, proceso->program_counter);
             proceso->program_counter++;
-			//interpretar_instruccion_de_memoria(buffer);
-            //log_info(log_cpu, "PID: %d - FETCH - Program Counter: %d", proceso->pid, proceso->program_counter);
+			interpretar_instruccion_de_memoria(buffer);
             free(buffer);
             break;
         case EXIT:
@@ -92,14 +91,14 @@ void atender_interrupcion()
 {
     t_list* lista;
     
-	int cod_op = recibir_operacion(cliente_kernel);
+	int cod_op = recibir_operacion(socket_interrupt_kernel);
 	switch (cod_op) 
     {
         case MENSAJE:
-            recibir_mensaje(cliente_kernel, log_cpu);
+            recibir_mensaje(socket_interrupt_kernel, log_cpu);
             break;
         case PAQUETE:
-            lista = recibir_paquete(cliente_kernel);
+            lista = recibir_paquete(socket_interrupt_kernel);
             log_info(log_cpu, "Me llegaron los siguientes valores:\n");
             list_iterate(lista, (void*) iterator);
             break;

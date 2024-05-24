@@ -31,6 +31,7 @@ void atender_cpu(){
 // ************* ESCUCHA ACTIVA DE KERNEL *************
 void atender_kernel(){
     bool control = 1;
+    t_buffer* buffer;
     while(control){
         int cod_op_kernel = recibir_operacion(socket_cliente_kernel);
         switch (cod_op_kernel) {
@@ -40,8 +41,15 @@ void atender_kernel(){
 
             case CREACION_PROCESO_KERNEL_A_MEMORIA:
                 log_info(log_memoria, "Kernel pide creacion de un nuevo proceso");
-                t_buffer* buffer = recibiendo_paquete_personalizado(socket_cliente_kernel);
+                buffer = recibiendo_paquete_personalizado(socket_cliente_kernel);
 				iniciar_estructura_para_un_proceso_nuevo(buffer);
+                free(buffer);
+                break;
+
+            case FINALIZAR_PROCESO_KERNEL_A_MEMORIA:
+                log_info(log_memoria, "Kernel quiere finalizar un proceso");
+                buffer = recibiendo_paquete_personalizado(socket_cliente_kernel);
+				//liberar_memoria_proceso(buffer);
                 free(buffer);
                 break;
 

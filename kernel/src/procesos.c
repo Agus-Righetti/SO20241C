@@ -182,7 +182,7 @@ void crear_hilo_proceso(pcb* proceso){
     if(strcmp(config_kernel->algoritmo_planificacion, "FIFO") == 0)
     {
         pthread_create(&hilo_recibe_proceso, NULL, (void*)recibir_pcb_hilo,(void*)&args_hilo); 
-        pthread_join(&hilo_recibe_proceso, NULL);
+        pthread_join(hilo_recibe_proceso, NULL);
     }
     // Si el algoritmo es RR, lo recibo por una interrupcion contra CPU
     else if(strcmp(config_kernel->algoritmo_planificacion, "RR") == 0)
@@ -190,9 +190,9 @@ void crear_hilo_proceso(pcb* proceso){
         pthread_create(&hilo_recibe_proceso, NULL, (void*)recibir_pcb_hilo,(void*)&args_hilo); 
         pthread_create(&hilo_interrupcion, NULL, (void*)algoritmo_round_robin,(void*)&args_hilo); 
         
-        pthread_join(&hilo_recibe_proceso, NULL);
-        wait(&destruir_hilo_interrupcion);
-        pthread_cancel(&hilo_interrupcion, NULL);
+        pthread_join(hilo_recibe_proceso, NULL);
+        sem_wait(&destruir_hilo_interrupcion);
+        pthread_cancel(hilo_interrupcion);
 
     }
 }
@@ -206,23 +206,52 @@ void algoritmo_round_robin (void* arg){
     usleep(*config_kernel->quantum);
     desalojar_proceso_hilo(args);
     
-    accionar_segun_estado(args->proceso);
+    return;
+}
+
+void accionar_segun_estado(pcb* proceso, int flag)
+{
+    //flag = 1, ya ejecuto todo, tengo q pasarlo a exit
+    //flag = 0 aun no ejecuto del todo, lo mando a la cola de ready
+    if(flag == 1){
+        pasar_proceso_a_exit(proceso);
+    }else if (flag ==0)
+    {
+        //lo mando a la cola de ready
+        pthread_mutex_lock(&proceso->mutex_pcb);
+        proceso->estado_del_proceso = READY; 
+        pthread_mutex_unlock(&proceso->mutex_pcb);
+        
+        pthread_mutex_lock(&mutex_cola_de_ready);
+        queue_push(cola_de_ready,proceso);
+        pthread_mutex_unlock(&mutex_cola_de_ready);
+        sem_post(&sem_cola_de_ready);
+
+        // Hago un log obligatorio
+        log_info(log_kernel, "PID: %d - Estado Anterior: EXECUTE - Estado Actual: READY", proceso->pid);
+    }
     
     return;
+
 }
 
-void accionar_segun_estado (pcb* proceso)
+void pasar_proceso_a_exit(pcb* proceso)
 {
-    if(proceso->estado_del_proceso == READY)
-    {
-        pthread_mutex_lock(&mutex_cola_de_ready);
-        queue_push(cola_de_ready, proceso);
-        pthread_mutex_unlock(&mutex_cola_de_ready);
-    }
-    //faltarian las opciones para exit
-    return;
+    pthread_mutex_lock(&proceso->mutex_pcb);
+    proceso->estado_del_proceso = EXIT; 
+    pthread_mutex_unlock(&proceso->mutex_pcb);
 
+    log_info(log_kernel, "PID: %d - Estado Anterior: EXECUTE - Estado Actual: EXIT", proceso->pid);
+    //aca lo tengo q cargar a la cola de exit
+    pthread_mutex_lock(&cola_de_exit);
+    queue_push(proceso, cola_de_exit);
+    pthread_mutex_unlock(&cola_de_exit);
+
+    //estos dos free tendrian q hacerse cuando se termina el programa (todo el programa)
+    //free(proceso->registros);
+    //free(proceso); 
 }
+
 
 
 // ************* Funcion que sirve para obtener de regreso un proceso a traves de una interrupcion *************
@@ -237,13 +266,6 @@ void desalojar_proceso(pcb* proceso){
 
     eliminar_paquete(paquete_a_enviar);
 
-    // Recibo el paquete a través del socket y los guardo en una lista
-    // t_paquete* paquete_recibido = crear_paquete_personalizado(PCB_CPU_A_KERNEL);
-    // paquete_recibido->buffer = recibiendo_paquete_personalizado(interrupcion_kernel_cpu);
-
-    // proceso = recibir_estructura_del_buffer(paquete_recibido->buffer);
-
-    // eliminar_paquete(paquete_recibido);
 
     return;
 }
@@ -270,14 +292,29 @@ void recibir_pcb(pcb* proceso) {
 
     if(strcmp(config_kernel->algoritmo_planificacion, "RR") == 0)
     {
-        signal(&destruir_hilo_interrupcion);
+        //VER SI FUNCA
+        sem_post(&destruir_hilo_interrupcion);
     }
 
     proceso = recibir_estructura_del_buffer(paquete->buffer);
 
-    //cambiar_estado_a_exit(proceso);
-    // Libero el paquete
     eliminar_paquete(paquete);
+
+    //Este paquete es para recibir el flag, el flag esta en 1 si el proceso ta ejecuto todo y en 0 si aun le falta
+
+
+    t_paquete* paquete_estado = crear_paquete_personalizado(CPU_TERMINA_EJECUCION_PCB);
+
+    paquete_estado->buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu);
+
+    int flag_estado = recibir_int_del_buffer(paquete_estado->buffer);
+    
+    // Libero el paquete
+
+    eliminar_paquete(paquete_estado);
+
+    accionar_segun_estado(proceso, flag_estado); //este va a mandar el proceso a ready o exit
+
 
     return;
 }

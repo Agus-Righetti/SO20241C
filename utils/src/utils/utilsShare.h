@@ -31,26 +31,29 @@ typedef enum
     CODIGO,
 	INTERRUPCION,
 	CPU,
-	DESALOJO,
-	IO_GEN_SLEEP,
+	DESALOJO, // Devolvemos PCB por interrupcion
+	IO_GEN_SLEEP, // Instruccion
+	
+	// Interfaces
 	GENERICA,
     STDIN,
     STDOUT,
     DIALFS,
+	
 	// KERNEL A MEMORIA
-	CREACION_PROCESO_KERNEL_A_MEMORIA, // [path, PID] -> [Char, Int]
+	CREACION_PROCESO_KERNEL_A_MEMORIA, // [path, PID] -> [String, Int]
+	FINALIZAR_PROCESO_KERNEL_A_MEMORIA, // [PID] -> [Int] 
 
 	// CPU A MEMORIA
 	CPU_PIDE_INSTRUCCION_A_MEMORIA, // [PID, IP] -> [Int, Int]
 
 	// MEMORIA A CPU
-	CPU_RECIBE_INSTRUCCION_DE_MEMORIA, // [Instruccion] -> [Char, Char, Char, Char, Char]
+	CPU_RECIBE_INSTRUCCION_DE_MEMORIA, // [Instruccion] -> [String, String, String, String, String]
 
-	// INSTRUCCION
-	// PCB de Kernel a CPU
 	PCB_KERNEL_A_CPU,
-	// PCB CPU a Kernel
-	PCB_CPU_A_KERNEL
+	PCB_CPU_A_KERNEL,
+	
+	CPU_TERMINA_EJECUCION_PCB //Flag para ver si el proceso ya se ejecuto del todo (1 o 0)
 }op_code;
 
 void* recibir_buffer(int*, int);

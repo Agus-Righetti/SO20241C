@@ -1,6 +1,8 @@
 #include "atenderKERNEL.h"
 
+//******************************************************************
 //******************* CREACIÓN DE PROCESO **************************
+//******************************************************************
 void iniciar_estructura_para_un_proceso_nuevo(t_buffer* buffer){
 	char* path = recibir_string_del_buffer(buffer);
 	int pid = recibir_int_del_buffer(buffer);
@@ -115,3 +117,22 @@ t_list* leer_archivo_y_cargar_instrucciones(char* archivo_pseudocodigo) {
     free(linea_instruccion);
     return instrucciones;
 }
+
+//******************************************************************
+//******************** FINALIZAR PROCESO ***************************
+//******************************************************************
+// void liberar_memoria_proceso(buffer){
+//     // RECIBO UN BUFFER [PID] -> Int
+
+//     // DEBO LIBERAR ESPACIO, Y SACAR EL PROCESO DE LA LISTA
+//     int pid_a_eliminar = recibir_int_del_buffer(buffer);
+//     t_proceso* proceso_a_eliminar = obtener_proceso_por_id(pid_a_eliminar);
+    
+//     if(list_remove_element(lista_procesos_recibidos,proceso_a_eliminar)){
+// 		//DEBO ELIMINAR EL PROCESO DE LA LISTA 
+// 		log_info(log_memoria, "PROCESO <PID:%d> ELIMINADO DE MEMORIA", pid);
+// 	} else {
+// 		log_info(log_memoria, "Proceso no encontrado en la lista de procesos para ser eliminados");
+// 		exit(EXIT_FAILURE);
+// 	}
+// }
