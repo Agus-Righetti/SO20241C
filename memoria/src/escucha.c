@@ -10,10 +10,11 @@ void atender_cpu(){
                 recibir_mensaje(socket_cliente_cpu, log_memoria);
                 break;
 
-            case CPU_RECIBE_INSTRUCCION_DE_MEMORIA:
+            case CPU_PIDE_INSTRUCCION_A_MEMORIA:
                 log_info(log_memoria, "CPU me pide una instruccion");
                 t_buffer* buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
 				cpu_pide_instruccion(buffer);
+                free(buffer);
                 break;
 
             case -1:
@@ -41,6 +42,7 @@ void atender_kernel(){
                 log_info(log_memoria, "Kernel pide creacion de un nuevo proceso");
                 t_buffer* buffer = recibiendo_paquete_personalizado(socket_cliente_kernel);
 				iniciar_estructura_para_un_proceso_nuevo(buffer);
+                free(buffer);
                 break;
 
             case -1:

@@ -3,8 +3,7 @@
 // MEMORIA es server de CPU
 // CPU es cliente de MEMORIA
 
-void atender_memoria() 
-{
+void atender_memoria() {
     t_list* lista;
     t_instruccion* instruccion;
 
@@ -23,16 +22,24 @@ void atender_memoria()
             list_iterate(lista, (void*) iterator);
             list_destroy_and_destroy_elements(lista, free);
             break;
-        case INSTRUCCION:
-            lista = recibir_paquete(socket_servidor_memoria);
-            instruccion = malloc(sizeof(t_instruccion));
-            recibir_instruccion_de_memoria(socket_servidor_memoria);
-            proceso->program_counter++;
-            log_info(log_cpu, "PID: %d - FETCH - Program Counter: %d", proceso->pid, proceso->program_counter);
-            interpretar_instrucciones();
-            list_destroy_and_destroy_elements(lista, free);
-            free(instruccion);
+
+        case CPU_RECIBE_INSTRUCCION_DE_MEMORIA:
+        // REVISAR
+            // log_info(log_cpu, "Recibi una instruccion de memoria");
+            // t_buffer* buffer = recibiendo_paquete_personalizado(socket_servidor_memoria);
+			// recibir_instruccion_de_memoria(buffer);
+            
             break;
+            // lista = recibir_paquete(socket_servidor_memoria);
+            // instruccion = malloc(sizeof(t_instruccion));
+            // recibir_instruccion_de_memoria(socket_servidor_memoria);
+            // proceso->program_counter++;
+            // log_info(log_cpu, "PID: %d - FETCH - Program Counter: %d", proceso->pid, proceso->program_counter);
+            // interpretar_instrucciones();
+            // list_destroy_and_destroy_elements(lista, free);
+            // free(instruccion);
+            // break;
+
         case EXIT:
             error_exit(EXIT);
             list_destroy_and_destroy_elements(lista, free); 
@@ -72,13 +79,11 @@ void atender_kernel()
                 list_iterate(lista, (void*) iterator);
                 list_destroy_and_destroy_elements(lista, free);
                 break;
-            case EXECUTE:
-                lista = recibir_paquete(socket_cliente_kernel);
-                proceso = malloc(sizeof(pcb));
-                proceso->instrucciones = NULL;
-                recibir_pcb(lista, proceso);
+            case PCB_KERNEL_A_CPU: // Execute
+                t_buffer* buffer = recibiendo_paquete_personalizado(socket_cliente_kernel);
+                recibir_pcb(buffer);
                 interpretar_instrucciones();
-                list_destroy_and_destroy_elements(lista, free);
+                // list_destroy_and_destroy_elements(lista, free);
                 break;
             case EXIT:
                 error_exit(EXIT);
@@ -114,14 +119,14 @@ void atender_interrupcion()
                 list_iterate(lista, (void*) iterator);
                 list_destroy_and_destroy_elements(lista, free);
                 break;
-            case EXECUTE:
-                lista = recibir_paquete(socket_cliente_kernel);
-                proceso = malloc(sizeof(pcb));
-                proceso->instrucciones = NULL;
-                recibir_pcb(lista, proceso);
-                interpretar_instrucciones();
-                list_destroy_and_destroy_elements(lista, free);
-                break;
+            // case EXECUTE:
+            //     lista = recibir_paquete(socket_cliente_kernel);
+            //     proceso = malloc(sizeof(pcb));
+            //     proceso->instrucciones = NULL;
+            //     recibir_pcb(, proceso);
+            //     interpretar_instrucciones();
+            //     list_destroy_and_destroy_elements(lista, free);
+            //     break;
             case EXIT:
                 error_exit(EXIT);
                 list_destroy_and_destroy_elements(lista, free); 
@@ -148,7 +153,7 @@ void esperar_memoria(int conexion)
 
 void escuchar_memoria()
 {
-    // solicitar_instrucciones_a_memoria(socket_cliente_cpu);
+    solicitar_instrucciones_a_memoria(socket_cliente_cpu);
     esperar_memoria(socket_cliente_cpu);
 }
 

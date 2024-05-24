@@ -37,10 +37,11 @@ int main(int argc, char* argv[])
     //************* HILO CONSOLA *************
     pthread_t thread_consola = hilo_consola ();
 
-    pthread_join(thread_consola, NULL);
     //*************HILO GESTOR DE LOS PROCESOS A ENVIAR A CPU*************
-
     pthread_t thread_enviar_procesos_cpu = hilo_enviar_procesos_cpu();
+
+    pthread_join(thread_consola, NULL);
+
 
     //************* Destruyo el log y cierro programa *************
     log_destroy(log_kernel);

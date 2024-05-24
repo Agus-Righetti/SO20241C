@@ -1,40 +1,43 @@
 #include "pcb.h"
 
-void recibir_pcb(t_list *paquete, pcb *proceso)
+void recibir_pcb(t_buffer* buffer)
 {
     // void memcpy(destino, elemento que obtenemos del paquete, size);
+    pcb* pcb_recibido = recibir_estructura_del_buffer(buffer);
+
+    log_info(log_cpu, "El PID es: %d", pcb_recibido->pid);
     
     // Del paquete, obtengo el pid
-    int i = 0;
-	memcpy(&(proceso->pid), list_get(paquete, i++), sizeof(int));
+    // int i = 0;
+	// memcpy(&(proceso->pid), list_get(paquete, i++), sizeof(int));
 
-    // Obtenemos las instrucciones
-	int cantidad_instrucciones;
-	memcpy(&(cantidad_instrucciones), list_get(paquete, i++), sizeof(int));
+    // // Obtenemos las instrucciones
+	// int cantidad_instrucciones;
+	// memcpy(&(cantidad_instrucciones), list_get(paquete, i++), sizeof(int));
 
-    // Si proceso->instruccion es distinto de NULL, destruye el paquete y sus elementos (del pcb) 
-	if(proceso->instrucciones) 
-    {
-		list_destroy_and_destroy_elements(proceso->instrucciones, free); // Para asegurar que no haya fuga de memoria
-	}
+    // // Si proceso->instruccion es distinto de NULL, destruye el paquete y sus elementos (del pcb) 
+	// if(proceso->instrucciones) 
+    // {
+	// 	list_destroy_and_destroy_elements(proceso->instrucciones, free); // Para asegurar que no haya fuga de memoria
+	// }
 
-    // Obtenemos las intrucciones
-	proceso->instrucciones = list_slice_and_remove(paquete, i, cantidad_instrucciones);
+    // // Obtenemos las intrucciones
+	// proceso->instrucciones = list_slice_and_remove(paquete, i, cantidad_instrucciones);
 
-    // Obtenemos el program counter
-	memcpy(&(proceso->program_counter), list_get(paquete, i++), sizeof(int));
+    // // Obtenemos el program counter
+	// memcpy(&(proceso->program_counter), list_get(paquete, i++), sizeof(int));
 	
-    // Obtenemos los registros
-    memcpy(proceso->registros->ax, list_get(paquete, i++), 8);
-	memcpy(proceso->registros->bx, list_get(paquete, i++), 8);
-	memcpy(proceso->registros->cx, list_get(paquete, i++), 8);
-	memcpy(proceso->registros->dx, list_get(paquete, i++), 8);
-	memcpy(proceso->registros->eax, list_get(paquete, i++), 32);
-	memcpy(proceso->registros->ebx, list_get(paquete, i++), 32);
-	memcpy(proceso->registros->ecx, list_get(paquete, i++), 32);
-	memcpy(proceso->registros->edx, list_get(paquete, i++), 32);
-	memcpy(proceso->registros->si, list_get(paquete, i++), 32);
-	memcpy(proceso->registros->di, list_get(paquete, i++), 32);
+    // // Obtenemos los registros
+    // memcpy(proceso->registros->ax, list_get(paquete, i++), 8);
+	// memcpy(proceso->registros->bx, list_get(paquete, i++), 8);
+	// memcpy(proceso->registros->cx, list_get(paquete, i++), 8);
+	// memcpy(proceso->registros->dx, list_get(paquete, i++), 8);
+	// memcpy(proceso->registros->eax, list_get(paquete, i++), 32);
+	// memcpy(proceso->registros->ebx, list_get(paquete, i++), 32);
+	// memcpy(proceso->registros->ecx, list_get(paquete, i++), 32);
+	// memcpy(proceso->registros->edx, list_get(paquete, i++), 32);
+	// memcpy(proceso->registros->si, list_get(paquete, i++), 32);
+	// memcpy(proceso->registros->di, list_get(paquete, i++), 32);
 }
 
 void enviar_pcb(int conexion, pcb *proceso, op_code codigo)
@@ -369,11 +372,11 @@ void error_exit(char** parte)
 void solicitar_instrucciones_a_memoria(int conexion_cpu_memoria) 
 {   
     // Creo el paquete
-    t_paquete* paquete = crear_paquete(); 
+    t_paquete* paquete = crear_paquete_personalizado(CPU_PIDE_INSTRUCCION_A_MEMORIA); 
 
     // Agregamos el pc y el pid al paquete
-    //agregar_a_paquete(paquete, proceso->program_counter, sizeof(int));
-    agregar_a_paquete(paquete, proceso->pid, sizeof(int));
+    agregar_int_al_paquete_personalizado(paquete, proceso->pid);
+    agregar_int_al_paquete_personalizado(paquete, proceso->program_counter);
 
     // Envio el paquete a memoria
     enviar_paquete(paquete, conexion_cpu_memoria);
@@ -381,24 +384,23 @@ void solicitar_instrucciones_a_memoria(int conexion_cpu_memoria)
     eliminar_paquete(paquete);
 }
 
-void recibir_instruccion_de_memoria(int socket_servidor_memoria)
-{
-    // Espero la respuesta de memoria
-    t_paquete *respuesta = recibir_paquete(socket_servidor_memoria);
+// void recibir_instruccion_de_memoria(int socket_servidor_memoria){
+//     // Espero la respuesta de memoria
+//     t_buffer* buffer = recibiendo_paquete_personalizado(socket_servidor_memoria);
 
-    // Verifico que se hayan recibidos valores
-    if (respuesta == NULL) 
-    {
-        error_show("No se recibio el proceso por parte de MEMORIA");
-        return;
-    }
+//     // Verifico que se hayan recibidos valores
+//     if (respuesta == NULL) 
+//     {
+//         error_show("No se recibio el proceso por parte de MEMORIA");
+//         return;
+//     }
 
-    // Extraigo las instrucciones del paquete
-    memcpy(proceso, respuesta->buffer->stream, sizeof(respuesta));
+//     // Extraigo las instrucciones del paquete
+//     memcpy(proceso, respuesta->buffer->stream, sizeof(respuesta));
 
-    eliminar_paquete(respuesta);
-    list_destroy_and_destroy_elements(respuesta, free);
-}
+//     eliminar_paquete(respuesta);
+//     list_destroy_and_destroy_elements(respuesta, free);
+// }
 
 // 3er checkpoint
 // MOV_IN EDX ECX

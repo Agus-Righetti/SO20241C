@@ -59,7 +59,7 @@ void iniciar_proceso(char* path ){
 
     // Creo una estructura de pcb e inicializo todos los campos
     pcb* nuevo_pcb = malloc(sizeof(pcb)); //HAY QUE LIBERAR EN EXIT
-    pid_contador == 999;
+    pid_contador += 1;
     nuevo_pcb->estado_del_proceso = NEW;
     nuevo_pcb->program_counter = 0;
     nuevo_pcb->direccion_instrucciones = path; 
@@ -157,18 +157,18 @@ void enviar_proceso_a_cpu(){
 
 // ************* Funcion que sirve para enviar el pcb como tal al CPU *************
 void enviar_pcb(pcb* proceso) {
-    
+
     // Creo un paquete
-    t_paquete* paquete = crear_paquete();
+    t_paquete* paquete_pcb = crear_paquete_personalizado(PCB_KERNEL_A_CPU);
 
     // Agrego el struct pcb al paquete
-    agregar_a_paquete(paquete, proceso, sizeof(pcb));
+    agregar_estructura_al_paquete_personalizado(paquete_pcb, proceso, sizeof(pcb));
 
     // Envio el paquete a través del socket
-    enviar_paquete(paquete, conexion_kernel_cpu);
+    enviar_paquete(paquete_pcb, conexion_kernel_cpu);
 
     // Libero el paquete
-    eliminar_paquete(paquete);
+    eliminar_paquete(paquete_pcb);
 }
 
 // ************* Funcion que sirve para crear un hilo por el proceso enviado, y segun el algoritmo recibirlo por FIFO o RR *************

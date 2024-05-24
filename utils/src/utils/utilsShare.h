@@ -38,12 +38,19 @@ typedef enum
     STDOUT,
     DIALFS,
 	// KERNEL A MEMORIA
-	CREACION_PROCESO_KERNEL_A_MEMORIA, // Path -> [Char]
+	CREACION_PROCESO_KERNEL_A_MEMORIA, // [path, PID] -> [Char, Int]
 
-	//CPU A MEMORIA
-	//MEMORIA A CPU
-	CPU_RECIBE_INSTRUCCION_DE_MEMORIA
+	// CPU A MEMORIA
+	CPU_PIDE_INSTRUCCION_A_MEMORIA, // [PID, IP] -> [Int, Int]
+
+	// MEMORIA A CPU
+	CPU_RECIBE_INSTRUCCION_DE_MEMORIA, // [Instruccion] -> [Char, Char, Char, Char, Char]
+
 	// INSTRUCCION
+	// PCB de Kernel a CPU
+	PCB_KERNEL_A_CPU,
+	// PCB CPU a Kernel
+	PCB_CPU_A_KERNEL
 }op_code;
 
 void* recibir_buffer(int*, int);
@@ -113,12 +120,14 @@ typedef struct {
 	t_list* instrucciones;
 }pcb;
 
-//******* DECLARACION REVISAR
+//******* PAQUETES PERSONALIZADOS **********
 t_paquete* crear_paquete_personalizado(op_code code_op);
 void agregar_int_al_paquete_personalizado(t_paquete* paquete, int valor);
 void agregar_string_al_paquete_personalizado(t_paquete* paquete, char* string);
+void agregar_estructura_al_paquete_personalizado(t_paquete* paquete, void* estructura, int size);
 t_buffer* recibiendo_paquete_personalizado(int socket_conexion);
 int recibir_int_del_buffer(t_buffer* buffer);
 char* recibir_string_del_buffer(t_buffer* buffer);
+void* recibir_estructura_del_buffer(t_buffer* buffer);
 
 #endif

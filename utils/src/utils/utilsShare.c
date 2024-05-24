@@ -264,6 +264,23 @@ void agregar_string_al_paquete_personalizado(t_paquete* paquete, char* string){
 	paquete->buffer->size += sizeof(char)*size_string;
 }
 
+void agregar_estructura_al_paquete_personalizado(t_paquete* paquete, void* estructura, int size){
+	if(paquete->buffer->size == 0){
+		paquete->buffer->stream = malloc(sizeof(int) + size);
+		memcpy(paquete->buffer->stream, &size, sizeof(int));
+		memcpy(paquete->buffer->stream + sizeof(int), estructura, size);
+	}else{
+		paquete->buffer->stream = realloc(paquete->buffer->stream,
+												paquete->buffer->size + sizeof(int) + size);
+
+		memcpy(paquete->buffer->stream + paquete->buffer->size, &size, sizeof(int));
+		memcpy(paquete->buffer->stream + paquete->buffer->size + sizeof(int), estructura, size);
+	}
+
+	paquete->buffer->size += sizeof(int);
+	paquete->buffer->size += size;
+}
+
 t_buffer* recibiendo_paquete_personalizado(int socket_conexion){
 	t_buffer* unBuffer = malloc(sizeof(t_buffer));
 	int size;
@@ -346,4 +363,43 @@ char* recibir_string_del_buffer(t_buffer* buffer){
 	buffer->size = nuevo_size;
 
 	return string;
+}
+
+void* recibir_estructura_del_buffer(t_buffer* buffer){
+	if(buffer->size == 0){
+		printf("\n[ERROR] Al intentar extraer un contenido de un t_buffer vacio\n\n");
+		exit(EXIT_FAILURE);
+	}
+
+	if(buffer->size < 0){
+		printf("\n[ERROR] Esto es raro. El t_buffer contiene un size NEGATIVO \n\n");
+		exit(EXIT_FAILURE);
+	}
+
+	int size_estructura;
+	void* estructura;
+	memcpy(&size_estructura, buffer->stream, sizeof(int));
+	estructura = malloc(size_estructura);
+	memcpy(estructura, buffer->stream + sizeof(int), size_estructura);
+
+	int nuevo_size = buffer->size - sizeof(int) - size_estructura;
+	if(nuevo_size == 0){
+		free(buffer->stream);
+		buffer->stream = NULL;
+		buffer->size = 0;
+		return estructura;
+	}
+	if(nuevo_size < 0){
+		printf("\nBUFFER CON TAMAÑO NEGATIVO\n\n");
+		//free(estructura);
+		//return "";
+		exit(EXIT_FAILURE);
+	}
+	void* nuevo_estructura = malloc(nuevo_size);
+	memcpy(nuevo_estructura, buffer->stream + sizeof(int) + size_estructura, nuevo_size);
+	free(buffer->stream);
+	buffer->stream = nuevo_estructura;
+	buffer->size = nuevo_size;
+
+	return estructura;
 }

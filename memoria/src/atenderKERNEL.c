@@ -5,9 +5,6 @@ void iniciar_estructura_para_un_proceso_nuevo(t_buffer* buffer){
 	char* path = recibir_string_del_buffer(buffer);
 	int pid = recibir_int_del_buffer(buffer);
             
-            // char* path = "path_instrucciones.txt";
-            // int pid = 10;
-            
     log_info(log_memoria, "Proceso %d recibido, direccion del path: %s", pid, path);
 
 	//Crear un proceso

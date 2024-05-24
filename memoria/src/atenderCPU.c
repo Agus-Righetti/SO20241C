@@ -4,8 +4,6 @@
 void cpu_pide_instruccion(t_buffer* un_buffer){        //[PID, IP]
 	int pid = recibir_int_del_buffer(un_buffer);
 	int ip = recibir_int_del_buffer(un_buffer);
-				// int pid = 1;
-				// int ip = 10;
 
     //tengo que obtener proceso buscando con los PID
     t_proceso* un_proceso = obtener_proceso_por_id(pid);
@@ -50,18 +48,7 @@ void enviar_una_instruccion_a_cpu(t_instruccion_codigo* instruccion){
 
 	// EN REALIDAD DEBO ENVIAR UN BUFFER DE LA FORMA [MNEMONICO, PARAMETRO1, PARAMETRO2, PARAMETRO3, PARAMETRO4, PARAMETRO5]
     //                                                  CHAR*       CHAR*       CHAR*       CHAR*       CHAR*       CHAR* 
-	agregar_string_al_paquete_personalizado(paquete, instruccion->mnemonico);
-	if(instruccion->primero_parametro != NULL){
-		agregar_string_al_paquete_personalizado(paquete, instruccion->primero_parametro);
-		if(instruccion->segundo_parametro != NULL){
-			agregar_string_al_paquete_personalizado(paquete, instruccion->segundo_parametro);
-			if(instruccion->tercero_parametro != NULL){
-				agregar_string_al_paquete_personalizado(paquete, instruccion->tercero_parametro);
-				if(instruccion->cuarto_parametro != NULL)
-					agregar_string_al_paquete_personalizado(paquete, instruccion->cuarto_parametro);
-			}	
-		}
-	}
+	agregar_estructura_al_paquete_personalizado(paquete, instruccion, sizeof(instruccion));
 
 	enviar_paquete(paquete, socket_cliente_cpu);
 	eliminar_paquete(paquete);

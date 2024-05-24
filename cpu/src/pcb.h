@@ -34,7 +34,7 @@ typedef struct
     int tamanio;
 } t_instruccion;
 
-void recibir_pcb(t_list *lista, pcb *proceso); 
+void recibir_pcb(t_buffer* buffer); 
 void enviar_pcb(int conexion, pcb *proceso, op_code codigo);
 void recibir_instruccion(t_list *paquete, t_instruccion *proceso);
 
