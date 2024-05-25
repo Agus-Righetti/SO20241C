@@ -70,6 +70,7 @@ void atender_kernel()
             case PCB_KERNEL_A_CPU: // Execute
                 t_buffer* buffer = recibiendo_paquete_personalizado(socket_cliente_kernel);
                 recibir_pcb(buffer);
+                solicitar_instrucciones_a_memoria(socket_servidor_memoria);
                 free(buffer);
                 break;
             case EXIT:
@@ -129,7 +130,7 @@ void esperar_memoria(int conexion)
 
 void escuchar_memoria()
 {
-    solicitar_instrucciones_a_memoria(socket_cliente_cpu);
+    //solicitar_instrucciones_a_memoria(socket_cliente_cpu);
     esperar_memoria(socket_cliente_cpu);
 }
 

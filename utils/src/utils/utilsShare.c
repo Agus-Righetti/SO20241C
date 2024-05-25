@@ -19,9 +19,11 @@ int iniciar_servidor(char* puerto, t_log* logger)
 	socket_servidor = socket(servinfo->ai_family, servinfo->ai_socktype, servinfo->ai_protocol);
 
 	// Asociamos el socket a un puerto
+	//chequear que no sea -1
 	bind(socket_servidor, servinfo->ai_addr, servinfo->ai_addrlen);
 
 	// Escuchamos las conexiones entrantes
+	//chequear que no sea -1
 	listen(socket_servidor, SOMAXCONN);
 
 	freeaddrinfo(servinfo);
