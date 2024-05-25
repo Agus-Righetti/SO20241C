@@ -124,6 +124,7 @@ void enviar_proceso_a_cpu(){
 
     while(1){
 
+        sem_wait(&sem_puedo_mandar_a_cpu);//espero si ya hay otro proceso ejecutando en CPU
         sem_wait(&sem_cola_de_ready); //hago que haya algo dentro de la cola de ready
         // Saco el proceso siguiente de la cola de READY
         pthread_mutex_lock(&mutex_cola_de_ready);
@@ -310,6 +311,9 @@ void recibir_pcb(pcb* proceso) {
     paquete_estado->buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu);
 
     int flag_estado = recibir_int_del_buffer(paquete_estado->buffer);
+
+    sem_post(&sem_puedo_mandar_a_cpu);//aviso que ya volvio el proceso q estaba en CPU, puedo mandar otro
+
     
     // Libero el paquete
 

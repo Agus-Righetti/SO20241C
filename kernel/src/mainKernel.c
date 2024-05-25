@@ -25,6 +25,7 @@ int main(int argc, char* argv[])
     sem_init(&sem_cola_de_new,0,0);
     sem_init(&sem_cola_de_ready,0,0);
     sem_init(&destruir_hilo_interrupcion,0,0);
+    sem_init(&sem_puedo_mandar_a_cpu,0,1);
 
     // ************* Creo el log y el config del kernel para uso general *************
     log_kernel = log_create("kernel.log", "Kernel", 1, LOG_LEVEL_DEBUG);
@@ -66,6 +67,7 @@ int main(int argc, char* argv[])
     sem_destroy(&sem_cola_de_new);
     sem_destroy(&sem_multiprogramacion);
     sem_destroy(&destruir_hilo_interrupcion);
+    sem_destroy(&sem_puedo_mandar_a_cpu);
 
 
 

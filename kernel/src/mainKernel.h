@@ -30,5 +30,6 @@ sem_t sem_cola_de_ready;
 sem_t sem_cola_de_new;
 sem_t sem_multiprogramacion;
 sem_t destruir_hilo_interrupcion;
+sem_t sem_puedo_mandar_a_cpu;
 
 #endif
