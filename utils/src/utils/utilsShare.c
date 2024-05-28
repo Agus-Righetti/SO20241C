@@ -32,67 +32,6 @@ int iniciar_servidor(char* puerto, t_log* logger)
 	return socket_servidor;
 }
 
-int iniciar_servidor(char* puerto, t_log* logger)
-{
-	// Preparamos al receptor para recibir mensajes
-	int socket_servidor;
-	struct addrinfo hints, *servinfo, *p;
-	int rv;
-	int yes = 1;
-
-	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = AF_INET;
-	hints.ai_socktype = SOCK_STREAM;
-	hints.ai_flags = AI_PASSIVE;
-
-	if ((rv = getaddrinfo(NULL, puerto, &hints, &servinfo)) != 0) {
-		log_error(logger, "getaddrinfo: %s", gai_strerror(rv));
-		return -1;
-	}
-
-	// Bucle sobre todas las posibles direcciones y enlazar al primero posible
-	for (p = servinfo; p != NULL; p = p->ai_next) {
-		if ((socket_servidor = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1) {
-			log_error(logger, "socket: %s", strerror(errno));
-			continue;
-		}
-
-		// Configurar el socket para reutilizar la dirección
-		if (setsockopt(socket_servidor, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1) {
-			log_error(logger, "setsockopt: %s", strerror(errno));
-			close(socket_servidor);
-			freeaddrinfo(servinfo);
-			return -1;
-		}
-
-		if (bind(socket_servidor, p->ai_addr, p->ai_addrlen) == -1) {
-			log_error(logger, "bind: %s", strerror(errno));
-			close(socket_servidor);
-			continue;
-		}
-
-		break; // Si llegamos aquí, bind tuvo éxito
-	}
-
-	if (p == NULL) {
-		log_error(logger, "No se pudo bindear a ninguna dirección");
-		freeaddrinfo(servinfo);
-		return -1;
-	}
-
-	freeaddrinfo(servinfo);
-
-	if (listen(socket_servidor, SOMAXCONN) == -1) {
-		log_error(logger, "listen: %s", strerror(errno));
-		close(socket_servidor);
-		return -1;
-	}
-
-	log_trace(logger, "Listo para escuchar a mi cliente");
-
-	return socket_servidor;
-}
-
 int esperar_cliente(int socket_servidor, t_log* logger)
 {
 	// Una vez que se conecta el cliente

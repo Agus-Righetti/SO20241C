@@ -101,11 +101,8 @@ void interpretar_instruccion_de_memoria(buffer)
         exit(1);
     }
 
-    // t_instruccion_codigo instruccion_recibida = recibir_estructura_del buffer(buffer);
-    // parte[0] = instruccion_recibida->mnemonico;
-
-    // iniciar_diccionario_instrucciones();
-    // iniciar_diccionario_registros(&proceso->registros);
+    iniciar_diccionario_instrucciones();
+    iniciar_diccionario_registros(&proceso->registros);
     
     // [MOV_IN EAX EBX] -> UNA instruccion la recibimos como una lista de string
     char** parte = string_split((char*)list_get(proceso->instrucciones, proceso->program_counter), " "); // Partes de la instruccion actual
