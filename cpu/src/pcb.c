@@ -3,7 +3,6 @@
 void recibir_pcb(t_buffer* buffer)
 {
     pcb* pcb_recibido = recibir_estructura_del_buffer(buffer);
-    solicitar_instrucciones_a_memoria(socket_servidor_memoria, pcb_recibido); // Ver si va aca
 
     // Acordarse de sacarlos!!!!!!
     log_info(log_cpu, "El PID es: %d", pcb_recibido->pid);
@@ -356,7 +355,7 @@ void error_exit(char** parte)
 	free(proceso);
 }
 
-void solicitar_instrucciones_a_memoria(int conexion_cpu_memoria, pcb* pcb_recibido) 
+void solicitar_instrucciones_a_memoria(int socket_cliente_cpu, pcb* pcb_recibido) 
 {   
     // ¿no tendriamos que pasarle por parametro el pcb del proceso?
 
@@ -369,8 +368,11 @@ void solicitar_instrucciones_a_memoria(int conexion_cpu_memoria, pcb* pcb_recibi
     agregar_int_al_paquete_personalizado(paquete, pcb_recibido->program_counter);
 
     // Envio el paquete a memoria
-    enviar_paquete(paquete, conexion_cpu_memoria);
+    enviar_paquete(paquete, socket_cliente_cpu);
     eliminar_paquete(paquete);
+    
+    // Acordarse de sacarlo!!!!!!
+    log_info(log_cpu, "Le pedi instruccion a Memoria");
 }
 
 // 3er checkpoint
