@@ -17,10 +17,11 @@ int main(int argc, char* argv[])
 	int socket_cliente_cpu = conexion_a_memoria();
 
 	// Server para recibir a Kernel ---------------------------------------------------------------------------------------------------
-    
+	
 	escuchar_kernel();
 
 	// Instrucciones con memoria
+	
 	escuchar_memoria();
    
 	// terminar_programa();

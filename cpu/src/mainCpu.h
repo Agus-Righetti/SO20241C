@@ -18,10 +18,10 @@ int socket_cliente_kernel;
 int socket_cliente_cpu;
 int socket_interrupt_kernel;
 
-
 pcb* proceso;
 t_dictionary* instrucciones;
 t_dictionary* registros;
+pcb* pcb_recibido; 
 
 void terminar_programa();
 

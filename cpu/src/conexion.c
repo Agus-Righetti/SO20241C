@@ -3,7 +3,8 @@
 // MEMORIA es server de CPU
 // CPU es cliente de MEMORIA
 
-void atender_memoria() {
+void atender_memoria() 
+{
     t_list* lista;
     t_instruccion* instruccion;
 
@@ -70,7 +71,7 @@ void atender_kernel()
             case PCB_KERNEL_A_CPU: // Execute
                 t_buffer* buffer = recibiendo_paquete_personalizado(socket_cliente_kernel);
                 recibir_pcb(buffer);
-                solicitar_instrucciones_a_memoria(socket_servidor_memoria);
+                // solicitar_instrucciones_a_memoria(socket_servidor_memoria, buffer);
                 free(buffer);
                 break;
             case EXIT:

@@ -3,10 +3,11 @@
 void recibir_pcb(t_buffer* buffer)
 {
     pcb* pcb_recibido = recibir_estructura_del_buffer(buffer);
+    solicitar_instrucciones_a_memoria(socket_servidor_memoria, pcb_recibido); // Ver si va aca
 
+    // Acordarse de sacarlos!!!!!!
     log_info(log_cpu, "El PID es: %d", pcb_recibido->pid);
     log_info(log_cpu, "El PC es: %d", pcb_recibido->program_counter);
-    // log_info(log_cpu, "El registro AX es: %d", pcb_recibido->registros->ax);
 }
 
 void enviar_pcb(int conexion, pcb *proceso, op_code codigo)
@@ -358,13 +359,17 @@ void error_exit(char** parte)
 	free(proceso);
 }
 
-void solicitar_instrucciones_a_memoria(int conexion_cpu_memoria) {   // ¿no tendriamos que pasarle por parametro el pcb del proceso?
+void solicitar_instrucciones_a_memoria(int conexion_cpu_memoria, pcb* pcb_recibido) 
+{   
+    // ¿no tendriamos que pasarle por parametro el pcb del proceso?
+
     // Creo el paquete
     t_paquete* paquete = crear_paquete_personalizado(CPU_PIDE_INSTRUCCION_A_MEMORIA); 
-    log_info(log_cpu, "Tengo este pid de proceso %d", proceso->pid);
+    log_info(log_cpu, "Tengo este pid de proceso %d", pcb_recibido->pid);
+    
     // Agregamos el pc y el pid al paquete
-    agregar_int_al_paquete_personalizado(paquete, proceso->pid); 
-    agregar_int_al_paquete_personalizado(paquete, proceso->program_counter);
+    agregar_int_al_paquete_personalizado(paquete, pcb_recibido->pid); 
+    agregar_int_al_paquete_personalizado(paquete, pcb_recibido->program_counter);
 
     // Envio el paquete a memoria
     enviar_paquete(paquete, conexion_cpu_memoria);
