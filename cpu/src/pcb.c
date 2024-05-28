@@ -264,8 +264,8 @@ void instruccion_exit(char** parte)
 {
 	log_info(log_cpu, "PID: %d - Ejecutando: %s", proceso->pid, parte[0]);
 	proceso->program_counter++;
-	enviar_pcb(conexion_cpu_kernel, proceso, EXIT);
-    enviar_flag(conexion_cpu_kernel, 1);
+	enviar_pcb(socket_servidor_cpu, proceso, EXIT);
+    enviar_flag(socket_servidor_cpu, 1);
 	list_destroy_and_destroy_elements(proceso->instrucciones, free);
 	free(proceso);
 }
@@ -320,8 +320,8 @@ void instruccion_wait(char** parte)
 	proceso->program_counter++;
     
     // Indico al kernel que el proceso está esperando algo
-	enviar_pcb(conexion_cpu_kernel, proceso, WAIT);
-    enviar_flag(conexion_cpu_kernel, 0);
+	enviar_pcb(socket_servidor_cpu, proceso, WAIT);
+    enviar_flag(socket_servidor_cpu, 0);
 	
     list_destroy_and_destroy_elements(proceso->instrucciones, free);
 	free(proceso);
@@ -340,8 +340,8 @@ void instruccion_signal(char **parte)
 	log_info(log_cpu, "PID: %d - Ejecutando: %s - %s", proceso->pid, parte[0], parte[1]);
 
     // Enviar solicitud de SIGNAL al kernel
-    enviar_pcb(conexion_cpu_kernel, proceso, SIGNAL);
-    enviar_flag(conexion_cpu_kernel, 0);
+    enviar_pcb(socket_servidor_cpu, proceso, SIGNAL);
+    enviar_flag(socket_servidor_cpu, 0);
 
     list_destroy_and_destroy_elements(proceso->instrucciones, free);
     free(proceso);
@@ -349,8 +349,8 @@ void instruccion_signal(char **parte)
 
 void error_exit(char** parte) 
 {
-	enviar_pcb(conexion_cpu_kernel, proceso, CODIGO);
-    enviar_flag(conexion_cpu_kernel, 1); 
+	enviar_pcb(socket_servidor_cpu, proceso, CODIGO);
+    enviar_flag(socket_servidor_cpu, 1); 
 	list_destroy_and_destroy_elements(proceso->instrucciones, free);
 	free(proceso);
 }
@@ -361,7 +361,10 @@ void solicitar_instrucciones_a_memoria(int socket_cliente_cpu, pcb* pcb_recibido
 
     // Creo el paquete
     t_paquete* paquete = crear_paquete_personalizado(CPU_PIDE_INSTRUCCION_A_MEMORIA); 
+
+    // pcb* pcb_recibido = recibir_estructura_del_buffer(buffer);    
     log_info(log_cpu, "Tengo este pid de proceso %d", pcb_recibido->pid);
+
     
     // Agregamos el pc y el pid al paquete
     agregar_int_al_paquete_personalizado(paquete, pcb_recibido->pid); 

@@ -11,7 +11,6 @@
 t_log* log_cpu;
 cpu_config* config_cpu;
 
-int conexion_cpu_kernel; 
 int socket_servidor_memoria; 
 int socket_servidor_cpu;
 int socket_cliente_kernel;

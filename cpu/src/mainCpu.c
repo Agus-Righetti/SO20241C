@@ -20,6 +20,8 @@ int main(int argc, char* argv[])
 	
 	escuchar_kernel();
 
+	log_info(log_cpu, "El PID es: %d", pcb_recibido->pid);
+
 	// Instrucciones con memoria
 	
 	escuchar_memoria();

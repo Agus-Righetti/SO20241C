@@ -21,7 +21,6 @@ extern cpu_config* config_cpu;
 
 extern int socket_servidor_cpu;
 extern int socket_cliente_kernel;
-extern int conexion_cpu_kernel;
 extern int socket_servidor_memoria;
 extern int socket_cliente_cpu;
 extern int socket_interrupt_kernel;
