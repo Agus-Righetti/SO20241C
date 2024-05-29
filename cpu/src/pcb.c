@@ -2,11 +2,47 @@
 
 void recibir_pcb(t_buffer* buffer)
 {
-    pcb* pcb_recibido = recibir_estructura_del_buffer(buffer);
-
+    pcb* pcb_recibido = recibir_pcb_del_buffer(buffer);
+    
     // Acordarse de sacarlos!!!!!!
     log_info(log_cpu, "El PID es: %d", pcb_recibido->pid);
     log_info(log_cpu, "El PC es: %d", pcb_recibido->program_counter);
+
+    free(pcb_recibido);
+}
+
+pcb* recibir_pcb_del_buffer(t_buffer* buffer) 
+{
+    if (buffer->size <= sizeof(int)) 
+    {
+        printf("\n[ERROR] El buffer está vacío o tiene un tamaño incorrecto\n\n");
+        exit(EXIT_FAILURE);
+    }
+
+    int size_estructura;
+    void* estructura;
+
+    // Copia el tamaño de la estructura desde el buffer
+    memcpy(&size_estructura, buffer->stream, sizeof(int));
+
+    // Verifica si el tamaño de la estructura en el buffer es válido
+    if (size_estructura <= 0 || size_estructura > buffer->size - sizeof(int)) 
+    {
+        printf("\n[ERROR] Tamaño de estructura inválido en el buffer\n\n");
+        exit(EXIT_FAILURE);
+    }
+
+    // Reserva memoria para la estructura
+    estructura = malloc(size_estructura);
+
+    // Copia la estructura desde el buffer
+    memcpy(estructura, buffer->stream + sizeof(int), size_estructura);
+
+    // Actualiza el tamaño y el stream del buffer
+    buffer->size -= sizeof(int) + size_estructura;
+    buffer->stream += sizeof(int) + size_estructura;
+
+    return (pcb*)estructura;
 }
 
 void enviar_pcb(int conexion, pcb *proceso, op_code codigo)

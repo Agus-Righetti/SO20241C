@@ -30,7 +30,8 @@ extern t_dictionary* instrucciones;
 extern t_dictionary* registros;
 extern pcb* pcb_recibido;
 
-typedef struct {
+typedef struct 
+{
     uint32_t pid;
     uint32_t pagina;
     uint32_t marco;
