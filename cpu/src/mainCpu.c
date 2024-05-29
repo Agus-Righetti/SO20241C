@@ -26,19 +26,20 @@ int main(int argc, char* argv[])
 	
 	escuchar_memoria();
    
-	// terminar_programa();
-
+	terminar_programa();
+	liberar_conexion(socket_cliente_cpu);
 	return EXIT_SUCCESS;
 }
 
-// void terminar_programa()
-// {
-// 	if (log_cpu != NULL) 
-//     {
-// 		log_destroy(log_cpu);
-// 	}
-// 	if (config_cpu != NULL) 
-//     {
-// 		config_destroy(config_cpu);
-// 	}
-// }
+void terminar_programa()
+{
+	if (log_cpu != NULL) 
+    {
+		log_destroy(log_cpu);
+	}
+	if (config_cpu != NULL) 
+    {
+		config_destroy(config_cpu);
+	}
+}
+

@@ -42,7 +42,7 @@ void iniciar_diccionario_instrucciones(void);
 void iniciar_diccionario_registros(registros_cpu* registro);
 void destruir_diccionarios(void); 
 void interpretar_instruccion_de_memoria(buffer);
-
+pcb* recibir_pcb_del_buffer(t_buffer* buffer); 
 
 void instruccion_set(char **parte);
 void instruccion_sum(char **parte);
@@ -52,7 +52,6 @@ void instruccion_io_gen_sleep(char **parte);
 void instruccion_exit(char** parsed); 
 void instruccion_wait(char** parte);
 void instruccion_signal(char **parte);
-pcb* recibir_pcb_del_buffer(t_buffer* buffer);
 
 void error_exit(char** parte);
 void solicitar_instrucciones_a_memoria(int socket_servidor_memoria, pcb* pcb_recibido); 

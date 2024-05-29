@@ -69,7 +69,9 @@ int main(int argc, char* argv[])
     sem_destroy(&destruir_hilo_interrupcion);
     sem_destroy(&sem_puedo_mandar_a_cpu);
 
-
+    liberar_conexion(conexion_kernel_cpu);
+    liberar_conexion(interrupcion_kernel_cpu);
+    liberar_conexion(conexion_kernel_memoria);
 
 	return EXIT_SUCCESS;
 }

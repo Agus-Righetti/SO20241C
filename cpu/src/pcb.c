@@ -2,6 +2,10 @@
 
 void recibir_pcb(t_buffer* buffer)
 {
+    // Acordarse de sacarlos!!!!!!
+    log_info(log_cpu, "El PID es: %d", proceso->pid);
+    log_info(log_cpu, "El PC es: %d", proceso->program_counter);
+
     pcb* pcb_recibido = recibir_pcb_del_buffer(buffer);
     
     // Acordarse de sacarlos!!!!!!
