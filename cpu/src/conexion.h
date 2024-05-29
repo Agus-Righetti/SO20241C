@@ -8,5 +8,7 @@
 void escuchar_kernel();
 void escuchar_memoria();
 void atender_kernel();
+void atender_memoria();
+void atender_interrupcion();
 
 #endif

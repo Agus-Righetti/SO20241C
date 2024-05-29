@@ -20,13 +20,7 @@ int main(int argc, char* argv[])
 	
 	escuchar_kernel();
 
-	// Crear un buffer y recibir un pcb
-    t_buffer buffer;
-    // Asigna un valor adecuado al buffer
-    // ...
-    pcb* pcb_recibido = recibir_pcb_del_buffer(&buffer);
-
-	printf("El PID es: %d\n", pcb_recibido->pid);
+	// printf("El PID es: %d\n", pcb_recibido->pid);
 
 	// Instrucciones con memoria
 	

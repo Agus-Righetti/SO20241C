@@ -41,7 +41,8 @@ void recibir_instruccion(t_list *paquete, t_instruccion *proceso);
 void iniciar_diccionario_instrucciones(void);
 void iniciar_diccionario_registros(registros_cpu* registro);
 void destruir_diccionarios(void); 
-void interpretar_instrucciones(void);
+void interpretar_instruccion_de_memoria(buffer);
+
 
 void instruccion_set(char **parte);
 void instruccion_sum(char **parte);

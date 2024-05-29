@@ -6,7 +6,7 @@
 #include "cliente.h"
 #include "servidor.h"
 #include "pcb.h"
-//#include "conexion.h"
+#include "conexion.h"
 
 t_log* log_cpu;
 cpu_config* config_cpu;
