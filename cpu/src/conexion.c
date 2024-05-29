@@ -53,8 +53,8 @@ void atender_kernel()
 {
    	t_list* lista;
 
-    // while(1)
-    // { 
+    while(1)
+    { 
         int cod_op_kernel = recibir_operacion(socket_cliente_kernel);
 
         switch (cod_op_kernel) 
@@ -71,7 +71,7 @@ void atender_kernel()
             case PCB_KERNEL_A_CPU: // Execute
                 t_buffer* buffer = recibiendo_paquete_personalizado(socket_cliente_kernel);
                 recibir_pcb(buffer);
-                // solicitar_instrucciones_a_memoria(socket_servidor_memoria, pcb_recibido);
+                solicitar_instrucciones_a_memoria(socket_servidor_memoria, pcb_recibido);
                 free(buffer);
                 break;
             case EXIT:
@@ -86,7 +86,7 @@ void atender_kernel()
                 log_warning(log_cpu, "Operacion desconocida. No quieras meter la pata");
                 break;
         }
-    // }
+    }
 }
 
 void atender_interrupcion()

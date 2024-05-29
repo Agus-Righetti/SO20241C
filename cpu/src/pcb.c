@@ -13,10 +13,10 @@ void recibir_pcb(t_buffer* buffer)
 
 pcb* recibir_pcb_del_buffer(t_buffer* buffer) 
 {
-    if (buffer->size <= sizeof(int)) 
+    if (buffer == NULL || buffer->size <= sizeof(int)) 
     {
-        printf("\n[ERROR] El buffer está vacío o tiene un tamaño incorrecto\n\n");
-        exit(EXIT_FAILURE);
+        log_error(log_cpu, "El buffer está vacío o tiene un tamaño incorrecto al recibir el PCB");
+        return NULL;
     }
 
     int size_estructura;
@@ -28,12 +28,17 @@ pcb* recibir_pcb_del_buffer(t_buffer* buffer)
     // Verifica si el tamaño de la estructura en el buffer es válido
     if (size_estructura <= 0 || size_estructura > buffer->size - sizeof(int)) 
     {
-        printf("\n[ERROR] Tamaño de estructura inválido en el buffer\n\n");
-        exit(EXIT_FAILURE);
+        log_error(log_cpu, "Tamaño de estructura inválido en el buffer al recibir el PCB");
+        return NULL;
     }
 
     // Reserva memoria para la estructura
     estructura = malloc(size_estructura);
+    if (estructura == NULL) 
+    {
+        log_error(log_cpu, "No se pudo reservar memoria para el PCB al recibir el PCB");
+        return NULL;
+    }
 
     // Copia la estructura desde el buffer
     memcpy(estructura, buffer->stream + sizeof(int), size_estructura);
@@ -393,13 +398,17 @@ void error_exit(char** parte)
 
 void solicitar_instrucciones_a_memoria(int socket_cliente_cpu, pcb* pcb_recibido) 
 {   
-    // ¿no tendriamos que pasarle por parametro el pcb del proceso?
+    if (pcb_recibido == NULL) 
+    {
+        log_error(log_cpu, "No se pudo reservar memoria para el PCB al recibir el PCB");
+        return NULL;
+    }
 
     // Creo el paquete
     t_paquete* paquete = crear_paquete_personalizado(CPU_PIDE_INSTRUCCION_A_MEMORIA); 
 
     // pcb* pcb_recibido = recibir_estructura_del_buffer(buffer);    
-    log_info(log_cpu, "Tengo este pid de proceso %d", pcb_recibido->pid);
+    // log_info(log_cpu, "Tengo este pid de proceso %d", pcb_recibido->pid);
 
     
     // Agregamos el pc y el pid al paquete

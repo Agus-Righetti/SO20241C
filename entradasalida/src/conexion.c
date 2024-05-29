@@ -19,15 +19,15 @@ void atender_kernel()
 
         switch(cod_op_io)
         {
-            case GENERICA:
-                leer_configuracion_generica(&configuracion);
-                recibir_operacion_generica_de_kernel(GENERICA, cod_op_io);
-                liberar_configuracion(&configuracion);
-                break;
-            case STDIN:
-                leer_consola(log_io);
-                leer_configuracion_stdin(configuracion);
-                break;
+            // case GENERICA:
+            //     leer_configuracion_generica(&configuracion);
+            //     recibir_operacion_generica_de_kernel(GENERICA, cod_op_io);
+            //     liberar_configuracion(&configuracion);
+            //     break;
+            // case STDIN:
+            //     leer_consola(log_io);
+            //     leer_configuracion_stdin(configuracion);
+            //     break;
             // case STDOUT:
             //     leer_configuracion_stdout(configuracion);
             //     break;
