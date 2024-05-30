@@ -16,15 +16,18 @@ int main(int argc, char* argv[])
     pthread_mutex_init(&mutex_cola_de_execute,NULL);
     pthread_mutex_init(&mutex_cola_de_exit,NULL);
     pthread_mutex_init(&mutex_cola_de_blocked,NULL);
+    pthread_mutex_init(&mutex_cola_prioridad_vrr,NULL);
     cola_de_new = queue_create();
     cola_de_ready = queue_create();
     cola_de_execute = queue_create();
     cola_de_exit = queue_create();
     cola_de_blocked = queue_create();
+    cola_prioridad_vrr = queue_create();
 
     sem_init(&sem_cola_de_new,0,0);
     sem_init(&sem_cola_de_ready,0,0);
     sem_init(&destruir_hilo_interrupcion,0,0);
+    sem_init(&sem_cola_prioridad_vrr,0,0);
     sem_init(&sem_puedo_mandar_a_cpu,0,1);
 
     // ************* Creo el log y el config del kernel para uso general *************
@@ -65,11 +68,13 @@ int main(int argc, char* argv[])
     pthread_mutex_destroy(&mutex_cola_de_exit);
     pthread_mutex_destroy(&mutex_cola_de_blocked);
     pthread_mutex_destroy(&mutex_cola_de_execute);
+    pthread_mutex_destroy(&mutex_cola_prioridad_vrr);
     sem_destroy(&sem_cola_de_ready);
     sem_destroy(&sem_cola_de_new);
     sem_destroy(&sem_multiprogramacion);
     sem_destroy(&destruir_hilo_interrupcion);
     sem_destroy(&sem_puedo_mandar_a_cpu);
+    sem_destroy(&sem_cola_prioridad_vrr);
 
 
 

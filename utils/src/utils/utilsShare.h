@@ -18,6 +18,7 @@
 #include<pthread.h> // Biblioteca para hilos
 #include<semaphore.h> // Biblioteca para semaforos
 #include<unistd.h> // Para la función sleep()
+#include <time.h> //para usar clock()
 
 // ************* ESTRUCTURAS GLOBALES *************
 // ************* CODIGOS DE OPERACION *************

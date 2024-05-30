@@ -76,7 +76,7 @@ void iniciar_proceso(char* path ){
     nuevo_pcb->program_counter = 0;
     nuevo_pcb->direccion_instrucciones = path; 
     nuevo_pcb->pid = pid_contador;
-    nuevo_pcb->quantum = 0;
+    nuevo_pcb->quantum = config_kernel->quantum; //al iniciar el proceso tiene todo su quantum disponible
     nuevo_pcb->registros = malloc(sizeof(registros_cpu)); //HAY QUE LIBERARLO
     nuevo_pcb->registros->ax = 0;
     nuevo_pcb->registros->bx = 0;
@@ -113,7 +113,7 @@ void iniciar_proceso(char* path ){
 
         // Ingreso el proceso a la cola de READY - Tambien semaforo porque es seccion critica 
         pthread_mutex_lock(&mutex_cola_de_ready);
-        queue_push(cola_de_ready, nuevo_pcb);
+        queue_push(&cola_de_ready,nuevo_pcb);
         pthread_mutex_unlock(&mutex_cola_de_ready);
         sem_post(&sem_cola_de_ready); //agrego 1 al semaforo contador
         
@@ -123,7 +123,7 @@ void iniciar_proceso(char* path ){
     }else {
         // Si no hay espacio para un nuevo proceso en ready lo sumo a la cola de NEW - Semaforo SC
         pthread_mutex_lock(&mutex_cola_de_new);
-        queue_push(cola_de_new, nuevo_pcb);
+        queue_push(&cola_de_new,nuevo_pcb);
         pthread_mutex_unlock(&mutex_cola_de_new);
         sem_post(&sem_cola_de_new);
     }
@@ -133,15 +133,26 @@ void iniciar_proceso(char* path ){
 // ************* Funcion para enviar un proceso a cpu *************
 // Es llamada por un hilo especifico para esto
 void enviar_proceso_a_cpu(){
-
+    //en esta funcion tengo que hacer cambios para vrr, tengo que primero fijarme si hay algo en la cola de prioridad, si hay mando ese, sino mando de la cola normal
     while(1){
 
         sem_wait(&sem_puedo_mandar_a_cpu);//espero si ya hay otro proceso ejecutando en CPU
-        sem_wait(&sem_cola_de_ready); //hago que haya algo dentro de la cola de ready
-        // Saco el proceso siguiente de la cola de READY
-        pthread_mutex_lock(&mutex_cola_de_ready);
-        pcb* proceso_seleccionado = queue_pop(cola_de_ready);
-        pthread_mutex_unlock(&mutex_cola_de_ready);
+        pcb* proceso_seleccionado;
+        if((strcmp(config_kernel->algoritmo_planificacion, "VRR") == 0) && (queue_is_empty(&cola_prioridad_vrr) == false))
+        {
+            sem_wait(&sem_cola_prioridad_vrr); //hago que haya algo dentro de la cola de ready
+            // Saco el proceso siguiente de la cola de READY
+            pthread_mutex_lock(&mutex_cola_prioridad_vrr);
+            proceso_seleccionado = queue_pop(&cola_prioridad_vrr);
+            pthread_mutex_unlock(&mutex_cola_prioridad_vrr);
+        }else{
+            sem_wait(&sem_cola_de_ready); //hago que haya algo dentro de la cola de ready
+            // Saco el proceso siguiente de la cola de READY
+            pthread_mutex_lock(&mutex_cola_de_ready);
+            proceso_seleccionado = queue_pop(&cola_de_ready);
+            pthread_mutex_unlock(&mutex_cola_de_ready);
+        }
+        
 
         //Verifico que el estado del proceso sea READY
         if (proceso_seleccionado->estado_del_proceso == READY) 
@@ -206,16 +217,24 @@ void crear_hilo_proceso(pcb* proceso){
         sem_wait(&destruir_hilo_interrupcion);
         pthread_cancel(hilo_interrupcion);
 
-    }
+    }else if(strcmp(config_kernel->algoritmo_planificacion, "VRR") == 0)
+    {
+        //Para hacer el VRR necesitamos una cola de prioridad, los procesos van a ir ahi si vuelven con quantum disponible, siempre antes de mandar un proceso a execute vamos a tener q chequear esa cola antes, ademas tenemos q modificar la variable QUANTUM dentro del proceso, ese sera el quantum disponible para ejecutar, vamos a por ello!!!
+        pthread_create(&hilo_recibe_proceso, NULL, (void*)recibir_pcb_hilo,(void*)&args_hilo); 
+        pthread_create(&hilo_interrupcion, NULL, (void*)algoritmo_round_robin,(void*)&args_hilo); 
+
+    }else log_error(log_kernel, "Estan mal las configs capo");
+    
 }
 
 void algoritmo_round_robin (void* arg){
 
     //aca vamos a armar dos hilos, uno que maneje solo cuando mandarle
     //la interrupcion y otro que siemp este esperando a q cpu le mande el pcb
-    thread_args_procesos_kernel* args = (thread_args_procesos_kernel*)arg;
+    thread_args_procesos_kernel*args = (thread_args_procesos_kernel*)arg;
+    pcb* proceso_actual = args->proceso;
 
-    usleep(*config_kernel->quantum);
+    usleep(proceso_actual->quantum); //aca usamos el quantum del proceso, asi podemos reutilziar la funcion para VRR
     desalojar_proceso_hilo(args);
     
     return;
@@ -228,16 +247,35 @@ void accionar_segun_estado(pcb* proceso, int flag)
     if(flag == 1){
         pasar_proceso_a_exit(proceso);
     }else if (flag ==0)
-    {
-        //lo mando a la cola de ready
+    { 
         pthread_mutex_lock(&proceso->mutex_pcb);
         proceso->estado_del_proceso = READY; 
         pthread_mutex_unlock(&proceso->mutex_pcb);
-        
-        pthread_mutex_lock(&mutex_cola_de_ready);
-        queue_push(cola_de_ready,proceso);
-        pthread_mutex_unlock(&mutex_cola_de_ready);
-        sem_post(&sem_cola_de_ready);
+
+        if(strcmp(config_kernel->algoritmo_planificacion, "VRR") == 0)
+        {
+            if(proceso->quantum > 0)
+            {
+                //si aun le queda quantum disponible se ira a la cola de prioridad
+                pthread_mutex_lock(&mutex_cola_prioridad_vrr);
+                queue_push(&cola_prioridad_vrr,proceso);
+                pthread_mutex_unlock(&mutex_cola_prioridad_vrr);
+                sem_post(&sem_cola_prioridad_vrr);
+
+            }else{
+                //no le queda quantum, ira a ready normal
+                proceso->quantum = config_kernel->quantum; // le vuelvo a asignar todo el quantum
+                pthread_mutex_lock(&mutex_cola_de_ready);
+                queue_push(&cola_de_ready,proceso);
+                pthread_mutex_unlock(&mutex_cola_de_ready);
+                sem_post(&sem_cola_de_ready);
+            }
+        }else{ // no estoy en vrr, siempre madno a cola de ready normal
+            pthread_mutex_lock(&mutex_cola_de_ready);
+            queue_push(&cola_de_ready,proceso);
+            pthread_mutex_unlock(&mutex_cola_de_ready);
+            sem_post(&sem_cola_de_ready);
+        };
 
         // Hago un log obligatorio
         log_info(log_kernel, "PID: %d - Estado Anterior: EXECUTE - Estado Actual: READY", proceso->pid);
@@ -255,9 +293,6 @@ void pasar_proceso_a_exit(pcb* proceso)
 
     log_info(log_kernel, "PID: %d - Estado Anterior: EXECUTE - Estado Actual: EXIT", proceso->pid);
     //aca lo tengo q cargar a la cola de exit
-    pthread_mutex_lock(&cola_de_exit);
-    queue_push(proceso, cola_de_exit);
-    pthread_mutex_unlock(&cola_de_exit);
 
     free(proceso->registros);
     free(proceso); 
@@ -292,15 +327,26 @@ void desalojar_proceso_hilo(void* arg){
 // ************* Funcion para recibir el pcb desde CPU si termina su ejecucion sin interrupcion *************
 void recibir_pcb(pcb* proceso) {
     
-    // Creo un nuevo paquete
+   
+    //inicio un reloj, va a contar cuanto tiempo estuvo esperando hasta q llegue el paquete (sirve para vrr)
+    clock_t inicio, fin;
+    double tiempo_que_tardo_en_recibir;
 
+    inicio = clock(); // en este momento arranco a esperar
+
+    
+    // Creo un nuevo paquete
     t_paquete* paquete = crear_paquete_personalizado(PCB_CPU_A_KERNEL);
 
     // Recibo el paquete a través del socket y los guardo en una lista
 
     paquete->buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu);
 
-    if(strcmp(config_kernel->algoritmo_planificacion, "RR") == 0)
+
+    fin = clock(); // en este momento termino de esperar
+    tiempo_que_tardo_en_recibir = (double)(fin - inicio) * 1000.0 / CLOCKS_PER_SEC;
+
+    if(strcmp(config_kernel->algoritmo_planificacion, "RR") == 0 || strcmp(config_kernel->algoritmo_planificacion, "VRR") == 0)
     {
         //VER SI FUNCA
         sem_post(&destruir_hilo_interrupcion);
@@ -308,6 +354,11 @@ void recibir_pcb(pcb* proceso) {
 
     proceso = recibir_estructura_del_buffer(paquete->buffer);
     
+    if(strcmp(config_kernel->algoritmo_planificacion, "VRR") == 0)
+    {
+        proceso->quantum = proceso->quantum - tiempo_que_tardo_en_recibir; //le pongo el quantum que le queda disponible, solo si estoy en vrr que es cuando me importa
+    };
+
     log_info(log_kernel, "Recibi PID: %d", proceso->pid);
     
     eliminar_paquete(paquete);
@@ -350,7 +401,7 @@ void pasar_procesos_de_new_a_ready()
     sem_wait(&cola_de_new);
     sem_wait(&sem_multiprogramacion);
     pthread_mutex_lock(&mutex_cola_de_new);
-    proceso_a_mandar_a_ready = queue_pop(cola_de_new);
+    proceso_a_mandar_a_ready = queue_pop(&cola_de_new);
     pthread_mutex_unlock(&mutex_cola_de_new);
 
     pthread_mutex_lock(&proceso_a_mandar_a_ready->mutex_pcb);
@@ -359,7 +410,7 @@ void pasar_procesos_de_new_a_ready()
 
     // Ingreso el proceso a la cola de READY - Tambien semaforo porque es seccion critica 
     pthread_mutex_lock(&mutex_cola_de_ready);
-    queue_push(cola_de_ready, proceso_a_mandar_a_ready);
+    queue_push(&cola_de_ready,proceso_a_mandar_a_ready);
     pthread_mutex_unlock(&mutex_cola_de_ready);
     sem_post(&sem_cola_de_ready); //agrego 1 al semaforo contador
 
