@@ -49,6 +49,8 @@ int main(int argc, char* argv[])
     //*************HILO GESTOR DE LOS PROCESOS A ENVIAR A CPU*************
     pthread_t thread_enviar_procesos_cpu = hilo_enviar_procesos_cpu();
 
+    pthread_t thread_pasar_procesos_new_a_ready = hilo_pasar_de_new_a_ready();
+
     pthread_join(thread_consola, NULL);
 
 

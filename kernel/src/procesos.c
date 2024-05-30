@@ -23,6 +23,18 @@ pthread_t hilo_enviar_procesos_cpu (){
     return thread_enviar_procesos_cpu;
 }
 
+pthread_t hilo_pasar_de_new_a_ready() (){ 
+
+    // Creo el hilo de consola
+    pthread_t thread_pasar_de_new_a_ready;
+            
+    // ********* CREO EL HILO SERVER PARA RECIBIR A CPU *********
+    pthread_create(&thread_pasar_de_new_a_ready, NULL, (void*)pasar_procesos_de_new_a_ready, NULL);
+
+    return thread_pasar_de_new_a_ready;
+}
+
+
 // ************* Funcion que utiliza un hilo para mantener la consola siempre abierta *************
 void leer_consola(void* arg){
     
@@ -113,7 +125,7 @@ void iniciar_proceso(char* path ){
         pthread_mutex_lock(&mutex_cola_de_new);
         queue_push(cola_de_new, nuevo_pcb);
         pthread_mutex_unlock(&mutex_cola_de_new);
-        sem_post(&sem_cola_de_new); //agrego 1 al semaforo contador
+        sem_post(&sem_cola_de_new);
     }
 }
 
@@ -185,7 +197,6 @@ void crear_hilo_proceso(pcb* proceso){
         pthread_create(&hilo_recibe_proceso, NULL, (void*)recibir_pcb_hilo,(void*)&args_hilo); 
         pthread_join(hilo_recibe_proceso, NULL);
     }
-    // Si el algoritmo es RR, lo recibo por una interrupcion contra CPU
     else if(strcmp(config_kernel->algoritmo_planificacion, "RR") == 0)
     {
         pthread_create(&hilo_recibe_proceso, NULL, (void*)recibir_pcb_hilo,(void*)&args_hilo); 
@@ -248,9 +259,8 @@ void pasar_proceso_a_exit(pcb* proceso)
     queue_push(proceso, cola_de_exit);
     pthread_mutex_unlock(&cola_de_exit);
 
-    //estos dos free tendrian q hacerse cuando se termina el programa (todo el programa)
-    //free(proceso->registros);
-    //free(proceso); 
+    free(proceso->registros);
+    free(proceso); 
 }
 
 
@@ -277,7 +287,6 @@ void desalojar_proceso_hilo(void* arg){
     pcb* proceso = args->proceso;
 
     desalojar_proceso(proceso); 
-    // Falta destruir el hilo
 }
 
 // ************* Funcion para recibir el pcb desde CPU si termina su ejecucion sin interrupcion *************
@@ -331,5 +340,27 @@ void recibir_pcb_hilo(void* arg){
     pcb* proceso = args->proceso;
 
     recibir_pcb(proceso);
-    //-------------------------falta destruir el hilo-----------
+}
+
+//Parte del planificador a largo plazo
+//Espera que haya procesos en la cola de new, si se puede, os agrega a ready para q se ejecuten
+void pasar_procesos_de_new_a_ready()
+{
+    pcb * proceso_a_mandar_a_ready;
+    sem_wait(&cola_de_new);
+    sem_wait(&sem_multiprogramacion);
+    pthread_mutex_lock(&mutex_cola_de_new);
+    proceso_a_mandar_a_ready = queue_pop(cola_de_new, nuevo_pcb);
+    pthread_mutex_unlock(&mutex_cola_de_new);
+
+    pthread_mutex_lock(&proceso_a_mandar_a_ready->mutex_pcb);
+    proceso_a_mandar_a_ready->estado_del_proceso = READY; 
+    pthread_mutex_unlock(&proceso_a_mandar_a_ready->mutex_pcb);
+
+    // Ingreso el proceso a la cola de READY - Tambien semaforo porque es seccion critica 
+    pthread_mutex_lock(&mutex_cola_de_ready);
+    queue_push(cola_de_ready, proceso_a_mandar_a_ready);
+    pthread_mutex_unlock(&mutex_cola_de_ready);
+    sem_post(&sem_cola_de_ready); //agrego 1 al semaforo contador
+
 }
