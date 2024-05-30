@@ -327,7 +327,7 @@ void desalojar_proceso_hilo(void* arg){
 // ************* Funcion para recibir el pcb desde CPU si termina su ejecucion sin interrupcion *************
 void recibir_pcb(pcb* proceso) {
     
-   
+   //esta funcion deberia tener un switch para accionar segun el codop q nos mandan, porque para el manejo de recursos necesitamos hacer algo segun el codop 
     //inicio un reloj, va a contar cuanto tiempo estuvo esperando hasta q llegue el paquete (sirve para vrr)
     clock_t inicio, fin;
     double tiempo_que_tardo_en_recibir;
