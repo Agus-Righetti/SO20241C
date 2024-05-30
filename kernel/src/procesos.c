@@ -287,15 +287,16 @@ void accionar_segun_estado(pcb* proceso, int flag)
 
 void pasar_proceso_a_exit(pcb* proceso)
 {
+    char* estado_anterior = proceso->estado_del_proceso;
     pthread_mutex_lock(&proceso->mutex_pcb);
     proceso->estado_del_proceso = EXIT; 
     pthread_mutex_unlock(&proceso->mutex_pcb);
 
-    log_info(log_kernel, "PID: %d - Estado Anterior: EXECUTE - Estado Actual: EXIT", proceso->pid);
-    //aca lo tengo q cargar a la cola de exit
+    log_info(log_kernel, "PID: %d - Estado Anterior: %c - Estado Actual: EXIT", proceso->pid, estado_anterior);
 
     free(proceso->registros);
     free(proceso); 
+    sem_post(&sem_multiprogramacion);
 }
 
 
