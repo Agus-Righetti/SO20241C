@@ -4,7 +4,13 @@ int main() {
     // ************* LOG Y CONFIG DE USO GENERAL *************
     log_memoria = log_create("memoria.log", "Memoria", 1, LOG_LEVEL_DEBUG); 
     config_memoria = armar_config();
+    char* holaa = "holaaa";
 
+    char* direccion = strcat(config_memoria->path_instrucciones, holaa);
+    log_info(log_memoria, direccion);
+    // AVERGA
+    //char* instruccion = obtener_instruccion_por_indice(un_proceso->instrucciones, ip);
+    
     // ********* INICIALIZO MEMORIA COMO SERVIDOR *********
     inicializar_servidor();
     

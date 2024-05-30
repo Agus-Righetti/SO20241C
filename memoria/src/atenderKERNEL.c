@@ -38,6 +38,13 @@ t_proceso* crear_proceso(int pid, char* path_instruc){
 //********** LEE EL ARCHIVO Y CARGA LAS INSTRUCCIONES EN UNA LISTA (LAS INSTRUCCIONES LAS DEJA DEL TIPO "t_instruccion_codigo")
 t_list* leer_archivo_y_cargar_instrucciones(char* archivo_pseudocodigo) {
     //Abro el archivo en modo lectura
+
+    // EN CONFIG ME DICE DONDE ESTAN LOS PATH
+    //char* direccion = strcat(config_memoria->path_instrucciones, archivo_pseudocodigo);
+    
+    // POR AHORA DEJO LA LINEA DE ABAJO
+    // para no hacer que todos tengan que crear una carpeta "sripts-pruebas"
+
     FILE* archivo = fopen(archivo_pseudocodigo, "r");
 
     t_list* instrucciones = list_create(); //Creo una lista para almacenar todas las instrucciones
