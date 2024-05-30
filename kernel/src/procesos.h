@@ -9,6 +9,7 @@
 void leer_consola ();
 pthread_t hilo_consola ();
 pthread_t hilo_enviar_procesos_cpu ();
+pthread_t hilo_pasar_de_new_a_ready();
 void iniciar_proceso(char* path );
 void enviar_proceso_a_cpu();
 void enviar_pcb(pcb* proceso);
@@ -20,6 +21,7 @@ void algoritmo_round_robin (void* arg);
 void accionar_segun_estado(pcb* proceso, int flag);
 void recibir_pcb_hilo(void* arg);
 void pasar_proceso_a_exit(pcb* proceso);
+void pasar_procesos_de_new_a_ready();
 
 
 

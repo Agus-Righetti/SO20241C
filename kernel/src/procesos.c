@@ -23,7 +23,7 @@ pthread_t hilo_enviar_procesos_cpu (){
     return thread_enviar_procesos_cpu;
 }
 
-pthread_t hilo_pasar_de_new_a_ready() (){ 
+pthread_t hilo_pasar_de_new_a_ready(){ 
 
     // Creo el hilo de consola
     pthread_t thread_pasar_de_new_a_ready;
@@ -350,7 +350,7 @@ void pasar_procesos_de_new_a_ready()
     sem_wait(&cola_de_new);
     sem_wait(&sem_multiprogramacion);
     pthread_mutex_lock(&mutex_cola_de_new);
-    proceso_a_mandar_a_ready = queue_pop(cola_de_new, nuevo_pcb);
+    proceso_a_mandar_a_ready = queue_pop(cola_de_new);
     pthread_mutex_unlock(&mutex_cola_de_new);
 
     pthread_mutex_lock(&proceso_a_mandar_a_ready->mutex_pcb);
