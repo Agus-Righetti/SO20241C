@@ -70,7 +70,7 @@ void atender_kernel()
                 break;
             case PCB_KERNEL_A_CPU: // Execute
                 t_buffer* buffer = recibiendo_paquete_personalizado(socket_cliente_kernel);
-                recibir_pcb(buffer);
+                recibir_pcb(buffer, pcb_recibido);
                 solicitar_instrucciones_a_memoria(socket_servidor_memoria, pcb_recibido);
                 free(buffer);
                 break;
@@ -104,10 +104,9 @@ void atender_interrupcion()
             log_info(log_cpu, "Me llegaron los siguientes valores:\n");
             list_iterate(lista, (void*) iterator);
             break;
-        case INTERRUPCION:
+        case CPU_TERMINA_EJECUCION_PCB: // INTERRUPCION
             log_info(log_cpu, "Me llego una interrupcion de KERNEL");
             enviar_pcb(socket_servidor_cpu, proceso, DESALOJO);
-            enviar_flag(socket_servidor_cpu, 0);
             break;
         case -1:
             log_error(log_cpu, "El cliente se desconecto. Terminando servidor");
@@ -121,6 +120,7 @@ void atender_interrupcion()
 
 void escuchar_memoria()
 {
+    log_info(log_cpu, "Estoy escuchando memoria\n");
     pthread_t hilo_memoria;
     pthread_create(&hilo_memoria, NULL, (void*) atender_memoria, NULL);
     pthread_join(hilo_memoria, NULL);

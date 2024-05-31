@@ -28,7 +28,7 @@ extern int socket_interrupt_kernel;
 extern pcb* proceso;
 extern t_dictionary* instrucciones;
 extern t_dictionary* registros;
-extern pcb* pcb_recibido;
+extern pcb** pcb_recibido;
 
 typedef struct 
 {

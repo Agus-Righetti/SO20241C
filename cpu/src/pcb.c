@@ -1,57 +1,32 @@
 #include "pcb.h"
 
-void recibir_pcb(t_buffer* buffer)
+void recibir_pcb(t_buffer* buffer, pcb** pcb_recibido)
 {
+    pcb* pcb_temp = recibir_estructura_del_buffer(buffer);
+
+    if (pcb_temp == NULL) {
+        log_error(log_cpu, "No se pudo recibir el PCB. La estructura recibida es NULL.");
+        return;
+    }
+
+    *pcb_recibido = malloc(sizeof(pcb));
+
+    if (*pcb_recibido == NULL) {
+        log_error(log_cpu, "No se pudo asignar memoria para pcb_recibido");
+        free(pcb_temp);
+        return;
+    }
+
+    // Asignar los valores recibidos a la estructura pasada por referencia
+    (*pcb_recibido)->pid = pcb_temp->pid;
+    (*pcb_recibido)->program_counter = pcb_temp->program_counter;
+
     // Acordarse de sacarlos!!!!!!
-    log_info(log_cpu, "El PID es: %d", proceso->pid);
-    log_info(log_cpu, "El PC es: %d", proceso->program_counter);
+    log_info(log_cpu, "El PID es: %d", (*pcb_recibido)->pid);
+    log_info(log_cpu, "El PC es: %d", (*pcb_recibido)->program_counter);
 
-    pcb* pcb_recibido = recibir_pcb_del_buffer(buffer);
-    
-    // Acordarse de sacarlos!!!!!!
-    log_info(log_cpu, "El PID es: %d", pcb_recibido->pid);
-    log_info(log_cpu, "El PC es: %d", pcb_recibido->program_counter);
-
-    free(pcb_recibido);
-}
-
-pcb* recibir_pcb_del_buffer(t_buffer* buffer) 
-{
-    if (buffer == NULL || buffer->size <= sizeof(int)) 
-    {
-        log_error(log_cpu, "El buffer está vacío o tiene un tamaño incorrecto al recibir el PCB");
-        return NULL;
-    }
-
-    int size_estructura;
-    void* estructura;
-
-    // Copia el tamaño de la estructura desde el buffer
-    memcpy(&size_estructura, buffer->stream, sizeof(int));
-
-    // Verifica si el tamaño de la estructura en el buffer es válido
-    if (size_estructura <= 0 || size_estructura > buffer->size - sizeof(int)) 
-    {
-        log_error(log_cpu, "Tamaño de estructura inválido en el buffer al recibir el PCB");
-        return NULL;
-    }
-
-    // Reserva memoria para la estructura
-    estructura = malloc(size_estructura);
-    if (estructura == NULL) 
-    {
-        log_error(log_cpu, "No se pudo reservar memoria para el PCB al recibir el PCB");
-        return NULL;
-    }
-
-    // Copia la estructura desde el buffer
-    memcpy(estructura, buffer->stream + sizeof(int), size_estructura);
-
-    // Actualiza el tamaño y el stream del buffer
-    buffer->size -= sizeof(int) + size_estructura;
-    buffer->stream += sizeof(int) + size_estructura;
-
-    return (pcb*)estructura;
+    // Liberar la estructura temporal si es necesario
+    free(pcb_temp);
 }
 
 void enviar_pcb(int conexion, pcb *proceso, op_code codigo)
@@ -63,13 +38,13 @@ void enviar_pcb(int conexion, pcb *proceso, op_code codigo)
 	eliminar_paquete(paquete);
 }
 
-void enviar_flag(int conexion, int estado)
-{
-    t_paquete *paquete = crear_paquete_personalizado(CPU_TERMINA_EJECUCION_PCB);
-    agregar_int_al_paquete_personalizado(paquete, estado);
-    enviar_paquete(paquete, conexion);
-	eliminar_paquete(paquete);
-}
+// void enviar_flag(int conexion, int estado)
+// {
+//     t_paquete *paquete = crear_paquete_personalizado(CPU_TERMINA_EJECUCION_PCB);
+//     agregar_int_al_paquete_personalizado(paquete, estado);
+//     enviar_paquete(paquete, conexion);
+// 	eliminar_paquete(paquete);
+// }
 
 void iniciar_diccionario_instrucciones(void)
 {
@@ -134,7 +109,7 @@ void destruir_diccionarios(void)
 //     primero_parametro = recibir_string_del_buffer(buffer);
 // }
 
-void interpretar_instruccion_de_memoria(buffer)
+void interpretar_instruccion_de_memoria(t_buffer* buffer)
 {   
     //t_instruccion_codigo;
     //[String, String, String, String, String, String]
@@ -310,7 +285,7 @@ void instruccion_exit(char** parte)
 	log_info(log_cpu, "PID: %d - Ejecutando: %s", proceso->pid, parte[0]);
 	proceso->program_counter++;
 	enviar_pcb(socket_servidor_cpu, proceso, EXIT);
-    enviar_flag(socket_servidor_cpu, 1);
+    //enviar_flag(socket_servidor_cpu, 1);
 	list_destroy_and_destroy_elements(proceso->instrucciones, free);
 	free(proceso);
 }
@@ -366,7 +341,7 @@ void instruccion_wait(char** parte)
     
     // Indico al kernel que el proceso está esperando algo
 	enviar_pcb(socket_servidor_cpu, proceso, WAIT);
-    enviar_flag(socket_servidor_cpu, 0);
+    //enviar_flag(socket_servidor_cpu, 0);
 	
     list_destroy_and_destroy_elements(proceso->instrucciones, free);
 	free(proceso);
@@ -386,7 +361,7 @@ void instruccion_signal(char **parte)
 
     // Enviar solicitud de SIGNAL al kernel
     enviar_pcb(socket_servidor_cpu, proceso, SIGNAL);
-    enviar_flag(socket_servidor_cpu, 0);
+    //enviar_flag(socket_servidor_cpu, 0);
 
     list_destroy_and_destroy_elements(proceso->instrucciones, free);
     free(proceso);
@@ -395,12 +370,12 @@ void instruccion_signal(char **parte)
 void error_exit(char** parte) 
 {
 	enviar_pcb(socket_servidor_cpu, proceso, CODIGO);
-    enviar_flag(socket_servidor_cpu, 1); 
+    //enviar_flag(socket_servidor_cpu, 1); 
 	list_destroy_and_destroy_elements(proceso->instrucciones, free);
 	free(proceso);
 }
 
-void solicitar_instrucciones_a_memoria(int socket_cliente_cpu, pcb* pcb_recibido) 
+void solicitar_instrucciones_a_memoria(int socket_cliente_cpu, pcb* pcb_recibido) // Tendrian que ir **?
 {   
     if (pcb_recibido == NULL) 
     {
@@ -411,10 +386,6 @@ void solicitar_instrucciones_a_memoria(int socket_cliente_cpu, pcb* pcb_recibido
     // Creo el paquete
     t_paquete* paquete = crear_paquete_personalizado(CPU_PIDE_INSTRUCCION_A_MEMORIA); 
 
-    // pcb* pcb_recibido = recibir_estructura_del_buffer(buffer);    
-    // log_info(log_cpu, "Tengo este pid de proceso %d", pcb_recibido->pid);
-
-    
     // Agregamos el pc y el pid al paquete
     agregar_int_al_paquete_personalizado(paquete, pcb_recibido->pid); 
     agregar_int_al_paquete_personalizado(paquete, pcb_recibido->program_counter);
@@ -425,6 +396,9 @@ void solicitar_instrucciones_a_memoria(int socket_cliente_cpu, pcb* pcb_recibido
     
     // Acordarse de sacarlo!!!!!!
     log_info(log_cpu, "Le pedi instruccion a Memoria");
+    printf("Verificación fuera de la función:\n");
+    printf("El PID es: %d\n", pcb_recibido->pid);
+    printf("El PC es: %d\n", pcb_recibido->program_counter);
 }
 
 // 3er checkpoint

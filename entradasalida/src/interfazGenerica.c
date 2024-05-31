@@ -1,22 +1,22 @@
 #include "interfazGenerica.h"
 
-// void recibir_operacion_generica_de_kernel(InterfazGenerica* interfaz_generica, op_code codigo)
-// {
-//     // Verificar si la operación es para una interfaz genérica
-//     if (codigo == IO_GEN_SLEEP) 
-//     {
-//         int unidades_trabajo = recibir_unidades_trabajo(socket_servidor_kernel);
-//         realizar_sleep(unidades_trabajo * interfaz_generica->tiempo_unidad_trabajo);
-//         log_info(log_io, "Operacion generica recibida: IO_GEN_SLEEP. Unidades de trabajo: %d", unidades_trabajo);
-//     } else if (codigo == -1) {
-//         log_error(log_io, "KERNEL se desconecto. Terminando servidor");
-//         exit(1);
-//     } else {
-//         log_warning(log_io, "Operacion recibida no es para una interfaz generica.\n");
-//     }
-// }
+void recibir_operacion_generica_de_kernel(InterfazGenerica* interfaz_generica, op_code codigo)
+{
+    // Verificar si la operación es para una interfaz genérica
+    if (codigo == IO_GEN_SLEEP) 
+    {
+        int unidades_trabajo = recibir_unidades_trabajo(conexion_io_kernel);
+        realizar_sleep(unidades_trabajo * interfaz_generica->tiempo_unidad_trabajo);
+        log_info(log_io, "Operacion generica recibida: IO_GEN_SLEEP. Unidades de trabajo: %d", unidades_trabajo);
+    } else if (codigo == -1) {
+        log_error(log_io, "KERNEL se desconecto. Terminando servidor");
+        exit(1);
+    } else {
+        log_warning(log_io, "La operacion recibida no es para una interfaz generica.\n");
+    }
+}
 
-void iniciar_config(Interfaz *configuracion)
+void iniciar_config_generica(Interfaz *configuracion)
 {   
     if (configuracion == NULL) 
     {
@@ -44,7 +44,7 @@ void iniciar_config(Interfaz *configuracion)
     configuracion->archivo->tipo_interfaz = strdup(config_get_string_value(config, "TIPO_INTERFAZ"));
     configuracion->archivo->tiempo_unidad_trabajo = config_get_int_value(config, "TIEMPO_UNIDAD_TRABAJO");
     configuracion->archivo->ip_kernel = strdup(config_get_string_value(config, "IP_KERNEL"));
-    configuracion->archivo->puerto_kernel = strdup(config_get_string_value(config, "PUERTO_KERNEL"));
+    configuracion->archivo->puerto_kernel = config_get_int_value(config, "PUERTO_KERNEL");
 
     // Liberar el t_config
     config_destroy(config);
@@ -52,7 +52,7 @@ void iniciar_config(Interfaz *configuracion)
 
 void leer_configuracion_generica(Interfaz *configuracion)
 {
-    iniciar_config(configuracion);
+    iniciar_config_generica(configuracion);
 
     // Loggeamos el valor de config
     log_info(log_io, "Lei el TIPO_INTERFAZ %s, el TIEMPO_UNIDAD_TRABAJO %d, el IP_KERNEL %s y el PUERTO_KERNEL %s.", 
@@ -77,7 +77,7 @@ void realizar_sleep(int tiempo)
     usleep(tiempo * 1000); // Convertir de milisegundos a microsegundos
 }
 
-void liberar_configuracion(Interfaz* configuracion)
+void liberar_configuracion_generica(Interfaz* configuracion)
 {
     if(configuracion) {
         free(configuracion->archivo->tipo_interfaz);

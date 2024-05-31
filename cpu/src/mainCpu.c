@@ -1,7 +1,7 @@
 #include <mainCpu.h>
 
-t_log* log_cpu;
-cpu_config* config_cpu;
+// t_log* log_cpu;
+// cpu_config* config_cpu;
 
 int main(int argc, char* argv[]) 
 {
@@ -20,8 +20,11 @@ int main(int argc, char* argv[])
 	
 	escuchar_kernel();
 
-	// printf("El PID es: %d\n", pcb_recibido->pid);
-
+    // Verificar los valores fuera de la función
+    printf("Verificación fuera de la función:\n");
+    printf("El PID es: %d\n", (*pcb_recibido)->pid);
+    printf("El PC es: %d\n", (*pcb_recibido)->program_counter);
+	
 	// Instrucciones con memoria
 	
 	escuchar_memoria();

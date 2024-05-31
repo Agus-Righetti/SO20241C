@@ -1,38 +1,20 @@
-#include "interfazSTDIN.h"
+#include "interfazSTDOUT.h"
 
-void leer_consola()
+void leer_configuracion_stdout(Interfaz *configuracion)
 {
-	char* leido;
-
-	leido = readline("Ingrese el texto: > ");
-	log_info(log_io, ">>%s", leido);
-
-	// El resto, las vamos leyendo y logueando hasta recibir un string vacío
-	while(strcmp(leido, "") != 0)
-    {
-		free(leido);
-		leido = readline("> ");
-		log_info(log_io, ">> %s", leido);
-	}
-
-	// ¡No te olvides de liberar las lineas antes de regresar!
-	free(leido);
-}
-
-void leer_configuracion_stdin(Interfaz *configuracion)
-{
-    iniciar_config_stdin(configuracion);
+    iniciar_config_stdout(configuracion);
 
     // Loggeamos el valor de config
-    log_info(log_io, "Lei el TIPO_INTERFAZ %s, el IP_KERNEL %s, el PUERTO_KERNEL %s, el IP_MEMORIA %s y el PUERTO_MEMORIA %s.", 
+    log_info(log_io, "Lei el TIPO_INTERFAZ %s, el TIEMPO_UNIDAD_TRABAJO %s, el IP_KERNEL %s, el PUERTO_KERNEL %s, el IP_MEMORIA %s y el PUERTO_MEMORIA %s.", 
              configuracion->archivo->tipo_interfaz, 
+             configuracion->archivo->tiempo_unidad_trabajo,
              configuracion->archivo->ip_kernel, 
              configuracion->archivo->puerto_kernel, 
              configuracion->archivo->ip_memoria,
              configuracion->archivo->puerto_memoria);
 }
 
-void iniciar_config_stdin(Interfaz *configuracion)
+void iniciar_config_stdout(Interfaz *configuracion)
 {   
     if (configuracion == NULL) 
     {
@@ -58,6 +40,7 @@ void iniciar_config_stdin(Interfaz *configuracion)
     }
     
     configuracion->archivo->tipo_interfaz = strdup(config_get_string_value(config, "TIPO_INTERFAZ"));
+    configuracion->archivo->tiempo_unidad_trabajo = config_get_int_value(config, "TIEMPO_UNIDAD_TRABAJO");
     configuracion->archivo->ip_kernel = strdup(config_get_string_value(config, "IP_KERNEL"));
     configuracion->archivo->puerto_kernel = config_get_int_value(config, "PUERTO_KERNEL");
     configuracion->archivo->ip_memoria = strdup(config_get_string_value(config, "IP_MEMORIA"));
@@ -67,26 +50,12 @@ void iniciar_config_stdin(Interfaz *configuracion)
     config_destroy(config);
 }
 
-void recibir_operacion_stdin_de_kernel(Interfaz* interfaz, op_code codigo)
-{
-    // Verificar si la operación es para una interfaz genérica
-    if (codigo == IO_STDIN_READ) 
-    {
-        // Falta hacer
-        log_info(log_io, "Operacion generica recibida: IO_STDIN_READ.");
-    } else if (codigo == -1) {
-        log_error(log_io, "KERNEL se desconecto. Terminando servidor");
-        exit(1);
-    } else {
-        log_warning(log_io, "Operacion recibida no es para una interfaz generica.\n");
-    }
-}
-
-void liberar_configuracion_stdin(Interfaz* configuracion)
+void liberar_configuracion_stdout(Interfaz* configuracion)
 {
     if(configuracion) 
     {
         free(configuracion->archivo->tipo_interfaz);
+        free(configuracion->archivo->tiempo_unidad_trabajo);
         free(configuracion->archivo->ip_kernel);
         free(configuracion->archivo->puerto_kernel);
         free(configuracion->archivo->ip_memoria);
