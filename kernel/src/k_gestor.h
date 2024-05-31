@@ -35,6 +35,7 @@ extern int pid_contador;
 extern int conexion_kernel_cpu;
 extern int interrupcion_kernel_cpu;
 extern int conexion_kernel_memoria;
+extern int cantidad_recursos;
 extern pthread_mutex_t mutex_cola_de_ready;
 extern pthread_mutex_t mutex_cola_de_new;
 extern pthread_mutex_t mutex_grado_programacion;

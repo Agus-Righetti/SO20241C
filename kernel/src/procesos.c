@@ -140,8 +140,9 @@ void enviar_proceso_a_cpu(){
         pcb* proceso_seleccionado;
         if((strcmp(config_kernel->algoritmo_planificacion, "VRR") == 0) && (queue_is_empty(&cola_prioridad_vrr) == false))
         {
-            sem_wait(&sem_cola_prioridad_vrr); //hago que haya algo dentro de la cola de ready
-            // Saco el proceso siguiente de la cola de READY
+            //este semaforo no hace falta en realidad
+            //sem_wait(&sem_cola_prioridad_vrr); //hago que haya algo dentro de la cola de prioridad
+            // Saco el proceso siguiente de la cola de prioridad
             pthread_mutex_lock(&mutex_cola_prioridad_vrr);
             proceso_seleccionado = queue_pop(&cola_prioridad_vrr);
             pthread_mutex_unlock(&mutex_cola_prioridad_vrr);
@@ -208,7 +209,7 @@ void crear_hilo_proceso(pcb* proceso){
         pthread_create(&hilo_recibe_proceso, NULL, (void*)recibir_pcb_hilo,(void*)&args_hilo); 
         pthread_join(hilo_recibe_proceso, NULL);
     }
-    else if(strcmp(config_kernel->algoritmo_planificacion, "RR") == 0)
+    else if(strcmp(config_kernel->algoritmo_planificacion, "RR") == 0 || strcmp(config_kernel->algoritmo_planificacion, "VRR") == 0)
     {
         pthread_create(&hilo_recibe_proceso, NULL, (void*)recibir_pcb_hilo,(void*)&args_hilo); 
         pthread_create(&hilo_interrupcion, NULL, (void*)algoritmo_round_robin,(void*)&args_hilo); 
@@ -216,12 +217,6 @@ void crear_hilo_proceso(pcb* proceso){
         pthread_join(hilo_recibe_proceso, NULL);
         sem_wait(&destruir_hilo_interrupcion);
         pthread_cancel(hilo_interrupcion);
-
-    }else if(strcmp(config_kernel->algoritmo_planificacion, "VRR") == 0)
-    {
-        //Para hacer el VRR necesitamos una cola de prioridad, los procesos van a ir ahi si vuelven con quantum disponible, siempre antes de mandar un proceso a execute vamos a tener q chequear esa cola antes, ademas tenemos q modificar la variable QUANTUM dentro del proceso, ese sera el quantum disponible para ejecutar, vamos a por ello!!!
-        pthread_create(&hilo_recibe_proceso, NULL, (void*)recibir_pcb_hilo,(void*)&args_hilo); 
-        pthread_create(&hilo_interrupcion, NULL, (void*)algoritmo_round_robin,(void*)&args_hilo); 
 
     }else log_error(log_kernel, "Estan mal las configs capo");
     
@@ -246,7 +241,7 @@ void accionar_segun_estado(pcb* proceso, int flag)
     //flag = 0 aun no ejecuto del todo, lo mando a la cola de ready
     if(flag == 1){
         pasar_proceso_a_exit(proceso);
-    }else if (flag ==0)
+    }else if (flag == 0)
     { 
         pthread_mutex_lock(&proceso->mutex_pcb);
         proceso->estado_del_proceso = READY; 
@@ -261,6 +256,8 @@ void accionar_segun_estado(pcb* proceso, int flag)
                 queue_push(&cola_prioridad_vrr,proceso);
                 pthread_mutex_unlock(&mutex_cola_prioridad_vrr);
                 sem_post(&sem_cola_prioridad_vrr);
+                log_info(log_kernel, "PID: %d - Estado Anterior: EXECUTE - Estado Actual: READY", proceso->pid);
+
 
             }else{
                 //no le queda quantum, ira a ready normal
@@ -269,16 +266,19 @@ void accionar_segun_estado(pcb* proceso, int flag)
                 queue_push(&cola_de_ready,proceso);
                 pthread_mutex_unlock(&mutex_cola_de_ready);
                 sem_post(&sem_cola_de_ready);
+                log_info(log_kernel, "PID: %d - Estado Anterior: EXECUTE - Estado Actual: READY", proceso->pid);
+
             }
         }else{ // no estoy en vrr, siempre madno a cola de ready normal
             pthread_mutex_lock(&mutex_cola_de_ready);
             queue_push(&cola_de_ready,proceso);
             pthread_mutex_unlock(&mutex_cola_de_ready);
             sem_post(&sem_cola_de_ready);
+            log_info(log_kernel, "PID: %d - Estado Anterior: EXECUTE - Estado Actual: READY", proceso->pid);
+
         };
 
         // Hago un log obligatorio
-        log_info(log_kernel, "PID: %d - Estado Anterior: EXECUTE - Estado Actual: READY", proceso->pid);
     }
     
     return;
@@ -296,7 +296,7 @@ void pasar_proceso_a_exit(pcb* proceso)
 
     free(proceso->registros);
     free(proceso); 
-    sem_post(&sem_multiprogramacion);
+    sem_post(&sem_multiprogramacion); //agrego 1 al grado de multiprogramacion
 }
 
 
@@ -331,21 +331,61 @@ void recibir_pcb(pcb* proceso) {
    //esta funcion deberia tener un switch para accionar segun el codop q nos mandan, porque para el manejo de recursos necesitamos hacer algo segun el codop 
     //inicio un reloj, va a contar cuanto tiempo estuvo esperando hasta q llegue el paquete (sirve para vrr)
     clock_t inicio, fin;
-    double tiempo_que_tardo_en_recibir;
+    int tiempo_que_tardo_en_recibir;
 
     inicio = clock(); // en este momento arranco a esperar
 
+    int codigo_operacion = recibir_operacion(conexion_kernel_cpu);
+
+    int flag_estado;
     
+    t_buffer* buffer;
+    
+    switch(codigo_operacion)
+    {
+        case PCB_CPU_A_KERNEL: 
+
+            buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu);
+            fin = clock();
+            flag_estado = 0;
+
+            break;
+
+        case CPU_TERMINA_EJECUCION_PCB:
+            buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu);
+            flag_estado = 1;
+
+            break;
+
+        case SIGNAL:
+            buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu);
+            fin = clock();
+            //flag_estado = 0;
+
+            break;
+
+        case WAIT:
+            buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu);
+            fin = clock();
+            //flag_estado = 0;
+            //flag_estado = hacer_wait(); // Hacemos que si devuelve un 2 entonces se manda a la cola de blocked
+
+            break;
+        
+        default
+            log_error(log_kernel, "El codigo de operacion no es reconocido :(");
+            break;
+    }
+
     // Creo un nuevo paquete
-    t_paquete* paquete = crear_paquete_personalizado(PCB_CPU_A_KERNEL);
+    //t_paquete* paquete = crear_paquete_personalizado(PCB_CPU_A_KERNEL);
 
     // Recibo el paquete a través del socket y los guardo en una lista
 
-    paquete->buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu);
+    //paquete->buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu);
 
-
-    fin = clock(); // en este momento termino de esperar
-    tiempo_que_tardo_en_recibir = (double)(fin - inicio) * 1000.0 / CLOCKS_PER_SEC;
+    //fin = clock(); // en este momento termino de esperar
+    tiempo_que_tardo_en_recibir = (int)((double)(fin - inicio) * 1000.0 / CLOCKS_PER_SEC);
 
     if(strcmp(config_kernel->algoritmo_planificacion, "RR") == 0 || strcmp(config_kernel->algoritmo_planificacion, "VRR") == 0)
     {
@@ -353,7 +393,18 @@ void recibir_pcb(pcb* proceso) {
         sem_post(&destruir_hilo_interrupcion);
     }
 
-    proceso = recibir_estructura_del_buffer(paquete->buffer);
+    proceso = recibir_estructura_del_buffer(buffer);
+
+    if(codigo_operacion == WAIT)
+    {
+        int indice_recurso = recibir_int_del_buffer(buffer);
+        flag_estado = hacer_wait(indice_recurso);
+
+    }else if(codigo_operacion == SIGNAL)
+    {
+        int indice_recurso = recibir_int_del_buffer(buffer);
+        flag_estado = hacer_signal(indice_recurso);
+    }
     
     if(strcmp(config_kernel->algoritmo_planificacion, "VRR") == 0)
     {
@@ -362,27 +413,27 @@ void recibir_pcb(pcb* proceso) {
 
     log_info(log_kernel, "Recibi PID: %d", proceso->pid);
     
-    eliminar_paquete(paquete);
+    //eliminar_paquete(paquete);
+    free(buffer->stream);
+    free(buffer);
 
     //Este paquete es para recibir el flag, el flag esta en 1 si el proceso ta ejecuto todo y en 0 si aun le falta
 
+    // t_paquete* paquete_estado = crear_paquete_personalizado(CPU_TERMINA_EJECUCION_PCB);
 
-    t_paquete* paquete_estado = crear_paquete_personalizado(CPU_TERMINA_EJECUCION_PCB);
+    // paquete_estado->buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu);
 
-    paquete_estado->buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu);
-
-    int flag_estado = recibir_int_del_buffer(paquete_estado->buffer);
+    //flag_estado = recibir_int_del_buffer(paquete_estado->buffer);
 
     sem_post(&sem_puedo_mandar_a_cpu);//aviso que ya volvio el proceso q estaba en CPU, puedo mandar otro
 
     
     // Libero el paquete
 
-    eliminar_paquete(paquete_estado);
+    //eliminar_paquete(paquete_estado);
 
     accionar_segun_estado(proceso, flag_estado); //este va a mandar el proceso a ready o exit
-
-
+    
     return;
 }
 
@@ -399,20 +450,95 @@ void recibir_pcb_hilo(void* arg){
 void pasar_procesos_de_new_a_ready()
 {
     pcb * proceso_a_mandar_a_ready;
-    sem_wait(&cola_de_new);
-    sem_wait(&sem_multiprogramacion);
-    pthread_mutex_lock(&mutex_cola_de_new);
-    proceso_a_mandar_a_ready = queue_pop(&cola_de_new);
-    pthread_mutex_unlock(&mutex_cola_de_new);
+    while(1)
+    {
+        sem_wait(&sem_cola_de_new);
+        sem_wait(&sem_multiprogramacion);
+        pthread_mutex_lock(&mutex_cola_de_new);
+        proceso_a_mandar_a_ready = queue_pop(&cola_de_new);
+        pthread_mutex_unlock(&mutex_cola_de_new);
 
-    pthread_mutex_lock(&proceso_a_mandar_a_ready->mutex_pcb);
-    proceso_a_mandar_a_ready->estado_del_proceso = READY; 
-    pthread_mutex_unlock(&proceso_a_mandar_a_ready->mutex_pcb);
+        pthread_mutex_lock(&proceso_a_mandar_a_ready->mutex_pcb);
+        proceso_a_mandar_a_ready->estado_del_proceso = READY; 
+        pthread_mutex_unlock(&proceso_a_mandar_a_ready->mutex_pcb);
 
-    // Ingreso el proceso a la cola de READY - Tambien semaforo porque es seccion critica 
-    pthread_mutex_lock(&mutex_cola_de_ready);
-    queue_push(&cola_de_ready,proceso_a_mandar_a_ready);
-    pthread_mutex_unlock(&mutex_cola_de_ready);
-    sem_post(&sem_cola_de_ready); //agrego 1 al semaforo contador
+        // Ingreso el proceso a la cola de READY - Tambien semaforo porque es seccion critica 
+        pthread_mutex_lock(&mutex_cola_de_ready);
+        queue_push(&cola_de_ready,proceso_a_mandar_a_ready);
+        pthread_mutex_unlock(&mutex_cola_de_ready);
+        sem_post(&sem_cola_de_ready); //agrego 1 al semaforo contador
+    }
 
 }
+
+int hacer_signal(int indice_recurso)
+{
+    int flag;
+
+    if(indice_recurso < cantidad_recursos) //chequeo que existe el recurso
+    {
+        ++ config_kernel->instancias_recursos[indice_recurso];
+
+        if(config_kernel->instancias_recursos[indice_recurso] < 0){
+            flag = 2; //con flag == 2 bloqueo el recurso
+            //tengo q mandar a la cola de bloqueados de ese recurso
+        }
+
+    } else flag = 1;
+    return flag;
+}
+
+int hacer_wait(int indice_recurso)
+{
+    int flag;
+
+    if(indice_recurso < cantidad_recursos){ // Si existe el recurso solicitado
+        
+        -- config_kernel->instancias_recursos[indice_recurso];
+
+        if(config_kernel->instancias_recursos[indice_recurso] < 0){
+            flag = 2; // En atender_segun_estado entonces se bloqueara el proceso
+        }
+         
+    }else{ // Entonces no existe el recurso solicitado
+        flag = 1
+    }
+    
+    return flag;
+}
+// RECURSOS=[RA,RB,RC]
+// INSTANCIAS_RECURSOS=[1,2,1]
+
+
+// int main() {
+//     // Supongamos que tienes un array de tamaño N
+//     int array[] = {1, 2, 3, 4, 5};
+//     int N = sizeof(array) / sizeof(array[0]);
+
+//     // Crear un array de punteros a colas
+//     Cola** colas = (Cola**)malloc(N * sizeof(Cola*));
+
+//     // Inicializar cada cola
+//     for (int i = 0; i < N; i++) {
+//         colas[i] = crearCola();
+//     }
+
+//     // Ejemplo de uso: encolar elementos en cada cola
+//     for (int i = 0; i < N; i++) {
+//         encolar(colas[i], array[i]);
+//     }
+
+//     // Ejemplo de uso: desencolar elementos de cada cola
+//     for (int i = 0; i < N; i++) {
+//         int data = desencolar(colas[i]);
+//         printf("Desencolado de cola %d: %d\n", i, data);
+//     }
+
+//     // Liberar memoria de las colas
+//     for (int i = 0; i < N; i++) {
+//         free(colas[i]);
+//     }
+//     free(colas);
+
+//     return 0;
+// }

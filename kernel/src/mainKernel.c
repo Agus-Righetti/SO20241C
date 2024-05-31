@@ -11,6 +11,8 @@ int main(int argc, char* argv[])
     decir_hola("Kernel");
     pid_contador = 0; //Va incrementando a meidda que arrancamos un nuevo proceso
     
+    cantidad_recursos = sizeof(config_kernel->instancias_recursos) / sizeof(config_kernel->instancias_recursos[0]);
+
     pthread_mutex_init(&mutex_cola_de_new,NULL);
     pthread_mutex_init(&mutex_cola_de_ready,NULL);
     pthread_mutex_init(&mutex_cola_de_execute,NULL);
