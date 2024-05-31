@@ -53,7 +53,7 @@ void instruccion_wait(char** parte);
 void instruccion_signal(char **parte);
 
 void error_exit(char** parte);
-void solicitar_instrucciones_a_memoria(int socket_servidor_memoria, pcb* pcb_recibido); 
+void solicitar_instrucciones_a_memoria(int socket_servidor_memoria, pcb** pcb_recibido); 
 void recibir_instruccion_de_memoria(int socket_servidor_memoria);
 
 #endif

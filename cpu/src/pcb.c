@@ -375,7 +375,7 @@ void error_exit(char** parte)
 	free(proceso);
 }
 
-void solicitar_instrucciones_a_memoria(int socket_cliente_cpu, pcb* pcb_recibido) // Tendrian que ir **?
+void solicitar_instrucciones_a_memoria(int socket_cliente_cpu, pcb** pcb_recibido) // Tendrian que ir **?
 {   
     if (pcb_recibido == NULL) 
     {
@@ -387,8 +387,8 @@ void solicitar_instrucciones_a_memoria(int socket_cliente_cpu, pcb* pcb_recibido
     t_paquete* paquete = crear_paquete_personalizado(CPU_PIDE_INSTRUCCION_A_MEMORIA); 
 
     // Agregamos el pc y el pid al paquete
-    agregar_int_al_paquete_personalizado(paquete, pcb_recibido->pid); 
-    agregar_int_al_paquete_personalizado(paquete, pcb_recibido->program_counter);
+    agregar_int_al_paquete_personalizado(paquete, (*pcb_recibido)->pid); 
+    agregar_int_al_paquete_personalizado(paquete, (*pcb_recibido)->program_counter);
 
     // Envio el paquete a memoria
     enviar_paquete(paquete, socket_cliente_cpu);
@@ -397,8 +397,8 @@ void solicitar_instrucciones_a_memoria(int socket_cliente_cpu, pcb* pcb_recibido
     // Acordarse de sacarlo!!!!!!
     log_info(log_cpu, "Le pedi instruccion a Memoria");
     printf("Verificación fuera de la función:\n");
-    printf("El PID es: %d\n", pcb_recibido->pid);
-    printf("El PC es: %d\n", pcb_recibido->program_counter);
+    printf("El PID es: %d\n", (*pcb_recibido)->pid);
+    printf("El PC es: %d\n", (*pcb_recibido)->program_counter);
 }
 
 // 3er checkpoint
