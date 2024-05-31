@@ -22,6 +22,8 @@ void accionar_segun_estado(pcb* proceso, int flag);
 void recibir_pcb_hilo(void* arg);
 void pasar_proceso_a_exit(pcb* proceso);
 void pasar_procesos_de_new_a_ready();
+int hacer_signal(int indice_recurso, pcb* proceso);
+int hacer_wait(int indice_recurso);
 
 
 

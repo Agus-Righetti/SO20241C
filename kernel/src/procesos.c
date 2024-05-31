@@ -235,11 +235,15 @@ void algoritmo_round_robin (void* arg){
     return;
 }
 
-void accionar_segun_estado(pcb* proceso, int flag)
-{
+void accionar_segun_estado(pcb* proceso, int flag){
     //flag = 1, ya ejecuto todo, tengo q pasarlo a exit
     //flag = 0 aun no ejecuto del todo, lo mando a la cola de ready
-    if(flag == 1){
+    //flag = 2, entonces tengo que bloquear el proceso
+    //flag = -1 no hago nada, ya lo hicieron 
+    if(flag == 2){
+        pasar_proceso_a_blocked(proceso);
+    }
+    else if(flag == 1){
         pasar_proceso_a_exit(proceso);
     }else if (flag == 0)
     { 
@@ -285,8 +289,7 @@ void accionar_segun_estado(pcb* proceso, int flag)
 
 }
 
-void pasar_proceso_a_exit(pcb* proceso)
-{
+void pasar_proceso_a_exit(pcb* proceso){
     char* estado_anterior = proceso->estado_del_proceso;
     pthread_mutex_lock(&proceso->mutex_pcb);
     proceso->estado_del_proceso = EXIT; 
@@ -299,7 +302,15 @@ void pasar_proceso_a_exit(pcb* proceso)
     sem_post(&sem_multiprogramacion); //agrego 1 al grado de multiprogramacion
 }
 
+void pasar_proceso_a_blocked(pcb* proceso){
+    
+    char* estado_anterior = proceso->estado_del_proceso;
+    pthread_mutex_lock(&proceso->mutex_pcb);
+    proceso->estado_del_proceso = BLOCKED; 
+    pthread_mutex_unlock(&proceso->mutex_pcb);
 
+    log_info(log_kernel, "PID: %d - Estado Anterior: %c - Estado Actual: BLOCKED", proceso->pid, estado_anterior);
+}
 
 // ************* Funcion que sirve para obtener de regreso un proceso a traves de una interrupcion *************
 void desalojar_proceso(pcb* proceso){
@@ -398,12 +409,12 @@ void recibir_pcb(pcb* proceso) {
     if(codigo_operacion == WAIT)
     {
         int indice_recurso = recibir_int_del_buffer(buffer);
-        flag_estado = hacer_wait(indice_recurso);
+        flag_estado = hacer_wait(indice_recurso, proceso);
 
     }else if(codigo_operacion == SIGNAL)
     {
         int indice_recurso = recibir_int_del_buffer(buffer);
-        flag_estado = hacer_signal(indice_recurso);
+        flag_estado = hacer_signal(indice_recurso, proceso);
     }
     
     if(strcmp(config_kernel->algoritmo_planificacion, "VRR") == 0)
@@ -475,70 +486,52 @@ int hacer_signal(int indice_recurso)
 {
     int flag;
 
+
     if(indice_recurso < cantidad_recursos) //chequeo que existe el recurso
     {
         ++ config_kernel->instancias_recursos[indice_recurso];
 
-        if(config_kernel->instancias_recursos[indice_recurso] < 0){
-            flag = 2; //con flag == 2 bloqueo el recurso
-            //tengo q mandar a la cola de bloqueados de ese recurso
-        }
+        if(config_kernel->instancias_recursos[indice_recurso] <= 0){
+            flag = 0; //flag 0 porque quiero pasarlo a ready de nuevo
+            // Saco de la cola de blocked de ese recurso
+            pthread_mutex_lock(&mutex_por_recurso[indice_recurso]);
+            pcb* proceso_desbloqueado = queue_pop(&colas_por_recurso[indice_recurso]);
+            pthread_mutex_unlock(&mutex_por_recurso[indice_recurso]);
+            
+        }else flag = -1; //accionar_segun_estado no debe hacer nada porque ya lo hice aca
 
-    } else flag = 1;
+    } else flag = 1;// no existe,  mando a exit el proceso
+
     return flag;
 }
 
-int hacer_wait(int indice_recurso)
+int hacer_wait(int indice_recurso, pcb* proceso)
 {
     int flag;
 
     if(indice_recurso < cantidad_recursos){ // Si existe el recurso solicitado
         
-        -- config_kernel->instancias_recursos[indice_recurso];
+        -- config_kernel->instancias_recursos[indice_recurso]; // Quito una instancia de ese recurso
 
         if(config_kernel->instancias_recursos[indice_recurso] < 0){
-            flag = 2; // En atender_segun_estado entonces se bloqueara el proceso
-        }
+            
+            flag = -1; // En accionar_segun_estado no hara nada porque ya se hace aca por el tema de la cola de bloqueados general y esta
+
+            char* estado_anterior = proceso->estado_del_proceso;
+            pthread_mutex_lock(&proceso->mutex_pcb);
+            proceso->estado_del_proceso = BLOCKED; 
+            pthread_mutex_unlock(&proceso->mutex_pcb);
+
+            log_info(log_kernel, "PID: %d - Estado Anterior: %c - Estado Actual: BLOCKED", proceso->pid, estado_anterior);
+            
+            //aca habria q agregar un mutex x las dudas (uno x cada cola)
+            pthread_mutex_lock(&mutex_por_recurso[indice_recurso]);
+            queue_push(&colas_por_recurso[indice_recurso], proceso); //Mando a la cola de blocked de ese recurso
+            pthread_mutex_unlock(&mutex_por_recurso[indice_recurso]);
+            
+        }else flag = 0; //flag 0 para que vuelva a la cola de ready
          
-    }else{ // Entonces no existe el recurso solicitado
-        flag = 1
-    }
+    }else flag = 1; // Entonces no existe el recurso solicitado
     
     return flag;
 }
-// RECURSOS=[RA,RB,RC]
-// INSTANCIAS_RECURSOS=[1,2,1]
-
-
-// int main() {
-//     // Supongamos que tienes un array de tamaño N
-//     int array[] = {1, 2, 3, 4, 5};
-//     int N = sizeof(array) / sizeof(array[0]);
-
-//     // Crear un array de punteros a colas
-//     Cola** colas = (Cola**)malloc(N * sizeof(Cola*));
-
-//     // Inicializar cada cola
-//     for (int i = 0; i < N; i++) {
-//         colas[i] = crearCola();
-//     }
-
-//     // Ejemplo de uso: encolar elementos en cada cola
-//     for (int i = 0; i < N; i++) {
-//         encolar(colas[i], array[i]);
-//     }
-
-//     // Ejemplo de uso: desencolar elementos de cada cola
-//     for (int i = 0; i < N; i++) {
-//         int data = desencolar(colas[i]);
-//         printf("Desencolado de cola %d: %d\n", i, data);
-//     }
-
-//     // Liberar memoria de las colas
-//     for (int i = 0; i < N; i++) {
-//         free(colas[i]);
-//     }
-//     free(colas);
-
-//     return 0;
-// }

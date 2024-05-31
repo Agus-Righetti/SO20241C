@@ -17,6 +17,7 @@ t_queue* cola_de_execute;
 t_queue* cola_de_exit;
 t_queue* cola_de_blocked;
 t_queue* cola_prioridad_vrr;
+// t_queue** colas_por_recurso = malloc(cantidad_recursos * sizeof(t_queue*));
 int pid_contador = 0;
 int conexion_kernel_cpu;
 int interrupcion_kernel_cpu;
