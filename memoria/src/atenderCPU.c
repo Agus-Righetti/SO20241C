@@ -1,6 +1,8 @@
 #include "atenderCPU.h"
 
-//************ DESARROLLO DE TODAS LAS FUNCIONES QUE NECESITA CPU **************
+//******************************************************************
+//******************* PIDE UNA INSTRUCCIÓN *************************
+//******************************************************************
 void cpu_pide_instruccion(t_buffer* un_buffer){        //[PID, IP]
 	int pid = recibir_int_del_buffer(un_buffer);
 	int ip = recibir_int_del_buffer(un_buffer);
@@ -50,4 +52,32 @@ void enviar_una_instruccion_a_cpu(char* instruccion){
 
 	enviar_paquete(paquete, socket_cliente_cpu);
 	eliminar_paquete(paquete);
+}
+
+//******************************************************************
+//****************** ACCESO A ESPACIO USUARIO **********************
+//******************************************************************
+
+
+//******************************************************************
+//****************** ACCESO A TABLA DE PÁGINA **********************
+//******************************************************************
+int consulta_marco_segun_pagina (int pid, int nro_pag){
+	// Busco el proceso en mi lista de procesos
+	t_proceso* un_proceso = obtener_proceso_por_id(pid);
+	// Si sigue, es porque encontró el proceso
+	// Tengo que buscar en la tabla de páginas del proceso, si la página está
+	// Para eso controlo bit de presencia
+	t_fila_tabla_paginas* linea_actual = list_get(un_proceso->tabla_paginas, nro_pag);
+
+	if(linea_actual == NULL){
+		log_error(log_memoria, "NRO DE PÁGINA <%d> DEL PROCESO <%d> NO VALIDO", nro_pag, pid);
+		return -1;
+	}
+
+	if(linea_actual->presencia == 0){
+		log_error(log_memoria, "PAGE FAULT: NRO DE PÁGINA <%d> - PROCESO <%d>", nro_pag, pid);
+		return -1;
+	}
+	return linea_actual->frame;
 }

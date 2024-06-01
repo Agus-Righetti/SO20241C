@@ -49,7 +49,7 @@ void atender_kernel(){
             case FINALIZAR_PROCESO_KERNEL_A_MEMORIA:
                 log_info(log_memoria, "Kernel quiere finalizar un proceso");
                 buffer = recibiendo_paquete_personalizado(socket_cliente_kernel);
-				//liberar_memoria_proceso(buffer);
+				liberar_memoria_proceso(buffer);
                 free(buffer);
                 break;
 

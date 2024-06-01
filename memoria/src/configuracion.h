@@ -5,5 +5,6 @@
 
 // *************** DECLARACIÓN DE FUNCIONES **********
 memoria_config* armar_config();
+void paginar_memoria();
 
 #endif

@@ -13,13 +13,15 @@ typedef struct
     int tam_pagina;
     char* path_instrucciones;
     int retardo_respuesta;
-}memoria_config;
+} memoria_config;
 
 typedef struct{
 	int pid;
     char* path;
 	t_list* instrucciones;
-}t_proceso;
+    t_list* tabla_paginas;
+} t_proceso;
+
 // ************ ESTRUCTURA DE UNA INSTRUCCION *******
 typedef struct{
 	char* mnemonico;
@@ -28,8 +30,15 @@ typedef struct{
     char* tercero_parametro;
     char* cuarto_parametro;
     char* quinto_parametro;
-}t_instruccion_codigo;
+} t_instruccion_codigo;
 
+// ************ ESTRUCTURA DE UNA FILA DE TABLA *********
+typedef struct {
+    int frame;
+    bool presencia;
+    bool modificado;
+    // Seguramente tengo que agregar más datos
+} t_fila_tabla_paginas;
 
 // ************* VARIABLES GLOBALES *************
 extern t_log* log_memoria;
@@ -41,5 +50,10 @@ extern int socket_cliente_kernel;
 extern int socket_cliente_io;
 
 extern t_list* lista_procesos_recibidos;
+
+extern void* espacio_usuario;
+extern t_bitarray* bitmap_marcos;
+
+extern pthread_mutex_t mutex_bitmap_marcos;
 
 #endif

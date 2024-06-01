@@ -9,7 +9,7 @@ void iniciar_estructura_para_un_proceso_nuevo(t_buffer* buffer){
             
     log_info(log_memoria, "Proceso %d recibido, direccion del path: %s", pid, path);
 
-	//Crear un proceso
+	// Crear un proceso
 	t_proceso* proceso_nuevo = crear_proceso(pid, path);
 
 	//Agregar a la lista de procesos 
@@ -18,7 +18,7 @@ void iniciar_estructura_para_un_proceso_nuevo(t_buffer* buffer){
 
 	log_info(log_memoria, "PROCESO CREADO CON ÉXITO");
 
-	// CREAR ESTRUCTURAS PARA EL PROCESO
+	// Creo tabla de páginas
 	// Podriamos mandar un mensaje para chequear que llegó
 }
 
@@ -28,8 +28,9 @@ t_proceso* crear_proceso(int pid, char* path_instruc){
 	proceso_nuevo->pid = pid;
 	proceso_nuevo->path = path_instruc;
 	proceso_nuevo->instrucciones = NULL;
+    proceso_nuevo->tabla_paginas = list_create();
 
-	//Cargando instrucciones
+	// Cargo instrucciones
 	proceso_nuevo->instrucciones = leer_archivo_y_cargar_instrucciones(proceso_nuevo->path);
 
 	return proceso_nuevo;
@@ -41,7 +42,7 @@ t_list* leer_archivo_y_cargar_instrucciones(char* archivo_pseudocodigo) {
 
     // EN CONFIG ME DICE DONDE ESTAN LOS PATH
     //char* direccion = strcat(config_memoria->path_instrucciones, archivo_pseudocodigo);
-    
+    // ver si en config tengo que agregar una /
     // POR AHORA DEJO LA LINEA DE ABAJO
     // para no hacer que todos tengan que crear una carpeta "sripts-pruebas"
 
@@ -129,18 +130,20 @@ t_list* leer_archivo_y_cargar_instrucciones(char* archivo_pseudocodigo) {
 //******************************************************************
 //******************** FINALIZAR PROCESO ***************************
 //******************************************************************
-// void liberar_memoria_proceso(buffer){
-//     // RECIBO UN BUFFER [PID] -> Int
+void liberar_memoria_proceso(t_buffer* buffer){
+    // RECIBO UN BUFFER [PID] -> Int
+    // DEBO LIBERAR ESPACIO, Y SACAR EL PROCESO DE LA LISTA
 
-//     // DEBO LIBERAR ESPACIO, Y SACAR EL PROCESO DE LA LISTA
-//     int pid_a_eliminar = recibir_int_del_buffer(buffer);
-//     t_proceso* proceso_a_eliminar = obtener_proceso_por_id(pid_a_eliminar);
+    int pid_a_eliminar = recibir_int_del_buffer(buffer);
+    t_proceso* proceso_a_eliminar = obtener_proceso_por_id(pid_a_eliminar);
     
-//     if(list_remove_element(lista_procesos_recibidos,proceso_a_eliminar)){
-// 		//DEBO ELIMINAR EL PROCESO DE LA LISTA 
-// 		log_info(log_memoria, "PROCESO <PID:%d> ELIMINADO DE MEMORIA", pid);
-// 	} else {
-// 		log_info(log_memoria, "Proceso no encontrado en la lista de procesos para ser eliminados");
-// 		exit(EXIT_FAILURE);
-// 	}
-// }
+    if(list_remove_element(lista_procesos_recibidos, proceso_a_eliminar)){
+		// ELIMINO EL PROCESO DE LA LISTA 
+		log_info(log_memoria, "PROCESO <PID:%d> ELIMINADO DE MEMORIA", pid_a_eliminar);
+	} else {
+		log_info(log_memoria, "Proceso no encontrado en la lista de procesos para ser eliminados");
+		//exit(EXIT_FAILURE);
+	}
+    // LIBERO ESPACIO, MARCO FRAMES COMO LIBRES
+    //proceso_a_eliminar->tabla_paginas
+}

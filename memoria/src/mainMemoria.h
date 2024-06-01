@@ -25,4 +25,11 @@ int socket_cliente_io;
 //******** PROCESOS ***********
 t_list* lista_procesos_recibidos;
 
+//******** PAGINACIÓN ***********
+void* espacio_usuario;
+t_bitarray* bitmap_marcos;
+
+//******** SEMÁFOROS ***********
+pthread_mutex_t mutex_bitmap_marcos;
+
 #endif

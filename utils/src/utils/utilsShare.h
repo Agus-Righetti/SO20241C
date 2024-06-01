@@ -10,14 +10,15 @@
 #include<commons/error.h>
 #include<commons/collections/list.h>
 #include<commons/collections/queue.h>
-#include<string.h>
-#include<assert.h>
 #include<commons/string.h>
 #include<commons/config.h>
+#include<commons/bitarray.h> //Biblioteca para manejar bitarray (memoria)
+#include<string.h>  //-> ver si esta repetida
+#include<assert.h>
 #include<readline/readline.h>
 #include<pthread.h> // Biblioteca para hilos
 #include<semaphore.h> // Biblioteca para semaforos
-#include<unistd.h> // Para la función sleep()
+
 
 // ************* ESTRUCTURAS GLOBALES *************
 // ************* CODIGOS DE OPERACION *************
