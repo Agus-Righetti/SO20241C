@@ -144,6 +144,19 @@ void liberar_memoria_proceso(t_buffer* buffer){
 		log_info(log_memoria, "Proceso no encontrado en la lista de procesos para ser eliminados");
 		//exit(EXIT_FAILURE);
 	}
+
     // LIBERO ESPACIO, MARCO FRAMES COMO LIBRES
-    //proceso_a_eliminar->tabla_paginas
+    // recorro posiciones de la tabla de página, me fijo bit de P -> si es ==1 marco frame LIBRE
+    t_list* tabla_paginas_a_eliminar = proceso_a_eliminar->tabla_paginas;
+
+    for (int i = 0; i < list_size(tabla_paginas_a_eliminar); i++) {
+        t_fila_tabla_paginas* pagina_a_eliminar = list_get(tabla_paginas_a_eliminar, i);
+
+        if (pagina_a_eliminar->presencia == 1) {
+            pthread_mutex_lock (&mutex_bitmap_marcos);
+            bitarray_clean_bit(bitmap_marcos, pagina_a_eliminar->frame);
+            pthread_mutex_unlock (&mutex_bitmap_marcos);
+        }
+    }
+    
 }

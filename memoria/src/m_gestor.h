@@ -6,8 +6,7 @@
 #include <utils/utilsShare.h>
 
 // ************* ESTRUCTURAS GLOBALES *************
-typedef struct 
-{
+typedef struct{
     char* puerto_escucha;
     int tam_memoria;
     int tam_pagina;
