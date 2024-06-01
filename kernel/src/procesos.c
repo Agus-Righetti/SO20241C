@@ -497,8 +497,9 @@ int hacer_signal(int indice_recurso)
             pthread_mutex_lock(&mutex_por_recurso[indice_recurso]);
             pcb* proceso_desbloqueado = queue_pop(&colas_por_recurso[indice_recurso]);
             pthread_mutex_unlock(&mutex_por_recurso[indice_recurso]);
+            accionar_segun_estado(proceso_desbloqueado , 0); //mando el proceso q se desbloqueo recien a la cola de ready
             
-        }else flag = -1; //accionar_segun_estado no debe hacer nada porque ya lo hice aca
+        }else flag = 0; //debo pasar este proceso de nuevo a ready, el signal no lo bloquea
 
     } else flag = 1;// no existe,  mando a exit el proceso
 
@@ -515,7 +516,7 @@ int hacer_wait(int indice_recurso, pcb* proceso)
 
         if(config_kernel->instancias_recursos[indice_recurso] < 0){
             
-            flag = -1; // En accionar_segun_estado no hara nada porque ya se hace aca por el tema de la cola de bloqueados general y esta
+            flag = -1; // En accionar_segun_estado no hara nada porque ya lo bloqueo aca
 
             char* estado_anterior = proceso->estado_del_proceso;
             pthread_mutex_lock(&proceso->mutex_pcb);
@@ -524,7 +525,7 @@ int hacer_wait(int indice_recurso, pcb* proceso)
 
             log_info(log_kernel, "PID: %d - Estado Anterior: %c - Estado Actual: BLOCKED", proceso->pid, estado_anterior);
             
-            //aca habria q agregar un mutex x las dudas (uno x cada cola)
+            
             pthread_mutex_lock(&mutex_por_recurso[indice_recurso]);
             queue_push(&colas_por_recurso[indice_recurso], proceso); //Mando a la cola de blocked de ese recurso
             pthread_mutex_unlock(&mutex_por_recurso[indice_recurso]);
