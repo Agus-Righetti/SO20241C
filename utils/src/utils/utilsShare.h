@@ -32,6 +32,7 @@ typedef enum
 	INTERRUPCION,
 	CPU,
 	DESALOJO, // Devolvemos PCB por interrupcion
+	MARCO,
 
 	// Instruccioniones de I/O
 	IO_GEN_SLEEP, 

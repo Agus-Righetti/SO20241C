@@ -14,7 +14,19 @@ typedef struct
     char* puerto_escucha_interrupt;
     int cantidad_entradas_tlb;
     char* algoritmo_tlb;
-}cpu_config;
+} cpu_config;
+
+typedef struct {
+    int pid;
+    int numero_pagina;
+    int numero_marco;
+} TLB_Entrada;
+
+typedef struct {
+    int cantidad_entradas;
+    TLB_Entrada* entradas;
+    // Otros campos según el algoritmo de reemplazo
+} TLB;
 
 extern t_log* log_cpu;
 extern cpu_config* config_cpu;
@@ -29,12 +41,6 @@ extern pcb* proceso;
 extern t_dictionary* instrucciones;
 extern t_dictionary* registros;
 extern pcb** pcb_recibido;
-
-typedef struct 
-{
-    uint32_t pid;
-    uint32_t pagina;
-    uint32_t marco;
-}tlb;
+extern TLB* tlb;
 
 #endif

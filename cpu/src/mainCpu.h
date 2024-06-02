@@ -23,6 +23,8 @@ t_dictionary* registros;
 pcb* proceso = NULL;
 pcb** pcb_recibido = &proceso; // Asignación de la dirección de proceso a pcb_recibido
 
+TLB* tlb; 
+
 void terminar_programa();
 
 #endif
