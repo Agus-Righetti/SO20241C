@@ -7,6 +7,7 @@
 #include "servidor.h"
 #include "pcb.h"
 #include "conexion.h"
+#include "direccion.h"
 
 t_log* log_cpu;
 cpu_config* config_cpu;
@@ -24,6 +25,8 @@ pcb* proceso = NULL;
 pcb** pcb_recibido = &proceso; // Asignación de la dirección de proceso a pcb_recibido
 
 TLB* tlb; 
+int cantidad_entradas_tlb;
+int algoritmo_tlb;
 
 void terminar_programa();
 

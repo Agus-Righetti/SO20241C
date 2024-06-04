@@ -26,8 +26,12 @@ typedef enum
 	MENSAJE,
 	PAQUETE,
 	INSTRUCCION, 
+
+	// Instrucciones
     WAIT,
     SIGNAL, 
+	MOV_IN,
+
     CODIGO,
 	INTERRUPCION,
 	CPU,

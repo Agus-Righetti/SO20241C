@@ -2,6 +2,7 @@
 #define PCB_H_
 
 #include "cpu_gestor.h"
+#include "direccion.h"
 
 typedef enum
 {

@@ -1,7 +1,5 @@
 #include <direccion.h>
 
-#define MAX_ENTRADAS_TLB 100 // No se como buscar este valor
-
 int traducir_direccion_logica_a_fisica(int direccion_logica)
 {
     int tamanio_pagina = config_get_int_value(config_cpu, "TAM_MAX_PAGINACION");
@@ -9,7 +7,7 @@ int traducir_direccion_logica_a_fisica(int direccion_logica)
     int desplazamiento = direccion_logica - numero_pagina * tamanio_pagina;
     log_info(log_cpu, "Nro pagina: %d | desplazamiento: %d ", numero_pagina, desplazamiento);
 
-    TLB_Entrada respuesta = buscar(numero_pagina); // No es un puntero
+    TLB_Entrada respuesta = buscar(numero_pagina); 
 
     if(respuesta.pid != -1)
     {
@@ -28,10 +26,10 @@ int traducir_direccion_logica_a_fisica(int direccion_logica)
 
         // Recibir respuesta de memoria
         int cod_op = recibir_operacion(socket_cliente_cpu);
-        if(cod_op == MARCO) // Agregar a struct
+        if(cod_op == MARCO) 
         {
             int marco;
-            recibir_marco(socket_cliente_cpu, &marco); // Suponiendo que recibimos el número de marco correctamente
+            recibir_marco(socket_cliente_cpu, &marco); 
             log_info(log_cpu, "PID: %d - OBTENER MARCO - Página: %d - Marco: %d", proceso->pid, numero_pagina, marco);
             
             // Agregarlo a la tlb
@@ -39,7 +37,7 @@ int traducir_direccion_logica_a_fisica(int direccion_logica)
             nueva_entrada.pid = proceso->pid;
             nueva_entrada.numero_pagina = numero_pagina;
             nueva_entrada.numero_marco = marco;
-            actualizar_tlb(&nueva_entrada); // Suponiendo que tienes una función para actualizar la TLB
+            actualizar_tlb(&nueva_entrada); 
 
             return (marco * tamanio_pagina) + desplazamiento;
         }
@@ -90,13 +88,10 @@ int recibir_marco(int socket_cliente, int* marco)
 
 TLB_Entrada buscar(int numero_pagina) 
 {
-    for(int i = 0; i < tlb->cantidad_entradas; i++) // No entiendo que es la listaTLB
+    for(int i = 0; i < tlb->cantidad_entradas; i++) 
     {
-        // tlb* numero = list_get(listaTLB, i);
-        // if (numero->pagina == numero_pagina) 
         if(tlb->entradas[i].numero_pagina == numero_pagina)
         {
-            // return numero;
             return tlb->entradas[i];
         }
     }
@@ -110,59 +105,84 @@ TLB_Entrada buscar(int numero_pagina)
 
 void actualizar_tlb(TLB_Entrada* nueva_entrada) 
 {
-    // Insertar la nueva entrada en la TLB
-    // Por ejemplo, aquí podrías implementar un algoritmo de reemplazo si la TLB está llena
-    // O simplemente agregar la entrada al final si hay espacio
-    // Aquí asumo que tienes una estructura TLB definida y un arreglo de entradas en ella
-    // Supongamos que tienes una variable global tlb de tipo TLB*
-    if (tlb->cantidad_entradas < MAX_ENTRADAS_TLB) {
+    cantidad_entradas_tlb = config_get_int_value(config_cpu, "CANTIDAD_ENTRADAS_TLB");
+    algoritmo_tlb = strdup(config_get_string_value(config_cpu, "ALGORITMO_TLB"));
+
+    if (tlb->cantidad_entradas < cantidad_entradas_tlb) 
+    {
         // Si hay espacio en la TLB, simplemente agregamos la entrada al final
         tlb->entradas[tlb->cantidad_entradas] = *nueva_entrada;
+        tlb->uso_lru[tlb->cantidad_entradas] = tlb->cantidad_entradas; // Actualiza el uso LRU
         tlb->cantidad_entradas++;
-    } else {
-        // Si la TLB está llena, puedes implementar un algoritmo de reemplazo (FIFO, LRU, etc.)
-        // Por simplicidad, aquí asumiremos que simplemente sobrescribimos la primera entrada (FIFO)
-        // O una entrada aleatoria (LRU)
-        // Implementación del algoritmo de reemplazo
-        // Por ejemplo, reemplazamos la primera entrada (FIFO)
-        tlb->entradas[0] = *nueva_entrada;
+    } 
+    else 
+    {
+        if (strcmp(algoritmo_tlb, "FIFO") == 0) 
+        {
+            // Implementación del algoritmo FIFO
+            for (int i = 1; i < cantidad_entradas_tlb; i++) 
+            {
+                tlb->entradas[i - 1] = tlb->entradas[i];
+                tlb->uso_lru[i - 1] = tlb->uso_lru[i];
+            }
+            
+            tlb->entradas[cantidad_entradas_tlb - 1] = *nueva_entrada;
+            tlb->uso_lru[cantidad_entradas_tlb - 1] = cantidad_entradas_tlb - 1; // Actualiza el uso LRU
+        } 
+        else if (strcmp(algoritmo_tlb, "LRU") == 0) 
+        {
+            // Implementación del algoritmo LRU
+            int lru_index = 0;
+            for (int i = 1; i < cantidad_entradas_tlb; i++) 
+            {
+                if (tlb->uso_lru[i] < tlb->uso_lru[lru_index]) 
+                {
+                    lru_index = i;
+                }
+            }
+            tlb->entradas[lru_index] = *nueva_entrada;
+            // Actualiza los usos para reflejar el nuevo uso más reciente
+            for (int i = 0; i < cantidad_entradas_tlb; i++) 
+            {
+                if (tlb->uso_lru[i] >= 0) 
+                {
+                    tlb->uso_lru[i]++;
+                }
+            }
+            tlb->uso_lru[lru_index] = 0;
+        } 
+        else 
+        {
+            log_error(log_cpu, "Algoritmo de reemplazo de TLB no soportado: %s", algoritmo_tlb);
+        }
     }
 }
 
-//----------------------------------------------------------------
-
-// int MMU(int dirLogica) {
-
-
-//     objetoTLB* retornoTLB = buscarEnTLB(numeroPagina);  // Buscar en la TLB
-//     if (retornoTLB != NULL) {
-//         // TLB HIT
-//         log_info(logger, "PID: %d - TLB HIT - Pagina: %d", proceso->pid, numeroPagina);
-//         return (retornoTLB->numMarco * tamanio_pagina) + desplazamiento;
-//     } else {
-//         // TLB MISS
-//         log_info(logger, "PID: %d - TLB MISS - Pagina: %d", proceso->pid, numeroPagina);
-        
-//         // Mandar solicitud de marco correspondiente a la memoria
-//         mandar_numero_actualizado(conexion_memoria, numeroPagina, BUSCAR_MARCO);
-        
-//         op_code codOp = recibir_operacion(conexion_memoria);
-//         if (codOp == NUMERO) {
-//             int marco = recibir_numero(conexion_memoria);
-            
-//             // Agregar la nueva entrada a la TLB
-//             if (list_size(listaTLB) < config.cantidad_entradas_tlb) {
-//                 agregar_a_TLB(proceso->pid, numeroPagina, marco);
-//             } else {
-//                 // Ejecutar el algoritmo de sustitución si la TLB está llena
-//                 algoritmoSustitucion(proceso->pid, numeroPagina, marco);
-//             }
-            
-//             return (marco * tamanio_pagina) + desplazamiento;
-//         } else {
-//             // Manejar el caso de error en la recepción de marco
-//             log_error(logger, "Error al recibir el marco de memoria");
-//             return -1;  // o algún valor de error adecuado
-//         }
-//     }
-// }
+void inicializar_tlb() 
+{
+    // Inicializa la TLB y otros parámetros
+    tlb = malloc(sizeof(TLB));
+    if (tlb == NULL) 
+    {
+        fprintf(stderr, "No se pudo asignar memoria para la TLB\n");
+        exit(EXIT_FAILURE);
+    }
+    tlb->cantidad_entradas = 0;
+    tlb->entradas = malloc(cantidad_entradas_tlb * sizeof(TLB_Entrada));
+    if (tlb->entradas == NULL) 
+    {
+        fprintf(stderr, "No se pudo asignar memoria para las entradas de la TLB\n");
+        exit(EXIT_FAILURE);
+    }
+    tlb->uso_lru = malloc(cantidad_entradas_tlb * sizeof(int)); // Solo necesario para LRU
+    if (tlb->uso_lru == NULL) 
+    {
+        fprintf(stderr, "No se pudo asignar memoria para el seguimiento de uso LRU\n");
+        exit(EXIT_FAILURE);
+    }
+    // Inicializa el array de uso LRU
+    for (int i = 0; i < cantidad_entradas_tlb; i++) 
+    {
+        tlb->uso_lru[i] = -1;
+    }
+}

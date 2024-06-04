@@ -22,11 +22,13 @@ typedef struct {
     int numero_marco;
 } TLB_Entrada;
 
+// Para LRU, se necesita un campo adicional para mantener el orden de uso
 typedef struct {
     int cantidad_entradas;
     TLB_Entrada* entradas;
-    // Otros campos según el algoritmo de reemplazo
+    int* uso_lru; // Para LRU se puede usar un array para rastrear el uso
 } TLB;
+
 
 extern t_log* log_cpu;
 extern cpu_config* config_cpu;
@@ -42,5 +44,7 @@ extern t_dictionary* instrucciones;
 extern t_dictionary* registros;
 extern pcb** pcb_recibido;
 extern TLB* tlb;
+extern int cantidad_entradas_tlb;
+extern int algoritmo_tlb;
 
 #endif

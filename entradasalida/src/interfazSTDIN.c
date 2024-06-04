@@ -69,16 +69,16 @@ void iniciar_config_stdin(Interfaz *configuracion)
 
 void recibir_operacion_stdin_de_kernel(Interfaz* interfaz, op_code codigo)
 {
-    // Verificar si la operación es para una interfaz genérica
+    // Verificar si la operación es para una interfaz stdin
     if (codigo == IO_STDIN_READ) 
     {
         // Falta hacer
-        log_info(log_io, "Operacion generica recibida: IO_STDIN_READ.");
+        log_info(log_io, "Operacion recibida: IO_STDIN_READ.");
     } else if (codigo == -1) {
         log_error(log_io, "KERNEL se desconecto. Terminando servidor");
         exit(1);
     } else {
-        log_warning(log_io, "Operacion recibida no es para una interfaz generica.\n");
+        log_warning(log_io, "Operacion recibida no es para una interfaz STDIN.\n");
     }
 }
 

@@ -132,12 +132,12 @@ void interpretar_instruccion_de_memoria(t_buffer* buffer)
         case I_SET:
             instruccion_set(parte);
             break;
-        // case I_MOV_IN:
-        //     instruccion_mov_in(parte);
-        //     break;
-        // case I_MOV_OUT:
-        //     instruccion_mov_out(parte);
-        //     break;
+        case I_MOV_IN:
+            instruccion_mov_in(parte);
+            break;
+        case I_MOV_OUT:
+            instruccion_mov_out(parte);
+            break;
         case I_SUM:
             instruccion_sum(parte);
             break;
@@ -147,27 +147,27 @@ void interpretar_instruccion_de_memoria(t_buffer* buffer)
         case I_JNZ:
             instruccion_jnz(parte);
             break;
-        // case I_RESIZE:
-        //     instruccion_resize(parte);
-        //     break;
-        // case I_COPY_STRING:
-        //     instruccion_copy_string(parte);
-        //     break;
+        case I_RESIZE:
+            instruccion_resize(parte);
+            break;
+        case I_COPY_STRING:
+            instruccion_copy_string(parte);
+            break;
         case I_WAIT:
             instruccion_wait(parte);
             break;
         case I_SIGNAL:
             instruccion_signal(parte);
             break;
-        // case I_IO_GEN_SLEEP:
-        //     instruccion_io_gen_sleep(parte);
-        //     break;
-        // case I_IO_STDIN_READ:
-        //     instruccion_io_stdin_read(parte);
-        //     break;
-        // case I_IO_STDOUT_WRITE:
-        //     instruccion_io_stdout_write(parte);
-        //     break;
+        case I_IO_GEN_SLEEP:
+            instruccion_io_gen_sleep(parte);
+            break;
+        case I_IO_STDIN_READ:
+            instruccion_io_stdin_read(parte);
+            break;
+        case I_IO_STDOUT_WRITE:
+            instruccion_io_stdout_write(parte);
+            break;
         // case I_IO_FS_CREATE:
         //     instruccion_io_fs_create(parte);
         //     break;
@@ -204,6 +204,48 @@ void instruccion_set(char **parte)
 	// Obtiene el valor del registro desde el diccionario 'registros' usando 'parte[1]' como clave y copia el valor de 'parte[2]' en el registro encontrado.
     memcpy(dictionary_get(registros, parte[1]), parte[2], strlen(parte[2]));
 	proceso->program_counter++; 
+}
+
+void instruccion_mov_in (char **parte)
+{
+    // MOV_IN registro_datos registro_direccion
+    // MOV_IN EDX ECX
+
+	log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s", proceso->pid, parte[0], parte[1], parte[2]);
+    
+    // Traducimos la direccion del registro direccion
+	int direccion_fisica = traducir_direccion_logica_a_fisica(parte[2]); 
+	
+	char* instruccion = string_from_format("%s %s %s", parte[0], (char*)dictionary_get(registros, parte[1]), direccion_fisica);
+	
+    // Pido espacio de memoria para la instruccion + /0
+    char* instruccion_alloc = malloc(strlen(instruccion) + 1);
+
+	strcpy(instruccion_alloc, instruccion); // Le copio la instruccion a instruccion_alloc
+
+	list_replace_and_destroy_element(proceso->instrucciones, proceso->program_counter, instruccion_alloc, free);
+	
+    log_trace(log_cpu, "PID: %d - Instruccion traducida: %s", proceso->pid, (char*)list_get(proceso->instrucciones, proceso->program_counter));
+	
+    t_instruccion* instruccion_proceso = malloc(sizeof(t_instruccion));
+	generar_instruccion(proceso, instruccion_proceso, list_get(proceso->instrucciones, proceso->program_counter));
+
+    // Enviamos la instruccion a memoria
+    enviar_instruccion(socket_cliente_cpu, instruccion_proceso, MOV_IN);
+	log_warning(log_cpu, "PID: %d - Advertencia: Instruccion sin realizar", proceso->pid);
+	proceso->program_counter++;
+}
+
+void generar_instruccion(pcb* proceso, t_instruccion* instruccion_proceso, char* instruccion) 
+{
+	instruccion_proceso->pid = proceso->pid;
+	instruccion_proceso->instruccion = instruccion;
+}
+
+void instruccion_mov_out (char **parte)
+{
+    // MOV_OUT EDX ECX
+
 }
 
 void instruccion_sum(char **parte)
@@ -250,6 +292,16 @@ void instruccion_jnz(char **parte)
     }
 }
 
+void instruccion_resize(char **parte)
+{
+    // RESIZE 128
+}
+
+void instruccion_copy_string(char **parte)
+{
+    // COPY_STRING 8
+}
+
 void instruccion_io_gen_sleep(char **parte)
 {
     // IO_GEN_SLEEP Int1 10
@@ -278,16 +330,6 @@ void solicitar_sleep_io(const char *interfaz, int unidades_trabajo, int pid)
 
     // Liberar el paquete
     eliminar_paquete(paquete);
-}
-
-void instruccion_exit(char** parte) 
-{
-	log_info(log_cpu, "PID: %d - Ejecutando: %s", proceso->pid, parte[0]);
-	proceso->program_counter++;
-	enviar_pcb(socket_servidor_cpu, proceso, EXIT);
-    //enviar_flag(socket_servidor_cpu, 1);
-	list_destroy_and_destroy_elements(proceso->instrucciones, free);
-	free(proceso);
 }
 
 void intruccion_io_fs_create(char **parte)
@@ -401,11 +443,32 @@ void solicitar_instrucciones_a_memoria(int socket_cliente_cpu, pcb** pcb_recibid
     printf("El PC es: %d\n", (*pcb_recibido)->program_counter);
 }
 
-// 3er checkpoint
-// MOV_IN EDX ECX
-// MOV_OUT EDX ECX
-// RESIZE 128
-// COPY_STRING 8
+void enviar_instruccion(int conexion, t_instruccion* instruccion, op_code codigo)
+{
+    // Creamos un paquete
+	t_paquete *paquete = crear_paquete_personalizado(codigo);
+    agregar_estructura_al_paquete_personalizado(paquete, instruccion, sizeof(t_instruccion));
+    enviar_paquete(paquete, conexion);
+	eliminar_paquete(paquete);
+}
 
-// IO_STDIN_READ Int2 EAX AX
-// IO_STDOUT_WRITE Int3 BX EAX
+void instruccion_exit(char** parte) 
+{
+	log_info(log_cpu, "PID: %d - Ejecutando: %s", proceso->pid, parte[0]);
+	proceso->program_counter++;
+	enviar_pcb(socket_servidor_cpu, proceso, EXIT);
+    //enviar_flag(socket_servidor_cpu, 1);
+	list_destroy_and_destroy_elements(proceso->instrucciones, free);
+	free(proceso);
+}
+
+void instruccion_io_stdin_read(char** parte) 
+{
+    // IO_STDIN_READ Int2 EAX AX
+}
+
+void instruccion_io_stdout_write(char** parte) 
+{
+    // IO_STDOUT_WRITE Int3 BX EAX
+}
+
