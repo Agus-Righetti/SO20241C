@@ -95,7 +95,7 @@ TLB_Entrada buscar(int numero_pagina)
             return tlb->entradas[i];
         }
     }
-    // return NULL;
+
     TLB_Entrada entrada_vacia;
     entrada_vacia.pid = -1;
     entrada_vacia.numero_pagina = -1;
@@ -120,14 +120,11 @@ void actualizar_tlb(TLB_Entrada* nueva_entrada)
         if (strcmp(algoritmo_tlb, "FIFO") == 0) 
         {
             // Implementación del algoritmo FIFO
-            for (int i = 1; i < cantidad_entradas_tlb; i++) 
+            for (int i = 0; i < cantidad_entradas_tlb - 1; i++) 
             {
-                tlb->entradas[i - 1] = tlb->entradas[i];
-                tlb->uso_lru[i - 1] = tlb->uso_lru[i];
+                tlb->entradas[i] = tlb->entradas[i + 1];
             }
-            
-            tlb->entradas[cantidad_entradas_tlb - 1] = *nueva_entrada;
-            tlb->uso_lru[cantidad_entradas_tlb - 1] = cantidad_entradas_tlb - 1; // Actualiza el uso LRU
+            tlb->entradas[cantidad_entradas_tlb - 1] = *nueva_entrada;        
         } 
         else if (strcmp(algoritmo_tlb, "LRU") == 0) 
         {
@@ -162,24 +159,30 @@ void inicializar_tlb()
 {
     // Inicializa la TLB y otros parámetros
     tlb = malloc(sizeof(TLB));
+
     if (tlb == NULL) 
     {
         fprintf(stderr, "No se pudo asignar memoria para la TLB\n");
         exit(EXIT_FAILURE);
     }
+
     tlb->cantidad_entradas = 0;
     tlb->entradas = malloc(cantidad_entradas_tlb * sizeof(TLB_Entrada));
+
     if (tlb->entradas == NULL) 
     {
         fprintf(stderr, "No se pudo asignar memoria para las entradas de la TLB\n");
         exit(EXIT_FAILURE);
     }
+
     tlb->uso_lru = malloc(cantidad_entradas_tlb * sizeof(int)); // Solo necesario para LRU
+
     if (tlb->uso_lru == NULL) 
     {
         fprintf(stderr, "No se pudo asignar memoria para el seguimiento de uso LRU\n");
         exit(EXIT_FAILURE);
     }
+
     // Inicializa el array de uso LRU
     for (int i = 0; i < cantidad_entradas_tlb; i++) 
     {

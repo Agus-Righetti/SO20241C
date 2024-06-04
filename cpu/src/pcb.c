@@ -147,11 +147,11 @@ void interpretar_instruccion_de_memoria(t_buffer* buffer)
         case I_JNZ:
             instruccion_jnz(parte);
             break;
-        case I_RESIZE:
-            instruccion_resize(parte);
-            break;
-        case I_COPY_STRING:
-            instruccion_copy_string(parte);
+        // case I_RESIZE:
+        //     instruccion_resize(parte);
+        //     break;
+        // case I_COPY_STRING:
+        //     instruccion_copy_string(parte);
             break;
         case I_WAIT:
             instruccion_wait(parte);
@@ -162,12 +162,12 @@ void interpretar_instruccion_de_memoria(t_buffer* buffer)
         case I_IO_GEN_SLEEP:
             instruccion_io_gen_sleep(parte);
             break;
-        case I_IO_STDIN_READ:
-            instruccion_io_stdin_read(parte);
-            break;
-        case I_IO_STDOUT_WRITE:
-            instruccion_io_stdout_write(parte);
-            break;
+        // case I_IO_STDIN_READ:
+        //     instruccion_io_stdin_read(parte);
+        //     break;
+        // case I_IO_STDOUT_WRITE:
+        //     instruccion_io_stdout_write(parte);
+        //     break;
         // case I_IO_FS_CREATE:
         //     instruccion_io_fs_create(parte);
         //     break;
@@ -369,6 +369,26 @@ void intruccion_io_fs_create(char **parte)
     
 // }
 
+// void instruccion_io_stdin_read(char** parte) 
+// {
+//     // IO_STDIN_READ Int2 EAX AX
+// }
+
+// void instruccion_io_stdout_write(char** parte) 
+// {
+//     // IO_STDOUT_WRITE Int3 BX EAX
+// }
+
+void instruccion_exit(char** parte) 
+{
+	log_info(log_cpu, "PID: %d - Ejecutando: %s", proceso->pid, parte[0]);
+	proceso->program_counter++;
+	enviar_pcb(socket_servidor_cpu, proceso, EXIT);
+    //enviar_flag(socket_servidor_cpu, 1);
+	list_destroy_and_destroy_elements(proceso->instrucciones, free);
+	free(proceso);
+}
+
 void instruccion_wait(char** parte)
 {
     // Verificar que se haya pasado el nombre del recurso como argumento
@@ -451,24 +471,3 @@ void enviar_instruccion(int conexion, t_instruccion* instruccion, op_code codigo
     enviar_paquete(paquete, conexion);
 	eliminar_paquete(paquete);
 }
-
-void instruccion_exit(char** parte) 
-{
-	log_info(log_cpu, "PID: %d - Ejecutando: %s", proceso->pid, parte[0]);
-	proceso->program_counter++;
-	enviar_pcb(socket_servidor_cpu, proceso, EXIT);
-    //enviar_flag(socket_servidor_cpu, 1);
-	list_destroy_and_destroy_elements(proceso->instrucciones, free);
-	free(proceso);
-}
-
-void instruccion_io_stdin_read(char** parte) 
-{
-    // IO_STDIN_READ Int2 EAX AX
-}
-
-void instruccion_io_stdout_write(char** parte) 
-{
-    // IO_STDOUT_WRITE Int3 BX EAX
-}
-
