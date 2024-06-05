@@ -12,4 +12,7 @@ void server_para_cpu();
 void server_para_kernel();
 void server_para_io();
 
+// ********* APENAS ESTABLEZCO CONEXION CON CPU ENVIO TAM DE MARCOS *********
+void enviar_tam_marco_a_cpu();
+
 #endif

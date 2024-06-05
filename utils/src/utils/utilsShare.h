@@ -50,6 +50,7 @@ typedef enum
 
 	// MEMORIA A CPU
 	CPU_RECIBE_INSTRUCCION_DE_MEMORIA, // [Instruccion] -> [String, String, String, String, String]
+	CPU_RECIBE_TAMAÑO_PAGINA_DE_MEMORIA, 
 
 	PCB_KERNEL_A_CPU,
 	PCB_CPU_A_KERNEL,
