@@ -46,4 +46,3 @@ void terminar_programa()
 		config_destroy(config_cpu);
 	}
 }
-

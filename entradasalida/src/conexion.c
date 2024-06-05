@@ -22,7 +22,6 @@ void atender_kernel()
                 liberar_configuracion_generica(&configuracion);
                 break;
             case STDIN:
-                leer_consola(log_io);
                 leer_configuracion_stdin(&configuracion);
                 recibir_operacion_stdin_de_kernel(STDIN, cod_op_io);
                 liberar_configuracion_stdin(&configuracion);

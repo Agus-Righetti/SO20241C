@@ -31,6 +31,10 @@ typedef enum
     WAIT,
     SIGNAL, 
 	MOV_IN,
+	MOV_OUT,
+
+	PEDIR_TAMANIO,
+	OUT_OF_MEMORY,
 
     CODIGO,
 	INTERRUPCION,

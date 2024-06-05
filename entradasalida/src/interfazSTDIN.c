@@ -14,9 +14,8 @@ void leer_consola()
 		leido = readline("> ");
 		log_info(log_io, ">> %s", leido);
 	}
-
-	// ¡No te olvides de liberar las lineas antes de regresar!
-	free(leido);
+	
+    free(leido);
 }
 
 void leer_configuracion_stdin(Interfaz *configuracion)
@@ -72,12 +71,16 @@ void recibir_operacion_stdin_de_kernel(Interfaz* interfaz, op_code codigo)
     // Verificar si la operación es para una interfaz stdin
     if (codigo == IO_STDIN_READ) 
     {
-        // Falta hacer
         log_info(log_io, "Operacion recibida: IO_STDIN_READ.");
-    } else if (codigo == -1) {
+        leer_consola(); // Esta función se encuentra en el módulo de I/O y debe estar definida allí
+    } 
+    else if (codigo == -1) 
+    {
         log_error(log_io, "KERNEL se desconecto. Terminando servidor");
         exit(1);
-    } else {
+    } 
+    else 
+    {
         log_warning(log_io, "Operacion recibida no es para una interfaz STDIN.\n");
     }
 }

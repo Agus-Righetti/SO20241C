@@ -46,17 +46,6 @@ int traducir_direccion_logica_a_fisica(int direccion_logica)
             log_error(log_cpu, "Error al recibir el marco de la memoria");
             return -1; 
         }
-
-        // RECIBIR MARCO
-        // char *mensaje = recibir_valor(socket_memoria);
-        // nro_marco = atoi(mensaje);
-        // free(mensaje);
-
-        // if (nro_marco >= 0){
-        //     log_info(logger, "PID: %d -OBTUVE MARCO - Página:< %d  > - Marco: < %d >", pid, numero_pagina, nro_marco);
-        //     direccion_fisica = (nro_marco * tamanio_pagina) + desplazamiento;
-        // }
-
     }
 }
 
@@ -108,7 +97,7 @@ void actualizar_tlb(TLB_Entrada* nueva_entrada)
     cantidad_entradas_tlb = config_get_int_value(config_cpu, "CANTIDAD_ENTRADAS_TLB");
     algoritmo_tlb = strdup(config_get_string_value(config_cpu, "ALGORITMO_TLB"));
 
-    if (tlb->cantidad_entradas < cantidad_entradas_tlb) 
+    if(tlb->cantidad_entradas < cantidad_entradas_tlb) 
     {
         // Si hay espacio en la TLB, simplemente agregamos la entrada al final
         tlb->entradas[tlb->cantidad_entradas] = *nueva_entrada;
