@@ -21,9 +21,12 @@ void algoritmo_round_robin (void* arg);
 void accionar_segun_estado(pcb* proceso, int flag);
 void recibir_pcb_hilo(void* arg);
 void pasar_proceso_a_exit(pcb* proceso);
+void pasar_proceso_a_blocked(pcb* proceso);
 void pasar_procesos_de_new_a_ready();
 int hacer_signal(int indice_recurso, pcb* proceso);
-int hacer_wait(int indice_recurso);
+int hacer_wait(int indice_recurso, pcb* proceso);
+void listar_procesos_por_estado();
+char* obtener_char_de_estado(estados estado_a_convertir);
 
 
 

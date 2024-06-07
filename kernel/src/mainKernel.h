@@ -17,6 +17,7 @@ t_queue* cola_de_execute;
 t_queue* cola_de_exit;
 t_queue* cola_de_blocked;
 t_queue* cola_prioridad_vrr;
+t_queue* cola_general_de_procesos; //esta cola tendra a todos los procesos del sistema
 // t_queue** colas_por_recurso = malloc(cantidad_recursos * sizeof(t_queue*));
 int pid_contador = 0;
 int conexion_kernel_cpu;
@@ -30,6 +31,7 @@ pthread_mutex_t mutex_cola_de_blocked;
 pthread_mutex_t mutex_cola_de_execute;
 pthread_mutex_t mutex_grado_programacion;
 pthread_mutex_t mutex_cola_prioridad_vrr;
+pthread_mutex_t mutex_cola_general_de_procesos;
 sem_t sem_cola_de_ready;
 sem_t sem_cola_de_new;
 sem_t sem_multiprogramacion;

@@ -104,6 +104,7 @@ typedef struct {
 	char* direccion_instrucciones; //es el path que me mandan por consola
 	pthread_mutex_t mutex_pcb;
 	t_list* instrucciones;
+	t_queue* recursos_asignados;
 } pcb;
 
 // ************ DECLARACION DE FUNCIONES ************

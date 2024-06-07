@@ -9,7 +9,7 @@ void iterator(char* value)
 int main(int argc, char* argv[]) 
 {
     decir_hola("Kernel");
-    pid_contador = 0; //Va incrementando a meidda que arrancamos un nuevo proceso
+    pid_contador = 0; //Va incrementando a medida que arrancamos un nuevo proceso
     
     cantidad_recursos = sizeof(config_kernel->instancias_recursos) / sizeof(config_kernel->instancias_recursos[0]);
 
@@ -18,7 +18,7 @@ int main(int argc, char* argv[])
 
     for (int i = 0; i < cantidad_recursos; i++) {
         colas_por_recurso[i] = queue_create();
-        pthread_mutex_init(&mutex_por_recurso[i], NULL);
+        pthread_mutex_init(mutex_por_recurso[i], NULL);
     }
 
     pthread_mutex_init(&mutex_cola_de_new,NULL);
@@ -27,12 +27,14 @@ int main(int argc, char* argv[])
     pthread_mutex_init(&mutex_cola_de_exit,NULL);
     pthread_mutex_init(&mutex_cola_de_blocked,NULL);
     pthread_mutex_init(&mutex_cola_prioridad_vrr,NULL);
+    pthread_mutex_init(&mutex_cola_general_de_procesos,NULL);
     cola_de_new = queue_create();
     cola_de_ready = queue_create();
     cola_de_execute = queue_create();
     cola_de_exit = queue_create();
     cola_de_blocked = queue_create();
     cola_prioridad_vrr = queue_create();
+    cola_general_de_procesos = queue_create();
 
     sem_init(&sem_cola_de_new,0,0);
     sem_init(&sem_cola_de_ready,0,0);
@@ -80,7 +82,7 @@ int main(int argc, char* argv[])
 
     for (int i = 0; i < cantidad_recursos; i++) {
         queue_destroy(colas_por_recurso[i]);
-        pthread_mutex_destroy(&mutex_por_recurso);
+        pthread_mutex_destroy(mutex_por_recurso);
     }
     free(colas_por_recurso);
     free(mutex_por_recurso);
@@ -97,6 +99,10 @@ int main(int argc, char* argv[])
     sem_destroy(&destruir_hilo_interrupcion);
     sem_destroy(&sem_puedo_mandar_a_cpu);
     sem_destroy(&sem_cola_prioridad_vrr);
+
+    liberar_conexion(conexion_kernel_cpu);
+    liberar_conexion(interrupcion_kernel_cpu);
+    liberar_conexion(conexion_kernel_memoria);
 
 
 
