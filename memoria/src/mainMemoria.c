@@ -8,6 +8,7 @@ int main() {
     // ************* PAGINACIÓN *************
     paginar_memoria();
     pthread_mutex_init(&mutex_bitmap_marcos, NULL);
+    pthread_mutex_init(&mutex_espacio_usuario, NULL);
 
     // ********* INICIALIZO MEMORIA COMO SERVIDOR *********
     inicializar_servidor();
@@ -27,6 +28,7 @@ int main() {
 	free(config_memoria);
     bitarray_destroy(bitmap_marcos);
     pthread_mutex_destroy(&mutex_bitmap_marcos);
+    pthread_mutex_destroy(&mutex_espacio_usuario);
 
     // ELIMINAR COSAS
     //pthread_mutex_destroy (pthread_mutex_t *__mutex);

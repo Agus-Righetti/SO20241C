@@ -4,6 +4,7 @@
 // ************* INCLUDES GENERALES *************
 #include <utils/hello.h>
 #include <utils/utilsShare.h>
+#include <math.h>
 
 // ************* ESTRUCTURAS GLOBALES *************
 typedef struct{
@@ -36,12 +37,19 @@ typedef struct {
     int frame;
     bool presencia;
     bool modificado;
+    int tam_disponible;
     // Seguramente tengo que agregar más datos
 } t_fila_tabla_paginas;
+
+// ************ ESTRUCTURA DE UN MARCO, la tuve que hacer para la lista *********
+typedef struct {
+    int id;
+} t_frame;
 
 // ************* VARIABLES GLOBALES *************
 extern t_log* log_memoria;
 extern memoria_config* config_memoria;
+extern  int cant_marcos;
 
 extern int socket_servidor_memoria;
 extern int socket_cliente_cpu;
@@ -52,7 +60,10 @@ extern t_list* lista_procesos_recibidos;
 
 extern void* espacio_usuario;
 extern t_bitarray* bitmap_marcos;
+extern t_list* marcos_libres;
+extern int cant_marcos; //revisar este
 
 extern pthread_mutex_t mutex_bitmap_marcos;
+extern pthread_mutex_t mutex_espacio_usuario;
 
 #endif
