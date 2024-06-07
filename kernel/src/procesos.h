@@ -27,6 +27,7 @@ int hacer_signal(int indice_recurso, pcb* proceso);
 int hacer_wait(int indice_recurso, pcb* proceso);
 void listar_procesos_por_estado();
 char* obtener_char_de_estado(estados estado_a_convertir);
+void cambiar_grado_multiprogramacion(char* nuevo_valor_formato_char);
 
 
 

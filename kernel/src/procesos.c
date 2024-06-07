@@ -59,6 +59,10 @@ void leer_consola(void* arg){
         }else if (strcmp(partes[0], "PROCESO_ESTADO") == 0){
             printf("Ha seleccionado la opción PROCESO_ESTADO\n");
             listar_procesos_por_estado();
+        
+        }else if (strcmp(partes[0], "MULTIPROGRAMACION") == 0){
+            printf("Ha seleccionado la opción MULTIPROGRAMACION\n");
+            cambiar_grado_multiprogramacion(partes[1]);
         }else {
             
             printf("Opción no válida\n");
@@ -114,7 +118,7 @@ void iniciar_proceso(char* path ){
     int multiprogramacion_actual;
     sem_getvalue(&sem_multiprogramacion, &multiprogramacion_actual); // Obtengo valor del grado de multiprogramacion
     
-    if (multiprogramacion_actual > 0)
+    if (multiprogramacion_actual > 0 )
     {   
         //Chequeo si tengo lugar para aceptar otro proceso en base al grado de multiprogramacion actual q tengo
         
@@ -233,6 +237,17 @@ void listar_procesos_por_estado()
     queue_destroy(cola_aux_new);
 
 
+}
+void cambiar_grado_multiprogramacion(char* nuevo_valor_formato_char)
+{
+    int nuevo_valor = atoi(nuevo_valor_formato_char);
+    config_kernel->grado_multiprogramacion = nuevo_valor;
+    int valor_semaforo;
+    sem_getvalue(&sem_multiprogramacion, &valor_semaforo);
+    while (valor_semaforo > nuevo_valor)
+    {
+        sem_wait(&sem_multiprogramacion);
+    }
 }
 
 
@@ -436,7 +451,11 @@ void pasar_proceso_a_exit(pcb* proceso){
 
     free(proceso->registros);
     free(proceso); 
-    sem_post(&sem_multiprogramacion); //agrego 1 al grado de multiprogramacion
+    if(queue_size(cola_general_de_procesos) < config_kernel->grado_multiprogramacion)
+    {
+        sem_post(&sem_multiprogramacion);//agrego 1 al grado de multiprogramacion solo si puedo
+    }
+     
 }
 
 void pasar_proceso_a_blocked(pcb* proceso){
@@ -705,5 +724,8 @@ char* obtener_char_de_estado(estados estado_a_convertir)
             return "EXIT";
         case NEW:
             return "NEW";
+        default:
+            return "No entiendo";
     }
+
 }
