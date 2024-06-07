@@ -19,14 +19,14 @@ int traducir_direccion_logica_a_fisica(int direccion_logica)
         log_info(log_cpu, "PID: %d - TLB MISS - Pagina: %d", proceso->pid, numero_pagina);
 
         // Solicitar marco
-        t_paquete *paquete = crear_paquete_personalizado(MARCO);
-        agregar_estructura_al_paquete_personalizado(paquete, &numero_pagina, sizeof(int));
-        agregar_estructura_al_paquete_personalizado(paquete, &proceso->pid, sizeof(int));
-        enviar_paquete(paquete, socket_cliente_cpu);
+        // t_paquete *paquete = crear_paquete_personalizado(MARCO);
+        // agregar_estructura_al_paquete_personalizado(paquete, &numero_pagina, sizeof(int));
+        // agregar_estructura_al_paquete_personalizado(paquete, &proceso->pid, sizeof(int));
+        // enviar_paquete(paquete, socket_cliente_cpu);
 
-        // Recibir respuesta de memoria
+        // Recibir tamaño de pagina de memoria
         int cod_op = recibir_operacion(socket_cliente_cpu);
-        if(cod_op == MARCO) 
+        if(cod_op == CPU_RECIBE_TAMAÑO_PAGINA_DE_MEMORIA) // -----------------------------------------------------------------------
         {
             int marco;
             recibir_marco(socket_cliente_cpu, &marco); 
@@ -38,7 +38,7 @@ int traducir_direccion_logica_a_fisica(int direccion_logica)
             nueva_entrada.numero_pagina = numero_pagina;
             nueva_entrada.numero_marco = marco;
             actualizar_tlb(&nueva_entrada); 
-
+            
             return (marco * tamanio_pagina) + desplazamiento;
         }
         else

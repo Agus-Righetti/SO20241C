@@ -13,35 +13,35 @@ void atender_memoria()
     {
         switch (cod_op_memoria) 
         {
-        case MENSAJE:
-            recibir_mensaje(socket_cliente_cpu, log_cpu);
-            break;
-        case PAQUETE:
-            lista = recibir_paquete(socket_cliente_cpu);
-            log_info(log_cpu, "Me llegaron los siguientes valores:\n");
-            list_iterate(lista, (void*) iterator);
-            list_destroy_and_destroy_elements(lista, free);
-            break;
-        case CPU_RECIBE_INSTRUCCION_DE_MEMORIA:
-            log_info(log_cpu, "Recibi una instruccion de memoria");
-            t_buffer* buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
-            log_info(log_cpu, "PID: %d - FETCH - Program Counter: %d", proceso->pid, proceso->program_counter);
-            proceso->program_counter++;
-			interpretar_instruccion_de_memoria(buffer);
-            free(buffer);
-            break;
-        case EXIT:
-            error_exit(EXIT);
-            list_destroy_and_destroy_elements(lista, free); 
-            break;
-        case -1:
-            log_error(log_cpu, "MEMORIA se desconecto. Terminando servidor");
-            free(socket_cliente_cpu);
-            exit(1);
-            return;
-        default:
-            log_warning(log_cpu,"Operacion desconocida. No quieras meter la pata");
-            break;
+            case MENSAJE:  
+                recibir_mensaje(socket_cliente_cpu, log_cpu);
+                break;
+            case PAQUETE:
+                lista = recibir_paquete(socket_cliente_cpu);
+                log_info(log_cpu, "Me llegaron los siguientes valores:\n");
+                list_iterate(lista, (void*) iterator);
+                list_destroy_and_destroy_elements(lista, free);
+                break;
+            case CPU_RECIBE_INSTRUCCION_DE_MEMORIA:
+                log_info(log_cpu, "Recibi una instruccion de memoria");
+                t_buffer* buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
+                log_info(log_cpu, "PID: %d - FETCH - Program Counter: %d", proceso->pid, proceso->program_counter);
+                proceso->program_counter++;
+                interpretar_instruccion_de_memoria(buffer);
+                free(buffer);
+                break;
+            case EXIT:
+                error_exit(EXIT);
+                list_destroy_and_destroy_elements(lista, free); 
+                break;
+            case -1:
+                log_error(log_cpu, "MEMORIA se desconecto. Terminando servidor");
+                free(socket_cliente_cpu);
+                exit(1);
+                return;
+            default:
+                log_warning(log_cpu,"Operacion desconocida. No quieras meter la pata");
+                break;
         }
     }
 }
@@ -106,7 +106,7 @@ void atender_interrupcion()
             break;
         case CPU_TERMINA_EJECUCION_PCB: // INTERRUPCION
             log_info(log_cpu, "Me llego una interrupcion de KERNEL");
-            enviar_pcb(socket_cliente_kernel, proceso, DESALOJO);
+            enviar_pcb(socket_cliente_kernel, proceso, DESALOJO, NULL);
             break;
         case -1:
             log_error(log_cpu, "El cliente se desconecto. Terminando servidor");

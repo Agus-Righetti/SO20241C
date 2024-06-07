@@ -1,8 +1,5 @@
 #include <mainCpu.h>
 
-// t_log* log_cpu;
-// cpu_config* config_cpu;
-
 int main(int argc, char* argv[]) 
 {
     decir_hola("CPU");
@@ -31,7 +28,7 @@ int main(int argc, char* argv[])
 	escuchar_memoria();
    
 	terminar_programa();
-	liberar_conexion(socket_cliente_cpu);
+	liberar_conexion(socket_cliente_kernel);
 	return EXIT_SUCCESS;
 }
 

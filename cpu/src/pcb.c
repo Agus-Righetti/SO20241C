@@ -31,22 +31,30 @@ void recibir_pcb(t_buffer* buffer, pcb** pcb_recibido)
     free(pcb_temp);
 }
 
-void enviar_pcb(int conexion, pcb *proceso, op_code codigo)
+void enviar_pcb(int conexion, pcb *proceso, op_code codigo, char* recurso)
 {
-    // Creamos un paquete
-	t_paquete *paquete = crear_paquete_personalizado(PCB_CPU_A_KERNEL);
+    t_paquete *paquete = crear_paquete_personalizado(PCB_CPU_A_KERNEL);
     agregar_estructura_al_paquete_personalizado(paquete, proceso, sizeof(pcb));
+    
+    if (recurso == NULL) {
+        return; // No hacer nada si el recurso es NULL
+    }
+
+    int recurso_valor = atoi(recurso);
+
+    if(recurso_valor == 1) {
+        agregar_int_al_paquete_personalizado(paquete, 0);
+    } else if (recurso_valor == 2) {
+        agregar_int_al_paquete_personalizado(paquete, 1); 
+    } else if (recurso_valor == 3) {
+        agregar_int_al_paquete_personalizado(paquete, 2); 
+    } else {
+        return; // No hacer nada si el recurso no coincide
+    }
+	
     enviar_paquete(paquete, conexion);
 	eliminar_paquete(paquete);
 }
-
-// void enviar_flag(int conexion, int estado)
-// {
-//     t_paquete *paquete = crear_paquete_personalizado(CPU_TERMINA_EJECUCION_PCB);
-//     agregar_int_al_paquete_personalizado(paquete, estado);
-//     enviar_paquete(paquete, conexion);
-// 	eliminar_paquete(paquete);
-// }
 
 // Diccionario ---------------------------------------------------------------------------------------------------------------------
 
@@ -126,28 +134,10 @@ void solicitar_instrucciones_a_memoria(int socket_cliente_cpu, pcb** pcb_recibid
     printf("El PC es: %d\n", (*pcb_recibido)->program_counter);
 }
 
-// void recibir_instruccion_de_memoria(t_buffer* buffer)
-// {
-//     // el buffer tiene un struct INSTRUCCION DENTRO 
-//     // [char* mnemonico, char* primero_parametro, char* segundo_parametro, char* tercero_parametro, char* cuarto_parametro, char* quinto_parametro]
-
-//     // Verifico que se hayan recibidos valores
-//     if (buffer == NULL) {
-//         error_show("No se recibio el proceso por parte de MEMORIA");
-//         exit(1);
-//     }
-
-//     mnemonico = recibir_string_del_buffer(buffer);
-//     primero_parametro = recibir_string_del_buffer(buffer);
-// }
-
 // Instrucciones -------------------------------------------------------------------------------------------------------------------
 
 void interpretar_instruccion_de_memoria(t_buffer* buffer)
 {   
-    //t_instruccion_codigo;
-    //[String, String, String, String, String, String]
-
     if (buffer == NULL) 
     {
         error_show("No se recibio el proceso por parte de MEMORIA");
@@ -199,9 +189,9 @@ void interpretar_instruccion_de_memoria(t_buffer* buffer)
         case I_IO_STDIN_READ:
             instruccion_io_stdin_read(parte);
             break;
-        case I_IO_STDOUT_WRITE:
-            instruccion_io_stdout_write(parte);
-            break;
+        // case I_IO_STDOUT_WRITE:
+        //     instruccion_io_stdout_write(parte);
+        //     break;
         // case I_IO_FS_CREATE:
         //     instruccion_io_fs_create(parte);
         //     break;
@@ -390,7 +380,7 @@ void instruccion_resize(char **parte)
     {
         printf("Error: No se pudo ajustar el tamaño del proceso. Out of Memory.\n");
         
-        enviar_pcb(socket_cliente_kernel, proceso, OUT_OF_MEMORY);
+        enviar_pcb(socket_cliente_kernel, proceso, OUT_OF_MEMORY, NULL);
     } 
     else 
     {
@@ -457,8 +447,7 @@ void instruccion_wait(char** parte)
 	proceso->program_counter++;
     
     // Indico al kernel que el proceso está esperando algo
-	enviar_pcb(socket_cliente_kernel, proceso, WAIT);
-    //enviar_flag(socket_servidor_cpu, 0);
+	enviar_pcb(socket_cliente_kernel, proceso, WAIT, parte[1]);
 	
     list_destroy_and_destroy_elements(proceso->instrucciones, free);
 	free(proceso);
@@ -478,8 +467,7 @@ void instruccion_signal(char **parte)
     proceso->program_counter++;
 
     // Enviar solicitud de SIGNAL al kernel
-    enviar_pcb(socket_cliente_kernel, proceso, SIGNAL);
-    //enviar_flag(socket_servidor_cpu, 0);
+    enviar_pcb(socket_cliente_kernel, proceso, SIGNAL, parte[1]);
 
     list_destroy_and_destroy_elements(proceso->instrucciones, free);
     free(proceso);
@@ -506,12 +494,12 @@ void instruccion_io_gen_sleep(char **parte)
 void solicitar_sleep_io(const char *interfaz, int unidades_trabajo, int pid)
 {
     // Crear y enviar el paquete al Kernel
-    t_paquete *paquete = crear_paquete();
+    t_paquete *paquete = crear_paquete_personalizado(IO_GEN_SLEEP);
 
     // Agregar la información necesaria al paquete
-    agregar_a_paquete(paquete, &pid, sizeof(int));
-    agregar_a_paquete(paquete, &unidades_trabajo, sizeof(int));
-    agregar_a_paquete(paquete, interfaz, strlen(interfaz) + 1);
+    agregar_estructura_al_paquete_personalizado(paquete, &proceso, sizeof(pcb)); 
+    agregar_estructura_al_paquete_personalizado(paquete, &unidades_trabajo, sizeof(int));
+    agregar_estructura_al_paquete_personalizado(paquete, interfaz, strlen(interfaz) + 1);
 
     // Enviar el paquete al Kernel
     enviar_paquete(paquete, socket_cliente_kernel);
@@ -531,6 +519,11 @@ void instruccion_io_stdin_read(char** parte)
         return;
     }
 
+    if(parte[1] != STDIN) 
+    {
+        log_error(log_cpu, "La interfaz indicada no es STDIN.");
+    }
+
     // Extraer los registros de la instrucción
     char* interfaz = parte[1];
     char* direccion = parte[2];
@@ -540,35 +533,32 @@ void instruccion_io_stdin_read(char** parte)
     int tamanio = atoi(parte[3]);
 
     // Enviar la solicitud al kernel
-    enviar_solicitud_a_kernel(IO_STDIN_READ, interfaz, direccion_fisica, tamanio, socket_cliente_kernel);
+    enviar_solicitud_a_kernel(interfaz, direccion_fisica, tamanio, socket_cliente_kernel);
     proceso->program_counter++;
 }
 
-void enviar_solicitud_a_kernel(Interfaz* interfaz, int direccion_fisica, int tamanio) 
+void enviar_solicitud_a_kernel(Interfaz* interfaz, int direccion_fisica, int tamanio, int conexion) 
 {
-    t_paquete* paquete = crear_paquete();
-
-    // Agregar el código de operación al paquete
-    agregar_a_paquete(paquete, STDIN, sizeof(op_code));
+    t_paquete* paquete = crear_paquete_personalizado(IO_STDIN_READ);
 
     // Agregar la estructura Interfaz al paquete
-    agregar_a_paquete(paquete, interfaz, sizeof(Interfaz));
+    agregar_estructura_al_paquete_personalizado(paquete, interfaz, sizeof(Interfaz));
 
     // Agregar la dirección fisica al paquete
-    agregar_a_paquete(paquete, &direccion_fisica, sizeof(int));
+    agregar_estructura_al_paquete_personalizado(paquete, &direccion_fisica, sizeof(int));
 
     // Agregar el tamaño al paquete
-    agregar_a_paquete(paquete, &tamanio, sizeof(int));
+    agregar_estructura_al_paquete_personalizado(paquete, &tamanio, sizeof(int));
 
     // Enviar el paquete al socket cliente
     enviar_paquete(paquete, socket_cliente_kernel);
     eliminar_paquete(paquete);
 }
 
-void instruccion_io_stdout_write(char** parte) 
-{
-    // IO_STDOUT_WRITE Int3 BX EAX
-}
+// void instruccion_io_stdout_write(char** parte) 
+// {
+//     // IO_STDOUT_WRITE Int3 BX EAX
+// }
 
 // void intruccion_io_fs_create(char **parte)
 // {
@@ -600,16 +590,14 @@ void instruccion_exit(char** parte)
 {
 	log_info(log_cpu, "PID: %d - Ejecutando: %s", proceso->pid, parte[0]);
 	proceso->program_counter++;
-	enviar_pcb(socket_cliente_kernel, proceso, EXIT);
-    //enviar_flag(socket_servidor_cpu, 1);
+	enviar_pcb(socket_cliente_kernel, proceso, EXIT, NULL);
 	list_destroy_and_destroy_elements(proceso->instrucciones, free);
 	free(proceso);
 }
 
 void error_exit(char** parte) 
 {
-	enviar_pcb(socket_cliente_kernel, proceso, CODIGO);
-    //enviar_flag(socket_servidor_cpu, 1); 
+	enviar_pcb(socket_cliente_kernel, proceso, CODIGO, NULL);
 	list_destroy_and_destroy_elements(proceso->instrucciones, free);
 	free(proceso);
 }
