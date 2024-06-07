@@ -1,6 +1,12 @@
 #include "procesos.h"
 
+
+
+
+
+// -----------------------------------------------------------------------------------------
 // ------------- ACÁ EMPIEZAN LOS HILOS QUE SE QUEDAN CONSTANTEMENTE PRENDIDOS -------------
+// -----------------------------------------------------------------------------------------
 
 // ************* CREO HILO PARA DEJAR LA CONSOLA ABIERTA SIEMPRE *************
 pthread_t hilo_consola (){ 
@@ -22,7 +28,7 @@ pthread_t hilo_enviar_procesos_cpu (){
     return thread_enviar_procesos_cpu;
 }
 
-// ****** CREO HILO PARA PASAR PROCESOS A LA COLA DE READY SI DA EL GRADO DE MULTIP ********
+// ************* CREO HILO PARA PASAR PROCESOS A LA COLA DE READY SI DA EL GRADO DE MULTIPROGRAMACION *************
 pthread_t hilo_pasar_de_new_a_ready(){ 
 
     pthread_t thread_pasar_de_new_a_ready;
@@ -32,8 +38,17 @@ pthread_t hilo_pasar_de_new_a_ready(){
     return thread_pasar_de_new_a_ready;
 }
 
+// -----------------------------------------------------------------------------------------
 // ------------- ACÁ TERMINAN LOS HILOS QUE SE QUEDAN CONSTANTEMENTE PRENDIDOS -------------
+// -----------------------------------------------------------------------------------------
 
+
+
+
+
+// ------------------------------------------------------------------------------------------------------
+// ------------- ACÁ EMPIEZAN LAS FUNCIONES LLAMADAS POR LOS HILOS CONSTANTEMENTE PRENDIDOS -------------
+// ------------------------------------------------------------------------------------------------------
 
 // ************* SIRVE PARA LEER LOS COMANDOS DESDE LA CONSOLA (DESDE HILO_CONSOLA) *************
 void leer_consola(void* arg){
@@ -72,9 +87,91 @@ void leer_consola(void* arg){
     }
 }
 
-// ------------- ACÁ EMPIEZAN LAS FUNCIONES PROPIAS DE LOS COMANDOS INGRESADOS POR CONSOLA -------------
+// ************* PARA ENVIAR UN PROCESO (PCB) A CPU (DESDE HILO_ENVIAR_PROCESOS_CPU) *************
+void enviar_proceso_a_cpu(){
 
-// ************* Inicializa un nuevo PCB y lo manda a la cola correspondiente *************
+    while(1){ // Para estar constantemente intentando enviar un proceso
+
+        sem_wait(&sem_puedo_mandar_a_cpu); // Espero si ya hay otro proceso ejecutando en CPU (solo se ejecuta de a un proceso)
+        pcb* proceso_seleccionado;
+        if((strcmp(config_kernel->algoritmo_planificacion, "VRR") == 0) && (queue_is_empty(cola_prioridad_vrr) == false))
+        { 
+            // Verifico si es VRR el algoritmo y si la cola de prioridad tiene algo, entonces voy a usar lo de esa cola prioritaria
+
+            pthread_mutex_lock(&mutex_cola_prioridad_vrr); 
+            proceso_seleccionado = queue_pop(cola_prioridad_vrr); // Saco el proceso siguiente de la cola de prioridad
+            pthread_mutex_unlock(&mutex_cola_prioridad_vrr);
+
+        }else{
+            
+            sem_wait(&sem_cola_de_ready); // Si no hay nada en la cola de Ready no avanzo
+            pthread_mutex_lock(&mutex_cola_de_ready);
+            proceso_seleccionado = queue_pop(cola_de_ready); // Saco el proceso siguiente de la cola de Ready
+            pthread_mutex_unlock(&mutex_cola_de_ready);
+
+        }
+
+        if (proceso_seleccionado->estado_del_proceso == READY) // Verifico que el estado del proceso sea READY
+        {
+            
+            pthread_mutex_lock(&proceso_seleccionado->mutex_pcb);
+            proceso_seleccionado->estado_del_proceso = EXECUTE; // Cambio el estado del proceso sacado de la cola de READY
+            pthread_mutex_unlock(&proceso_seleccionado->mutex_pcb);
+
+            log_info(log_kernel, "PID: %d - Estado Anterior: READY - Estado Actual: EXECUTE", proceso_seleccionado->pid); // Hago un log obligatorio 
+            
+            enviar_pcb(proceso_seleccionado); // Envio el pcb a CPU
+
+            crear_hilo_proceso (proceso_seleccionado); // Inicio un hilo que maneje la ejecucion del proceso
+
+        }else
+        {
+            
+            error_show("El estado seleccionado no se encuentra en estado 'READY'"); // Si el proceso seleccionado no se encuentra en READY muestro un error
+
+        }
+    }
+}
+
+// ************* PARA PASAR PROCESOS NEW -> READY (DESDE HILO_PASAR_DE_NEW_A_READY) *************
+void pasar_procesos_de_new_a_ready(){
+    
+    //Parte del planificador a largo plazo
+    //Espera que haya procesos en la cola de New, si el grado de multiprogramacion lo permite, pasa los procesos a Ready para que se ejecuten
+    
+    pcb * proceso_a_mandar_a_ready;
+    while(1)
+    {
+        sem_wait(&sem_cola_de_new); // Uso semaforos sobre la cola y el grado de multiprogramacion porque son cosas compartidas
+        sem_wait(&sem_multiprogramacion); // Tanto para ver que haya procesos en New como para ver de no pasarme del grado de multiprogramacion
+        pthread_mutex_lock(&mutex_cola_de_new);
+        proceso_a_mandar_a_ready = queue_pop(cola_de_new); // Saco un proceso de la cola de New para despues pasarlo a Ready
+        pthread_mutex_unlock(&mutex_cola_de_new);
+
+        pthread_mutex_lock(&proceso_a_mandar_a_ready->mutex_pcb);
+        proceso_a_mandar_a_ready->estado_del_proceso = READY; // Le asigno el nuevo estado "Ready"
+        pthread_mutex_unlock(&proceso_a_mandar_a_ready->mutex_pcb);
+
+        pthread_mutex_lock(&mutex_cola_de_ready); // Tmbn semaforo porque es seccion critica 
+        queue_push(cola_de_ready,proceso_a_mandar_a_ready); // Ingreso el proceso a la cola de Ready. 
+        pthread_mutex_unlock(&mutex_cola_de_ready);
+        sem_post(&sem_cola_de_ready); // Agrego 1 al semaforo contador de la cola
+    }
+}
+
+// ------------------------------------------------------------------------------------------------------
+// ------------- ACÁ TERMINAN LAS FUNCIONES LLAMADAS POR LOS HILOS CONSTANTEMENTE PRENDIDOS -------------
+// ------------------------------------------------------------------------------------------------------
+
+
+
+
+
+// -----------------------------------------------------------------------------------------------------
+// ------------- ACÁ EMPIEZAN LAS FUNCIONES PROPIAS DE LOS COMANDOS INGRESADOS POR CONSOLA -------------
+// -----------------------------------------------------------------------------------------------------
+
+// ************* INICIALIZA UN NUEVO PCB Y LO MANDA A LA COLA CORRESPONDIENTE *************
 void iniciar_proceso(char* path ){    
 
     // Creo una estructura de pcb e inicializo todos los campos
@@ -238,6 +335,8 @@ void listar_procesos_por_estado()
 
 
 }
+
+//************* Falta el comentario de esta ************* 
 void cambiar_grado_multiprogramacion(char* nuevo_valor_formato_char)
 {
     int nuevo_valor = atoi(nuevo_valor_formato_char);
@@ -251,77 +350,50 @@ void cambiar_grado_multiprogramacion(char* nuevo_valor_formato_char)
     }
 }
 
-
+// -----------------------------------------------------------------------------------------------------
 // ------------- ACÁ TERMINAN LAS FUNCIONES PROPIAS DE LOS COMANDOS INGRESADOS POR CONSOLA -------------
+// -----------------------------------------------------------------------------------------------------
 
 
 
 
-// ************* Funcion para enviar un proceso a cpu *************
-// Es llamada por un hilo especifico para esto
-void enviar_proceso_a_cpu(){
-    //en esta funcion tengo que hacer cambios para vrr, tengo que primero fijarme si hay algo en la cola de prioridad, si hay mando ese, sino mando de la cola normal
-    while(1){
 
-        sem_wait(&sem_puedo_mandar_a_cpu);//espero si ya hay otro proceso ejecutando en CPU
-        pcb* proceso_seleccionado;
-        if((strcmp(config_kernel->algoritmo_planificacion, "VRR") == 0) && (queue_is_empty(cola_prioridad_vrr) == false))
-        {
-            //este semaforo no hace falta en realidad
-            //sem_wait(&sem_cola_prioridad_vrr); //hago que haya algo dentro de la cola de prioridad
-            // Saco el proceso siguiente de la cola de prioridad
-            pthread_mutex_lock(&mutex_cola_prioridad_vrr);
-            proceso_seleccionado = queue_pop(cola_prioridad_vrr);
-            pthread_mutex_unlock(&mutex_cola_prioridad_vrr);
-        }else{
-            sem_wait(&sem_cola_de_ready); //hago que haya algo dentro de la cola de ready
-            // Saco el proceso siguiente de la cola de READY
-            pthread_mutex_lock(&mutex_cola_de_ready);
-            proceso_seleccionado = queue_pop(cola_de_ready);
-            pthread_mutex_unlock(&mutex_cola_de_ready);
-        }
-        
+// ------------------------------------------------------------------------------------
+// ------------- ACÁ COMIENZAN LAS FUNCIONES PARA ENVIAR UN PROCESO A CPU -------------
+// ------------------------------------------------------------------------------------
 
-        //Verifico que el estado del proceso sea READY
-        if (proceso_seleccionado->estado_del_proceso == READY) 
-        {
-            // Cambio el estado del proceso sacado de la cola de READY
-            pthread_mutex_lock(&proceso_seleccionado->mutex_pcb);
-            proceso_seleccionado->estado_del_proceso = EXECUTE; 
-            pthread_mutex_unlock(&proceso_seleccionado->mutex_pcb);
-
-            // Hago un log obligatorio
-            log_info(log_kernel, "PID: %d - Estado Anterior: READY - Estado Actual: EXECUTE", proceso_seleccionado->pid); 
-
-            // Envio el pcb a CPU
-            enviar_pcb(proceso_seleccionado); 
-
-            // Inicio un hilo que maneje la ejecucion del proceso
-            crear_hilo_proceso (proceso_seleccionado); 
-
-        }else
-        {
-            // Si el proceso seleccionado no se encuentra en READY muestro un error
-            error_show("El estado seleccionado no se encuentra en estado 'READY'");
-        }
-    }
-}
-
-// ************* Funcion que sirve para enviar el pcb como tal al CPU *************
+// ************* ARMA EL PAQUETE NECESARIO PARA ENVIAR EL PCB A CPU *************
 void enviar_pcb(pcb* proceso) {
 
-    // Creo un paquete
-    t_paquete* paquete_pcb = crear_paquete_personalizado(PCB_KERNEL_A_CPU);
+    t_paquete* paquete_pcb = crear_paquete_personalizado(PCB_KERNEL_A_CPU); // Creo un paquete personalizado con un codop para que CPU reconozca lo que le estoy mandando
 
-    // Agrego el struct pcb al paquete
-    agregar_estructura_al_paquete_personalizado(paquete_pcb, proceso, sizeof(pcb));
+    agregar_estructura_al_paquete_personalizado(paquete_pcb, proceso, sizeof(pcb)); // Agrego el struct pcb al paquete
 
-    // Envio el paquete a través del socket
-    enviar_paquete(paquete_pcb, conexion_kernel_cpu);
+    enviar_paquete(paquete_pcb, conexion_kernel_cpu); // Envio el paquete a través del socket
 
-    // Libero el paquete
-    eliminar_paquete(paquete_pcb);
+    eliminar_paquete(paquete_pcb); // Libero el paquete
 }
+
+// -----------------------------------------------------------------------------------
+// ------------- ACÁ TERMINAN LAS FUNCIONES PARA ENVIAR UN PROCESO A CPU -------------
+// -----------------------------------------------------------------------------------
+
+
+
+
+
+// --------------------------------------------------------------------------------------
+// ------------- ACÁ COMIENZAN LAS FUNCIONES PARA RECIBIR UN PROCESO DE CPU -------------
+// --------------------------------------------------------------------------------------
+
+
+// -------------------------------------------------------------------------------------
+// ------------- ACÁ TERMINAN LAS FUNCIONES PARA RECIBIR UN PROCESO DE CPU -------------
+// -------------------------------------------------------------------------------------
+
+
+
+
 
 // ************* Funcion que sirve para crear un hilo por el proceso enviado, y segun el algoritmo recibirlo por FIFO o RR *************
 void crear_hilo_proceso(pcb* proceso){
@@ -614,31 +686,6 @@ void recibir_pcb_hilo(void* arg){
     pcb* proceso = args->proceso;
 
     recibir_pcb(proceso);
-}
-
-//Parte del planificador a largo plazo
-//Espera que haya procesos en la cola de new, si se puede, os agrega a ready para q se ejecuten
-void pasar_procesos_de_new_a_ready(){
-    pcb * proceso_a_mandar_a_ready;
-    while(1)
-    {
-        sem_wait(&sem_cola_de_new);
-        sem_wait(&sem_multiprogramacion);
-        pthread_mutex_lock(&mutex_cola_de_new);
-        proceso_a_mandar_a_ready = queue_pop(cola_de_new);
-        pthread_mutex_unlock(&mutex_cola_de_new);
-
-        pthread_mutex_lock(&proceso_a_mandar_a_ready->mutex_pcb);
-        proceso_a_mandar_a_ready->estado_del_proceso = READY; 
-        pthread_mutex_unlock(&proceso_a_mandar_a_ready->mutex_pcb);
-
-        // Ingreso el proceso a la cola de READY - Tambien semaforo porque es seccion critica 
-        pthread_mutex_lock(&mutex_cola_de_ready);
-        queue_push(cola_de_ready,proceso_a_mandar_a_ready);
-        pthread_mutex_unlock(&mutex_cola_de_ready);
-        sem_post(&sem_cola_de_ready); //agrego 1 al semaforo contador
-    }
-
 }
 
 int hacer_signal(int indice_recurso, pcb* proceso){
