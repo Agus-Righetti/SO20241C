@@ -247,6 +247,7 @@ void cambiar_grado_multiprogramacion(char* nuevo_valor_formato_char)
     while (valor_semaforo > nuevo_valor)
     {
         sem_wait(&sem_multiprogramacion);
+        sem_getvalue(&sem_multiprogramacion, &valor_semaforo);
     }
 }
 
