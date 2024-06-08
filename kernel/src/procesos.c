@@ -4,9 +4,9 @@
 
 
 
-// -----------------------------------------------------------------------------------------
-// ------------- ACÁ EMPIEZAN LOS HILOS QUE SE QUEDAN CONSTANTEMENTE PRENDIDOS -------------
-// -----------------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------
+// ------------- INICIO HILOS QUE SE QUEDAN CONSTANTEMENTE PRENDIDOS -------------
+// -------------------------------------------------------------------------------
 
 // ************* CREO HILO PARA DEJAR LA CONSOLA ABIERTA SIEMPRE *************
 pthread_t hilo_consola (){ 
@@ -38,17 +38,17 @@ pthread_t hilo_pasar_de_new_a_ready(){
     return thread_pasar_de_new_a_ready;
 }
 
-// -----------------------------------------------------------------------------------------
-// ------------- ACÁ TERMINAN LOS HILOS QUE SE QUEDAN CONSTANTEMENTE PRENDIDOS -------------
-// -----------------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// ------------- FIN HILOS QUE SE QUEDAN CONSTANTEMENTE PRENDIDOS -------------
+// ----------------------------------------------------------------------------
 
 
 
 
 
-// ------------------------------------------------------------------------------------------------------
-// ------------- ACÁ EMPIEZAN LAS FUNCIONES LLAMADAS POR LOS HILOS CONSTANTEMENTE PRENDIDOS -------------
-// ------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------
+// ------------- INICIO FUNCIONES LLAMADAS POR LOS HILOS CONSTANTEMENTE PRENDIDOS -------------
+// --------------------------------------------------------------------------------------------
 
 // ************* SIRVE PARA LEER LOS COMANDOS DESDE LA CONSOLA (DESDE HILO_CONSOLA) *************
 void leer_consola(void* arg){
@@ -159,17 +159,17 @@ void pasar_procesos_de_new_a_ready(){
     }
 }
 
-// ------------------------------------------------------------------------------------------------------
-// ------------- ACÁ TERMINAN LAS FUNCIONES LLAMADAS POR LOS HILOS CONSTANTEMENTE PRENDIDOS -------------
-// ------------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------------------
+// ------------- FIN FUNCIONES LLAMADAS POR LOS HILOS CONSTANTEMENTE PRENDIDOS -------------
+// -----------------------------------------------------------------------------------------
 
 
 
 
 
-// -----------------------------------------------------------------------------------------------------
-// ------------- ACÁ EMPIEZAN LAS FUNCIONES PROPIAS DE LOS COMANDOS INGRESADOS POR CONSOLA -------------
-// -----------------------------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------------------
+// ------------- INICIO FUNCIONES PROPIAS DE LOS COMANDOS INGRESADOS POR CONSOLA -------------
+// -------------------------------------------------------------------------------------------
 
 // ************* INICIALIZA UN NUEVO PCB Y LO MANDA A LA COLA CORRESPONDIENTE *************
 void iniciar_proceso(char* path ){    
@@ -350,20 +350,23 @@ void cambiar_grado_multiprogramacion(char* nuevo_valor_formato_char)
     }
 }
 
-// -----------------------------------------------------------------------------------------------------
-// ------------- ACÁ TERMINAN LAS FUNCIONES PROPIAS DE LOS COMANDOS INGRESADOS POR CONSOLA -------------
-// -----------------------------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------------------
+// ------------- FIN FUNCIONES PROPIAS DE LOS COMANDOS INGRESADOS POR CONSOLA -------------
+// ----------------------------------------------------------------------------------------
 
 
 
 
 
-// ------------------------------------------------------------------------------------
-// ------------- ACÁ COMIENZAN LAS FUNCIONES PARA ENVIAR UN PROCESO A CPU -------------
-// ------------------------------------------------------------------------------------
+
+// -------------------------------------------------------------------------
+// ------------- INICIO FUNCIONES PARA ENVIAR UN PROCESO A CPU -------------
+// -------------------------------------------------------------------------
 
 // ************* ARMA EL PAQUETE NECESARIO PARA ENVIAR EL PCB A CPU *************
 void enviar_pcb(pcb* proceso) {
+
+    // Funcion llamada por enviar_proceso_a_cpu
 
     t_paquete* paquete_pcb = crear_paquete_personalizado(PCB_KERNEL_A_CPU); // Creo un paquete personalizado con un codop para que CPU reconozca lo que le estoy mandando
 
@@ -374,52 +377,156 @@ void enviar_pcb(pcb* proceso) {
     eliminar_paquete(paquete_pcb); // Libero el paquete
 }
 
-// -----------------------------------------------------------------------------------
-// ------------- ACÁ TERMINAN LAS FUNCIONES PARA ENVIAR UN PROCESO A CPU -------------
-// -----------------------------------------------------------------------------------
+// --------------------------------------------------------------------------
+// ------------- FIN LAS FUNCIONES PARA ENVIAR UN PROCESO A CPU -------------
+// --------------------------------------------------------------------------
 
 
 
 
 
-// --------------------------------------------------------------------------------------
-// ------------- ACÁ COMIENZAN LAS FUNCIONES PARA RECIBIR UN PROCESO DE CPU -------------
-// --------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// ------------- INICIO FUNCIONES PARA RECIBIR UN PROCESO DE CPU -------------
+// ---------------------------------------------------------------------------
 
+// ENTENDER EL CANCEL DE ESTE
 
-// -------------------------------------------------------------------------------------
-// ------------- ACÁ TERMINAN LAS FUNCIONES PARA RECIBIR UN PROCESO DE CPU -------------
-// -------------------------------------------------------------------------------------
-
-
-
-
-
-// ************* Funcion que sirve para crear un hilo por el proceso enviado, y segun el algoritmo recibirlo por FIFO o RR *************
+// ************* CREA HILOS SEGUN EL ALGORITMO DE PLANIFICACION Y LLAMA FUNCIONES PARA MANEJAR LA RECEPCION DEL PCB *************
 void crear_hilo_proceso(pcb* proceso){
 
-    // Creo un hilo
-    pthread_t hilo_recibe_proceso, hilo_interrupcion;
-    thread_args_procesos_kernel args_hilo = {proceso};
+    // Funcion llamada por enviar_proceso_a_cpu
 
-    // Si el algoritmo de planificacion es FIFO entonces recibo el pcb normalmente desde CPU
+    pthread_t hilo_recibe_proceso, hilo_interrupcion; // Creo un hilo
+    thread_args_procesos_kernel args_hilo = {proceso}; // En sus args le cargo el proceso
+
     if(strcmp(config_kernel->algoritmo_planificacion, "FIFO") == 0)
     {
-        pthread_create(&hilo_recibe_proceso, NULL, (void*)recibir_pcb_hilo,(void*)&args_hilo); 
-        pthread_join(hilo_recibe_proceso, NULL);
+        // Si el algoritmo de planificacion es FIFO entonces recibo el pcb normalmente desde CPU
+
+        pthread_create(&hilo_recibe_proceso, NULL, (void*)recibir_pcb_hilo,(void*)&args_hilo); // Recibir un pcb normalmente, sin interrupciones
+        pthread_join(hilo_recibe_proceso, NULL); // No sigo hasta que no haya terminado de recibirlo
     }
     else if(strcmp(config_kernel->algoritmo_planificacion, "RR") == 0 || strcmp(config_kernel->algoritmo_planificacion, "VRR") == 0)
     {
-        pthread_create(&hilo_recibe_proceso, NULL, (void*)recibir_pcb_hilo,(void*)&args_hilo); 
-        pthread_create(&hilo_interrupcion, NULL, (void*)algoritmo_round_robin,(void*)&args_hilo); 
-        
-        pthread_join(hilo_recibe_proceso, NULL);
-        sem_wait(&destruir_hilo_interrupcion);
-        pthread_cancel(hilo_interrupcion);
 
-    }else log_error(log_kernel, "Estan mal las configs capo");
-    
+        // Si el algoritmo de planificacion es RR o VRR entonces permito la posibilidad de recibirlo por interrupcion de fin de quantum
+
+        pthread_create(&hilo_recibe_proceso, NULL, (void*)recibir_pcb_hilo,(void*)&args_hilo); // Recibir pcb normalmente
+        pthread_create(&hilo_interrupcion, NULL, (void*)algoritmo_round_robin,(void*)&args_hilo); // Recibir pcb por interrupcion de fin de quantum
+        
+        pthread_join(hilo_recibe_proceso, NULL); // Espero que termine de recibir normalmente
+        
+        sem_wait(&destruir_hilo_interrupcion);
+        pthread_cancel(hilo_interrupcion); 
+
+    }else {
+        log_error(log_kernel, "Estan mal las configs capo");
+    }
 }
+
+// ************* LLAMA A RECIBIR_PCB (RECIBO NORMAL) A TRAVES DE UN HILO *************
+void recibir_pcb_hilo(void* arg){
+    
+    thread_args_procesos_kernel* args = (thread_args_procesos_kernel*)arg; // Creo un hilo
+    pcb* proceso = args->proceso; // Le cargo el proceso en los args
+
+    recibir_pcb(proceso);
+}
+
+// NO ME CONVENCE / NO TERMINO DE ENTENDER EL CANCEL DEL HILO DE INTERRUPCION
+
+// ************* RECIBE EL PCB NORMALMENTE (SIN INTERRUPCION) SEGUN ALGORITMO *************
+void recibir_pcb(pcb* proceso) {
+    
+    clock_t inicio, fin; // Inicio un reloj, cuenta el tiempo que estuvo esperando hasta que llegue el paquete (sirve para vrr)
+    int tiempo_que_tardo_en_recibir;
+
+    inicio = clock(); // En este momento comienzo a esperar
+
+    int codigo_operacion = recibir_operacion(conexion_kernel_cpu); // Recibo el codigo de operacion para ver como actuo segun eso
+
+    int flag_estado; // Declaro un flag que me va a servir para manejar el estado del proceso posteriormente
+    
+    t_buffer* buffer; // Buffer para recibir el paquete
+    
+    switch(codigo_operacion) // Segun el codigo de operacion actuo 
+    {
+        case PCB_CPU_A_KERNEL: 
+
+            buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
+            fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
+            flag_estado = 0; // El proceso todavia no termino
+
+            break;
+
+        case CPU_TERMINA_EJECUCION_PCB:
+
+            buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
+            fin = clock(); // Este no estaba por algo en particular? Porque aunque finalice despues voy a querer hacer la cuenta del tiempo igual
+            flag_estado = 1; // El proceso ya finalizo, no quedan rafagas por ejecutar
+
+            break;
+
+        case SIGNAL:
+
+            buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
+            fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
+
+            break;
+
+        case WAIT:
+     
+            buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
+            fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
+
+            break;
+        
+        default:
+            log_error(log_kernel, "El codigo de operacion no es reconocido :(");
+            break;
+    }
+
+    tiempo_que_tardo_en_recibir = (int)((double)(fin - inicio) * 1000.0 / CLOCKS_PER_SEC); // Calculo el tiempo que me tarde en recibir el PCB
+
+    if(strcmp(config_kernel->algoritmo_planificacion, "RR") == 0 || strcmp(config_kernel->algoritmo_planificacion, "VRR") == 0)
+    {
+        //VER SI FUNCA
+        sem_post(&destruir_hilo_interrupcion);
+    }
+
+    proceso = recibir_estructura_del_buffer(buffer); // Asigno al proceso lo que viene del buffer
+
+    // Si estoy haciendo un Wait o Signal, entonces tambien tengo que recibir el indice del recurso necesitado para poder manejarlo
+
+    if(codigo_operacion == WAIT)
+    {
+        int indice_recurso = recibir_int_del_buffer(buffer); // Obtengo el indice del recurso que se usa para manejarlo
+        flag_estado = hacer_wait(indice_recurso, proceso); // Asigno un flag que viene 
+
+    }else if(codigo_operacion == SIGNAL)
+    {
+        int indice_recurso = recibir_int_del_buffer(buffer); // Obtengo el indice del recurso que se usa para manejarlo
+        flag_estado = hacer_signal(indice_recurso, proceso);
+    }
+    
+    if(strcmp(config_kernel->algoritmo_planificacion, "VRR") == 0) // Si estoy recibiendo a traves del algoritmo VRR
+    {
+        proceso->quantum = proceso->quantum - tiempo_que_tardo_en_recibir; // Le asigno el quantum que le queda disponible
+    };
+
+    log_info(log_kernel, "Recibi PID: %d", proceso->pid); 
+    
+    free(buffer->stream); // Libero directamente el buffer, no arme paquete asi que no hace falta
+    free(buffer);
+
+    sem_post(&sem_puedo_mandar_a_cpu); // Aviso que ya volvio el proceso que estaba en CPU, puedo mandar otro
+
+    accionar_segun_estado(proceso, flag_estado); // Mando el proceso a Ready o Exit segun corresponda
+    
+    return;
+}
+
+// NO ENTIENDO BIEN EL TEMA DEL HILO DE INTERRUPCION NI EL FUNCIONAMIENTO DE ESTA FUNCION - VER DESPUES
 
 void algoritmo_round_robin (void* arg){
 
@@ -434,12 +541,47 @@ void algoritmo_round_robin (void* arg){
     return;
 }
 
+// ************* LLAMA A DESALOJAR_PROCESO (NOTIFICAR INTERRUPCION) A TRAVES DE UN HILO *************
+void desalojar_proceso_hilo(void* arg){
+    
+    thread_args_procesos_kernel* args = (thread_args_procesos_kernel*)arg; // Creo un hilo
+    pcb* proceso = args->proceso; // Le cargo el proceso en los args
+
+    desalojar_proceso(proceso); 
+}
+
+// ************* NOTIFICA A CPU QUE HAY UNA INTERRUPCION Y DEBE MANDAR INMEDIATAMENTE EL PCB DE REGRESO *************
+void desalojar_proceso(pcb* proceso){
+   
+    //Esto capaz se puede poner desde donde se la llama a la funcion
+    log_info(log_kernel, "PID: %d - Desalojado por fin de Quantum", proceso->pid);
+
+    t_paquete* paquete_a_enviar = crear_paquete_personalizado(INTERRUPCION); // Creo un paquete con el codop especifico
+    enviar_paquete(paquete_a_enviar, interrupcion_kernel_cpu); // Lo mando vacio porque lo que interesa es el codop
+
+    eliminar_paquete(paquete_a_enviar); // Libero el paquete
+
+    return;
+}
+
+// ------------------------------------------------------------------------
+// ------------- FIN FUNCIONES PARA RECIBIR UN PROCESO DE CPU -------------
+// ------------------------------------------------------------------------
+
+
+
+
+// --------------------------------------------------------------------
+// ------------- INICIO FUNCIONES PARA MANEJAR UN PROCESO -------------
+// --------------------------------------------------------------------
+
+// ************* SEGUN EL FLAG QUE TENGA EL PROCESO VOY A CAMBIARLE EL ESTADO *************
 void accionar_segun_estado(pcb* proceso, int flag){
 
     //flag = 1, ya ejecuto todo, tengo q pasarlo a exit
-    //flag = 0 aun no ejecuto del todo, lo mando a la cola de ready
-    //flag = 2, entonces tengo que bloquear el proceso
-    //flag = -1 no hago nada, ya lo hicieron 
+    //flag = 0, aun no ejecuto del todo, lo mando a la cola de ready
+    //flag = 2, tengo que bloquear el proceso
+    //flag = -1, no hago nada, ya lo hicieron 
     
     if(flag == 2){
         pasar_proceso_a_blocked(proceso);
@@ -541,152 +683,11 @@ void pasar_proceso_a_blocked(pcb* proceso){
     log_info(log_kernel, "PID: %d - Estado Anterior: %s - Estado Actual: BLOCKED", proceso->pid, estado_anterior);
 }
 
-// ************* Funcion que sirve para obtener de regreso un proceso a traves de una interrupcion *************
-void desalojar_proceso(pcb* proceso){
-   
-    //Esto capaz se puede poner desde donde se la llama a la funcion
-    log_info(log_kernel, "PID: %d - Desalojado por fin de Quantum", proceso->pid);
-
-    // Creo un nuevo paquete
-    t_paquete* paquete_a_enviar = crear_paquete_personalizado(INTERRUPCION);
-    enviar_paquete(paquete_a_enviar, interrupcion_kernel_cpu);
-
-    eliminar_paquete(paquete_a_enviar);
+// -----------------------------------------------------------------
+// ------------- FIN FUNCIONES PARA MANEJAR UN PROCESO -------------
+// -----------------------------------------------------------------
 
 
-    return;
-}
-
-// ************* Funcion que llama a la de arriba a traves de un hilo *************
-void desalojar_proceso_hilo(void* arg){
-    thread_args_procesos_kernel* args = (thread_args_procesos_kernel*)arg;
-    pcb* proceso = args->proceso;
-
-    desalojar_proceso(proceso); 
-}
-
-// ************* Funcion para recibir el pcb desde CPU si termina su ejecucion sin interrupcion *************
-void recibir_pcb(pcb* proceso) {
-    
-   //esta funcion deberia tener un switch para accionar segun el codop q nos mandan, porque para el manejo de recursos necesitamos hacer algo segun el codop 
-    //inicio un reloj, va a contar cuanto tiempo estuvo esperando hasta q llegue el paquete (sirve para vrr)
-    clock_t inicio, fin;
-    int tiempo_que_tardo_en_recibir;
-
-    inicio = clock(); // en este momento arranco a esperar
-
-    int codigo_operacion = recibir_operacion(conexion_kernel_cpu);
-
-    int flag_estado;
-    
-    t_buffer* buffer;
-    
-    switch(codigo_operacion)
-    {
-        case PCB_CPU_A_KERNEL: 
-
-            buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu);
-            fin = clock();
-            flag_estado = 0;
-
-            break;
-
-        case CPU_TERMINA_EJECUCION_PCB:
-            buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu);
-            flag_estado = 1;
-
-            break;
-
-        case SIGNAL:
-            //NECESITAMOS que nos manden desde CPU que recurso
-            buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu);
-            fin = clock();
-            //flag_estado = 0;
-
-            break;
-
-        case WAIT:
-            buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu);
-            fin = clock();
-            //NECESITAMOS que nos manden desde CPU que recurso
-            //flag_estado = 0;
-            //flag_estado = hacer_wait(); // Hacemos que si devuelve un 2 entonces se manda a la cola de blocked
-
-            break;
-        
-        default:
-            log_error(log_kernel, "El codigo de operacion no es reconocido :(");
-            break;
-    }
-
-    // Creo un nuevo paquete
-    //t_paquete* paquete = crear_paquete_personalizado(PCB_CPU_A_KERNEL);
-
-    // Recibo el paquete a través del socket y los guardo en una lista
-
-    //paquete->buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu);
-
-    //fin = clock(); // en este momento termino de esperar
-    tiempo_que_tardo_en_recibir = (int)((double)(fin - inicio) * 1000.0 / CLOCKS_PER_SEC);
-
-    if(strcmp(config_kernel->algoritmo_planificacion, "RR") == 0 || strcmp(config_kernel->algoritmo_planificacion, "VRR") == 0)
-    {
-        //VER SI FUNCA
-        sem_post(&destruir_hilo_interrupcion);
-    }
-
-    proceso = recibir_estructura_del_buffer(buffer);
-
-    if(codigo_operacion == WAIT)
-    {
-        int indice_recurso = recibir_int_del_buffer(buffer);
-        flag_estado = hacer_wait(indice_recurso, proceso);
-
-    }else if(codigo_operacion == SIGNAL)
-    {
-        int indice_recurso = recibir_int_del_buffer(buffer);
-        //Del recurso nos tienen q mandar el indice
-        flag_estado = hacer_signal(indice_recurso, proceso);
-    }
-    
-    if(strcmp(config_kernel->algoritmo_planificacion, "VRR") == 0)
-    {
-        proceso->quantum = proceso->quantum - tiempo_que_tardo_en_recibir; //le pongo el quantum que le queda disponible, solo si estoy en vrr que es cuando me importa
-    };
-
-    log_info(log_kernel, "Recibi PID: %d", proceso->pid);
-    
-    //eliminar_paquete(paquete);
-    free(buffer->stream);
-    free(buffer);
-
-    //Este paquete es para recibir el flag, el flag esta en 1 si el proceso ta ejecuto todo y en 0 si aun le falta
-
-    // t_paquete* paquete_estado = crear_paquete_personalizado(CPU_TERMINA_EJECUCION_PCB);
-
-    // paquete_estado->buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu);
-
-    //flag_estado = recibir_int_del_buffer(paquete_estado->buffer);
-
-    sem_post(&sem_puedo_mandar_a_cpu);//aviso que ya volvio el proceso q estaba en CPU, puedo mandar otro
-
-    
-    // Libero el paquete
-
-    //eliminar_paquete(paquete_estado);
-
-    accionar_segun_estado(proceso, flag_estado); //este va a mandar el proceso a ready o exit
-    
-    return;
-}
-
-// ************* Funcion que llama a la de arriba a traves de un hilo *************
-void recibir_pcb_hilo(void* arg){
-    thread_args_procesos_kernel* args = (thread_args_procesos_kernel*)arg;
-    pcb* proceso = args->proceso;
-
-    recibir_pcb(proceso);
-}
 
 int hacer_signal(int indice_recurso, pcb* proceso){
     int flag;
