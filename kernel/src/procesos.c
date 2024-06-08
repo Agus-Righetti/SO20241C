@@ -633,18 +633,19 @@ void accionar_segun_estado(pcb* proceso, int flag){
 
 }
 
+// ************* PASA EL PROCESO SELECCIONADO A EXIT *************
 void pasar_proceso_a_exit(pcb* proceso){
 
     //En esta funcion faltan liberar los recursos q tenia el proceso
-    char* estado_anterior = obtener_char_de_estado(proceso->estado_del_proceso);
+    char* estado_anterior = obtener_char_de_estado(proceso->estado_del_proceso); F// Devuelvo el estado pero como string
+
     pthread_mutex_lock(&proceso->mutex_pcb);
-    proceso->estado_del_proceso = EXIT; 
+    proceso->estado_del_proceso = EXIT; // Asigno el estado del proceso como Exit
     pthread_mutex_unlock(&proceso->mutex_pcb);
 
-    //libero los recursos que tenia asignado el proceso
-    while(queue_is_empty(proceso->recursos_asignados) == false)
+    while(queue_is_empty(proceso->recursos_asignados) == false) // Mientras la cola de recursos asignados no esta vacia
     {
-        int recurso_a_liberar = (int)(intptr_t)queue_peek(proceso->recursos_asignados);
+        int recurso_a_liberar = (int)(intptr_t)queue_peek(proceso->recursos_asignados); // Entonces libero los recursos corresopndientes
         hacer_signal(recurso_a_liberar, proceso);
     }
     
@@ -758,6 +759,12 @@ int hacer_wait(int indice_recurso, pcb* proceso){
     return flag;
 }
 
+
+
+// -----------------------------------------------------
+// ------------- INICIO FUNCIONES VARIADAS -------------
+// -----------------------------------------------------
+
 //Esta funcion devuelve un char al pasarle un enum de estados
 char* obtener_char_de_estado(estados estado_a_convertir)
 {
@@ -778,3 +785,7 @@ char* obtener_char_de_estado(estados estado_a_convertir)
     }
 
 }
+
+// --------------------------------------------------
+// ------------- FIN FUNCIONES VARIADAS -------------
+// --------------------------------------------------
