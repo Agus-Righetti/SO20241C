@@ -53,11 +53,11 @@ void leer_consola(void* arg){
         
         char* lectura = readline("Ingrese comando: "); // Pido que se ingrese un comando
 
-        // partes me separa segun los espacios lo que hay, en partes[0] esta INICIAR_PROCESO
-        // en partes[1] va a estar el path
+        // Partes me separa segun los espacios lo que hay, en partes[0] esta INICIAR_PROCESO
+        // En partes[1] va a estar el path
         char **partes = string_split(lectura, " "); 
 
-        // Dependiendo el comando llamo a la funcion correspondiente
+        // Dependiendo el comando llamo a la función correspondiente
         if (strcmp(partes[0], "INICIAR_PROCESO") == 0) { 
 
             printf("Ha seleccionado la opción INICIAR_PROCESO\n");
@@ -66,6 +66,7 @@ void leer_consola(void* arg){
         } else if (strcmp(lectura, "FINALIZAR_PROCESO") == 0) {
 
             printf("Ha seleccionado la opción FINALIZAR_PROCESO\n");
+            finalizar_proceso(partes[1]); // Acá mando el PID del proceso que quiero finalizar
 
         }else if (strcmp(partes[0], "PROCESO_ESTADO") == 0){
             printf("Ha seleccionado la opción PROCESO_ESTADO\n");
@@ -74,10 +75,15 @@ void leer_consola(void* arg){
         }else if (strcmp(partes[0], "MULTIPROGRAMACION") == 0){
             printf("Ha seleccionado la opción MULTIPROGRAMACION\n");
             cambiar_grado_multiprogramacion(partes[1]);
+        }else if{
+            printf("Ha seleccionado la opción EJECUTAR_SCRIPT\n");
+            ejecutar_script(partes[1]);
         }else {
             
             printf("Opción no válida\n");
         }
+        
+        liberar_array_strings(partes); // Libero la memoria asignada por string_split
 
         free(lectura); // Libera la memoria asignada por readline
     }
@@ -194,7 +200,7 @@ void iniciar_proceso(char* path ){
     pthread_mutex_init(&nuevo_pcb->mutex_pcb,NULL);
 
     pthread_mutex_lock(&mutex_cola_general_de_procesos);
-    queue_push(cola_general_de_procesos,nuevo_pcb); //agrego a la cola de todos los procesos el nuevo PCB
+    queue_push(cola_general_de_procesos,nuevo_pcb); // Agrego a la cola de todos los procesos el nuevo PCB
     pthread_mutex_unlock(&mutex_cola_general_de_procesos);
 
 
@@ -238,7 +244,7 @@ void iniciar_proceso(char* path ){
     }
 }
 
-//************* Esta funcion mostrara e forma de tabla cada proceso en que estado esta actualmente ************* 
+// ************* MUESTRA EN FORMA DE TABLA EN QUÉ ESTADO SE ENCUENTRA CADA PROCESO ACTUALMENTE ************* 
 void listar_procesos_por_estado(){
     
     // Armo colas auxiliares de cada estado para mostrar por pantalla, asi pueden seguir las colas normales sin problema
@@ -331,7 +337,7 @@ void listar_procesos_por_estado(){
     queue_destroy(cola_aux_new);
 }
 
-    //************* CAMBIA EL GRADO DE MULTIPROGRAMCION DEL SISTEMA POR EL ENVIADO POR PARAMETRO ************* 
+// ************* CAMBIA EL GRADO DE MULTIPROGRAMCION DEL SISTEMA POR EL ENVIADO POR PARAMETRO ************* 
 void cambiar_grado_multiprogramacion(char* nuevo_valor_formato_char){
     
     int nuevo_valor = atoi(nuevo_valor_formato_char); // Se pasa el nuevo valor que es un string a tipo int
@@ -348,13 +354,88 @@ void cambiar_grado_multiprogramacion(char* nuevo_valor_formato_char){
     // Hago eso hasta que el semáforo quede con el mismo valor que el nuevo determinado por parámetro
 }
 
+// ************* FINALIZA EL PROCESO SELECCIONADO ************* 
+void finalizar_proceso(char* pid_formato_char){
+
+    int pid = atoi(pid_formato_char); // Paso a int el pid mandado por consola
+
+    pthread_mutex_lock(&mutex_cola_general_de_procesos); // Bloqueo la cola gral para sacar el proceso q paso a exit
+
+    pcb* proceso_cola_gral = queue_pop(cola_general_de_procesos); // Saco el primer elemento de la cola
+
+    while(pid != proceso_cola_gral->pid){ // Mientras el valor del pid del proceso obtenido no sea el mismo que el que quiero finalizar, entonces sigo
+
+        queue_push(cola_general_de_procesos, proceso_cola_gral); // Voy guardando y poniendo el proceso
+        proceso_cola_gral = queue_pop(cola_general_de_procesos); // Hasta que obtenga el que quiero
+    }
+
+    queue_push(cola_general_de_procesos, proceso_cola_gral); // Meto de nuevo el proceso que voy a pasar a exit, porque ahí se encargará de sacarlo de la cola
+
+    pthread_mutex_unlock(&mutex_cola_general_de_procesos); // Desbloqueo la cola gral
+
+    pasar_proceso_a_exit(proceso_cola_gral); // Paso el proceso a exit, ahí lo saco de la cola y libero recursos
+
+}
+
+// ************* EJECUTA UN SCRIPT DE COMANDOS ************* 
+// Tengo que terminar los ifs cuando termine todos los comandos
+void ejecutar_script(char* script_path){
+    
+    FILE *archivo; // Declaro un archivo
+    char linea[100]; // Declaro un tamaño de la línea de 100 caracteres
+
+    archivo = fopen(path, "r") // Abro el archivo en modo lectura
+    
+    if(archivo == NULL){ // Si no lo puedo abrir porque no existe o está mal el path
+        error_show("Error al abrir archivo de comandos"); // Entonces muestro un error
+        return;
+    }
+
+    while (fgets(linea, sizeof(linea), archivo) != NULL) { // Voy obteniendo las líneas del archivo una por una
+
+        linea[strcspn(linea, "\n")] = 0; // Obtengo la longitud de la línea hasta antes que haya un "\n", y ahí, lo reemplazo por un caracter nulo (elimino el salto de línea)
+
+        char **partes = string_split(linea, " "); 
+
+        // Dependiendo el comando llamo a la función correspondiente
+        if (strcmp(partes[0], "INICIAR_PROCESO") == 0) { 
+
+            printf("Ha seleccionado la opción INICIAR_PROCESO\n");
+            iniciar_proceso(partes[1]); // Esta es la funcion a la que llamo
+
+        } else if (strcmp(linea, "FINALIZAR_PROCESO") == 0) {
+
+            printf("Ha seleccionado la opción FINALIZAR_PROCESO\n");
+            finalizar_proceso(partes[1]); // Acá mando el PID del proceso que quiero finalizar
+
+        }else if (strcmp(partes[0], "PROCESO_ESTADO") == 0){
+            printf("Ha seleccionado la opción PROCESO_ESTADO\n");
+            listar_procesos_por_estado();
+        
+        }else if (strcmp(partes[0], "MULTIPROGRAMACION") == 0){
+            printf("Ha seleccionado la opción MULTIPROGRAMACION\n");
+            cambiar_grado_multiprogramacion(partes[1]);
+        }else if{
+            printf("Ha seleccionado la opción EJECUTAR_SCRIPT\n");
+            ejecutar_script(partes[1]);
+        }else {
+            
+            printf("Opción no válida\n");
+        }
+
+        liberar_array_strings(partes); // Libero la memoria asignada por string_split después de usarla
+
+    }
+
+    fclose(archivo); // Cierro el archivo
+    
+}
+
 
 // Estos son los comandos por consola que faltan hacer
-void ejecutar_script();
-void finalizar_proceso();
 void detener_planificacion();
 void iniciar_planificacion();
-
+    
 // ----------------------------------------------------------------------------------------
 // ------------- FIN FUNCIONES PROPIAS DE LOS COMANDOS INGRESADOS POR CONSOLA -------------
 // ----------------------------------------------------------------------------------------
@@ -665,7 +746,6 @@ void pasar_proceso_a_exit(pcb* proceso){
     }
     pthread_mutex_unlock(&mutex_cola_general_de_procesos); // Desbloqueo la cola gral
 
-
     log_info(log_kernel, "PID: %d - Estado Anterior: %s - Estado Actual: EXIT", proceso->pid, estado_anterior);
 
     free(proceso->registros);
@@ -781,6 +861,29 @@ int hacer_wait(int indice_recurso, pcb* proceso){
 
 
 
+// -----------------------------------------------------------------
+// ------------- INICIO FUNCIONES PARA LIBERAR MEMORIA -------------
+// -----------------------------------------------------------------
+
+// ************* LIBERA LA MEMORIA DE "PARTES" QUE SIRVE PARA DIVIDIR UN TEXTO *************
+void liberar_array_strings(char **array) {
+    
+    if (array == NULL) return; // Si ya es null, entonces termino la función
+    
+    for (int i = 0; array[i] != NULL; i++) { // Sino voy recorriendo y liberando
+        free(array[i]);
+    }
+    free(array);
+}
+
+// --------------------------------------------------------------
+// ------------- FIN FUNCIONES PARA LIBERAR MEMORIA -------------
+// --------------------------------------------------------------
+
+
+
+
+
 // ---------------------------------------------------
 // ------------- INICIO FUNCIONES VARIAS -------------
 // ---------------------------------------------------
@@ -808,3 +911,4 @@ char* obtener_char_de_estado(estados estado_a_convertir){
 // ------------------------------------------------
 // ------------- FIN FUNCIONES VARIAS -------------
 // ------------------------------------------------
+

@@ -17,8 +17,8 @@ t_queue* cola_de_execute;
 t_queue* cola_de_exit;
 t_queue* cola_de_blocked;
 t_queue* cola_prioridad_vrr;
-t_queue* cola_general_de_procesos; //esta cola tendra a todos los procesos del sistema
-// t_queue** colas_por_recurso = malloc(cantidad_recursos * sizeof(t_queue*));
+t_queue* cola_general_de_procesos; // Esta cola tendra a todos los procesos del sistema
+// t_queue** colas_por_recurso = malloc(cantidad_recursos * sizeof(t_queue*)); -- Esto lo tuve que poner en .c porque sino rompía todo.
 int pid_contador = 0;
 int conexion_kernel_cpu;
 int interrupcion_kernel_cpu;
