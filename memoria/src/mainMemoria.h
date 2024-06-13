@@ -30,7 +30,6 @@ t_list* lista_procesos_recibidos;
 void* espacio_usuario;
 t_bitarray* bitmap_marcos;
 int cant_marcos;
-t_list* marcos_libres;
 
 //******** SEMÁFOROS ***********
 pthread_mutex_t mutex_bitmap_marcos;

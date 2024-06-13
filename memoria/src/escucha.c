@@ -3,6 +3,7 @@
 // ************* ESCUCHA ACTIVA DE CPU *************
 void atender_cpu(){
     bool control = 1;
+    t_buffer* buffer;
     while(control){
         int cod_op_cpu = recibir_operacion(socket_cliente_cpu);
         switch (cod_op_cpu) {
@@ -12,8 +13,42 @@ void atender_cpu(){
 
             case CPU_PIDE_INSTRUCCION_A_MEMORIA:
                 log_info(log_memoria, "CPU me pide una instruccion");
-                t_buffer* buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
+                buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
+                usleep(config_memoria->retardo_respuesta *1000);
 				cpu_pide_instruccion(buffer);
+                free(buffer);
+                break;
+
+            case ACCESO_A_TABLA_DE_PAGINA:
+            // ME DAN UNA PAG RESPONDO NUMERO DE MARCO
+                log_info(log_memoria, "CPU consulta un marco segun una pagina");
+                buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
+                usleep(config_memoria->retardo_respuesta *1000);
+				cpu_pide_numero_de_marco(buffer);
+                free(buffer);
+                break;
+
+            case RESIZE:
+                log_info(log_memoria, "CPU me pide un resize de un proceso");
+                buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
+                usleep(config_memoria->retardo_respuesta *1000);
+                cpu_pide_resize(buffer); 
+                free(buffer);
+                break; 
+    
+            case CPU_PIDE_LECTURA_MEMORIA:
+                log_info(log_memoria, "CPU me pide la lectura de un espacio de memoria");
+                buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
+                usleep(config_memoria->retardo_respuesta *1000);
+                // cpu_pide_lectura(buffer); -> FALTA IMPLEMENTAR
+                free(buffer);
+                break;
+
+            case CPU_PIDE_ESCRITURA_MEMORIA:
+                log_info(log_memoria, "CPU me pide la escritura de un espacio de memoria");
+                buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
+                usleep(config_memoria->retardo_respuesta *1000);
+                // cpu_pide_escritura(buffer);  -> FALTA IMPLEMENTAR
                 free(buffer);
                 break;
 
@@ -42,6 +77,7 @@ void atender_kernel(){
             case CREACION_PROCESO_KERNEL_A_MEMORIA:
                 log_info(log_memoria, "Kernel pide creacion de un nuevo proceso");
                 buffer = recibiendo_paquete_personalizado(socket_cliente_kernel);
+                usleep(config_memoria->retardo_respuesta *1000);
 				iniciar_estructura_para_un_proceso_nuevo(buffer);
                 free(buffer);
                 break;
@@ -49,6 +85,7 @@ void atender_kernel(){
             case FINALIZAR_PROCESO_KERNEL_A_MEMORIA:
                 log_info(log_memoria, "Kernel quiere finalizar un proceso");
                 buffer = recibiendo_paquete_personalizado(socket_cliente_kernel);
+                usleep(config_memoria->retardo_respuesta *1000);
 				liberar_memoria_proceso(buffer);
                 free(buffer);
                 break;
@@ -57,6 +94,7 @@ void atender_kernel(){
                 log_error(log_memoria, "KERNEL se desconecto.");
                 control = 0;
                 break;
+
             default:
                 log_warning(log_memoria,"Operacion desconocida. No quieras meter la pata");
                 break;
@@ -67,16 +105,35 @@ void atender_kernel(){
 // ************* ESCUCHA ACTIVA DE IO*************
 void atender_io(){
     bool control = 1;
+    t_buffer* buffer;
     while(control){
         int cod_op_io = recibir_operacion(socket_cliente_io);
         switch (cod_op_io) {
             case MENSAJE:
                 recibir_mensaje(socket_cliente_io, log_memoria);
                 break;
+
+            case IO_PIDE_LECTURA_MEMORIA:
+                log_info(log_memoria, "IO me pide la lectura de un espacio de memoria");
+                buffer = recibiendo_paquete_personalizado(socket_cliente_io);
+                usleep(config_memoria->retardo_respuesta *1000);
+                // io_pide_lectura(buffer); -> FALTA IMPLEMENTAR
+                free(buffer);
+                break;
+
+            case IO_PIDE_ESCRITURA_MEMORIA:
+                log_info(log_memoria, "IO me pide la escritura de un espacio de memoria");
+                buffer = recibiendo_paquete_personalizado(socket_cliente_io);
+                usleep(config_memoria->retardo_respuesta *1000);
+                // io_pide_escritura(buffer);  -> FALTA IMPLEMENTAR
+                free(buffer);
+                break;
+
             case -1:
                 log_error(log_memoria, "IO se desconecto.");
                 control = 0; 
                 break;
+
             default:
                 log_warning(log_memoria,"Operacion desconocida. No quieras meter la pata");
                 break;

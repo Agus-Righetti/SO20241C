@@ -36,12 +36,9 @@ void paginar_memoria(){
         exit(1);
     }
 
-    cant_marcos = (config_memoria->tam_memoria / config_memoria->tam_pagina);
-    // Como la (/) redondea para abajo, es necesario chequearlo
-    // Se puede usar ceil pero no me funcionó       : (
-    if (cant_marcos * config_memoria->tam_pagina < config_memoria->tam_memoria){
-        cant_marcos ++;
-    }
+    cant_marcos = ceil((double)config_memoria->tam_memoria / (double)config_memoria->tam_pagina);
+    // Como la (/) redondea para abajo, es necesario usar el CEIL que redondea para arriba
+    // Tuve que agregar double porque el ceil opera sobre valores del tipo double
     
     // CREO EL BITMAP -> 
     // Divido por 8 porque está en Byte y lo necesito en bits
@@ -49,7 +46,7 @@ void paginar_memoria(){
     bitmap_marcos = bitarray_create_with_mode(espacio_bitarray, cant_marcos/8, LSB_FIRST);
 
     // Me voy a apoyar en una lista que guarde los valores de las frames libres
-    marcos_libres = list_create(); 
+    // marcos_libres = list_create(); 
     // int aux = 1;
     // while (aux <= cant_marcos) {
     //     marcos_libres = list_add(marcos_libres, aux);
@@ -58,14 +55,14 @@ void paginar_memoria(){
     
 
     // Seteo todo el bitmap en 0, para marcar que están todas libres
-    for (int i = 0; i < cant_marcos; i++) {
-        bitarray_clean_bit(bitmap_marcos, i);
+    // for (int i = 0; i < cant_marcos; i++) {
+    //     bitarray_clean_bit(bitmap_marcos, i);
 
-        // Armo una lista auxiliar con todos los frames libres
-		t_frame* frame_libre = malloc(sizeof(t_frame));
-        frame_libre->id = i;
-        list_add(marcos_libres, frame_libre);
-    } 
+    //     // Armo una lista auxiliar con todos los frames libres
+	// 	t_frame* frame_libre = malloc(sizeof(t_frame));
+    //     frame_libre->id = i;
+    //     list_add(marcos_libres, frame_libre);
+    // } 
 
         // Lo de abajo puesto para testear que funcione
         // bool a = bitarray_test_bit(bitmap_marcos, i);

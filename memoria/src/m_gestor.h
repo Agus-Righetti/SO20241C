@@ -18,8 +18,10 @@ typedef struct{
 typedef struct{
 	int pid;
     char* path;
+    int tamaño; 
 	t_list* instrucciones;
     t_list* tabla_paginas;
+    int tam_usado_ult_pag;
 } t_proceso;
 
 // ************ ESTRUCTURA DE UNA INSTRUCCION *******
@@ -32,14 +34,12 @@ typedef struct{
     char* quinto_parametro;
 } t_instruccion_codigo;
 
-// ************ ESTRUCTURA DE UNA FILA DE TABLA *********
+// ************ ESTRUCTURA DE UNA FILA DE TABLA -> una PAGINA *********
 typedef struct {
     int frame;
-    bool presencia;
-    bool modificado;
-    int tam_disponible;
-    // Seguramente tengo que agregar más datos
-} t_fila_tabla_paginas;
+    bool presencia;  // Puede ser innecesario
+    bool modificado; // Puede ser innecesario
+} t_pagina;
 
 // ************ ESTRUCTURA DE UN MARCO, la tuve que hacer para la lista *********
 typedef struct {
@@ -49,7 +49,6 @@ typedef struct {
 // ************* VARIABLES GLOBALES *************
 extern t_log* log_memoria;
 extern memoria_config* config_memoria;
-extern  int cant_marcos;
 
 extern int socket_servidor_memoria;
 extern int socket_cliente_cpu;
@@ -60,8 +59,7 @@ extern t_list* lista_procesos_recibidos;
 
 extern void* espacio_usuario;
 extern t_bitarray* bitmap_marcos;
-extern t_list* marcos_libres;
-extern int cant_marcos; //revisar este
+extern int cant_marcos; 
 
 extern pthread_mutex_t mutex_bitmap_marcos;
 extern pthread_mutex_t mutex_espacio_usuario;

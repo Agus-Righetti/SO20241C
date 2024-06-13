@@ -45,7 +45,7 @@ char* obtener_instruccion_por_indice(t_list* instrucciones, int indice_instrucci
 }
 
 void enviar_una_instruccion_a_cpu(char* instruccion){
-	usleep(config_memoria->retardo_respuesta *1000); //Espero el retardo de respuesta -> hago el pasaje de milisegundos a microsegundos
+
 	t_paquete* paquete = crear_paquete_personalizado(CPU_RECIBE_INSTRUCCION_DE_MEMORIA);
 
 	agregar_string_al_paquete_personalizado(paquete, instruccion);
@@ -57,27 +57,159 @@ void enviar_una_instruccion_a_cpu(char* instruccion){
 //******************************************************************
 //****************** ACCESO A ESPACIO USUARIO **********************
 //******************************************************************
+// Dirección física
+// Tamaño
+// Valor
+// Ante un pedido de lectura, devolver el valor que se encuentra a partir de la dirección física pedida.
+// Ante un pedido de escritura, escribir lo indicado a partir de la dirección física pedida. En caso satisfactorio se responderá un mensaje de ‘OK’.
 
+// FALTA IMPLEMENTAR
 
 //******************************************************************
 //****************** ACCESO A TABLA DE PÁGINA **********************
 //******************************************************************
-int consulta_marco_segun_pagina (int pid, int nro_pag){
+void cpu_pide_numero_de_marco(t_buffer* un_buffer){        //[PID, NUMERO DE PAGINA]
+	int pid = recibir_int_del_buffer(un_buffer);
+	int nro_pag = recibir_int_del_buffer(un_buffer);
+
+	// Busco el numero de marco
+	int marco = obtener_marco_segun_pagina (pid, nro_pag);
+	if(marco != -1){
+		log_info(log_memoria, "PID: <%d> - Pagina: <%d> - Marco: <%d>\n", pid, nro_pag, marco);
+	}
+
+	// SE LO ENVIO? O SOLO IMPRIMO POR PANTALLA?
+}
+
+
+int obtener_marco_segun_pagina (int pid, int nro_pag){
 	// Busco el proceso en mi lista de procesos
 	t_proceso* un_proceso = obtener_proceso_por_id(pid);
 	// Si sigue, es porque encontró el proceso
 	// Tengo que buscar en la tabla de páginas del proceso, si la página está
 	// Para eso controlo bit de presencia
-	t_fila_tabla_paginas* linea_actual = list_get(un_proceso->tabla_paginas, nro_pag);
+	t_pagina* pagina_actual = list_get(un_proceso->tabla_paginas, nro_pag);
 
-	if(linea_actual == NULL){
+	if(pagina_actual == NULL){
 		log_error(log_memoria, "NRO DE PÁGINA <%d> DEL PROCESO <%d> NO VALIDO", nro_pag, pid);
 		return -1;
 	}
-
-	if(linea_actual->presencia == 0){
+	// El número de página es válido, controlo el bit de presencia
+	if(pagina_actual->presencia == 0){
+		// Hubo page fault, la página no está en memoria
 		log_error(log_memoria, "PAGE FAULT: NRO DE PÁGINA <%d> - PROCESO <%d>", nro_pag, pid);
 		return -1;
 	}
-	return linea_actual->frame;
+	return pagina_actual->frame;
+}
+
+
+//******************************************************************
+//***************************** RESIZE *****************************
+//******************************************************************
+void cpu_pide_resize(t_buffer* un_buffer){          // [PID, TAMAÑO NUEVO] -> [Int, Int]
+	int pid = recibir_int_del_buffer(un_buffer);
+	int tamaño_nuevo = recibir_int_del_buffer(un_buffer);
+
+	t_proceso* mi_proceso = obtener_proceso_por_id(pid);
+
+	// Primero veo si tengo que AMPLIAR o REDUCIR
+	if (tamaño_nuevo < mi_proceso->tamaño){
+		// REDUCIR
+		int tamanio_a_reducir = mi_proceso->tamaño - tamaño_nuevo;
+
+		// LOG OBLIGATORIO PARA REDUCCION 
+		log_info(log_memoria, "PID: <%d> - Tamaño Actual: <%d> - Tamaño a Reducir: <%d>\n", pid, mi_proceso->tamaño, tamanio_a_reducir);
+
+		// Hay dos casos:
+		// CASO 1 -> no tengo que eliminar paginas porque el tamaño usado en la ultima pagina es mayor al que quiero reducir 
+		if(mi_proceso->tam_usado_ult_pag > tamanio_a_reducir){
+			mi_proceso->tamaño = tamaño_nuevo;
+			// Actualizo el tamaño usado de la ultima pagina 
+			mi_proceso->tam_usado_ult_pag = mi_proceso->tam_usado_ult_pag - tamanio_a_reducir;
+			
+		} else {
+			
+			// CASO 2 -> tengo que eliminar paginar
+			int cantidad_pag_a_reducir = ceil ((double)tamanio_a_reducir / (double)config_memoria->tam_pagina);
+			
+			while (cantidad_pag_a_reducir > 0){
+				// Empiezo eliminando ultima pag
+				t_pagina* pag_a_eliminar = list_remove(mi_proceso->tabla_paginas, list_size(mi_proceso->tabla_paginas));
+
+				// FUTURO: cambiar esto por funcion gn
+			    pthread_mutex_lock(&mutex_bitmap_marcos);
+    			bitarray_clean_bit(bitmap_marcos,(pag_a_eliminar->frame));
+    			pthread_mutex_unlock(&mutex_bitmap_marcos);
+
+				cantidad_pag_a_reducir --;
+			}
+
+
+			mi_proceso->tamaño = tamaño_nuevo;
+			mi_proceso->tam_usado_ult_pag = config_memoria->tam_pagina - ((list_size(mi_proceso->tabla_paginas)*config_memoria->tam_pagina) - mi_proceso->tamaño);
+		}
+
+
+	} else {
+
+		// AMPLIAR
+		int tamanio_a_aumentar = tamaño_nuevo - mi_proceso->tamaño;
+
+		// LOG OBLIGATORIO PARA AMPLIACION
+		log_info(log_memoria, "PID: <%d> - Tamaño Actual: <%d> - Tamaño a Ampliar: <%d>\n", pid, mi_proceso->tamaño, tamanio_a_aumentar);
+
+		// Hay dos casos:
+		// CASO 1 -> quiero ampliar pero no llego a agregar una pagina
+		if((config_memoria->tam_pagina - mi_proceso->tam_usado_ult_pag) <= tamanio_a_aumentar){
+			//                 espacio libre de ult pag                 <= lo que quiero agregar
+
+			mi_proceso->tamaño = tamaño_nuevo;
+			// Actualizo el tamaño usado de la ultima pagina 
+			mi_proceso->tam_usado_ult_pag = mi_proceso->tam_usado_ult_pag + tamanio_a_aumentar;
+			
+		} else {
+			
+			// CASO 2 -> tengo que agregar paginas
+			int cantidad_pag_a_aumentar = ceil ((double)tamanio_a_aumentar / (double)config_memoria->tam_pagina);
+			
+			// Primero verifico que haya lugar en memoria
+			bool lugar = hay_lugar_en_memoria(cantidad_pag_a_aumentar);
+			if (lugar == 0){
+				// NO HAY ESPACIO -> no puedo guardar el proceso
+				log_info(log_memoria, "OUT OF MEMORY \n Proceso PID: <%d> - NO PUDO COMPLETAR EL RESIZE", pid);
+				enviar_out_of_memory_a_cpu();
+
+			} else{
+				// HAY LUGAR
+				// busco los marcos libres
+				t_list* marcos_libres = buscar_marcos_libres();
+				int posicion = 0;
+				while (cantidad_pag_a_aumentar > 0){
+					// Elijo el marco en el que voy a guardar
+					t_frame* marco_por_usar = list_get(marcos_libres, posicion); // AGARRO EL PRIMERO QUE ENCUENTRO EN LA LISTA DE LIBRES
+					ocupar_marco(marco_por_usar);
+
+					// Creo la pagina
+					t_pagina* pag_nueva = crear_pagina(marco_por_usar);
+
+			    	agregar_pag_a_tabla (mi_proceso, pag_nueva);
+
+					cantidad_pag_a_aumentar --;
+					posicion ++;
+					}
+
+				eliminar_lista(marcos_libres);
+				mi_proceso->tamaño = tamaño_nuevo;
+				mi_proceso->tam_usado_ult_pag = (list_size(mi_proceso->tabla_paginas)*config_memoria->tam_pagina) - mi_proceso->tamaño;
+			}
+		}
+	}
+}
+
+void enviar_out_of_memory_a_cpu(){ // VER SI NECESITAN EL PID O ALGO
+	t_paquete* paquete = crear_paquete_personalizado(CPU_RECIBE_OUT_OF_MEMORY_DE_MEMORIA);
+
+	enviar_paquete(paquete, socket_cliente_cpu);
+	eliminar_paquete(paquete);
 }

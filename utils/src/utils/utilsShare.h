@@ -13,11 +13,12 @@
 #include<commons/string.h>
 #include<commons/config.h>
 #include<commons/bitarray.h> //Biblioteca para manejar bitarray (memoria)
-#include<string.h>  //-> ver si esta repetida
+#include<string.h>           //-> ver si esta repetida
 #include<assert.h>
 #include<readline/readline.h>
-#include<pthread.h> // Biblioteca para hilos
-#include<semaphore.h> // Biblioteca para semaforos
+#include<pthread.h>          // Biblioteca para hilos
+#include<semaphore.h>        // Biblioteca para semaforos
+#include<math.h>             // Biblioteca para (ceil)
 
 
 // ************* ESTRUCTURAS GLOBALES *************
@@ -42,15 +43,24 @@ typedef enum
     DIALFS,
 	
 	// KERNEL A MEMORIA
-	CREACION_PROCESO_KERNEL_A_MEMORIA, // [path, PID] -> [String, Int]
+	CREACION_PROCESO_KERNEL_A_MEMORIA,  // [path, PID] -> [String, Int]
 	FINALIZAR_PROCESO_KERNEL_A_MEMORIA, // [PID] -> [Int] 
 
 	// CPU A MEMORIA
 	CPU_PIDE_INSTRUCCION_A_MEMORIA, // [PID, IP] -> [Int, Int]
+	RESIZE,                         // [PID, TAMAÑO] -> [Int, Int]
+	ACCESO_A_TABLA_DE_PAGINA,       // [PID, NUMERO PAG] -> [Int, Int]
+	CPU_PIDE_LECTURA_MEMORIA,       // [Direccion Fisica, TAMAÑO, VALOR]
+	CPU_PIDE_ESCRITURA_MEMORIA,     // [Direccion Fisica, TAMAÑO, VALOR]
 
 	// MEMORIA A CPU
-	CPU_RECIBE_INSTRUCCION_DE_MEMORIA, // [Instruccion] -> [String, String, String, String, String]
-	CPU_RECIBE_TAMAÑO_PAGINA_DE_MEMORIA, 
+	CPU_RECIBE_INSTRUCCION_DE_MEMORIA,   // [Instruccion] -> [String, String, String, String, String]
+	CPU_RECIBE_TAMAÑO_PAGINA_DE_MEMORIA, // [Tam_pagina] -> [Int]
+	CPU_RECIBE_OUT_OF_MEMORY_DE_MEMORIA, // VACIO
+
+	// IO A MEMORIA
+	IO_PIDE_LECTURA_MEMORIA,   // [Direccion Fisica, TAMAÑO, VALOR] 
+	IO_PIDE_ESCRITURA_MEMORIA, // [Direccion Fisica, TAMAÑO, VALOR]
 
 	PCB_KERNEL_A_CPU,
 	PCB_CPU_A_KERNEL,

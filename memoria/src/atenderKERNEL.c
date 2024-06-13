@@ -18,7 +18,6 @@ void iniciar_estructura_para_un_proceso_nuevo(t_buffer* buffer){
 
 	log_info(log_memoria, "PROCESO CREADO CON ÉXITO");
 
-	// Creo tabla de páginas
 	// Podriamos mandar un mensaje para chequear que llegó
 }
 
@@ -27,9 +26,13 @@ t_proceso* crear_proceso(int pid, char* path_instruc){
 
 	proceso_nuevo->pid = pid;
 	proceso_nuevo->path = path_instruc;
+    proceso_nuevo->tamaño = 0; 
 	proceso_nuevo->instrucciones = NULL;
     proceso_nuevo->tabla_paginas = list_create();
+    proceso_nuevo->tam_usado_ult_pag = 0;
 
+    log_info(log_memoria, "PID: <%d> - Tamaño: <%d>", proceso_nuevo->pid, list_size(proceso_nuevo->tabla_paginas));
+    
 	// Cargo instrucciones
 	proceso_nuevo->instrucciones = leer_archivo_y_cargar_instrucciones(proceso_nuevo->path);
 
@@ -132,7 +135,7 @@ t_list* leer_archivo_y_cargar_instrucciones(char* archivo_pseudocodigo) {
 //******************************************************************
 void liberar_memoria_proceso(t_buffer* buffer){
     // RECIBO UN BUFFER [PID] -> Int
-    // DEBO LIBERAR ESPACIO, Y SACAR EL PROCESO DE LA LISTA
+    // DEBO LIBERAR ESPACIO (MARCAR FRAMES LIBRES), Y SACAR EL PROCESO DE LA LISTA
 
     int pid_a_eliminar = recibir_int_del_buffer(buffer);
     t_proceso* proceso_a_eliminar = obtener_proceso_por_id(pid_a_eliminar);
@@ -150,7 +153,7 @@ void liberar_memoria_proceso(t_buffer* buffer){
     t_list* tabla_paginas_a_eliminar = proceso_a_eliminar->tabla_paginas;
 
     for (int i = 0; i < list_size(tabla_paginas_a_eliminar); i++) {
-        t_fila_tabla_paginas* pagina_a_eliminar = list_get(tabla_paginas_a_eliminar, i);
+        t_pagina* pagina_a_eliminar = list_get(tabla_paginas_a_eliminar, i);
 
         if (pagina_a_eliminar->presencia == 1) {
             pthread_mutex_lock (&mutex_bitmap_marcos);
@@ -158,5 +161,8 @@ void liberar_memoria_proceso(t_buffer* buffer){
             pthread_mutex_unlock (&mutex_bitmap_marcos);
         }
     }
-    
+    // la destruyo? revisar
+    list_destroy(tabla_paginas_a_eliminar);
+    list_destroy(proceso_a_eliminar->tabla_paginas);
+
 }

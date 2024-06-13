@@ -23,16 +23,19 @@ int main() {
     recibir_escuchar_io();
 
     // ********* LIBERO TODO *********
+    // Despues armar funcion que haga todo
 	log_destroy(log_memoria);
+
+    // Chequear que esto este bien
+    liberar_conexion(socket_cliente_io);
+    liberar_conexion(socket_cliente_cpu);
+    liberar_conexion(socket_cliente_kernel);
+
     list_destroy(lista_procesos_recibidos);
 	free(config_memoria);
     bitarray_destroy(bitmap_marcos);
     pthread_mutex_destroy(&mutex_bitmap_marcos);
     pthread_mutex_destroy(&mutex_espacio_usuario);
-
-    // ELIMINAR COSAS
-    //pthread_mutex_destroy (pthread_mutex_t *__mutex);
-	//sem_destroy (sem_t *__sem) __THROW __nonnull ((1));
 
     return EXIT_SUCCESS;
 }
