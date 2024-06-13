@@ -1,9 +1,5 @@
 #include "procesos.h"
 
-
-
-
-
 // -------------------------------------------------------------------------------
 // ------------- INICIO HILOS QUE SE QUEDAN CONSTANTEMENTE PRENDIDOS -------------
 // -------------------------------------------------------------------------------
@@ -122,7 +118,7 @@ void enviar_proceso_a_cpu(){
             
             enviar_pcb(proceso_seleccionado); // Envio el pcb a CPU
 
-            crear_hilo_proceso (proceso_seleccionado); // Inicio un hilo que maneje la ejecucion del proceso
+            crear_hilo_proceso (proceso_seleccionado); // Inicio un hilo que maneje el algoritmo del proceso
 
         }else
         {
@@ -243,25 +239,26 @@ void iniciar_proceso(char* path ){
 }
 
 //************* Esta funcion mostrara e forma de tabla cada proceso en que estado esta actualmente ************* 
-void listar_procesos_por_estado()
-{
-    //armo colas auxiliares para mostrar por pantalla, asi pueden seguir las colas normales sin problema
+void listar_procesos_por_estado(){
+    
+    // Armo colas auxiliares de cada estado para mostrar por pantalla, asi pueden seguir las colas normales sin problema
     t_queue* cola_aux_ready = queue_create();
     t_queue* cola_aux_execute = queue_create();
     t_queue* cola_aux_blocked = queue_create();
     t_queue* cola_aux_exit = queue_create();
     t_queue* cola_aux_new = queue_create();
 
-
-    pthread_mutex_lock(&mutex_cola_general_de_procesos); //bloqueo la cola gral
+    pthread_mutex_lock(&mutex_cola_general_de_procesos); // Bloqueo la cola general
     
-    pcb* primer_pcb_cola_gral = queue_pop(cola_general_de_procesos); //saco el 1er PCB de la cola gral
+    pcb* primer_pcb_cola_gral = queue_pop(cola_general_de_procesos); // Saco el 1er PCB de la cola gral
 
-    pcb* aux = primer_pcb_cola_gral; //esta variable tendra los procesos de la cola
+    pcb* aux = primer_pcb_cola_gral; // Esta variable tendrá los procesos de la cola
 
     pcb* primero_aux = queue_peek(cola_general_de_procesos);
-    //este while recorre la cola gral, agregando cada proceso a la cola aux q corresponda
-    while(primer_pcb_cola_gral != primero_aux)
+    
+    // Este while recorre la cola gral, agregando cada proceso a la cola aux q corresponda
+    
+    while(primer_pcb_cola_gral != primero_aux) // Salgo cuando dí toda la vuelta
     {
         switch(aux->estado_del_proceso)
         {
@@ -282,14 +279,15 @@ void listar_procesos_por_estado()
                 break;
         }
         primero_aux = queue_peek(cola_general_de_procesos);
-        queue_push(cola_general_de_procesos, aux); //agrego el q saque de la cola gral
-        aux = queue_pop(cola_general_de_procesos); //saco el proximo de la cola
+        queue_push(cola_general_de_procesos, aux); // Agrego el q saque de la cola gral
+        aux = queue_pop(cola_general_de_procesos); // Saco el proximo de la cola
     }
 
-    queue_push(cola_general_de_procesos, aux); //agrego el ultimo q saque (no entro al while)
-    pthread_mutex_unlock(&mutex_cola_general_de_procesos); //desbloqueo la cola gral
+    queue_push(cola_general_de_procesos, aux); // Agrego el ultimo q saque (no entró al while)
+    pthread_mutex_unlock(&mutex_cola_general_de_procesos); // Desbloqueo la cola general
 
-    //hago los logs de cada cola
+    // Recorro cada cola y hago los logs de cada una
+
     log_info(log_kernel, "Procesos en estado NEW: \n");
     while(queue_is_empty(cola_aux_new)!= true)
     {
@@ -325,30 +323,37 @@ void listar_procesos_por_estado()
         log_info(log_kernel, "PID: %d\n" , aux->pid );
     }
 
-    //libero las colas auxiliares
-    
+    // Libero las colas auxiliares
     queue_destroy(cola_aux_exit);
     queue_destroy(cola_aux_ready);
     queue_destroy(cola_aux_blocked);
     queue_destroy(cola_aux_execute);
     queue_destroy(cola_aux_new);
-
-
 }
 
-//************* Falta el comentario de esta ************* 
-void cambiar_grado_multiprogramacion(char* nuevo_valor_formato_char)
-{
-    int nuevo_valor = atoi(nuevo_valor_formato_char);
-    config_kernel->grado_multiprogramacion = nuevo_valor;
+    //************* CAMBIA EL GRADO DE MULTIPROGRAMCION DEL SISTEMA POR EL ENVIADO POR PARAMETRO ************* 
+void cambiar_grado_multiprogramacion(char* nuevo_valor_formato_char){
+    
+    int nuevo_valor = atoi(nuevo_valor_formato_char); // Se pasa el nuevo valor que es un string a tipo int
+    config_kernel->grado_multiprogramacion = nuevo_valor; // Asigno el nuevo grado de multiprogramación
+    
     int valor_semaforo;
-    sem_getvalue(&sem_multiprogramacion, &valor_semaforo);
-    while (valor_semaforo > nuevo_valor)
+    sem_getvalue(&sem_multiprogramacion, &valor_semaforo); // Obtengo el valor actual del semáforo del grado de multiprogramación y lo guardo en valor_semaforo
+
+    while (valor_semaforo > nuevo_valor) // Mientras que el valor de multiprogramación sea mayor que el nuevo
     {
-        sem_wait(&sem_multiprogramacion);
+        sem_wait(&sem_multiprogramacion); // Le voy restando de a uno al semáforo del grado de multiprogramación
         sem_getvalue(&sem_multiprogramacion, &valor_semaforo);
-    }
+    } 
+    // Hago eso hasta que el semáforo quede con el mismo valor que el nuevo determinado por parámetro
 }
+
+
+// Estos son los comandos por consola que faltan hacer
+void ejecutar_script();
+void finalizar_proceso();
+void detener_planificacion();
+void iniciar_planificacion();
 
 // ----------------------------------------------------------------------------------------
 // ------------- FIN FUNCIONES PROPIAS DE LOS COMANDOS INGRESADOS POR CONSOLA -------------
@@ -377,9 +382,9 @@ void enviar_pcb(pcb* proceso) {
     eliminar_paquete(paquete_pcb); // Libero el paquete
 }
 
-// --------------------------------------------------------------------------
-// ------------- FIN LAS FUNCIONES PARA ENVIAR UN PROCESO A CPU -------------
-// --------------------------------------------------------------------------
+// ----------------------------------------------------------------------
+// ------------- FIN FUNCIONES PARA ENVIAR UN PROCESO A CPU -------------
+// ----------------------------------------------------------------------
 
 
 
@@ -404,7 +409,7 @@ void crear_hilo_proceso(pcb* proceso){
         // Si el algoritmo de planificacion es FIFO entonces recibo el pcb normalmente desde CPU
 
         pthread_create(&hilo_recibe_proceso, NULL, (void*)recibir_pcb_hilo,(void*)&args_hilo); // Recibir un pcb normalmente, sin interrupciones
-        pthread_join(hilo_recibe_proceso, NULL); // No sigo hasta que no haya terminado de recibirlo
+        pthread_join(hilo_recibe_proceso, NULL); // No sigo hasta que no haya terminado de recibirlo, y ahí libero el hilo
     }
     else if(strcmp(config_kernel->algoritmo_planificacion, "RR") == 0 || strcmp(config_kernel->algoritmo_planificacion, "VRR") == 0)
     {
@@ -438,12 +443,12 @@ void recibir_pcb_hilo(void* arg){
 // ************* RECIBE EL PCB NORMALMENTE (SIN INTERRUPCION) SEGUN ALGORITMO *************
 void recibir_pcb(pcb* proceso) {
     
-    clock_t inicio, fin; // Inicio un reloj, cuenta el tiempo que estuvo esperando hasta que llegue el paquete (sirve para vrr)
+    clock_t inicio, fin; // Inicio un reloj, cuenta el tiempo que estuvo esperando hasta que llegue el paquete (sirve para VRR)
     int tiempo_que_tardo_en_recibir;
 
     inicio = clock(); // En este momento comienzo a esperar
 
-    int codigo_operacion = recibir_operacion(conexion_kernel_cpu); // Recibo el codigo de operacion para ver como actuo segun eso
+    int codigo_operacion = recibir_operacion(conexion_kernel_cpu); // Recibo el codigo de operacion para ver como actúo según eso
 
     int flag_estado; // Declaro un flag que me va a servir para manejar el estado del proceso posteriormente
     
@@ -462,7 +467,7 @@ void recibir_pcb(pcb* proceso) {
         case CPU_TERMINA_EJECUCION_PCB:
 
             buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
-            fin = clock(); // Este no estaba por algo en particular? Porque aunque finalice despues voy a querer hacer la cuenta del tiempo igual
+            fin = clock(); // Termino el tiempo desde que empecé a esperar la recepción
             flag_estado = 1; // El proceso ya finalizo, no quedan rafagas por ejecutar
 
             break;
@@ -501,12 +506,12 @@ void recibir_pcb(pcb* proceso) {
     if(codigo_operacion == WAIT)
     {
         int indice_recurso = recibir_int_del_buffer(buffer); // Obtengo el indice del recurso que se usa para manejarlo
-        flag_estado = hacer_wait(indice_recurso, proceso); // Asigno un flag que viene 
+        flag_estado = hacer_wait(indice_recurso, proceso); // Asigno un flag que sirve para manejar el estado del proceso
 
     }else if(codigo_operacion == SIGNAL)
     {
         int indice_recurso = recibir_int_del_buffer(buffer); // Obtengo el indice del recurso que se usa para manejarlo
-        flag_estado = hacer_signal(indice_recurso, proceso);
+        flag_estado = hacer_signal(indice_recurso, proceso); // Asigno un flag que sirve para manejar el estado del proceso
     }
     
     if(strcmp(config_kernel->algoritmo_planificacion, "VRR") == 0) // Si estoy recibiendo a traves del algoritmo VRR
@@ -578,9 +583,9 @@ void desalojar_proceso(pcb* proceso){
 // ************* SEGUN EL FLAG QUE TENGA EL PROCESO VOY A CAMBIARLE EL ESTADO *************
 void accionar_segun_estado(pcb* proceso, int flag){
 
-    //flag = 1, ya ejecuto todo, tengo q pasarlo a exit
-    //flag = 0, aun no ejecuto del todo, lo mando a la cola de ready
-    //flag = 2, tengo que bloquear el proceso
+    //flag =  1, ya ejecutó todo, tengo q pasarlo a exit
+    //flag =  0, aun no ejecutó del todo, lo mando a la cola de ready
+    //flag =  2, tengo que bloquear el proceso
     //flag = -1, no hago nada, ya lo hicieron 
     
     if(flag == 2){
@@ -597,47 +602,45 @@ void accionar_segun_estado(pcb* proceso, int flag){
 
         if(strcmp(config_kernel->algoritmo_planificacion, "VRR") == 0)
         {
-            if(proceso->quantum > 0)
+            if(proceso->quantum > 0) // Si todavía me queda quantum disponible
             {
-                //si aun le queda quantum disponible se ira a la cola de prioridad
-                pthread_mutex_lock(&mutex_cola_prioridad_vrr);
-                queue_push(cola_prioridad_vrr,proceso);
+                pthread_mutex_lock(&mutex_cola_prioridad_vrr); 
+                queue_push(cola_prioridad_vrr,proceso); // Entonces voy a la cola de prioridad
                 pthread_mutex_unlock(&mutex_cola_prioridad_vrr);
                 sem_post(&sem_cola_prioridad_vrr);
+
                 log_info(log_kernel, "PID: %d - Estado Anterior: %s - Estado Actual: READY", proceso->pid, estado_anterior);
 
+            }else{ // Si no le queda quantum
 
-            }else{
-                //no le queda quantum, ira a ready normal
-                proceso->quantum = config_kernel->quantum; // le vuelvo a asignar todo el quantum
+                proceso->quantum = config_kernel->quantum; // Le reinicio el quantum
                 pthread_mutex_lock(&mutex_cola_de_ready);
-                queue_push(cola_de_ready,proceso);
+                queue_push(cola_de_ready,proceso); // Y la sumo a la cola de Ready normal
                 pthread_mutex_unlock(&mutex_cola_de_ready);
                 sem_post(&sem_cola_de_ready);
+
                 log_info(log_kernel, "PID: %d - Estado Anterior: %s - Estado Actual: READY", proceso->pid, estado_anterior);
 
             }
-        }else{ // no estoy en vrr, siempre madno a cola de ready normal
+        }else{ // No estoy en vrr, siempre madno a cola de Ready normal
+            
             pthread_mutex_lock(&mutex_cola_de_ready);
-            queue_push(cola_de_ready,proceso);
+            queue_push(cola_de_ready,proceso); // Meto a la cola de Ready
             pthread_mutex_unlock(&mutex_cola_de_ready);
             sem_post(&sem_cola_de_ready);
+
             log_info(log_kernel, "PID: %d - Estado Anterior: %s - Estado Actual: READY", proceso->pid , estado_anterior);
 
         };
-
-        // Hago un log obligatorio
     }
-    
     return;
-
 }
 
 // ************* PASA EL PROCESO SELECCIONADO A EXIT *************
 void pasar_proceso_a_exit(pcb* proceso){
 
     //En esta funcion faltan liberar los recursos q tenia el proceso
-    char* estado_anterior = obtener_char_de_estado(proceso->estado_del_proceso); F// Devuelvo el estado pero como string
+    char* estado_anterior = obtener_char_de_estado(proceso->estado_del_proceso); // Devuelvo el estado como string
 
     pthread_mutex_lock(&proceso->mutex_pcb);
     proceso->estado_del_proceso = EXIT; // Asigno el estado del proceso como Exit
@@ -645,11 +648,11 @@ void pasar_proceso_a_exit(pcb* proceso){
 
     while(queue_is_empty(proceso->recursos_asignados) == false) // Mientras la cola de recursos asignados no esta vacia
     {
-        int recurso_a_liberar = (int)(intptr_t)queue_peek(proceso->recursos_asignados); // Entonces libero los recursos corresopndientes
+        int recurso_a_liberar = (int)(intptr_t)queue_peek(proceso->recursos_asignados); // Entonces libero los recursos corresopndientes 
         hacer_signal(recurso_a_liberar, proceso);
     }
     
-    pthread_mutex_lock(&mutex_cola_general_de_procesos); //bloqueo la cola gral para sacar el proceso q paso a exit
+    pthread_mutex_lock(&mutex_cola_general_de_procesos); // Bloqueo la cola gral para sacar el proceso q paso a exit
 
     pcb* primer_pcb_cola_gral = queue_pop(cola_general_de_procesos);
 
@@ -657,10 +660,10 @@ void pasar_proceso_a_exit(pcb* proceso){
 
     while(aux->pid != proceso->pid)
     {
-        queue_push(cola_general_de_procesos, aux); //agrego el q saque de la cola gral
-        aux = queue_pop(cola_general_de_procesos); //saco el proximo de la cola
+        queue_push(cola_general_de_procesos, aux); // Agrego el q saque de la cola gral
+        aux = queue_pop(cola_general_de_procesos); // Saco el proximo de la cola
     }
-    pthread_mutex_unlock(&mutex_cola_general_de_procesos); //desbloqueo la cola gral
+    pthread_mutex_unlock(&mutex_cola_general_de_procesos); // Desbloqueo la cola gral
 
 
     log_info(log_kernel, "PID: %d - Estado Anterior: %s - Estado Actual: EXIT", proceso->pid, estado_anterior);
@@ -674,6 +677,7 @@ void pasar_proceso_a_exit(pcb* proceso){
      
 }
 
+// ************* PASA EL PROCESO SELECCIONADO A BLOCKED *************
 void pasar_proceso_a_blocked(pcb* proceso){
     
     char* estado_anterior = obtener_char_de_estado(proceso->estado_del_proceso);
@@ -690,32 +694,40 @@ void pasar_proceso_a_blocked(pcb* proceso){
 
 
 
+
+
+// -------------------------------------------------------------
+// ------------- INICIO FUNCIONES DE INSTRUCCIONES -------------
+// -------------------------------------------------------------
+
+// ************* REALIZA EL SIGNAL DE UN RECURSO *************
+
 int hacer_signal(int indice_recurso, pcb* proceso){
+
     int flag;
 
-
-    if(indice_recurso < cantidad_recursos) //chequeo que existe el recurso
+    if(indice_recurso < cantidad_recursos) // Chequeo que existe el recurso
     {
-        ++ config_kernel->instancias_recursos[indice_recurso];
+        ++ config_kernel->instancias_recursos[indice_recurso]; // Sumo una instancia al recurso
 
-        if(config_kernel->instancias_recursos[indice_recurso] <= 0){
-            flag = 0; //flag 0 porque quiero pasarlo a ready de nuevo
+        if(config_kernel->instancias_recursos[indice_recurso] <= 0){ // Verifico si el proceso está bloqueado o no, para desbloquearlo si hiciera falta
 
-            // Saco de la cola de blocked de ese recurso
+            flag = 0; // Esto es porque el proceso que llama al signal tiene que quedar en ready
+            
             pthread_mutex_lock(mutex_por_recurso[indice_recurso]);
-            pcb* proceso_desbloqueado = queue_pop(colas_por_recurso[indice_recurso]);
+            pcb* proceso_desbloqueado = queue_pop(colas_por_recurso[indice_recurso]); // Saco de la cola de blocked de ese recurso
             pthread_mutex_unlock(mutex_por_recurso[indice_recurso]);
 
-            queue_push(proceso_desbloqueado->recursos_asignados, (void*)(intptr_t)indice_recurso); //agrego a la cola de recursos asignados del proceso el recurso
+            queue_push(proceso_desbloqueado->recursos_asignados, (void*)(intptr_t)indice_recurso); // Agrego el recurso a la cola de recursos asignados del proceso
             
-            accionar_segun_estado(proceso_desbloqueado , 0); //mando el proceso q se desbloqueo recien a la cola de ready
+            accionar_segun_estado(proceso_desbloqueado , 0); // Con esto es con lo que desbloqueo lo que estaba bloqueado
             
-        }else flag = 0; //debo pasar este proceso de nuevo a ready, el signal no lo bloquea
+        }else flag = 0; // Debo pasar este proceso de nuevo a ready, el signal no lo bloquea
 
         //Saco de la cola de recursos asignados del proceso el recurso
-        int primer_recurso_asignado = (int)(intptr_t)queue_pop(proceso->recursos_asignados);
+        int primer_recurso_asignado = (int)(intptr_t)queue_pop(proceso->recursos_asignados); // Acá podría fallar si no hice un wait antes, podría no haber nada en la cola
         int recurso_aux = primer_recurso_asignado;
-        while(recurso_aux != indice_recurso)
+        while(recurso_aux != indice_recurso) // Acá se está recorriendo la cola, hasta que saco el recurso que quiero, si no tengo el que quiero lo vuelvo a meter en la cola
         {
             queue_push(proceso->recursos_asignados, (void*)(intptr_t)recurso_aux);
             recurso_aux = (int)(intptr_t)queue_pop(proceso->recursos_asignados);
@@ -726,6 +738,7 @@ int hacer_signal(int indice_recurso, pcb* proceso){
     return flag;
 }
 
+// ************* REALIZA EL WAIT DE UN RECURSO *************
 int hacer_wait(int indice_recurso, pcb* proceso){
     int flag;
 
@@ -733,41 +746,47 @@ int hacer_wait(int indice_recurso, pcb* proceso){
         
         -- config_kernel->instancias_recursos[indice_recurso]; // Quito una instancia de ese recurso
 
-        if(config_kernel->instancias_recursos[indice_recurso] < 0){
+        if(config_kernel->instancias_recursos[indice_recurso] < 0){ // Si no tengo más instancias disponibles, entonces bloqueo el proceso
             
             flag = -1; // En accionar_segun_estado no hara nada porque ya lo bloqueo aca
 
             char* estado_anterior = obtener_char_de_estado(proceso->estado_del_proceso);
             pthread_mutex_lock(&proceso->mutex_pcb);
-            proceso->estado_del_proceso = BLOCKED; 
+            proceso->estado_del_proceso = BLOCKED; // Bloqueo el proceso
             pthread_mutex_unlock(&proceso->mutex_pcb);
 
             log_info(log_kernel, "PID: %d - Estado Anterior: %s - Estado Actual: BLOCKED", proceso->pid, estado_anterior);
             
             
             pthread_mutex_lock(mutex_por_recurso[indice_recurso]);
-            queue_push(colas_por_recurso[indice_recurso], proceso); //Mando a la cola de blocked de ese recurso
+            queue_push(colas_por_recurso[indice_recurso], proceso); // Mando a la cola de blocked de ese recurso
             pthread_mutex_unlock(mutex_por_recurso[indice_recurso]);
             
-        }else{
+        }else{ // Si no lo tengo que bloquear, entonces lo mando a Ready
+
             flag = 0; //flag 0 para que vuelva a la cola de ready
-            queue_push(proceso->recursos_asignados, (void*)(intptr_t)indice_recurso); //agrego el recurso a los recursos asignados
+            queue_push(proceso->recursos_asignados, (void*)(intptr_t)indice_recurso); // Agrego el recurso a la cola de recursos asignados
         } 
          
-    }else flag = 1; // Entonces no existe el recurso solicitado
+    }else flag = 1; // Entonces no existe el recurso solicitado, y mando a exit al proceso
     
     return flag;
 }
 
+// ----------------------------------------------------------
+// ------------- FIN FUNCIONES DE INSTRUCCIONES -------------
+// ----------------------------------------------------------
 
 
-// -----------------------------------------------------
-// ------------- INICIO FUNCIONES VARIADAS -------------
-// -----------------------------------------------------
 
-//Esta funcion devuelve un char al pasarle un enum de estados
-char* obtener_char_de_estado(estados estado_a_convertir)
-{
+
+
+// ---------------------------------------------------
+// ------------- INICIO FUNCIONES VARIAS -------------
+// ---------------------------------------------------
+
+// ************* DEVUELVE UN CHAR* (STRING) AL PASARLE UN ENUM DE ESTADOS *************
+char* obtener_char_de_estado(estados estado_a_convertir){
     switch(estado_a_convertir)
     {
         case READY:
@@ -786,6 +805,6 @@ char* obtener_char_de_estado(estados estado_a_convertir)
 
 }
 
-// --------------------------------------------------
-// ------------- FIN FUNCIONES VARIADAS -------------
-// --------------------------------------------------
+// ------------------------------------------------
+// ------------- FIN FUNCIONES VARIAS -------------
+// ------------------------------------------------
