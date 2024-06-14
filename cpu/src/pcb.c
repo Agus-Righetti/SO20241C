@@ -39,19 +39,20 @@ void enviar_pcb(int conexion, pcb *proceso, op_code codigo, char* recurso)
     if (recurso == NULL) {
         return; // No hacer nada si el recurso es NULL
     }
+    else
+    {
+        int recurso_valor = atoi(recurso);
 
-    int recurso_valor = atoi(recurso);
-
-    if(recurso_valor == 1) {
-        agregar_int_al_paquete_personalizado(paquete, 0);
-    } else if (recurso_valor == 2) {
-        agregar_int_al_paquete_personalizado(paquete, 1); 
-    } else if (recurso_valor == 3) {
-        agregar_int_al_paquete_personalizado(paquete, 2); 
-    } else {
-        return; // No hacer nada si el recurso no coincide
+        if(recurso_valor == 1) {
+            agregar_int_al_paquete_personalizado(paquete, 0);
+        } else if (recurso_valor == 2) {
+            agregar_int_al_paquete_personalizado(paquete, 1); 
+        } else if (recurso_valor == 3) {
+            agregar_int_al_paquete_personalizado(paquete, 2); 
+        } else {
+            return; // No hacer nada si el recurso no coincide
+        }
     }
-	
     enviar_paquete(paquete, conexion);
 	eliminar_paquete(paquete);
 }
@@ -526,10 +527,12 @@ void instruccion_io_stdin_read(char** parte)
         return;
     }
 
-    if(parte[1] != STDIN) 
+    if(strcmp(parte[1], "STDIN") != 0) 
     {
         log_error(log_cpu, "La interfaz indicada no es STDIN.");
     }
+
+    log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s %s", proceso->pid, parte[0], parte[1], parte[2], parte[3]);
 
     // Extraer los registros de la instrucción
     char* interfaz = parte[1];
@@ -562,10 +565,43 @@ void enviar_solicitud_a_kernel(Interfaz* interfaz, int direccion_fisica, int tam
     eliminar_paquete(paquete);
 }
 
-// void instruccion_io_stdout_write(char** parte) 
-// {
-//     // IO_STDOUT_WRITE Int3 BX EAX
-// }
+void instruccion_io_stdout_write(char **parte) 
+{
+    // IO_STDOUT_WRITE Int3 BX EAX
+
+    // Verificar que la cantidad de argumentos sea la correcta
+    if (parte[1] == NULL || parte[2] == NULL || parte[3] == NULL) 
+    {
+        log_error(log_cpu, "Argumentos incorrectos para la instrucción IO_STDIN_READ.");
+        return;
+    }
+
+    if(strcmp(parte[1], "STDOUT") != 0) 
+    {
+        log_error(log_cpu, "La interfaz indicada no es STDIN.");
+    }
+
+    char *interfaz = parte[1];
+    char *registro_direccion = parte[2];
+    char *registro_tamano = parte[3];
+
+    log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s %s", proceso->pid, parte[0], parte[1], parte[2], parte[3]);
+
+    // Crear paquete para enviar al Kernel
+    t_paquete *paquete = crear_paquete_personalizado(IO_STDOUT_WRITE);
+
+    // Agregar los datos al paquete
+    agregar_string_al_paquete_personalizado(paquete, interfaz);
+    agregar_string_al_paquete_personalizado(paquete, registro_direccion);
+    agregar_string_al_paquete_personalizado(paquete, registro_tamano);
+
+    // Enviar paquete al Kernel
+    enviar_paquete(paquete, socket_cliente_kernel);
+    eliminar_paquete(paquete);
+
+    // Incrementar el program counter del proceso
+    proceso->program_counter++;
+}
 
 // void intruccion_io_fs_create(char **parte)
 // {
@@ -602,7 +638,7 @@ void instruccion_exit(char** parte)
 	free(proceso);
 }
 
-void error_exit(char** parte) 
+void error_exit(op_code codigo) 
 {
 	enviar_pcb(socket_cliente_kernel, proceso, CODIGO, NULL);
 	list_destroy_and_destroy_elements(proceso->instrucciones, free);

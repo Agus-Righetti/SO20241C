@@ -35,7 +35,7 @@ typedef struct
 extern t_log* log_io;
 extern io_config* config_io;
 extern pcb* proceso;
-// extern int socket_servidor_kernel;
+
 extern int conexion_io_kernel;
 extern int conexion_io_memoria;
 

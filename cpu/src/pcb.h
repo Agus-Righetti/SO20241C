@@ -67,7 +67,7 @@ void instruccion_exit(char** parsed);
 void instruccion_wait(char** parte);
 void instruccion_signal(char **parte);
 
-void error_exit(char** parte);
+void error_exit(op_code codigo);
 void solicitar_instrucciones_a_memoria(int socket_cliente_cpu, pcb** pcb_recibido); 
 // void recibir_instruccion_de_memoria(int socket_servidor_memoria);
 void enviar_instruccion(int conexion, t_instruccion* instruccion, op_code codigo);

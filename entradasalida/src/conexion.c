@@ -26,10 +26,10 @@ void atender_kernel()
                 recibir_operacion_stdin_de_kernel(STDIN, cod_op_io);
                 liberar_configuracion_stdin(&configuracion);
                 break;
-            case STDOUT:
-                leer_configuracion_stdout(&configuracion);
-                liberar_configuracion_stdout(&configuracion);
-                break;
+            // case STDOUT:
+            //     leer_configuracion_stdout(&configuracion);
+            //     liberar_configuracion_stdout(&configuracion);
+            //     break;
             // case DIALFS:
             //     leer_configuracion_dialfs(configuracion);
             //     break;

@@ -27,8 +27,8 @@ int traducir_direccion_logica_a_fisica(int direccion_logica)
         // Recibo marco de memoria
         int cod_op_memoria = recibir_operacion(socket_cliente_cpu);
         while(1) {
-            switch (cod_op_memoria) {
-                
+            switch (cod_op_memoria)
+            {
                 case CPU_RECIBE_NUMERO_DE_MARCO_DE_MEMORIA:
                     t_buffer* buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
                     int marco = recibir_int_del_buffer(buffer);
@@ -41,13 +41,10 @@ int traducir_direccion_logica_a_fisica(int direccion_logica)
                     nueva_entrada.numero_marco = marco;
                     actualizar_tlb(&nueva_entrada); 
                     free(buffer);
-
                     return (marco * tamanio_pagina) + desplazamiento;
-
                     break; 
                 case EXIT:
                     error_exit(EXIT);
-                    // list_destroy_and_destroy_elements(lista, free); 
                     break;
                 case -1:
                     log_error(log_cpu, "MEMORIA se desconecto. Terminando servidor");
@@ -59,34 +56,9 @@ int traducir_direccion_logica_a_fisica(int direccion_logica)
                     break;
             }
         }
+        eliminar_paquete(paquete);
     }
 }   
-
-// int recibir_marco(int socket_cliente, int* marco) 
-// {
-//     // Intenta recibir el número de marco desde el socket
-//     int bytes_recibidos = recv(socket_cliente, marco, sizeof(int), MSG_WAITALL);
-    
-//     // Verifica si la recepción fue exitosa
-//     if (bytes_recibidos == sizeof(int)) 
-//     {
-//         return 0; // Recepción exitosa
-//     } 
-//     else if (bytes_recibidos == -1) 
-//     {
-//         // Si recv devuelve -1, indica un error en la recepción
-//         perror("Error al recibir el número de marco");
-//         close(socket_cliente);
-//         return -1; // Error
-//     } 
-//     else 
-//     {
-//         // Si recv devuelve otro valor, indica que se recibió una cantidad inesperada de bytes
-//         fprintf(stderr, "Error: Se recibieron %d bytes en lugar de %lu\n", bytes_recibidos, sizeof(int));
-//         close(socket_cliente);
-//         return -1; // Error
-//     }
-// }
 
 TLB_Entrada buscar(int numero_pagina) 
 {
@@ -190,4 +162,28 @@ void inicializar_tlb()
     {
         tlb->uso_lru[i] = -1;
     }
+}
+
+// // Recibo una solicitud_traduccion, la traduzco y la mando a kernel
+// void manejar_solicitud_traduccion(int socket_cliente_kernel) // Ver sockets 
+// {
+//     t_buffer* buffer = recibir_buffer(socket_cliente_kernel);
+//     int direccion_logica = recibir_int_del_buffer(buffer);
+
+//     int direccion_fisica = traducir_direccion_logica_a_fisica(direccion_logica);
+
+//     t_paquete* paquete = crear_paquete_personalizado(DEVOLVER_TRADUCCION);
+//     agregar_int_al_paquete_personalizado(paquete, direccion_fisica);
+//     enviar_paquete(paquete, socket_cliente_kernel);
+
+//     eliminar_paquete(paquete);
+// }
+
+// Despues de enviar la dire, kernel recibe la dirección física y envía IO_STDOUT_WRITE a la interfaz I/O.
+void enviar_direccion_fisica_a_kernel(int socket_cliente_kernel, int direccion_fisica) // Ver sockets
+{
+    t_paquete *paquete = crear_paquete_personalizado(DIRECCION_FISICA);
+    agregar_int_al_paquete_personalizado(paquete, direccion_fisica);
+    enviar_paquete(paquete, socket_cliente_kernel);
+    eliminar_paquete(paquete);
 }

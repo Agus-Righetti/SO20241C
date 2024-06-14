@@ -42,6 +42,8 @@ typedef enum
 	DESALOJO, // Devolvemos PCB por interrupcion
 
 	INTERRUPCION_KERNEL,
+	DIRECCION_FISICA,
+	DEVOLVER_TRADUCCION,
 
 	// Instruccioniones de I/O
 	IO_GEN_SLEEP, 
@@ -52,7 +54,7 @@ typedef enum
 	IO_FS_TRUNCATE,
 	IO_FS_WRITE,
 	IO_FS_READ,
-
+	SOLICITAR_TRADUCCION,
 
 	// Interfaces
 	GENERICA,
@@ -83,6 +85,9 @@ typedef enum
 	// IO A MEMORIA
 	IO_PIDE_LECTURA_MEMORIA,   // [Direccion Fisica, TAMAÑO, VALOR] 
 	IO_PIDE_ESCRITURA_MEMORIA, // [Direccion Fisica, TAMAÑO, VALOR]
+
+	IO_RECIBE_TRADUCCION_DE_KERNEL,
+	IO_RECIBE_RESPUESTA_DE_LECTURA_DE_MEM,
 
 	PCB_KERNEL_A_CPU,
 	PCB_CPU_A_KERNEL,

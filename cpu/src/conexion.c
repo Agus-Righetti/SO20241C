@@ -26,7 +26,6 @@ void atender_memoria()
             case CPU_RECIBE_TAMAÑO_PAGINA_DE_MEMORIA:
                 buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
                 tamanio_pagina = recibir_int_del_buffer(buffer);
-                // log_info(log_cpu, "PID: %d - OBTENER MARCO - Página: %d - Marco: %d", proceso->pid, numero_pagina, marco);
                 free(buffer);
                 break; 
             case CPU_RECIBE_INSTRUCCION_DE_MEMORIA:
@@ -81,6 +80,14 @@ void atender_kernel()
                 solicitar_instrucciones_a_memoria(socket_cliente_cpu, pcb_recibido);
                 free(buffer);
                 break;
+            case SOLICITAR_TRADUCCION:
+                log_info(log_cpu, "Recibi una solicitud de traducción de dirección lógica a física del Kernel");
+                buffer = recibiendo_paquete_personalizado(socket_cliente_kernel);
+                int direccion_logica = recibir_int_del_buffer(buffer);
+                int direccion_fisica = traducir_direccion_logica_a_fisica(direccion_logica);
+                enviar_direccion_fisica_a_kernel(socket_cliente_kernel, direccion_fisica);
+                free(buffer);
+                break;
             case EXIT:
                 error_exit(EXIT);
                 list_destroy_and_destroy_elements(lista, free); 
@@ -100,29 +107,32 @@ void atender_interrupcion()
 {
     t_list* lista;
     
-	int cod_op = recibir_operacion(socket_interrupt_kernel);
-	switch (cod_op) 
+    while(1)
     {
-        case MENSAJE:
-            recibir_mensaje(socket_interrupt_kernel, log_cpu);
-            break;
-        case PAQUETE:
-            lista = recibir_paquete(socket_interrupt_kernel);
-            log_info(log_cpu, "Me llegaron los siguientes valores:\n");
-            list_iterate(lista, (void*) iterator);
-            break;
-        case INTERRUPCION_KERNEL:
-            log_info(log_cpu, "Me llego una interrupcion de KERNEL");
-            enviar_pcb(socket_cliente_kernel, proceso, DESALOJO, NULL);
-            break;
-        case -1:
-            log_error(log_cpu, "El cliente se desconecto. Terminando servidor");
-            return EXIT_FAILURE;
-            exit(1);
-        default:
-            log_warning(log_cpu, "Operacion desconocida. No quieras meter la pata");
-            break;
-	}
+        int cod_op = recibir_operacion(socket_interrupt_kernel);
+        switch (cod_op) 
+        {
+            case MENSAJE:
+                recibir_mensaje(socket_interrupt_kernel, log_cpu);
+                break;
+            case PAQUETE:
+                lista = recibir_paquete(socket_interrupt_kernel);
+                log_info(log_cpu, "Me llegaron los siguientes valores:\n");
+                list_iterate(lista, (void*) iterator);
+                break;
+            case INTERRUPCION_KERNEL:
+                log_info(log_cpu, "Me llego una interrupcion de KERNEL");
+                enviar_pcb(socket_cliente_kernel, proceso, DESALOJO, NULL);
+                break;
+            case -1:
+                log_error(log_cpu, "El cliente se desconecto. Terminando servidor");
+                return EXIT_FAILURE;
+                exit(1);
+            default:
+                log_warning(log_cpu, "Operacion desconocida. No quieras meter la pata");
+                break;
+        }
+    }
 }
 
 void escuchar_memoria()
