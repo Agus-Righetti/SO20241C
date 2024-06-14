@@ -15,18 +15,16 @@ int traducir_direccion_logica_a_fisica(int direccion_logica)
     } 
     else 
     {
-        // NO esta en TLB -> tiene que buscar en memoria
+        // No esta en TLB -> tiene que buscar en memoria
         log_info(log_cpu, "PID: %d - TLB MISS - Pagina: %d", proceso->pid, numero_pagina);
 
         // Tengo el numero de pag -> hago una consulta a memoria por el marco
-    
-        t_paquete *paquete = crear_paquete_personalizado(MARCO);      // [PID, NUMERO DE PAGINA]
+        t_paquete *paquete = crear_paquete_personalizado(CPU_PIDE_MARCO_A_MEMORIA); // [PID, NUMERO DE PAGINA]
         agregar_int_al_paquete_personalizado(paquete, proceso->pid);
         agregar_int_al_paquete_personalizado(paquete, numero_pagina);
         enviar_paquete(paquete, socket_cliente_cpu);
 
-        // Recibir marco de memoria
-        //////////////////////////////////////////
+        // Recibo marco de memoria
         int cod_op_memoria = recibir_operacion(socket_cliente_cpu);
         while(1) {
             switch (cod_op_memoria) {
@@ -35,6 +33,7 @@ int traducir_direccion_logica_a_fisica(int direccion_logica)
                     t_buffer* buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
                     int marco = recibir_int_del_buffer(buffer);
                     log_info(log_cpu, "PID: %d - OBTENER MARCO - Página: %d - Marco: %d", proceso->pid, numero_pagina, marco);
+                    
                     // Agregarlo a la tlb
                     TLB_Entrada nueva_entrada;
                     nueva_entrada.pid = proceso->pid;
@@ -42,11 +41,13 @@ int traducir_direccion_logica_a_fisica(int direccion_logica)
                     nueva_entrada.numero_marco = marco;
                     actualizar_tlb(&nueva_entrada); 
                     free(buffer);
+
+                    return (marco * tamanio_pagina) + desplazamiento;
+
                     break; 
-    
                 case EXIT:
                     error_exit(EXIT);
-                    list_destroy_and_destroy_elements(lista, free); 
+                    // list_destroy_and_destroy_elements(lista, free); 
                     break;
                 case -1:
                     log_error(log_cpu, "MEMORIA se desconecto. Terminando servidor");
@@ -58,10 +59,8 @@ int traducir_direccion_logica_a_fisica(int direccion_logica)
                     break;
             }
         }
-        return (marco * tamanio_pagina) + desplazamiento;
     }
-}
-        
+}   
 
 // int recibir_marco(int socket_cliente, int* marco) 
 // {

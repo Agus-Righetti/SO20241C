@@ -7,6 +7,7 @@ void atender_memoria()
 {
     t_list* lista;
     t_instruccion* instruccion;
+    t_buffer* buffer;
 
     int cod_op_memoria = recibir_operacion(socket_cliente_cpu);
     while(1)
@@ -22,16 +23,15 @@ void atender_memoria()
                 list_iterate(lista, (void*) iterator);
                 list_destroy_and_destroy_elements(lista, free);
                 break;
-
             case CPU_RECIBE_TAMAÑO_PAGINA_DE_MEMORIA:
-                t_buffer* buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
+                buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
                 tamanio_pagina = recibir_int_del_buffer(buffer);
-                log_info(log_cpu, "PID: %d - OBTENER MARCO - Página: %d - Marco: %d", proceso->pid, numero_pagina, marco);
+                // log_info(log_cpu, "PID: %d - OBTENER MARCO - Página: %d - Marco: %d", proceso->pid, numero_pagina, marco);
                 free(buffer);
                 break; 
             case CPU_RECIBE_INSTRUCCION_DE_MEMORIA:
                 log_info(log_cpu, "Recibi una instruccion de memoria");
-                t_buffer* buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
+                buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
                 log_info(log_cpu, "PID: %d - FETCH - Program Counter: %d", proceso->pid, proceso->program_counter);
                 proceso->program_counter++;
                 interpretar_instruccion_de_memoria(buffer);

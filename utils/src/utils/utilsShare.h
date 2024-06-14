@@ -34,7 +34,6 @@ typedef enum
     SIGNAL, 
 	MOV_IN,
 	MOV_OUT,
-
 	OUT_OF_MEMORY, // CAMBIAR ESTO
 
     CODIGO,
@@ -54,7 +53,7 @@ typedef enum
 	IO_FS_WRITE,
 	IO_FS_READ,
 
-	
+
 	// Interfaces
 	GENERICA,
     STDIN,
@@ -68,6 +67,7 @@ typedef enum
 	// CPU A MEMORIA
 	CPU_PIDE_INSTRUCCION_A_MEMORIA, // [PID, IP] -> [Int, Int]
 	CPU_MANDA_RESIZE_A_MEMORIA,     // [PID, TAMAÑO] -> [Int, Int]
+	CPU_PIDE_MARCO_A_MEMORIA,
 
 	ACCESO_A_TABLA_DE_PAGINA,       // [PID, NUMERO PAG] -> [Int, Int]
 	CPU_PIDE_LECTURA_MEMORIA,       // [Direccion Fisica, TAMAÑO, VALOR]
