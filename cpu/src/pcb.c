@@ -190,15 +190,15 @@ void interpretar_instruccion_de_memoria(t_buffer* buffer)
         case I_IO_STDIN_READ:
             instruccion_io_stdin_read(parte);
             break;
-        // case I_IO_STDOUT_WRITE:
-        //     instruccion_io_stdout_write(parte);
-        //     break;
-        // case I_IO_FS_CREATE:
-        //     instruccion_io_fs_create(parte);
-        //     break;
-        // case I_IO_FS_DELETE:
-        //     instruccion_io_fs_delete(parte);
-        //     break;
+        case I_IO_STDOUT_WRITE:
+            instruccion_io_stdout_write(parte);
+            break;
+        case I_IO_FS_CREATE:
+            instruccion_io_fs_create(parte);
+            break;
+        case I_IO_FS_DELETE:
+            instruccion_io_fs_delete(parte);
+            break;
         // case I_IO_FS_TRUNCATE:
         //     instruccion_io_fs_truncate(parte);
         //     break;
@@ -603,31 +603,62 @@ void instruccion_io_stdout_write(char **parte)
     proceso->program_counter++;
 }
 
-// void intruccion_io_fs_create(char **parte)
-// {
-//     // IO_FS_CREATE Interfaz NombreArchivo
+void instruccion_io_fs_create(char **parte)
+{
+    // IO_FS_CREATE Interfaz NombreArchivo
 
-// }
+    log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s", proceso->pid, parte[0], parte[1], parte[2]);
 
-// void intruccion_io_fs_delete(char **parte)
-// {
+    char *interfaz = parte[1];
+    char *nombre_archivo = parte[2];
+
+    // Crear paquete para enviar al kernel
+    t_paquete* paquete = crear_paquete_personalizado(IO_FS_CREATE);
+    agregar_string_al_paquete_personalizado(paquete, interfaz);
+    agregar_string_al_paquete_personalizado(paquete, nombre_archivo);
+
+    // Enviar paquete al kernel
+    enviar_paquete(paquete, socket_cliente_kernel);
+    eliminar_paquete(paquete);
+
+    // proceso->program_counter++;
+}
+
+void instruccion_io_fs_delete(char **parte)
+{
+    // IO_FS_DELETE Int4 notas.txt
+
+    log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s", proceso->pid, parte[0], parte[1], parte[2]);
     
-// }
+    char *interfaz = parte[1];
+    char *nombre_archivo = parte[2];
 
-// void intruccion_io_fs_truncate(char **parte)
-// {
-    
-// }
+    // Crear paquete para enviar al kernel
+    t_paquete* paquete = crear_paquete_personalizado(IO_FS_DELETE);
+    agregar_string_al_paquete_personalizado(paquete, interfaz);
+    agregar_string_al_paquete_personalizado(paquete, nombre_archivo);
 
-// void intruccion_io_fs_write(char **parte)
-// {
-    
-// }
+    // Enviar paquete al kernel
+    enviar_paquete(paquete, socket_cliente_kernel);
+    eliminar_paquete(paquete);
 
-// void intruccion_io_fs_read(char **parte)
-// {
+    // proceso->program_counter++;
+}
+
+void instruccion_io_fs_truncate(char **parte)
+{
     
-// }
+}
+
+void instruccion_io_fs_write(char **parte)
+{
+    
+}
+
+void instruccion_io_fs_read(char **parte)
+{
+    
+}
 
 void instruccion_exit(char** parte) 
 {

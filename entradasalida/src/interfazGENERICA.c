@@ -1,4 +1,4 @@
-#include "interfazGenerica.h"
+#include "interfazGENERICA.h"
 
 void recibir_operacion_generica_de_kernel(InterfazGenerica* interfaz_generica, op_code codigo)
 {

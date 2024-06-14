@@ -26,13 +26,15 @@ void atender_kernel()
                 recibir_operacion_stdin_de_kernel(STDIN, cod_op_io);
                 liberar_configuracion_stdin(&configuracion);
                 break;
-            // case STDOUT:
-            //     leer_configuracion_stdout(&configuracion);
-            //     liberar_configuracion_stdout(&configuracion);
-            //     break;
-            // case DIALFS:
-            //     leer_configuracion_dialfs(configuracion);
-            //     break;
+            case STDOUT:
+                leer_configuracion_stdout(&configuracion);
+                recibir_operacion_stdout_de_kernel(DIALFS, cod_op_io);
+                liberar_configuracion_stdout(&configuracion);
+                break;
+            case DIALFS:
+                leer_configuracion_dialfs(&configuracion);
+                liberar_configuracion_dialfs(&configuracion);
+                break;
             case -1:
                 log_error(log_io, "KERNEL se desconecto. Terminando servidor");
                 // free(conexion_io_kernel);
@@ -45,7 +47,8 @@ void atender_kernel()
     }
 }
 
-void escuchar_kernel(){
+void escuchar_kernel()
+{
     pthread_t thread;
     conexion_io_kernel = conexion_a_kernel(log_io, config_io);
     pthread_create(&thread, NULL, (void*)atender_kernel, NULL);
