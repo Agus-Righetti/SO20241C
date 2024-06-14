@@ -37,8 +37,8 @@ typedef struct{
 // ************ ESTRUCTURA DE UNA FILA DE TABLA -> una PAGINA *********
 typedef struct {
     int frame;
-    bool presencia;  // Puede ser innecesario
-    bool modificado; // Puede ser innecesario
+   //bool presencia;  // Puede ser innecesario
+    // El bit de modificado es innecesario, no tengo memoria virtual
 } t_pagina;
 
 // ************ ESTRUCTURA DE UN MARCO, la tuve que hacer para la lista *********

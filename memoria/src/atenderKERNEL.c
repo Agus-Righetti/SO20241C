@@ -149,17 +149,14 @@ void liberar_memoria_proceso(t_buffer* buffer){
 	}
 
     // LIBERO ESPACIO, MARCO FRAMES COMO LIBRES
-    // recorro posiciones de la tabla de página, me fijo bit de P -> si es ==1 marco frame LIBRE
+    // recorro posiciones de la tabla de página, marco frame LIBRE
     t_list* tabla_paginas_a_eliminar = proceso_a_eliminar->tabla_paginas;
 
     for (int i = 0; i < list_size(tabla_paginas_a_eliminar); i++) {
         t_pagina* pagina_a_eliminar = list_get(tabla_paginas_a_eliminar, i);
 
-        if (pagina_a_eliminar->presencia == 1) {
-            pthread_mutex_lock (&mutex_bitmap_marcos);
-            bitarray_clean_bit(bitmap_marcos, pagina_a_eliminar->frame);
-            pthread_mutex_unlock (&mutex_bitmap_marcos);
-        }
+            liberar_marco(pagina_a_eliminar->frame);
+
     }
     // la destruyo? revisar
     list_destroy(tabla_paginas_a_eliminar);

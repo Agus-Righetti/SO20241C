@@ -68,7 +68,7 @@ void enviar_una_instruccion_a_cpu(char* instruccion){
 //******************************************************************
 //****************** ACCESO A TABLA DE PÁGINA **********************
 //******************************************************************
-void cpu_pide_numero_de_marco(t_buffer* un_buffer){        //[PID, NUMERO DE PAGINA]
+void cpu_pide_numero_de_marco(t_buffer* un_buffer){        // [PID, NUMERO DE PAGINA]
 	int pid = recibir_int_del_buffer(un_buffer);
 	int nro_pag = recibir_int_del_buffer(un_buffer);
 
@@ -87,7 +87,7 @@ int obtener_marco_segun_pagina (int pid, int nro_pag){
 	t_proceso* un_proceso = obtener_proceso_por_id(pid);
 	// Si sigue, es porque encontró el proceso
 	// Tengo que buscar en la tabla de páginas del proceso, si la página está
-	// Para eso controlo bit de presencia
+	
 	t_pagina* pagina_actual = list_get(un_proceso->tabla_paginas, nro_pag);
 
 	if(pagina_actual == NULL){
@@ -95,11 +95,13 @@ int obtener_marco_segun_pagina (int pid, int nro_pag){
 		return -1;
 	}
 	// El número de página es válido, controlo el bit de presencia
-	if(pagina_actual->presencia == 0){
-		// Hubo page fault, la página no está en memoria
-		log_error(log_memoria, "PAGE FAULT: NRO DE PÁGINA <%d> - PROCESO <%d>", nro_pag, pid);
-		return -1;
-	}
+	// if(pagina_actual->presencia == 0){
+	// 	// Hubo page fault, la página no está en memoria
+	// 	log_error(log_memoria, "PAGE FAULT: NRO DE PÁGINA <%d> - PROCESO <%d>", nro_pag, pid);
+	// 	return -1;
+	// }
+	// NO PUEDE HABER PAGE FAULT NO HAY MEMORIA VIRTUAL
+	
 	return pagina_actual->frame;
 }
 
@@ -136,11 +138,7 @@ void cpu_pide_resize(t_buffer* un_buffer){          // [PID, TAMAÑO NUEVO] -> [
 			while (cantidad_pag_a_reducir > 0){
 				// Empiezo eliminando ultima pag
 				t_pagina* pag_a_eliminar = list_remove(mi_proceso->tabla_paginas, list_size(mi_proceso->tabla_paginas));
-
-				// FUTURO: cambiar esto por funcion gn
-			    pthread_mutex_lock(&mutex_bitmap_marcos);
-    			bitarray_clean_bit(bitmap_marcos,(pag_a_eliminar->frame));
-    			pthread_mutex_unlock(&mutex_bitmap_marcos);
+				liberar_marco(pag_a_eliminar->frame);
 
 				cantidad_pag_a_reducir --;
 			}
@@ -148,6 +146,7 @@ void cpu_pide_resize(t_buffer* un_buffer){          // [PID, TAMAÑO NUEVO] -> [
 
 			mi_proceso->tamaño = tamaño_nuevo;
 			mi_proceso->tam_usado_ult_pag = config_memoria->tam_pagina - ((list_size(mi_proceso->tabla_paginas)*config_memoria->tam_pagina) - mi_proceso->tamaño);
+			//                                     tam pag             -      ( cant pag * tam pag                                           - tam del proceso)
 		}
 
 
@@ -188,7 +187,7 @@ void cpu_pide_resize(t_buffer* un_buffer){          // [PID, TAMAÑO NUEVO] -> [
 				while (cantidad_pag_a_aumentar > 0){
 					// Elijo el marco en el que voy a guardar
 					t_frame* marco_por_usar = list_get(marcos_libres, posicion); // AGARRO EL PRIMERO QUE ENCUENTRO EN LA LISTA DE LIBRES
-					ocupar_marco(marco_por_usar);
+					ocupar_marco(marco_por_usar->id);
 
 					// Creo la pagina
 					t_pagina* pag_nueva = crear_pagina(marco_por_usar);

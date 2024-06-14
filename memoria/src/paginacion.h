@@ -5,8 +5,8 @@
 
 // *************** DECLARACIÓN DE FUNCIONES **********
 //**************** TODAVIA FALTA ARREGLAR *******************
-void ocupar_marco(t_frame* un_frame);
-void liberar_marco(t_frame* un_frame);
+void ocupar_marco(int posicion);
+void liberar_marco(int posicion);
 t_pagina* crear_pagina(t_frame* un_frame);
 void agregar_pag_a_tabla (t_proceso* proceso, t_pagina* pagina);
 bool hay_lugar_en_memoria(int paginasNecesarias);

@@ -5,15 +5,15 @@
 //******************************************************************
 
 // Funciones generales utiles
-void ocupar_marco(t_frame* un_frame){
+void ocupar_marco(int posicion){
     pthread_mutex_lock(&mutex_bitmap_marcos);
-    bitarray_set_bit(bitmap_marcos, un_frame->id);
+    bitarray_set_bit(bitmap_marcos, posicion);
     pthread_mutex_unlock(&mutex_bitmap_marcos);	
 }
 
-void liberar_marco(t_frame* un_frame){
+void liberar_marco(int posicion){
     pthread_mutex_lock(&mutex_bitmap_marcos);
-    bitarray_clean_bit(bitmap_marcos, un_frame->id);
+    bitarray_clean_bit(bitmap_marcos, posicion);
     pthread_mutex_unlock(&mutex_bitmap_marcos);	
 }
 
@@ -21,8 +21,8 @@ t_pagina* crear_pagina(t_frame* un_frame){
     t_pagina* pagina = malloc(sizeof(t_pagina));
 
 	pagina->frame = un_frame->id;
-	pagina->presencia = 1; // esta en MP
-	pagina->modificado = 1;// Lo pongo en 1 asi se carga en disco
+	//pagina->presencia = 1; // esta en MP -> puede ser innecesario
+
     // pagina->tam_disponible = espacioDisp;
 
     return pagina;
@@ -83,13 +83,29 @@ void eliminar_algo(void* algo){
 }
 
 
-
-
-// TODAVIA NO
-
+//******************************************************************
+//****************** ACCESO A ESPACIO USUARIO **********************
+//******************************************************************
 
 //******************************************************************
-//******************* GUARDAR ALGO EN PAG **************************
+//*********************** LECTURA EN PAG ***************************
+//******************************************************************
+// void* lectura_en_memoria(int direccion_fisica, int tamaño, void* valor){
+
+// }
+// Dirección física
+// Tamaño
+// Valor
+// Ante un pedido de lectura, devolver el valor que se encuentra a partir de la dirección física pedida.
+
+//******************************************************************
+//********************** ESCRITURA EN PAG **************************
 //******************************************************************
 // Tengo que guardar algo en memoria
 // me llega [DF, TAMAÑO, VALOR]
+
+// Dirección física
+// Tamaño
+// Valor
+
+// Ante un pedido de escritura, escribir lo indicado a partir de la dirección física pedida. En caso satisfactorio se responderá un mensaje de ‘OK’.
