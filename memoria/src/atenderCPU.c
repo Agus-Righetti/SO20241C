@@ -76,11 +76,10 @@ void cpu_pide_numero_de_marco(t_buffer* un_buffer){        // [PID, NUMERO DE PA
 	int marco = obtener_marco_segun_pagina (pid, nro_pag);
 	if(marco != -1){
 		log_info(log_memoria, "PID: <%d> - Pagina: <%d> - Marco: <%d>\n", pid, nro_pag, marco);
+		enviar_marco_consultado_a_cpu(marco);
 	}
 
-	// SE LO ENVIO? O SOLO IMPRIMO POR PANTALLA?
 }
-
 
 int obtener_marco_segun_pagina (int pid, int nro_pag){
 	// Busco el proceso en mi lista de procesos
@@ -105,6 +104,13 @@ int obtener_marco_segun_pagina (int pid, int nro_pag){
 	return pagina_actual->frame;
 }
 
+void enviar_marco_consultado_a_cpu(int marco_consultado){ 
+	t_paquete* paquete = crear_paquete_personalizado(CPU_RECIBE_NUMERO_DE_MARCO_DE_MEMORIA);
+
+	agregar_int_al_paquete_personalizado(paquete, marco_consultado);
+	enviar_paquete(paquete, socket_cliente_cpu);
+	eliminar_paquete(paquete);
+}
 
 //******************************************************************
 //***************************** RESIZE *****************************
@@ -149,6 +155,7 @@ void cpu_pide_resize(t_buffer* un_buffer){          // [PID, TAMAÑO NUEVO] -> [
 			//                                     tam pag             -      ( cant pag * tam pag                                           - tam del proceso)
 		}
 
+		enviar_ok_del_resize_a_cpu();   
 
 	} else {
 
@@ -166,7 +173,8 @@ void cpu_pide_resize(t_buffer* un_buffer){          // [PID, TAMAÑO NUEVO] -> [
 			mi_proceso->tamaño = tamaño_nuevo;
 			// Actualizo el tamaño usado de la ultima pagina 
 			mi_proceso->tam_usado_ult_pag = mi_proceso->tam_usado_ult_pag + tamanio_a_aumentar;
-			
+			enviar_ok_del_resize_a_cpu();
+
 		} else {
 			
 			// CASO 2 -> tengo que agregar paginas
@@ -201,13 +209,21 @@ void cpu_pide_resize(t_buffer* un_buffer){          // [PID, TAMAÑO NUEVO] -> [
 				eliminar_lista(marcos_libres);
 				mi_proceso->tamaño = tamaño_nuevo;
 				mi_proceso->tam_usado_ult_pag = (list_size(mi_proceso->tabla_paginas)*config_memoria->tam_pagina) - mi_proceso->tamaño;
+				enviar_ok_del_resize_a_cpu();
 			}
 		}
 	}
 }
 
-void enviar_out_of_memory_a_cpu(){ // VER SI NECESITAN EL PID O ALGO
+void enviar_out_of_memory_a_cpu(){ 
 	t_paquete* paquete = crear_paquete_personalizado(CPU_RECIBE_OUT_OF_MEMORY_DE_MEMORIA);
+
+	enviar_paquete(paquete, socket_cliente_cpu);
+	eliminar_paquete(paquete);
+}
+
+void enviar_ok_del_resize_a_cpu(){ 
+	t_paquete* paquete = crear_paquete_personalizado(CPU_RECIBE_OK_DEL_RESIZE);
 
 	enviar_paquete(paquete, socket_cliente_cpu);
 	eliminar_paquete(paquete);

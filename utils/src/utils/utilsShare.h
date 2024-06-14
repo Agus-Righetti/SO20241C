@@ -17,7 +17,7 @@
 #include<readline/readline.h>
 #include<pthread.h>          // Biblioteca para hilos
 #include<semaphore.h>        // Biblioteca para semaforos
-#include<math.h>             // Biblioteca para (ceil)
+#include<math.h>             // Biblioteca para ceil()
 #include <time.h>            // Biblioteca para usar clock()
 
 
@@ -79,8 +79,8 @@ typedef enum
 	CPU_RECIBE_INSTRUCCION_DE_MEMORIA,     // [Instruccion] -> [String, String, String, String, String]
 	CPU_RECIBE_TAMAÑO_PAGINA_DE_MEMORIA,   // [Tam_pagina] -> [Int]
 	CPU_RECIBE_OUT_OF_MEMORY_DE_MEMORIA,   // VACIO
-	CPU_RECIBE_OK_DEL_RESIZE,              // VACIO -> falta implementar
-	CPU_RECIBE_NUMERO_DE_MARCO_DE_MEMORIA, // [NUMERO DE MARCO] -> [Int]   ->falta implementar
+	CPU_RECIBE_OK_DEL_RESIZE,              // VACIO 
+	CPU_RECIBE_NUMERO_DE_MARCO_DE_MEMORIA, // [NUMERO DE MARCO] -> [Int]
 
 	// IO A MEMORIA
 	IO_PIDE_LECTURA_MEMORIA,   // [Direccion Fisica, TAMAÑO, VALOR] 
