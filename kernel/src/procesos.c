@@ -254,17 +254,17 @@ void listar_procesos_por_estado(){
     t_queue* cola_aux_exit = queue_create();
     t_queue* cola_aux_new = queue_create();
 
+    bool ya_recorri_todo = false;
+
     pthread_mutex_lock(&mutex_cola_general_de_procesos); // Bloqueo la cola general
     
     pcb* primer_pcb_cola_gral = queue_pop(cola_general_de_procesos); // Saco el 1er PCB de la cola gral
 
     pcb* aux = primer_pcb_cola_gral; // Esta variable tendrá los procesos de la cola
-
-    pcb* primero_aux = queue_peek(cola_general_de_procesos);
     
     // Este while recorre la cola gral, agregando cada proceso a la cola aux q corresponda
-    
-    while(primer_pcb_cola_gral != primero_aux) // Salgo cuando dí toda la vuelta
+
+    while(ya_recorri_todo == false)
     {
         switch(aux->estado_del_proceso)
         {
@@ -284,12 +284,15 @@ void listar_procesos_por_estado(){
                 queue_push(cola_aux_new, aux);
                 break;
         }
-        primero_aux = queue_peek(cola_general_de_procesos);
-        queue_push(cola_general_de_procesos, aux); // Agrego el q saque de la cola gral
-        aux = queue_pop(cola_general_de_procesos); // Saco el proximo de la cola
+        queue_push(cola_general_de_procesos, aux);
+        aux = queue_pop(cola_general_de_procesos);
+        if (aux == primer_pcb_cola_gral)
+        {
+            queue_push(cola_general_de_procesos, aux);
+            ya_recorri_todo = true;
+        }
     }
 
-    queue_push(cola_general_de_procesos, aux); // Agrego el ultimo q saque (no entró al while)
     pthread_mutex_unlock(&mutex_cola_general_de_procesos); // Desbloqueo la cola general
 
     // Recorro cada cola y hago los logs de cada una
@@ -355,26 +358,50 @@ void cambiar_grado_multiprogramacion(char* nuevo_valor_formato_char){
 }
 
 // ************* FINALIZA EL PROCESO SELECCIONADO ************* 
+// Terminar
 void finalizar_proceso(char* pid_formato_char){
 
     int pid = atoi(pid_formato_char); // Paso a int el pid mandado por consola
+    bool no_esta_en_el_sistema = false; // Hago un flag para saber si el proceso se encuentra en el sistema o no
 
-    pthread_mutex_lock(&mutex_cola_general_de_procesos); // Bloqueo la cola gral para sacar el proceso q paso a exit
+    pthread_mutex_lock(&mutex_cola_general_de_procesos); // Bloqueo la cola general
 
-    pcb* proceso_cola_gral = queue_pop(cola_general_de_procesos); // Saco el primer elemento de la cola
+    pcb* aux = queue_pop(cola_general_de_procesos); 
+    
+    int primer_pid = aux->pid;
 
-    while(pid != proceso_cola_gral->pid){ // Mientras el valor del pid del proceso obtenido no sea el mismo que el que quiero finalizar, entonces sigo
-
-        queue_push(cola_general_de_procesos, proceso_cola_gral); // Voy guardando y poniendo el proceso
-        proceso_cola_gral = queue_pop(cola_general_de_procesos); // Hasta que obtenga el que quiero
+    while(pid != aux->pid) // Después de recorrer toda la cola en aux nos queda el proceso correspondiente a ese pid
+    {
+        queue_push(cola_general_de_procesos, aux);
+        aux = queue_pop(cola_general_de_procesos);
+        if (aux->pid == primer_pid)
+        {
+            no_esta_en_el_sistema = true; // Si no encuentro el pid en toda la cola general de procesos, entonces marco que no lo encontré
+            break;
+        }
     }
 
-    queue_push(cola_general_de_procesos, proceso_cola_gral); // Meto de nuevo el proceso que voy a pasar a exit, porque ahí se encargará de sacarlo de la cola
-
-    pthread_mutex_unlock(&mutex_cola_general_de_procesos); // Desbloqueo la cola gral
-
-    pasar_proceso_a_exit(proceso_cola_gral); // Paso el proceso a exit, ahí lo saco de la cola y libero recursos
-
+    queue_push(cola_general_de_procesos, aux);
+    pthread_mutex_unlock(&mutex_cola_general_de_procesos); // Desbloqueo la cola general
+ 
+    if (no_esta_en_el_sistema == false){ // Si sí está en el sistema, entonces lo voy a sacar de su respectiva cola, y posteriormente será enviado a exit
+    
+        switch(aux->estado_del_proceso)
+        {
+            case READY:
+                sacar_de_cola_de_ready(pid);
+                break;
+            case EXECUTE:
+                sacar_de_execute(pid);
+                break;
+            case BLOCKED:
+                sacar_de_cola_de_blocked(pid);
+                break;
+            case NEW:
+                sacar_de_cola_de_new(pid);
+                break;
+        }
+    }else log_error(log_kernel, "El pid seleccionado no existe en el sistema"); // Si no está en el sistema, simplemente digo que no lo encontré
 }
 
 // ************* EJECUTA UN SCRIPT DE COMANDOS ************* 
@@ -616,12 +643,12 @@ void recibir_pcb(pcb* proceso) {
 
 void algoritmo_round_robin (void* arg){
 
-    //aca vamos a armar dos hilos, uno que maneje solo cuando mandarle
-    //la interrupcion y otro que siemp este esperando a q cpu le mande el pcb
+    // Aca vamos a armar dos hilos, uno que maneje solo cuando mandarle
+    // La interrupcion y otro que siemp este esperando a q cpu le mande el pcb
     thread_args_procesos_kernel*args = (thread_args_procesos_kernel*)arg;
     pcb* proceso_actual = args->proceso;
 
-    usleep(proceso_actual->quantum); //aca usamos el quantum del proceso, asi podemos reutilziar la funcion para VRR
+    usleep(proceso_actual->quantum); // Acá usamos el quantum del proceso, asi podemos reutilziar la funcion para VRR
     desalojar_proceso_hilo(args);
     
     return;
@@ -729,7 +756,7 @@ void pasar_proceso_a_exit(pcb* proceso){
 
     while(queue_is_empty(proceso->recursos_asignados) == false) // Mientras la cola de recursos asignados no esta vacia
     {
-        int recurso_a_liberar = (int)(intptr_t)queue_peek(proceso->recursos_asignados); // Entonces libero los recursos corresopndientes 
+        int recurso_a_liberar = (int)(intptr_t)queue_peek(proceso->recursos_asignados); // Entonces libero los recursos correspondientes 
         hacer_signal(recurso_a_liberar, proceso);
     }
     
@@ -761,6 +788,7 @@ void pasar_proceso_a_exit(pcb* proceso){
 void pasar_proceso_a_blocked(pcb* proceso){
     
     char* estado_anterior = obtener_char_de_estado(proceso->estado_del_proceso);
+    
     pthread_mutex_lock(&proceso->mutex_pcb);
     proceso->estado_del_proceso = BLOCKED; 
     pthread_mutex_unlock(&proceso->mutex_pcb);
@@ -776,12 +804,95 @@ void pasar_proceso_a_blocked(pcb* proceso){
 
 
 
+// -------------------------------------------------------------------
+// ------------- INICIO FUNCIONES AUXILIARES DE COMANDOS -------------
+// -------------------------------------------------------------------
+
+// ************* AUXILIAR DE FINALIZAR_PROCESO, SACA UN PROCESO DE LA COLA DE READY Y LO FINALIZA ************* 
+void sacar_de_cola_de_ready(int pid){
+    // Tenemos q recorrer la cola de ready buscando el pid y sacar ese, luego pasarlo a exit
+    pcb* aux;
+    int primer_pid = aux->pid;
+    bool encontrado = false;
+   
+    if(strcmp(config_kernel->algoritmo_planificacion, "VRR") == 0){
+
+        pthread_mutex_lock(&cola_prioridad_vrr);
+
+        if(queue_is_empty(cola_prioridad_vrr) == false){ // Si la cola de prioridad no está vacía
+            
+            while(aux -> pid != pid) // Entonces busco en la cola de prioridad
+            {
+                queue_push(cola_prioridad_vrr, aux);
+                aux = queue_pop(cola_prioridad_vrr);
+
+                if(aux->pid == primer_pid) // Si recorrí toda la cola y no encontré el proceso, entonces voy a buscar a Ready normal
+                {
+                    break;
+                }
+            }
+            encontrado = true; // Si lo encontré en la cola de prioridad, marco que ya se encontró, sino, busco en Ready normal
+        }
+        pthread_mutex_unlock(&cola_prioridad_vrr);
+        sem_wait(&cola_prioridad_vrr);
+    }
+    
+    pthread_mutex_lock(&mutex_cola_de_ready);
+
+    if(encontrado == false) // Si no lo encontré al proceso en la cola de prioridad, entonces lo busco en Ready normal
+    {
+        aux = queue_pop(cola_de_ready);
+        while(aux -> pid != pid) // Recorro la cola hasta que lo encuentre
+        {
+            queue_push(cola_de_ready, aux);
+            aux = queue_pop(cola_de_ready);
+        }
+        encontrado = true; // Encontré el proceso, dejo de buscar
+        sem_wait(&sem_cola_de_ready);
+    }
+    
+    pthread_mutex_unlock(&mutex_cola_de_ready);
+    
+    pasar_proceso_a_exit(aux); // Ahora sí, una vez que saqué el proceso de la cola en la que se encontraba, entonces lo paso a exit
+}
+
+// ************* AUXILIAR DE FINALIZAR_PROCESO, SACA UN PROCESO DE LA COLA DE NEW Y LO FINALIZA ************* 
+void sacar_de_cola_de_new(int pid){
+    pthread_mutex_lock(&mutex_cola_de_new);
+    
+    pcb* aux = queue_pop(cola_de_new);
+    int primer_pid = aux->pid;
+
+    while(aux -> pid != pid) // Recorro la cola hasta que lo encuentre
+    {
+        queue_push(cola_de_new, aux);
+        aux = queue_pop(cola_de_new);
+    }
+    
+    sem_wait(&sem_cola_de_new);
+    pthread_mutex_unlock(&mutex_cola_de_new);
+    pasar_proceso_a_exit(aux);
+}
+
+// ************* AUXILIAR DE FINALIZAR_PROCESO, SACA UN PROCESO DE EXECUTE Y LO FINALIZA ************* 
+void sacar_de_execute(int pid);
+
+// Para sacar cola de execute, tengo que mandar la interrupción a cpu, desalojar el proceso, recibirlo y pasarlo a exit.
+// Para sacar de la cola de blocked, tenemos que recorrer todas las colas de bloqueado (por las diferentes razones) hasta encontrarlo
+
+// ----------------------------------------------------------------
+// ------------- FIN FUNCIONES AUXILIARES DE COMANDOS -------------
+// ----------------------------------------------------------------
+
+
+
+
+
 // -------------------------------------------------------------
 // ------------- INICIO FUNCIONES DE INSTRUCCIONES -------------
 // -------------------------------------------------------------
 
 // ************* REALIZA EL SIGNAL DE UN RECURSO *************
-
 int hacer_signal(int indice_recurso, pcb* proceso){
 
     int flag;
@@ -805,15 +916,24 @@ int hacer_signal(int indice_recurso, pcb* proceso){
         }else flag = 0; // Debo pasar este proceso de nuevo a ready, el signal no lo bloquea
 
         //Saco de la cola de recursos asignados del proceso el recurso
-        int primer_recurso_asignado = (int)(intptr_t)queue_pop(proceso->recursos_asignados); // Acá podría fallar si no hice un wait antes, podría no haber nada en la cola
-        int recurso_aux = primer_recurso_asignado;
-        while(recurso_aux != indice_recurso) // Acá se está recorriendo la cola, hasta que saco el recurso que quiero, si no tengo el que quiero lo vuelvo a meter en la cola
-        {
-            queue_push(proceso->recursos_asignados, (void*)(intptr_t)recurso_aux);
-            recurso_aux = (int)(intptr_t)queue_pop(proceso->recursos_asignados);
+        
+        if(queue_is_empty(proceso->recursos_asignados) == false){ // Si la cola de recursos asignados del proceso no está vacía
+
+            int primer_recurso_asignado = (int)(intptr_t)queue_pop(proceso->recursos_asignados); // Entonces busco el recurso asignado 
+            int recurso_aux = primer_recurso_asignado; // Y lo quito de la cola
+        
+            while(recurso_aux != indice_recurso) // Acá se está recorriendo la cola, hasta que saco el recurso que quiero, si no tengo el que quiero lo vuelvo a meter en la cola
+            {
+                queue_push(proceso->recursos_asignados, (void*)(intptr_t)recurso_aux);
+                recurso_aux = (int)(intptr_t)queue_pop(proceso->recursos_asignados);
+
+                if(recurso_aux == primer_recurso_asignado){ // Si di toda la vuelta y no está el recurso, entonces salgo del bucle
+                    break;
+                }
+            }
         }
 
-    } else flag = 1;// no existe,  mando a exit el proceso
+    } else flag = 1; // No existe,  mando a exit el proceso
 
     return flag;
 }
@@ -866,6 +986,7 @@ int hacer_wait(int indice_recurso, pcb* proceso){
 // -----------------------------------------------------------------
 
 // ************* LIBERA LA MEMORIA DE "PARTES" QUE SIRVE PARA DIVIDIR UN TEXTO *************
+// A chequear
 void liberar_array_strings(char **array) {
     
     if (array == NULL) return; // Si ya es null, entonces termino la función

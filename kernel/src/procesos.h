@@ -31,6 +31,9 @@ void cambiar_grado_multiprogramacion(char* nuevo_valor_formato_char);
 void finalizar_proceso(char* pid_formato_char);
 void ejecutar_script(char* script_path);
 void liberar_array_strings(char **array);
+void sacar_de_cola_de_ready(int pid);
+void sacar_de_cola_de_new(int pid);
+void sacar_de_execute(int pid);
 
 
 //  *************** DECLARACIÓN DE ESTRUCTURAS ***************
