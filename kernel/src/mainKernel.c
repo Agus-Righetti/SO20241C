@@ -13,8 +13,8 @@ int main(int argc, char* argv[])
     
     cantidad_recursos = sizeof(config_kernel->instancias_recursos) / sizeof(config_kernel->instancias_recursos[0]);
 
-    t_queue** colas_por_recurso = malloc(cantidad_recursos * sizeof(t_queue*));
-    pthread_mutex_t** mutex_por_recurso = malloc(cantidad_recursos * sizeof(pthread_mutex_t*));
+    colas_por_recurso = malloc(cantidad_recursos * sizeof(t_queue*));
+    mutex_por_recurso = malloc(cantidad_recursos * sizeof(pthread_mutex_t*));
 
     for (int i = 0; i < cantidad_recursos; i++) {
         colas_por_recurso[i] = queue_create();

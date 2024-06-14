@@ -392,7 +392,7 @@ void finalizar_proceso(char* pid_formato_char){
                 sacar_de_cola_de_ready(pid);
                 break;
             case EXECUTE:
-                sacar_de_execute(pid);
+                //sacar_de_execute(pid);
                 break;
             case BLOCKED:
                 //sacar_de_cola_de_blocked(pid);

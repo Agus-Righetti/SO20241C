@@ -39,5 +39,7 @@ sem_t destruir_hilo_interrupcion;
 sem_t sem_puedo_mandar_a_cpu;
 sem_t sem_cola_prioridad_vrr;
 
+t_queue** colas_por_recurso;
+pthread_mutex_t** mutex_por_recurso;
 
 #endif

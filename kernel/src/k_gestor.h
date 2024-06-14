@@ -54,5 +54,7 @@ extern sem_t destruir_hilo_interrupcion;
 extern sem_t sem_puedo_mandar_a_cpu;
 extern sem_t sem_cola_prioridad_vrr;
 
+extern t_queue** colas_por_recurso;
+extern pthread_mutex_t** mutex_por_recurso;
 
 #endif

@@ -136,12 +136,8 @@ typedef struct {
 	char* direccion_instrucciones; //es el path que me mandan por consola
 	pthread_mutex_t mutex_pcb;
 	t_list* instrucciones;
-<<<<<<< HEAD
-}pcb;
-=======
 	t_queue* recursos_asignados;
 } pcb;
->>>>>>> kernel_maria
 
 // ************ DECLARACION DE FUNCIONES ************
 // ************ SERIALIZACION Y CONEXIONES GENERALES ************
