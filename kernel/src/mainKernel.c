@@ -12,15 +12,7 @@ int main(int argc, char* argv[])
     decir_hola("Kernel");
     pid_contador = 0; //Va incrementando a medida que arrancamos un nuevo proceso
     
-    cantidad_recursos = sizeof(config_kernel->instancias_recursos) / sizeof(config_kernel->instancias_recursos[0]);
-
-    colas_por_recurso = malloc(cantidad_recursos * sizeof(t_queue*));
-    mutex_por_recurso = malloc(cantidad_recursos * sizeof(pthread_mutex_t));
-
-    for (int i = 0; i < cantidad_recursos; i++) {
-        colas_por_recurso[i] = queue_create();
-        pthread_mutex_init(&mutex_por_recurso[i], NULL);
-    }
+    
 
     pthread_mutex_init(&mutex_cola_de_new,NULL);
     pthread_mutex_init(&mutex_cola_de_ready,NULL);
@@ -46,6 +38,18 @@ int main(int argc, char* argv[])
     // ************* Creo el log y el config del kernel para uso general *************
     log_kernel = log_create("kernel.log", "Kernel", 1, LOG_LEVEL_DEBUG);
     config_kernel = armar_config(log_kernel);
+
+    // ************* creo las colas por recursos con sus mutex *************
+
+    cantidad_recursos = sizeof(config_kernel->instancias_recursos) / sizeof(config_kernel->instancias_recursos[0]);
+
+    colas_por_recurso = malloc(cantidad_recursos * sizeof(t_queue*));
+    mutex_por_recurso = malloc(cantidad_recursos * sizeof(pthread_mutex_t));
+
+    for (int i = 0; i < cantidad_recursos; i++) {
+        colas_por_recurso[i] = queue_create();
+        pthread_mutex_init(&mutex_por_recurso[i], NULL);
+    }
 
     //semaforo para manejar el grado de multiprogramacion
     sem_init(&sem_multiprogramacion,0,config_kernel->grado_multiprogramacion); 

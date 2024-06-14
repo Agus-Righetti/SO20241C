@@ -61,6 +61,7 @@ void leer_consola(void* arg){
         if (strcmp(partes[0], "INICIAR_PROCESO") == 0) { 
 
             printf("Ha seleccionado la opción INICIAR_PROCESO\n");
+            //en partes[1] esta el path
             iniciar_proceso(partes[1]); // Esta es la funcion a la que llamo
 
         } else if (strcmp(lectura, "FINALIZAR_PROCESO") == 0) {
@@ -68,7 +69,7 @@ void leer_consola(void* arg){
             printf("Ha seleccionado la opción FINALIZAR_PROCESO\n");
             finalizar_proceso(partes[1]); // Acá mando el PID del proceso que quiero finalizar
 
-        }else if (strcmp(partes[0], "PROCESO_ESTADO") == 0){
+        }else if (strcmp(lectura, "PROCESO_ESTADO") == 0){
             printf("Ha seleccionado la opción PROCESO_ESTADO\n");
             listar_procesos_por_estado();
         
@@ -550,6 +551,8 @@ void recibir_pcb_hilo(void* arg){
 
 // ************* RECIBE EL PCB NORMALMENTE (SIN INTERRUPCION) SEGUN ALGORITMO *************
 void recibir_pcb(pcb* proceso) {
+
+    log_info(log_kernel, "entre a recibir pcb por pid: %d" , proceso->pid);
     
     clock_t inicio, fin; // Inicio un reloj, cuenta el tiempo que estuvo esperando hasta que llegue el paquete (sirve para VRR)
     int tiempo_que_tardo_en_recibir;
@@ -599,6 +602,7 @@ void recibir_pcb(pcb* proceso) {
             break;
     }
 
+    log_info(log_kernel, "ya recibi el paquete pid: %d" , proceso->pid);
     tiempo_que_tardo_en_recibir = (int)((double)(fin - inicio) * 1000.0 / CLOCKS_PER_SEC); // Calculo el tiempo que me tarde en recibir el PCB
 
     if(strcmp(config_kernel->algoritmo_planificacion, "RR") == 0 || strcmp(config_kernel->algoritmo_planificacion, "VRR") == 0)
@@ -690,6 +694,8 @@ void desalojar_proceso(pcb* proceso){
 
 // ************* SEGUN EL FLAG QUE TENGA EL PROCESO VOY A CAMBIARLE EL ESTADO *************
 void accionar_segun_estado(pcb* proceso, int flag){
+
+    log_info(log_kernel, "entre a accionar segun estado por proceso pid: %d" , proceso->pid);
 
     //flag =  1, ya ejecutó todo, tengo q pasarlo a exit
     //flag =  0, aun no ejecutó del todo, lo mando a la cola de ready
