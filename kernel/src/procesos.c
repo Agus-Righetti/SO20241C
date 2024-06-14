@@ -75,7 +75,7 @@ void leer_consola(void* arg){
         }else if (strcmp(partes[0], "MULTIPROGRAMACION") == 0){
             printf("Ha seleccionado la opción MULTIPROGRAMACION\n");
             cambiar_grado_multiprogramacion(partes[1]);
-        }else if{
+        }else if(strcmp(partes[0], "EJECUTAR_SCRIPT") == 0){
             printf("Ha seleccionado la opción EJECUTAR_SCRIPT\n");
             ejecutar_script(partes[1]);
         }else {
@@ -395,7 +395,7 @@ void finalizar_proceso(char* pid_formato_char){
                 sacar_de_execute(pid);
                 break;
             case BLOCKED:
-                sacar_de_cola_de_blocked(pid);
+                //sacar_de_cola_de_blocked(pid);
                 break;
             case NEW:
                 sacar_de_cola_de_new(pid);
@@ -411,7 +411,7 @@ void ejecutar_script(char* script_path){
     FILE *archivo; // Declaro un archivo
     char linea[100]; // Declaro un tamaño de la línea de 100 caracteres
 
-    archivo = fopen(path, "r") // Abro el archivo en modo lectura
+    archivo = fopen(script_path, "r") ;// Abro el archivo en modo lectura
     
     if(archivo == NULL){ // Si no lo puedo abrir porque no existe o está mal el path
         error_show("Error al abrir archivo de comandos"); // Entonces muestro un error
@@ -442,7 +442,7 @@ void ejecutar_script(char* script_path){
         }else if (strcmp(partes[0], "MULTIPROGRAMACION") == 0){
             printf("Ha seleccionado la opción MULTIPROGRAMACION\n");
             cambiar_grado_multiprogramacion(partes[1]);
-        }else if{
+        }else if(strcmp(partes[0], "EJECUTAR_SCRIPT") == 0){
             printf("Ha seleccionado la opción EJECUTAR_SCRIPT\n");
             ejecutar_script(partes[1]);
         }else {
@@ -811,13 +811,13 @@ void pasar_proceso_a_blocked(pcb* proceso){
 // ************* AUXILIAR DE FINALIZAR_PROCESO, SACA UN PROCESO DE LA COLA DE READY Y LO FINALIZA ************* 
 void sacar_de_cola_de_ready(int pid){
     // Tenemos q recorrer la cola de ready buscando el pid y sacar ese, luego pasarlo a exit
-    pcb* aux;
+    pcb* aux  = queue_pop(cola_prioridad_vrr);;
     int primer_pid = aux->pid;
     bool encontrado = false;
    
     if(strcmp(config_kernel->algoritmo_planificacion, "VRR") == 0){
 
-        pthread_mutex_lock(&cola_prioridad_vrr);
+        pthread_mutex_lock(&mutex_cola_prioridad_vrr);
 
         if(queue_is_empty(cola_prioridad_vrr) == false){ // Si la cola de prioridad no está vacía
             
@@ -833,8 +833,8 @@ void sacar_de_cola_de_ready(int pid){
             }
             encontrado = true; // Si lo encontré en la cola de prioridad, marco que ya se encontró, sino, busco en Ready normal
         }
-        pthread_mutex_unlock(&cola_prioridad_vrr);
-        sem_wait(&cola_prioridad_vrr);
+        pthread_mutex_unlock(&mutex_cola_prioridad_vrr);
+        sem_wait(&sem_cola_prioridad_vrr);
     }
     
     pthread_mutex_lock(&mutex_cola_de_ready);
@@ -861,7 +861,6 @@ void sacar_de_cola_de_new(int pid){
     pthread_mutex_lock(&mutex_cola_de_new);
     
     pcb* aux = queue_pop(cola_de_new);
-    int primer_pid = aux->pid;
 
     while(aux -> pid != pid) // Recorro la cola hasta que lo encuentre
     {

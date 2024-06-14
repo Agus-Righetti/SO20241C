@@ -34,6 +34,7 @@ typedef enum
 	CPU,
 	DESALOJO, // Devolvemos PCB por interrupcion
 	IO_GEN_SLEEP, // Instruccion
+	INTERRUPCION_KERNEL,
 	
 	// Interfaces
 	GENERICA,
