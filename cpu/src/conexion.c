@@ -94,6 +94,7 @@ void atender_interrupcion()
     t_list* lista;
     
 	int cod_op = recibir_operacion(socket_interrupt_kernel);
+
 	switch (cod_op) 
     {
         case MENSAJE:
@@ -105,7 +106,7 @@ void atender_interrupcion()
             list_iterate(lista, (void*) iterator);
             break;
         case INTERRUPCION_KERNEL:
-            log_info(log_cpu, "Me llego una interrupcion de KERNEL");
+            log_info(log_cpu, "Me llego una interrupcion de KERNEL, ahora voy a enviar el pcb");
             enviar_pcb(socket_cliente_kernel, proceso, DESALOJO, NULL);
             break;
         case -1:

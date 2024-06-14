@@ -1,0 +1,5 @@
+INICIAR_PROCESO pruebas.txt
+INICIAR_PROCESO pruebas.txt
+INICIAR_PROCESO pruebas.txt
+INICIAR_PROCESO pruebas.txt
+PROCESO_ESTADO

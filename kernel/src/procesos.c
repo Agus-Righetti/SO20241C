@@ -51,7 +51,7 @@ void leer_consola(void* arg){
     
      while(1) { // Para mantener esperando comandos constantemente
         
-        char* lectura = readline("Ingrese comando: "); // Pido que se ingrese un comando
+        char* lectura = readline("Ingrese comando: \n"); // Pido que se ingrese un comando
 
         // Partes me separa segun los espacios lo que hay, en partes[0] esta INICIAR_PROCESO
         // En partes[1] va a estar el path
@@ -64,7 +64,7 @@ void leer_consola(void* arg){
             //en partes[1] esta el path
             iniciar_proceso(partes[1]); // Esta es la funcion a la que llamo
 
-        } else if (strcmp(lectura, "FINALIZAR_PROCESO") == 0) {
+        } else if (strcmp(partes[0], "FINALIZAR_PROCESO") == 0) {
 
             printf("Ha seleccionado la opción FINALIZAR_PROCESO\n");
             finalizar_proceso(partes[1]); // Acá mando el PID del proceso que quiero finalizar
@@ -94,8 +94,10 @@ void leer_consola(void* arg){
 void enviar_proceso_a_cpu(){
 
     while(1){ // Para estar constantemente intentando enviar un proceso
+        log_info(log_kernel, "estoy en el while de enviar proceso a cpu");
 
         sem_wait(&sem_puedo_mandar_a_cpu); // Espero si ya hay otro proceso ejecutando en CPU (solo se ejecuta de a un proceso)
+        log_info(log_kernel, "estoy en el while de enviar proceso a cpu pero post semaforo");
         pcb* proceso_seleccionado;
         if((strcmp(config_kernel->algoritmo_planificacion, "VRR") == 0) && (queue_is_empty(cola_prioridad_vrr) == false))
         { 
@@ -145,6 +147,8 @@ void pasar_procesos_de_new_a_ready(){
     pcb * proceso_a_mandar_a_ready;
     while(1)
     {
+        log_info(log_kernel, "Entre a pasar_procesos_de_new_a_ready"); 
+        
         sem_wait(&sem_cola_de_new); // Uso semaforos sobre la cola y el grado de multiprogramacion porque son cosas compartidas
         sem_wait(&sem_multiprogramacion); // Tanto para ver que haya procesos en New como para ver de no pasarme del grado de multiprogramacion
         pthread_mutex_lock(&mutex_cola_de_new);
@@ -215,34 +219,34 @@ void iniciar_proceso(char* path ){
     eliminar_paquete(paquete_path);
 
     // Si el grado de multiprogramacion me lo permite, modifico el estado a READY
-    int multiprogramacion_actual;
-    sem_getvalue(&sem_multiprogramacion, &multiprogramacion_actual); // Obtengo valor del grado de multiprogramacion
+    // int multiprogramacion_actual;
+    // sem_getvalue(&sem_multiprogramacion, &multiprogramacion_actual); // Obtengo valor del grado de multiprogramacion
     
-    if (multiprogramacion_actual > 0 )
-    {   
-        //Chequeo si tengo lugar para aceptar otro proceso en base al grado de multiprogramacion actual q tengo
+    // if (multiprogramacion_actual > 0 )
+    // {   
+    //     //Chequeo si tengo lugar para aceptar otro proceso en base al grado de multiprogramacion actual q tengo
         
-        // Modifico el estado del proceso - Uso semaforo porque es una variable que tocan muchos hilos
-        pthread_mutex_lock(&nuevo_pcb->mutex_pcb);
-        nuevo_pcb->estado_del_proceso = READY; 
-        pthread_mutex_unlock(&nuevo_pcb->mutex_pcb);
+    //     // Modifico el estado del proceso - Uso semaforo porque es una variable que tocan muchos hilos
+    //     pthread_mutex_lock(&nuevo_pcb->mutex_pcb);
+    //     nuevo_pcb->estado_del_proceso = READY; 
+    //     pthread_mutex_unlock(&nuevo_pcb->mutex_pcb);
 
-        // Ingreso el proceso a la cola de READY - Tambien semaforo porque es seccion critica 
-        pthread_mutex_lock(&mutex_cola_de_ready);
-        queue_push(cola_de_ready,nuevo_pcb);
-        pthread_mutex_unlock(&mutex_cola_de_ready);
-        sem_post(&sem_cola_de_ready); //Agrego 1 al semaforo contador
+    //     // Ingreso el proceso a la cola de READY - Tambien semaforo porque es seccion critica 
+    //     pthread_mutex_lock(&mutex_cola_de_ready);
+    //     queue_push(cola_de_ready,nuevo_pcb);
+    //     pthread_mutex_unlock(&mutex_cola_de_ready);
+    //     sem_post(&sem_cola_de_ready); //Agrego 1 al semaforo contador
         
-        //Bajo el grado de programacion actual, ya que agregue un proceso mas a ready
-        sem_wait(&sem_multiprogramacion); //Resto 1 al grado de multiprogramacion
+    //     //Bajo el grado de programacion actual, ya que agregue un proceso mas a ready
+    //     sem_wait(&sem_multiprogramacion); //Resto 1 al grado de multiprogramacion
 
-    }else {
+    // }else {
         // Si no hay espacio para un nuevo proceso en ready lo sumo a la cola de NEW - Semaforo SC
         pthread_mutex_lock(&mutex_cola_de_new);
         queue_push(cola_de_new,nuevo_pcb);
         pthread_mutex_unlock(&mutex_cola_de_new);
         sem_post(&sem_cola_de_new);
-    }
+    //}
 }
 
 // ************* MUESTRA EN FORMA DE TABLA EN QUÉ ESTADO SE ENCUENTRA CADA PROCESO ACTUALMENTE ************* 
@@ -258,81 +262,86 @@ void listar_procesos_por_estado(){
     bool ya_recorri_todo = false;
 
     pthread_mutex_lock(&mutex_cola_general_de_procesos); // Bloqueo la cola general
-    
-    pcb* primer_pcb_cola_gral = queue_pop(cola_general_de_procesos); // Saco el 1er PCB de la cola gral
 
-    pcb* aux = primer_pcb_cola_gral; // Esta variable tendrá los procesos de la cola
-    
-    // Este while recorre la cola gral, agregando cada proceso a la cola aux q corresponda
-
-    while(ya_recorri_todo == false)
+    if (queue_is_empty(cola_general_de_procesos)== false)
     {
-        switch(aux->estado_del_proceso)
+
+    
+    
+        pcb* primer_pcb_cola_gral = queue_pop(cola_general_de_procesos); // Saco el 1er PCB de la cola gral
+
+        pcb* aux = primer_pcb_cola_gral; // Esta variable tendrá los procesos de la cola
+        
+        // Este while recorre la cola gral, agregando cada proceso a la cola aux q corresponda
+
+        while(ya_recorri_todo == false)
         {
-            case READY:
-                queue_push(cola_aux_ready, aux);
-                break;
-            case EXECUTE:
-                queue_push(cola_aux_execute, aux);
-                break;
-            case BLOCKED:
-                queue_push(cola_aux_blocked, aux);
-                break;
-            case EXIT:
-                queue_push(cola_aux_exit, aux);
-                break;
-            case NEW:
-                queue_push(cola_aux_new, aux);
-                break;
-        }
-        queue_push(cola_general_de_procesos, aux);
-        aux = queue_pop(cola_general_de_procesos);
-        if (aux == primer_pcb_cola_gral)
-        {
+            switch(aux->estado_del_proceso)
+            {
+                case READY:
+                    queue_push(cola_aux_ready, aux);
+                    break;
+                case EXECUTE:
+                    queue_push(cola_aux_execute, aux);
+                    break;
+                case BLOCKED:
+                    queue_push(cola_aux_blocked, aux);
+                    break;
+                case EXIT:
+                    queue_push(cola_aux_exit, aux);
+                    break;
+                case NEW:
+                    queue_push(cola_aux_new, aux);
+                    break;
+            }
             queue_push(cola_general_de_procesos, aux);
-            ya_recorri_todo = true;
+            aux = queue_pop(cola_general_de_procesos);
+            if (aux == primer_pcb_cola_gral)
+            {
+                queue_push(cola_general_de_procesos, aux);
+                ya_recorri_todo = true;
+            }
         }
-    }
 
-    pthread_mutex_unlock(&mutex_cola_general_de_procesos); // Desbloqueo la cola general
+        pthread_mutex_unlock(&mutex_cola_general_de_procesos); // Desbloqueo la cola general
 
-    // Recorro cada cola y hago los logs de cada una
+        // Recorro cada cola y hago los logs de cada una
 
-    log_info(log_kernel, "Procesos en estado NEW: \n");
-    while(queue_is_empty(cola_aux_new)!= true)
-    {
-        aux = queue_pop(cola_aux_new);
-        log_info(log_kernel, "PID: %d\n" , aux->pid );
-    }
+        log_info(log_kernel, "Procesos en estado NEW: \n");
+        while(queue_is_empty(cola_aux_new)!= true)
+        {
+            aux = queue_pop(cola_aux_new);
+            log_info(log_kernel, "PID: %d\n" , aux->pid );
+        }
 
-    log_info(log_kernel, "Procesos en estado READY: \n");
-    while(queue_is_empty(cola_aux_ready)!= true)
-    {
-        aux = queue_pop(cola_aux_ready);
-        log_info(log_kernel, "PID: %d\n" , aux->pid );
-    }
+        log_info(log_kernel, "Procesos en estado READY: \n");
+        while(queue_is_empty(cola_aux_ready)!= true)
+        {
+            aux = queue_pop(cola_aux_ready);
+            log_info(log_kernel, "PID: %d\n" , aux->pid );
+        }
 
-    log_info(log_kernel, "Procesos en estado BLOCKED: \n");
-    while(queue_is_empty(cola_aux_blocked)!= true)
-    {
-        aux = queue_pop(cola_aux_blocked);
-        log_info(log_kernel, "PID: %d\n" , aux->pid );
-    }
+        log_info(log_kernel, "Procesos en estado BLOCKED: \n");
+        while(queue_is_empty(cola_aux_blocked)!= true)
+        {
+            aux = queue_pop(cola_aux_blocked);
+            log_info(log_kernel, "PID: %d\n" , aux->pid );
+        }
 
-    log_info(log_kernel, "Procesos en estado EXIT: \n");
-    while(queue_is_empty(cola_aux_exit)!= true)
-    {
-        aux = queue_pop(cola_aux_exit);
-        log_info(log_kernel, "PID: %d\n" , aux->pid );
-    }
+        log_info(log_kernel, "Procesos en estado EXIT: \n");
+        while(queue_is_empty(cola_aux_exit)!= true)
+        {
+            aux = queue_pop(cola_aux_exit);
+            log_info(log_kernel, "PID: %d\n" , aux->pid );
+        }
 
-    log_info(log_kernel, "Procesos en estado EXECUTE: \n");
-    while(queue_is_empty(cola_aux_execute)!= true)
-    {
-        aux = queue_pop(cola_aux_execute);
-        log_info(log_kernel, "PID: %d\n" , aux->pid );
-    }
-
+        log_info(log_kernel, "Procesos en estado EXECUTE: \n");
+        while(queue_is_empty(cola_aux_execute)!= true)
+        {
+            aux = queue_pop(cola_aux_execute);
+            log_info(log_kernel, "PID: %d\n" , aux->pid );
+        }
+    }else log_info(log_kernel, "Aun no hay ningun proceso en el sistema" );
     // Libero las colas auxiliares
     queue_destroy(cola_aux_exit);
     queue_destroy(cola_aux_ready);
@@ -362,6 +371,8 @@ void cambiar_grado_multiprogramacion(char* nuevo_valor_formato_char){
 // Terminar
 void finalizar_proceso(char* pid_formato_char){
 
+    log_info(log_kernel, "Entre a finalizar_proceso \n");
+
     int pid = atoi(pid_formato_char); // Paso a int el pid mandado por consola
     bool no_esta_en_el_sistema = false; // Hago un flag para saber si el proceso se encuentra en el sistema o no
 
@@ -386,10 +397,12 @@ void finalizar_proceso(char* pid_formato_char){
     pthread_mutex_unlock(&mutex_cola_general_de_procesos); // Desbloqueo la cola general
  
     if (no_esta_en_el_sistema == false){ // Si sí está en el sistema, entonces lo voy a sacar de su respectiva cola, y posteriormente será enviado a exit
-    
+        log_info(log_kernel, "estoy en el if de que SI esta en el sistema");
         switch(aux->estado_del_proceso)
         {
             case READY:
+                log_info(log_kernel, "entre al case de ready");
+
                 sacar_de_cola_de_ready(pid);
                 break;
             case EXECUTE:
@@ -431,7 +444,7 @@ void ejecutar_script(char* script_path){
             printf("Ha seleccionado la opción INICIAR_PROCESO\n");
             iniciar_proceso(partes[1]); // Esta es la funcion a la que llamo
 
-        } else if (strcmp(linea, "FINALIZAR_PROCESO") == 0) {
+        } else if (strcmp(partes[0], "FINALIZAR_PROCESO") == 0) {
 
             printf("Ha seleccionado la opción FINALIZAR_PROCESO\n");
             finalizar_proceso(partes[1]); // Acá mando el PID del proceso que quiero finalizar
@@ -652,7 +665,7 @@ void algoritmo_round_robin (void* arg){
     thread_args_procesos_kernel*args = (thread_args_procesos_kernel*)arg;
     pcb* proceso_actual = args->proceso;
 
-    usleep(proceso_actual->quantum); // Acá usamos el quantum del proceso, asi podemos reutilziar la funcion para VRR
+    usleep((proceso_actual->quantum)*1000); // Acá usamos el quantum del proceso, asi podemos reutilziar la funcion para VRR
     desalojar_proceso_hilo(args);
     
     return;
@@ -676,6 +689,8 @@ void desalojar_proceso(pcb* proceso){
     t_paquete* paquete_a_enviar = crear_paquete_personalizado(INTERRUPCION_KERNEL); // Creo un paquete con el codop especifico
     enviar_paquete(paquete_a_enviar, interrupcion_kernel_cpu); // Lo mando vacio porque lo que interesa es el codop
 
+    log_info(log_kernel, "ya mande la interrumpcion");
+
     eliminar_paquete(paquete_a_enviar); // Libero el paquete
 
     return;
@@ -695,7 +710,7 @@ void desalojar_proceso(pcb* proceso){
 // ************* SEGUN EL FLAG QUE TENGA EL PROCESO VOY A CAMBIARLE EL ESTADO *************
 void accionar_segun_estado(pcb* proceso, int flag){
 
-    log_info(log_kernel, "entre a accionar segun estado por proceso pid: %d" , proceso->pid);
+    log_info(log_kernel, "entre a accionar segun estado por proceso pid: %d, flag: %d" , proceso->pid, flag);
 
     //flag =  1, ya ejecutó todo, tengo q pasarlo a exit
     //flag =  0, aun no ejecutó del todo, lo mando a la cola de ready
@@ -709,6 +724,8 @@ void accionar_segun_estado(pcb* proceso, int flag){
         pasar_proceso_a_exit(proceso);
     }else if (flag == 0)
     { 
+        log_info(log_kernel, "estoy en flag == 0");
+
         char* estado_anterior = obtener_char_de_estado(proceso->estado_del_proceso);
         pthread_mutex_lock(&proceso->mutex_pcb);
         proceso->estado_del_proceso = READY; 
@@ -716,6 +733,7 @@ void accionar_segun_estado(pcb* proceso, int flag){
 
         if(strcmp(config_kernel->algoritmo_planificacion, "VRR") == 0)
         {
+            log_info(log_kernel, "estoy en flag == 0 y estamos en VRR");
             if(proceso->quantum > 0) // Si todavía me queda quantum disponible
             {
                 pthread_mutex_lock(&mutex_cola_prioridad_vrr); 
@@ -726,6 +744,8 @@ void accionar_segun_estado(pcb* proceso, int flag){
                 log_info(log_kernel, "PID: %d - Estado Anterior: %s - Estado Actual: READY", proceso->pid, estado_anterior);
 
             }else{ // Si no le queda quantum
+
+                log_info(log_kernel, "estoy en el else holaaa VRR");
 
                 proceso->quantum = config_kernel->quantum; // Le reinicio el quantum
                 pthread_mutex_lock(&mutex_cola_de_ready);
@@ -738,6 +758,7 @@ void accionar_segun_estado(pcb* proceso, int flag){
             }
         }else{ // No estoy en vrr, siempre madno a cola de Ready normal
             
+            log_info(log_kernel, "estoy en el else holaaa RR o FIFO");
             pthread_mutex_lock(&mutex_cola_de_ready);
             queue_push(cola_de_ready,proceso); // Meto a la cola de Ready
             pthread_mutex_unlock(&mutex_cola_de_ready);
@@ -817,78 +838,22 @@ void pasar_proceso_a_blocked(pcb* proceso){
 // ************* AUXILIAR DE FINALIZAR_PROCESO, SACA UN PROCESO DE LA COLA DE READY Y LO FINALIZA ************* 
 void sacar_de_cola_de_ready(int pid){
     // Tenemos q recorrer la cola de ready buscando el pid y sacar ese, luego pasarlo a exit
-    pcb* aux  = queue_pop(cola_prioridad_vrr);;
+
+    log_info(log_kernel, "Entre a sacar de cola de ready\n");
+
+    pcb* aux; 
+    log_info(log_kernel, "estoy dsp del pop de sacar de cola de ready\n");
+
     int primer_pid = aux->pid;
     bool encontrado = false;
    
-    if(strcmp(config_kernel->algoritmo_planificacion, "VRR") == 0){
 
         pthread_mutex_lock(&mutex_cola_prioridad_vrr);
 
         if(queue_is_empty(cola_prioridad_vrr) == false){ // Si la cola de prioridad no está vacía
             
-            while(aux -> pid != pid) // Entonces busco en la cola de prioridad
-            {
-                queue_push(cola_prioridad_vrr, aux);
-                aux = queue_pop(cola_prioridad_vrr);
-
-                if(aux->pid == primer_pid) // Si recorrí toda la cola y no encontré el proceso, entonces voy a buscar a Ready normal
-                {
-                    break;
-                }
-            }
-            encontrado = true; // Si lo encontré en la cola de prioridad, marco que ya se encontró, sino, busco en Ready normal
-        }
-        pthread_mutex_unlock(&mutex_cola_prioridad_vrr);
-        sem_wait(&sem_cola_prioridad_vrr);
-    }
-    
-    pthread_mutex_lock(&mutex_cola_de_ready);
-
-    if(encontrado == false) // Si no lo encontré al proceso en la cola de prioridad, entonces lo busco en Ready normal
-    {
-        aux = queue_pop(cola_de_ready);
-        while(aux -> pid != pid) // Recorro la cola hasta que lo encuentre
-        {
-            queue_push(cola_de_ready, aux);
-            aux = queue_pop(cola_de_ready);
-        }
-        encontrado = true; // Encontré el proceso, dejo de buscar
-        sem_wait(&sem_cola_de_ready);
-    }
-    
-    pthread_mutex_unlock(&mutex_cola_de_ready);
-    
-    pasar_proceso_a_exit(aux); // Ahora sí, una vez que saqué el proceso de la cola en la que se encontraba, entonces lo paso a exit
-}
-
-// ************* AUXILIAR DE FINALIZAR_PROCESO, SACA UN PROCESO DE LA COLA DE NEW Y LO FINALIZA ************* 
-void sacar_de_cola_de_new(int pid){
-    pthread_mutex_lock(&mutex_cola_de_new);
-    
-    pcb* aux = queue_pop(cola_de_new);
-
-    while(aux -> pid != pid) // Recorro la cola hasta que lo encuentre
-    {
-        queue_push(cola_de_new, aux);
-        aux = queue_pop(cola_de_new);
-    }
-    
-    sem_wait(&sem_cola_de_new);
-    pthread_mutex_unlock(&mutex_cola_de_new);
-    pasar_proceso_a_exit(aux);
-}
-
-// ************* AUXILIAR DE FINALIZAR_PROCESO, SACA UN PROCESO DE EXECUTE Y LO FINALIZA ************* 
-void sacar_de_execute(int pid);
-
-// Para sacar cola de execute, tengo que mandar la interrupción a cpu, desalojar el proceso, recibirlo y pasarlo a exit.
-// Para sacar de la cola de blocked, tenemos que recorrer todas las colas de bloqueado (por las diferentes razones) hasta encontrarlo
-
-// ----------------------------------------------------------------
-// ------------- FIN FUNCIONES AUXILIARES DE COMANDOS -------------
-// ----------------------------------------------------------------
-
+            aux = queue_pop(cola_prioridad_vrr);
+            
 
 
 
