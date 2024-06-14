@@ -3,6 +3,8 @@
   // for the documentation about the launch.json format
   "version": "0.2.0",
   "configurations": [
+    
+    
     {
       "name": "run",
       "type": "cppdbg",
@@ -21,7 +23,8 @@
           "ignoreFailures": true
         }
       ],
-      "preLaunchTask": "build"
+      "preLaunchTask": "build",
+      "liveshare.allowGuestDebugControl": true
     }
   ]
 }

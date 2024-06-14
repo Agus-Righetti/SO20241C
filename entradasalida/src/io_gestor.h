@@ -26,7 +26,8 @@ typedef struct
     io_config* archivo;
 } Interfaz;
 
-typedef struct {
+typedef struct 
+{
     Interfaz interfaz;
     int tiempo_unidad_trabajo;
 } InterfazGenerica;

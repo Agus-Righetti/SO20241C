@@ -28,13 +28,32 @@ typedef enum
 	MENSAJE,
 	PAQUETE,
 	INSTRUCCION, 
+
+	// Instrucciones
     WAIT,
     SIGNAL, 
+	MOV_IN,
+	MOV_OUT,
+
+	PEDIR_TAMANIO,
+	OUT_OF_MEMORY,
+
     CODIGO,
 	INTERRUPCION,
 	CPU,
 	DESALOJO, // Devolvemos PCB por interrupcion
-	IO_GEN_SLEEP, // Instruccion
+	MARCO,
+	INTERRUPCION_KERNEL,
+
+	// Instruccioniones de I/O
+	IO_GEN_SLEEP, 
+	IO_STDIN_READ,
+	IO_STDOUT_WRITE,
+	IO_FS_CREATE,
+	IO_FS_DELETE,
+	IO_FS_TRUNCATE,
+	IO_FS_WRITE,
+	IO_FS_READ,
 	
 	// Interfaces
 	GENERICA,
@@ -115,7 +134,7 @@ typedef struct {
 	char* direccion_instrucciones; //es el path que me mandan por consola
 	pthread_mutex_t mutex_pcb;
 	t_list* instrucciones;
-} pcb;
+}pcb;
 
 // ************ DECLARACION DE FUNCIONES ************
 // ************ SERIALIZACION Y CONEXIONES GENERALES ************

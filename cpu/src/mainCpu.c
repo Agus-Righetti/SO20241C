@@ -1,8 +1,5 @@
 #include <mainCpu.h>
 
-t_log* log_cpu;
-cpu_config* config_cpu;
-
 int main(int argc, char* argv[]) 
 {
     decir_hola("CPU");
@@ -11,6 +8,7 @@ int main(int argc, char* argv[])
 
 	log_cpu = log_create("cpu.log", "CPU", 1, LOG_LEVEL_DEBUG);
 	config_cpu = armar_config(log_cpu);
+	inicializar_tlb();
 
     // Conexion CPU --> Memoria -------------------------------------------------------------------------------------------------------
 
@@ -20,23 +18,28 @@ int main(int argc, char* argv[])
 	
 	escuchar_kernel();
 
+    // Verificar los valores fuera de la función
+    printf("Verificación fuera de la función:\n");
+    printf("El PID es: %d\n", (*pcb_recibido)->pid);
+    printf("El PC es: %d\n", (*pcb_recibido)->program_counter);
+	
 	// Instrucciones con memoria
 	
 	escuchar_memoria();
    
-	// terminar_programa();
-
+	terminar_programa();
+	liberar_conexion(socket_cliente_kernel);
 	return EXIT_SUCCESS;
 }
 
-// void terminar_programa()
-// {
-// 	if (log_cpu != NULL) 
-//     {
-// 		log_destroy(log_cpu);
-// 	}
-// 	if (config_cpu != NULL) 
-//     {
-// 		config_destroy(config_cpu);
-// 	}
-// }
+void terminar_programa()
+{
+	if (log_cpu != NULL) 
+    {
+		log_destroy(log_cpu);
+	}
+	if (config_cpu != NULL) 
+    {
+		config_destroy(config_cpu);
+	}
+}

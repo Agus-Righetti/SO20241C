@@ -7,9 +7,6 @@ void escuchar_memoria()
 
 void atender_kernel()
 {
-    // conexion_io_kernel = conexion_a_kernel(log_io, config_io);
-    // int cod_op_io;
-
     // Si bien nosotros somos clientes de kernel, en este momento se podria decir que estamos actuando como servidores al recibir la operacion
     int cod_op_io = recibir_operacion(conexion_io_kernel);
 
@@ -19,23 +16,26 @@ void atender_kernel()
 
         switch(cod_op_io)
         {
-            // case GENERICA:
-            //     leer_configuracion_generica(&configuracion);
-            //     recibir_operacion_generica_de_kernel(GENERICA, cod_op_io);
-            //     liberar_configuracion(&configuracion);
-            //     break;
-            // case STDIN:
-            //     leer_configuracion_stdin(configuracion);
-            //     break;
-            // case STDOUT:
-            //     leer_configuracion_stdout(configuracion);
-            //     break;
+            case GENERICA:
+                leer_configuracion_generica(&configuracion);
+                recibir_operacion_generica_de_kernel(GENERICA, cod_op_io);
+                liberar_configuracion_generica(&configuracion);
+                break;
+            case STDIN:
+                leer_configuracion_stdin(&configuracion);
+                recibir_operacion_stdin_de_kernel(STDIN, cod_op_io);
+                liberar_configuracion_stdin(&configuracion);
+                break;
+            case STDOUT:
+                leer_configuracion_stdout(&configuracion);
+                liberar_configuracion_stdout(&configuracion);
+                break;
             // case DIALFS:
             //     leer_configuracion_dialfs(configuracion);
             //     break;
             case -1:
                 log_error(log_io, "KERNEL se desconecto. Terminando servidor");
-                // free(socket_servidor_kernel);
+                // free(conexion_io_kernel);
                 exit(1);
                 return;
             default:

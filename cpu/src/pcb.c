@@ -1,31 +1,62 @@
 #include "pcb.h"
 
-void recibir_pcb(t_buffer* buffer)
+// PCB -----------------------------------------------------------------------------------------------------------------------------
+
+void recibir_pcb(t_buffer* buffer, pcb** pcb_recibido)
 {
-    pcb* pcb_recibido = recibir_estructura_del_buffer(buffer);
-    solicitar_instrucciones_a_memoria(socket_servidor_memoria, pcb_recibido); // Ver si va aca
+    pcb* pcb_temp = recibir_estructura_del_buffer(buffer);
+
+    if (pcb_temp == NULL) {
+        log_error(log_cpu, "No se pudo recibir el PCB. La estructura recibida es NULL.");
+        return;
+    }
+
+    *pcb_recibido = malloc(sizeof(pcb));
+
+    if (*pcb_recibido == NULL) {
+        log_error(log_cpu, "No se pudo asignar memoria para pcb_recibido");
+        free(pcb_temp);
+        return;
+    }
+
+    // Asignar los valores recibidos a la estructura pasada por referencia
+    (*pcb_recibido)->pid = pcb_temp->pid;
+    (*pcb_recibido)->program_counter = pcb_temp->program_counter;
 
     // Acordarse de sacarlos!!!!!!
-    log_info(log_cpu, "El PID es: %d", pcb_recibido->pid);
-    log_info(log_cpu, "El PC es: %d", pcb_recibido->program_counter);
+    log_info(log_cpu, "El PID es: %d", (*pcb_recibido)->pid);
+    log_info(log_cpu, "El PC es: %d", (*pcb_recibido)->program_counter);
+
+    // Liberar la estructura temporal si es necesario
+    free(pcb_temp);
 }
 
-void enviar_pcb(int conexion, pcb *proceso, op_code codigo)
+void enviar_pcb(int conexion, pcb *proceso, op_code codigo, char* recurso)
 {
-    // Creamos un paquete
-	t_paquete *paquete = crear_paquete_personalizado(PCB_CPU_A_KERNEL);
+    t_paquete *paquete = crear_paquete_personalizado(PCB_CPU_A_KERNEL);
     agregar_estructura_al_paquete_personalizado(paquete, proceso, sizeof(pcb));
+    
+    if (recurso == NULL) {
+        return; // No hacer nada si el recurso es NULL
+    }
+
+    int recurso_valor = atoi(recurso);
+
+    if(recurso_valor == 1) {
+        agregar_int_al_paquete_personalizado(paquete, 0);
+    } else if (recurso_valor == 2) {
+        agregar_int_al_paquete_personalizado(paquete, 1); 
+    } else if (recurso_valor == 3) {
+        agregar_int_al_paquete_personalizado(paquete, 2); 
+    } else {
+        return; // No hacer nada si el recurso no coincide
+    }
+	
     enviar_paquete(paquete, conexion);
 	eliminar_paquete(paquete);
 }
 
-void enviar_flag(int conexion, int estado)
-{
-    t_paquete *paquete = crear_paquete_personalizado(CPU_TERMINA_EJECUCION_PCB);
-    agregar_int_al_paquete_personalizado(paquete, estado);
-    enviar_paquete(paquete, conexion);
-	eliminar_paquete(paquete);
-}
+// Diccionario ---------------------------------------------------------------------------------------------------------------------
 
 void iniciar_diccionario_instrucciones(void)
 {
@@ -75,26 +106,38 @@ void destruir_diccionarios(void)
 	dictionary_destroy(registros);
 }
 
-// void recibir_instruccion_de_memoria(t_buffer* buffer)
-// {
-//     // el buffer tiene un struct INSTRUCCION DENTRO 
-//     // [char* mnemonico, char* primero_parametro, char* segundo_parametro, char* tercero_parametro, char* cuarto_parametro, char* quinto_parametro]
+// Instrucciones memoria -----------------------------------------------------------------------------------------------------------
 
-//     // Verifico que se hayan recibidos valores
-//     if (buffer == NULL) {
-//         error_show("No se recibio el proceso por parte de MEMORIA");
-//         exit(1);
-//     }
-
-//     mnemonico = recibir_string_del_buffer(buffer);
-//     primero_parametro = recibir_string_del_buffer(buffer);
-// }
-
-void interpretar_instruccion_de_memoria(buffer)
+void solicitar_instrucciones_a_memoria(int socket_cliente_cpu, pcb** pcb_recibido) // Tendrian que ir **?
 {   
-    //t_instruccion_codigo;
-    //[String, String, String, String, String, String]
+    if (pcb_recibido == NULL) 
+    {
+        log_error(log_cpu, "No se pudo reservar memoria para el PCB al recibir el PCB");
+        return NULL;
+    }
 
+    // Creo el paquete
+    t_paquete* paquete = crear_paquete_personalizado(CPU_PIDE_INSTRUCCION_A_MEMORIA); 
+
+    // Agregamos el pc y el pid al paquete
+    agregar_int_al_paquete_personalizado(paquete, (*pcb_recibido)->pid); 
+    agregar_int_al_paquete_personalizado(paquete, (*pcb_recibido)->program_counter);
+
+    // Envio el paquete a memoria
+    enviar_paquete(paquete, socket_cliente_cpu);
+    eliminar_paquete(paquete);
+    
+    // Acordarse de sacarlo!!!!!!
+    log_info(log_cpu, "Le pedi instruccion a Memoria");
+    printf("Verificación fuera de la función:\n");
+    printf("El PID es: %d\n", (*pcb_recibido)->pid);
+    printf("El PC es: %d\n", (*pcb_recibido)->program_counter);
+}
+
+// Instrucciones -------------------------------------------------------------------------------------------------------------------
+
+void interpretar_instruccion_de_memoria(t_buffer* buffer)
+{   
     if (buffer == NULL) 
     {
         error_show("No se recibio el proceso por parte de MEMORIA");
@@ -113,12 +156,12 @@ void interpretar_instruccion_de_memoria(buffer)
         case I_SET:
             instruccion_set(parte);
             break;
-        // case I_MOV_IN:
-        //     instruccion_mov_in(parte);
-        //     break;
-        // case I_MOV_OUT:
-        //     instruccion_mov_out(parte);
-        //     break;
+        case I_MOV_IN:
+            instruccion_mov_in(parte);
+            break;
+        case I_MOV_OUT:
+            instruccion_mov_out(parte);
+            break;
         case I_SUM:
             instruccion_sum(parte);
             break;
@@ -128,24 +171,24 @@ void interpretar_instruccion_de_memoria(buffer)
         case I_JNZ:
             instruccion_jnz(parte);
             break;
-        // case I_RESIZE:
-        //     instruccion_resize(parte);
-        //     break;
-        // case I_COPY_STRING:
-        //     instruccion_copy_string(parte);
-        //     break;
+        case I_RESIZE:
+            instruccion_resize(parte);
+            break;
+        case I_COPY_STRING:
+            instruccion_copy_string(parte);
+            break;
         case I_WAIT:
             instruccion_wait(parte);
             break;
         case I_SIGNAL:
             instruccion_signal(parte);
             break;
-        // case I_IO_GEN_SLEEP:
-        //     instruccion_io_gen_sleep(parte);
-        //     break;
-        // case I_IO_STDIN_READ:
-        //     instruccion_io_stdin_read(parte);
-        //     break;
+        case I_IO_GEN_SLEEP:
+            instruccion_io_gen_sleep(parte);
+            break;
+        case I_IO_STDIN_READ:
+            instruccion_io_stdin_read(parte);
+            break;
         // case I_IO_STDOUT_WRITE:
         //     instruccion_io_stdout_write(parte);
         //     break;
@@ -166,14 +209,17 @@ void interpretar_instruccion_de_memoria(buffer)
         //     break;
         case I_EXIT:
             instruccion_exit(parte);
+            destruir_diccionarios();
             break;
         case -1:
             log_warning(log_cpu, "PID: %d - Advertencia: No se pudo interpretar la instrucción - Ejecutando: EXIT", proceso->pid);
             error_exit(EXIT);
+            destruir_diccionarios();
             return;
     }
     log_warning(log_cpu, "PID: %d - Advertencia: Sin instrucciones por ejecutar - Ejecutando: EXIT", proceso->pid);
 	error_exit(EXIT);
+    destruir_diccionarios();
     return;
 }
 
@@ -185,6 +231,74 @@ void instruccion_set(char **parte)
 	// Obtiene el valor del registro desde el diccionario 'registros' usando 'parte[1]' como clave y copia el valor de 'parte[2]' en el registro encontrado.
     memcpy(dictionary_get(registros, parte[1]), parte[2], strlen(parte[2]));
 	proceso->program_counter++; 
+}
+
+void instruccion_mov_in(char **parte)
+{
+    // MOV_IN registro_datos registro_direccion
+    // MOV_IN EDX ECX
+
+	log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s", proceso->pid, parte[0], parte[1], parte[2]);
+    
+    // Traducimos la direccion del registro direccion
+	int direccion_fisica = traducir_direccion_logica_a_fisica(parte[2]); 
+	
+	char* instruccion = string_from_format("%s %s %s", parte[0], (char*)dictionary_get(registros, parte[1]), direccion_fisica);
+	
+    // Pido espacio de memoria para la instruccion + /0
+    char* instruccion_alloc = malloc(strlen(instruccion) + 1);
+
+	strcpy(instruccion_alloc, instruccion); // Le copio la instruccion a instruccion_alloc
+
+	list_replace_and_destroy_element(proceso->instrucciones, proceso->program_counter, instruccion_alloc, free);
+	
+    log_trace(log_cpu, "PID: %d - Instruccion traducida: %s", proceso->pid, (char*)list_get(proceso->instrucciones, proceso->program_counter));
+	
+    t_instruccion* instruccion_proceso = malloc(sizeof(t_instruccion));
+	generar_instruccion(proceso, instruccion_proceso, list_get(proceso->instrucciones, proceso->program_counter));
+
+    // Enviamos la instruccion a memoria
+    enviar_instruccion(socket_cliente_cpu, instruccion_proceso, MOV_IN);
+	// log_warning(log_cpu, "PID: %d - Advertencia: Instruccion sin realizar", proceso->pid);
+	proceso->program_counter++;
+}
+
+void generar_instruccion(pcb* proceso, t_instruccion* instruccion_proceso, char* instruccion) 
+{
+	instruccion_proceso->pid = proceso->pid;
+	instruccion_proceso->instruccion = instruccion;
+}
+
+void instruccion_mov_out(char **parte)
+{
+    // MOV_OUT registro_direccion registro_datos
+    // MOV_OUT EDX ECX
+
+    log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s", proceso->pid, parte[0], parte[1], parte[2]);
+	int direccion_fisica = traducir_direccion_logica_a_fisica(parte[1]);
+	
+	char* instruccion = string_from_format("%s %s %s", parte[0], direccion_fisica, parte[2]);
+	char* instruccion_alloc = malloc(strlen(instruccion) + 1);
+	strcpy(instruccion_alloc, instruccion);
+    
+	list_replace_and_destroy_element(proceso->instrucciones, proceso->program_counter, instruccion_alloc, free);
+	log_trace(log_cpu, "PID: %d - Instruccion traducida: %s", proceso->pid, (char*)list_get(proceso->instrucciones, proceso->program_counter));
+	t_instruccion* instruccion_proceso = malloc(sizeof(t_instruccion));
+	
+    generar_instruccion(proceso, instruccion_proceso, list_get(proceso->instrucciones, proceso->program_counter));
+	enviar_instruccion(socket_cliente_cpu, instruccion_proceso, MOV_OUT);
+    
+	// log_warning(log_cpu, "PID: %d - Advertencia: Instruccion sin realizar", proceso->pid);
+	proceso->program_counter++;
+}
+
+void enviar_instruccion(int conexion, t_instruccion* instruccion, op_code codigo)
+{
+    // Creamos un paquete
+	t_paquete *paquete = crear_paquete_personalizado(codigo);
+    agregar_estructura_al_paquete_personalizado(paquete, instruccion, sizeof(t_instruccion));
+    enviar_paquete(paquete, conexion);
+	eliminar_paquete(paquete);
 }
 
 void instruccion_sum(char **parte)
@@ -231,12 +345,145 @@ void instruccion_jnz(char **parte)
     }
 }
 
+void instruccion_resize(char **parte)
+{
+    // RESIZE 128
+    log_info(log_cpu, "PID: %d - Ejecutando: %s - %s", proceso->pid, parte[0], parte[1]);
+
+    // Verificar si se proporcionó el tamaño como parámetro
+    if (parte[1] == NULL) 
+    {
+        printf("Error: Se debe proporcionar un tamaño para la instrucción RESIZE\n");
+        return;
+    }
+
+    // Convertir el tamaño de la instrucción a un entero
+    int nuevo_tamanio = atoi(parte[1]);
+
+    // Solicitar a la memoria ajustar el tamaño del proceso
+    
+    t_paquete *paquete = crear_paquete_personalizado(PEDIR_TAMANIO);
+    agregar_int_al_paquete_personalizado(paquete, nuevo_tamanio);
+    enviar_paquete(paquete, socket_cliente_cpu);
+	eliminar_paquete(paquete);
+    
+    t_buffer* buffer;
+    int resultado_memoria = recibir_int_del_buffer(buffer);
+    proceso->program_counter++; 
+
+    // Manejar la respuesta de la memoria
+    if (resultado_memoria == 0) 
+    {
+        printf("El tamaño del proceso se ha ajustado correctamente a %d\n", nuevo_tamanio);
+    } 
+    else if (resultado_memoria == OUT_OF_MEMORY) 
+    {
+        printf("Error: No se pudo ajustar el tamaño del proceso. Out of Memory.\n");
+        
+        enviar_pcb(socket_cliente_kernel, proceso, OUT_OF_MEMORY, NULL);
+    } 
+    else 
+    {
+        printf("Error desconocido al ajustar el tamaño del proceso.\n");
+    }
+}
+
+void instruccion_copy_string(char **parte)
+{
+    // COPY_STRING 8
+    log_info(log_cpu, "PID: %d - Ejecutando: %s - %s", proceso->pid, parte[0], parte[1]);
+
+    // Verificar si se proporcionó el tamaño como parámetro
+    if (parte[1] == NULL) 
+    {
+        printf("Error: Se debe proporcionar un tamaño para la instrucción COPY_STRING\n");
+        return;
+    }
+
+    // Obtener el tamaño de la copia
+    int tamanio = atoi(parte[1]);
+
+    registros_cpu* registros;
+
+    uint32_t direccion_origen = (uint32_t)dictionary_get(registros, "SI");
+    uint32_t direccion_destino = (uint32_t)dictionary_get(registros, "DI");
+
+    if (copiar_bytes(direccion_origen, direccion_destino, tamanio) == 1) {
+        printf("Se han copiado correctamente %d bytes desde la dirección de memoria apuntada por SI hacia la dirección de memoria apuntada por DI\n", tamanio);
+    } else {
+        printf("Error al copiar los bytes en la dirección de memoria apuntada por DI\n");
+    }
+
+    proceso->program_counter++;
+}
+
+// Función para copiar bytes desde una dirección de memoria a otra
+int copiar_bytes(uint32_t direccion_origen, uint32_t direccion_destino, int tamanio) 
+{
+    // Verificar si las direcciones de memoria son válidas
+    if (direccion_origen == 0 || direccion_destino == 0) 
+    {
+        printf("Error: Direcciones de memoria inválidas\n");
+        return 0;
+    }
+
+    if (tamanio != 0) 
+    {
+        memcpy((void *)direccion_destino, (void *)direccion_origen, tamanio);
+        return 1;
+    } 
+}
+
+void instruccion_wait(char** parte)
+{
+    // Verificar que se haya pasado el nombre del recurso como argumento
+    if (parte[1] == NULL) 
+    {
+        log_error(log_cpu, "No se ha proporcionado el nombre del recurso.");
+        return;
+    }
+
+	log_info(log_cpu, "PID: %d - Ejecutando: %s - %s", proceso->pid, parte[0], parte[1]);
+	proceso->program_counter++;
+    
+    // Indico al kernel que el proceso está esperando algo
+	enviar_pcb(socket_cliente_kernel, proceso, WAIT, parte[1]);
+	
+    list_destroy_and_destroy_elements(proceso->instrucciones, free);
+	free(proceso);
+}
+
+void instruccion_signal(char **parte)
+{
+    // Verificar que se haya pasado el nombre del recurso como argumento
+    if (parte[1] == NULL) 
+    {
+        log_error(log_cpu, "No se ha proporcionado el nombre del recurso.");
+        return;
+    }
+
+    // Log de ejecucion de la instruccion
+	log_info(log_cpu, "PID: %d - Ejecutando: %s - %s", proceso->pid, parte[0], parte[1]);
+    proceso->program_counter++;
+
+    // Enviar solicitud de SIGNAL al kernel
+    enviar_pcb(socket_cliente_kernel, proceso, SIGNAL, parte[1]);
+
+    list_destroy_and_destroy_elements(proceso->instrucciones, free);
+    free(proceso);
+}
+
 void instruccion_io_gen_sleep(char **parte)
 {
     // IO_GEN_SLEEP Int1 10
     char *interfaz = parte[1];
     int unidades_trabajo = atoi(parte[2]);
 
+    if(parte[1] != GENERICA) 
+    {
+        log_error(log_cpu, "La interfaz indicada no es GENERICA.");
+    }
+    
     printf("Solicitando a la interfaz %s que realice un sleep por %d unidades de trabajo...\n", interfaz, parte[2]);
     log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s", proceso->pid, parte[0], parte[1], parte[2]);
     solicitar_sleep_io(parte[1], unidades_trabajo, proceso->pid); // Esta función enviará la solicitud de sleep al Kernel
@@ -247,12 +494,12 @@ void instruccion_io_gen_sleep(char **parte)
 void solicitar_sleep_io(const char *interfaz, int unidades_trabajo, int pid)
 {
     // Crear y enviar el paquete al Kernel
-    t_paquete *paquete = crear_paquete();
+    t_paquete *paquete = crear_paquete_personalizado(IO_GEN_SLEEP);
 
     // Agregar la información necesaria al paquete
-    agregar_a_paquete(paquete, &pid, sizeof(int));
-    agregar_a_paquete(paquete, &unidades_trabajo, sizeof(int));
-    agregar_a_paquete(paquete, interfaz, strlen(interfaz) + 1);
+    agregar_estructura_al_paquete_personalizado(paquete, &proceso, sizeof(pcb)); 
+    agregar_estructura_al_paquete_personalizado(paquete, &unidades_trabajo, sizeof(int));
+    agregar_estructura_al_paquete_personalizado(paquete, interfaz, strlen(interfaz) + 1);
 
     // Enviar el paquete al Kernel
     enviar_paquete(paquete, socket_cliente_kernel);
@@ -261,32 +508,63 @@ void solicitar_sleep_io(const char *interfaz, int unidades_trabajo, int pid)
     eliminar_paquete(paquete);
 }
 
-void instruccion_exit(char** parte) 
+void instruccion_io_stdin_read(char** parte)
 {
-	log_info(log_cpu, "PID: %d - Ejecutando: %s", proceso->pid, parte[0]);
-	proceso->program_counter++;
-	enviar_pcb(conexion_cpu_kernel, proceso, EXIT);
-    enviar_flag(conexion_cpu_kernel, 1);
-	list_destroy_and_destroy_elements(proceso->instrucciones, free);
-	free(proceso);
-}
+    // IO_STDIN_READ Int2 EAX AX
 
-void intruccion_io_fs_create(char **parte)
-{
-    // IO_FS_CREATE Interfaz NombreArchivo
-    char *interfaz = parte[1];
-    char *nombre_archivo = parte[2];
+    // Verificar que la cantidad de argumentos sea la correcta
+    if (parte[1] == NULL || parte[2] == NULL || parte[3] == NULL) 
+    {
+        log_error(log_cpu, "Argumentos incorrectos para la instrucción IO_STDIN_READ.");
+        return;
+    }
 
-    printf("Solicitando al Kernel que cree un archivo '%s' en la interfaz '%s' del sistema de archivos...\n", nombre_archivo, interfaz);
-    log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s", proceso->pid, parte[0], parte[1], parte[2]);
+    if(parte[1] != STDIN) 
+    {
+        log_error(log_cpu, "La interfaz indicada no es STDIN.");
+    }
 
-    // Aquí debes enviar la solicitud al Kernel para que cree el archivo en la interfaz especificada
-    // Por ejemplo:
-    // solicitar_creacion_archivo(interfaz, nombre_archivo);
+    // Extraer los registros de la instrucción
+    char* interfaz = parte[1];
+    char* direccion = parte[2];
 
-    printf("La solicitud de creación del archivo '%s' en la interfaz '%s' se ha enviado al Kernel.\n", nombre_archivo, interfaz);
+    // Obtener la dirección lógica y el tamaño desde los registros
+    int direccion_fisica = traducir_direccion_logica_a_fisica(direccion);
+    int tamanio = atoi(parte[3]);
+
+    // Enviar la solicitud al kernel
+    enviar_solicitud_a_kernel(interfaz, direccion_fisica, tamanio, socket_cliente_kernel);
     proceso->program_counter++;
 }
+
+void enviar_solicitud_a_kernel(Interfaz* interfaz, int direccion_fisica, int tamanio, int conexion) 
+{
+    t_paquete* paquete = crear_paquete_personalizado(IO_STDIN_READ);
+
+    // Agregar la estructura Interfaz al paquete
+    agregar_estructura_al_paquete_personalizado(paquete, interfaz, sizeof(Interfaz));
+
+    // Agregar la dirección fisica al paquete
+    agregar_estructura_al_paquete_personalizado(paquete, &direccion_fisica, sizeof(int));
+
+    // Agregar el tamaño al paquete
+    agregar_estructura_al_paquete_personalizado(paquete, &tamanio, sizeof(int));
+
+    // Enviar el paquete al socket cliente
+    enviar_paquete(paquete, socket_cliente_kernel);
+    eliminar_paquete(paquete);
+}
+
+// void instruccion_io_stdout_write(char** parte) 
+// {
+//     // IO_STDOUT_WRITE Int3 BX EAX
+// }
+
+// void intruccion_io_fs_create(char **parte)
+// {
+//     // IO_FS_CREATE Interfaz NombreArchivo
+
+// }
 
 // void intruccion_io_fs_delete(char **parte)
 // {
@@ -308,76 +586,18 @@ void intruccion_io_fs_create(char **parte)
     
 // }
 
-void instruccion_wait(char** parte)
+void instruccion_exit(char** parte) 
 {
-    // Verificar que se haya pasado el nombre del recurso como argumento
-    if (parte[1] == NULL) 
-    {
-        log_error(log_cpu, "No se ha proporcionado el nombre del recurso.");
-        return;
-    }
-
-	log_info(log_cpu, "PID: %d - Ejecutando: %s - %s", proceso->pid, parte[0], parte[1]);
+	log_info(log_cpu, "PID: %d - Ejecutando: %s", proceso->pid, parte[0]);
 	proceso->program_counter++;
-    
-    // Indico al kernel que el proceso está esperando algo
-	enviar_pcb(conexion_cpu_kernel, proceso, WAIT);
-    enviar_flag(conexion_cpu_kernel, 0);
-	
-    list_destroy_and_destroy_elements(proceso->instrucciones, free);
-	free(proceso);
-}
-
-void instruccion_signal(char **parte)
-{
-    // Verificar que se haya pasado el nombre del recurso como argumento
-    if (parte[1] == NULL) 
-    {
-        log_error(log_cpu, "No se ha proporcionado el nombre del recurso.");
-        return;
-    }
-
-    // Log de ejecucion de la instruccion
-	log_info(log_cpu, "PID: %d - Ejecutando: %s - %s", proceso->pid, parte[0], parte[1]);
-
-    // Enviar solicitud de SIGNAL al kernel
-    enviar_pcb(conexion_cpu_kernel, proceso, SIGNAL);
-    enviar_flag(conexion_cpu_kernel, 0);
-
-    list_destroy_and_destroy_elements(proceso->instrucciones, free);
-    free(proceso);
-}
-
-void error_exit(char** parte) 
-{
-	enviar_pcb(conexion_cpu_kernel, proceso, CODIGO);
-    enviar_flag(conexion_cpu_kernel, 1); 
+	enviar_pcb(socket_cliente_kernel, proceso, CPU_TERMINA_EJECUCION_PCB, NULL);
 	list_destroy_and_destroy_elements(proceso->instrucciones, free);
 	free(proceso);
 }
 
-void solicitar_instrucciones_a_memoria(int conexion_cpu_memoria, pcb* pcb_recibido) 
-{   
-    // ¿no tendriamos que pasarle por parametro el pcb del proceso?
-
-    // Creo el paquete
-    t_paquete* paquete = crear_paquete_personalizado(CPU_PIDE_INSTRUCCION_A_MEMORIA); 
-    log_info(log_cpu, "Tengo este pid de proceso %d", pcb_recibido->pid);
-    
-    // Agregamos el pc y el pid al paquete
-    agregar_int_al_paquete_personalizado(paquete, pcb_recibido->pid); 
-    agregar_int_al_paquete_personalizado(paquete, pcb_recibido->program_counter);
-
-    // Envio el paquete a memoria
-    enviar_paquete(paquete, conexion_cpu_memoria);
-    eliminar_paquete(paquete);
+void error_exit(char** parte) 
+{
+	enviar_pcb(socket_cliente_kernel, proceso, CODIGO, NULL);
+	list_destroy_and_destroy_elements(proceso->instrucciones, free);
+	free(proceso);
 }
-
-// 3er checkpoint
-// MOV_IN EDX ECX
-// MOV_OUT EDX ECX
-// RESIZE 128
-// COPY_STRING 8
-
-// IO_STDIN_READ Int2 EAX AX
-// IO_STDOUT_WRITE Int3 BX EAX

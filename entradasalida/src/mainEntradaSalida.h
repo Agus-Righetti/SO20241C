@@ -5,7 +5,8 @@
 #include "configuracion.h"
 #include "cliente.h"
 #include "interfazGenerica.h"
-//#include "conexion.h"
+#include "interfazSTDIN.h"
+#include "conexion.h"
 
 t_log* log_io;
 io_config* config_io;
