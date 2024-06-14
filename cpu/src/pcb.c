@@ -361,32 +361,39 @@ void instruccion_resize(char **parte)
     int nuevo_tamanio = atoi(parte[1]);
 
     // Solicitar a la memoria ajustar el tamaño del proceso
-    
-    t_paquete *paquete = crear_paquete_personalizado(PEDIR_TAMANIO);
+    t_paquete *paquete = crear_paquete_personalizado(CPU_MANDA_RESIZE_A_MEMORIA); // [PID, TAMAÑO] -> [Int, Int]
+    agregar_int_al_paquete_personalizado(paquete, proceso->pid);
     agregar_int_al_paquete_personalizado(paquete, nuevo_tamanio);
     enviar_paquete(paquete, socket_cliente_cpu);
 	eliminar_paquete(paquete);
-    
-    t_buffer* buffer;
-    int resultado_memoria = recibir_int_del_buffer(buffer);
-    proceso->program_counter++; 
 
-    // Manejar la respuesta de la memoria
-    if (resultado_memoria == 0) 
-    {
-        printf("El tamaño del proceso se ha ajustado correctamente a %d\n", nuevo_tamanio);
+    // Escucha para recibir el ok o el out of memory
+    int cod_op_memoria = recibir_operacion(socket_cliente_cpu);
+    while(1) {
+        t_buffer* buffer;
+        switch (cod_op_memoria){
+            case CPU_RECIBE_OUT_OF_MEMORY_DE_MEMORIA: // VACIO
+                printf("Error: No se pudo ajustar el tamaño del proceso. Out of Memory.\n");
+                enviar_pcb(socket_cliente_kernel, proceso, OUT_OF_MEMORY, NULL);
+                free(buffer);
+                break;
+            case CPU_RECIBE_OK_DEL_RESIZE:
+                printf("El tamaño del proceso se ha ajustado correctamente a %d\n", nuevo_tamanio);
+                free(buffer);
+                break;
+            case -1:
+                log_error(log_cpu, "MEMORIA se desconecto. Terminando servidor");
+                free(socket_cliente_cpu);
+                exit(1);
+                return;
+            default:
+                log_warning(log_cpu,"Operacion desconocida. No quieras meter la pata");
+                break;
+            }
     } 
-    else if (resultado_memoria == OUT_OF_MEMORY) 
-    {
-        printf("Error: No se pudo ajustar el tamaño del proceso. Out of Memory.\n");
-        
-        enviar_pcb(socket_cliente_kernel, proceso, OUT_OF_MEMORY, NULL);
-    } 
-    else 
-    {
-        printf("Error desconocido al ajustar el tamaño del proceso.\n");
-    }
+    proceso->program_counter++; 
 }
+    
 
 void instruccion_copy_string(char **parte)
 {

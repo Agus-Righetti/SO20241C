@@ -2,7 +2,6 @@
 
 int traducir_direccion_logica_a_fisica(int direccion_logica)
 {
-    int tamanio_pagina = config_get_int_value(config_cpu, "TAM_MAX_PAGINACION");
     int numero_pagina = floor(direccion_logica / tamanio_pagina);
     int desplazamiento = direccion_logica - numero_pagina * tamanio_pagina;
     log_info(log_cpu, "Nro pagina: %d | desplazamiento: %d ", numero_pagina, desplazamiento);
@@ -16,64 +15,79 @@ int traducir_direccion_logica_a_fisica(int direccion_logica)
     } 
     else 
     {
+        // NO esta en TLB -> tiene que buscar en memoria
         log_info(log_cpu, "PID: %d - TLB MISS - Pagina: %d", proceso->pid, numero_pagina);
 
-        // Solicitar marco
-        // t_paquete *paquete = crear_paquete_personalizado(MARCO);
-        // agregar_estructura_al_paquete_personalizado(paquete, &numero_pagina, sizeof(int));
-        // agregar_estructura_al_paquete_personalizado(paquete, &proceso->pid, sizeof(int));
-        // enviar_paquete(paquete, socket_cliente_cpu);
-
-        // Recibir tamaño de pagina de memoria
-        int cod_op = recibir_operacion(socket_cliente_cpu);
-        if(cod_op == CPU_RECIBE_TAMAÑO_PAGINA_DE_MEMORIA) // -----------------------------------------------------------------------
-        {
-            int marco;
-            recibir_marco(socket_cliente_cpu, &marco); 
-            log_info(log_cpu, "PID: %d - OBTENER MARCO - Página: %d - Marco: %d", proceso->pid, numero_pagina, marco);
-            
-            // Agregarlo a la tlb
-            TLB_Entrada nueva_entrada;
-            nueva_entrada.pid = proceso->pid;
-            nueva_entrada.numero_pagina = numero_pagina;
-            nueva_entrada.numero_marco = marco;
-            actualizar_tlb(&nueva_entrada); 
-            
-            return (marco * tamanio_pagina) + desplazamiento;
-        }
-        else
-        {
-            log_error(log_cpu, "Error al recibir el marco de la memoria");
-            return -1; 
-        }
-    }
-}
-
-int recibir_marco(int socket_cliente, int* marco) 
-{
-    // Intenta recibir el número de marco desde el socket
-    int bytes_recibidos = recv(socket_cliente, marco, sizeof(int), MSG_WAITALL);
+        // Tengo el numero de pag -> hago una consulta a memoria por el marco
     
-    // Verifica si la recepción fue exitosa
-    if (bytes_recibidos == sizeof(int)) 
-    {
-        return 0; // Recepción exitosa
-    } 
-    else if (bytes_recibidos == -1) 
-    {
-        // Si recv devuelve -1, indica un error en la recepción
-        perror("Error al recibir el número de marco");
-        close(socket_cliente);
-        return -1; // Error
-    } 
-    else 
-    {
-        // Si recv devuelve otro valor, indica que se recibió una cantidad inesperada de bytes
-        fprintf(stderr, "Error: Se recibieron %d bytes en lugar de %lu\n", bytes_recibidos, sizeof(int));
-        close(socket_cliente);
-        return -1; // Error
+        t_paquete *paquete = crear_paquete_personalizado(MARCO);      // [PID, NUMERO DE PAGINA]
+        agregar_int_al_paquete_personalizado(paquete, proceso->pid);
+        agregar_int_al_paquete_personalizado(paquete, numero_pagina);
+        enviar_paquete(paquete, socket_cliente_cpu);
+
+        // Recibir marco de memoria
+        //////////////////////////////////////////
+        int cod_op_memoria = recibir_operacion(socket_cliente_cpu);
+        while(1) {
+            switch (cod_op_memoria) {
+                
+                case CPU_RECIBE_NUMERO_DE_MARCO_DE_MEMORIA:
+                    t_buffer* buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
+                    int marco = recibir_int_del_buffer(buffer);
+                    log_info(log_cpu, "PID: %d - OBTENER MARCO - Página: %d - Marco: %d", proceso->pid, numero_pagina, marco);
+                    // Agregarlo a la tlb
+                    TLB_Entrada nueva_entrada;
+                    nueva_entrada.pid = proceso->pid;
+                    nueva_entrada.numero_pagina = numero_pagina;
+                    nueva_entrada.numero_marco = marco;
+                    actualizar_tlb(&nueva_entrada); 
+                    free(buffer);
+                    break; 
+    
+                case EXIT:
+                    error_exit(EXIT);
+                    list_destroy_and_destroy_elements(lista, free); 
+                    break;
+                case -1:
+                    log_error(log_cpu, "MEMORIA se desconecto. Terminando servidor");
+                    free(socket_cliente_cpu);
+                    exit(1);
+                    return;
+                default:
+                    log_warning(log_cpu,"Operacion desconocida. No quieras meter la pata");
+                    break;
+            }
+        }
+        return (marco * tamanio_pagina) + desplazamiento;
     }
 }
+        
+
+// int recibir_marco(int socket_cliente, int* marco) 
+// {
+//     // Intenta recibir el número de marco desde el socket
+//     int bytes_recibidos = recv(socket_cliente, marco, sizeof(int), MSG_WAITALL);
+    
+//     // Verifica si la recepción fue exitosa
+//     if (bytes_recibidos == sizeof(int)) 
+//     {
+//         return 0; // Recepción exitosa
+//     } 
+//     else if (bytes_recibidos == -1) 
+//     {
+//         // Si recv devuelve -1, indica un error en la recepción
+//         perror("Error al recibir el número de marco");
+//         close(socket_cliente);
+//         return -1; // Error
+//     } 
+//     else 
+//     {
+//         // Si recv devuelve otro valor, indica que se recibió una cantidad inesperada de bytes
+//         fprintf(stderr, "Error: Se recibieron %d bytes en lugar de %lu\n", bytes_recibidos, sizeof(int));
+//         close(socket_cliente);
+//         return -1; // Error
+//     }
+// }
 
 TLB_Entrada buscar(int numero_pagina) 
 {

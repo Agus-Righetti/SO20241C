@@ -32,6 +32,7 @@ typedef struct {
 
 extern t_log* log_cpu;
 extern cpu_config* config_cpu;
+extern int tamanio_pagina;
 
 extern int socket_servidor_cpu;
 extern int socket_cliente_kernel;

@@ -11,6 +11,7 @@
 
 t_log* log_cpu;
 cpu_config* config_cpu;
+int tamanio_pagina;
 
 int socket_servidor_memoria; 
 int socket_servidor_cpu;

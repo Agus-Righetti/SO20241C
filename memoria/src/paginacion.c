@@ -102,10 +102,11 @@ void eliminar_algo(void* algo){
 //********************** ESCRITURA EN PAG **************************
 //******************************************************************
 // Tengo que guardar algo en memoria
-// me llega [DF, TAMAÑO, VALOR]
+// me llega [PID, DF, TAMAÑO, VALOR]
 
 // Dirección física
 // Tamaño
 // Valor
 
-// Ante un pedido de escritura, escribir lo indicado a partir de la dirección física pedida. En caso satisfactorio se responderá un mensaje de ‘OK’.
+// Ante un pedido de escritura, escribir lo indicado a partir de la dirección física pedida. 
+//En caso satisfactorio se responderá un mensaje de ‘OK’.

@@ -35,7 +35,6 @@ typedef enum
 	MOV_IN,
 	MOV_OUT,
 
-	PEDIR_TAMANIO,
 	OUT_OF_MEMORY, // CAMBIAR ESTO
 
     CODIGO,
@@ -43,7 +42,6 @@ typedef enum
 	CPU,
 	DESALOJO, // Devolvemos PCB por interrupcion
 
-	MARCO,
 	INTERRUPCION_KERNEL,
 
 	// Instruccioniones de I/O
@@ -69,15 +67,18 @@ typedef enum
 
 	// CPU A MEMORIA
 	CPU_PIDE_INSTRUCCION_A_MEMORIA, // [PID, IP] -> [Int, Int]
-	RESIZE,                         // [PID, TAMAÑO] -> [Int, Int]
+	CPU_MANDA_RESIZE_A_MEMORIA,     // [PID, TAMAÑO] -> [Int, Int]
+
 	ACCESO_A_TABLA_DE_PAGINA,       // [PID, NUMERO PAG] -> [Int, Int]
 	CPU_PIDE_LECTURA_MEMORIA,       // [Direccion Fisica, TAMAÑO, VALOR]
 	CPU_PIDE_ESCRITURA_MEMORIA,     // [Direccion Fisica, TAMAÑO, VALOR]
 
 	// MEMORIA A CPU
-	CPU_RECIBE_INSTRUCCION_DE_MEMORIA,   // [Instruccion] -> [String, String, String, String, String]
-	CPU_RECIBE_TAMAÑO_PAGINA_DE_MEMORIA, // [Tam_pagina] -> [Int]
-	CPU_RECIBE_OUT_OF_MEMORY_DE_MEMORIA, // VACIO
+	CPU_RECIBE_INSTRUCCION_DE_MEMORIA,     // [Instruccion] -> [String, String, String, String, String]
+	CPU_RECIBE_TAMAÑO_PAGINA_DE_MEMORIA,   // [Tam_pagina] -> [Int]
+	CPU_RECIBE_OUT_OF_MEMORY_DE_MEMORIA,   // VACIO
+	CPU_RECIBE_OK_DEL_RESIZE,              // VACIO -> falta implementar
+	CPU_RECIBE_NUMERO_DE_MARCO_DE_MEMORIA, // [NUMERO DE MARCO] -> [Int]   ->falta implementar
 
 	// IO A MEMORIA
 	IO_PIDE_LECTURA_MEMORIA,   // [Direccion Fisica, TAMAÑO, VALOR] 

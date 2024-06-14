@@ -28,7 +28,7 @@ void atender_cpu(){
                 free(buffer);
                 break;
 
-            case RESIZE:
+            case RESIZE: // cambiar
                 log_info(log_memoria, "CPU me pide un resize de un proceso");
                 buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
                 usleep(config_memoria->retardo_respuesta *1000);
