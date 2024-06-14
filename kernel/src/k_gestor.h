@@ -30,21 +30,29 @@ extern t_queue* cola_de_ready;
 extern t_queue* cola_de_execute;
 extern t_queue* cola_de_exit;
 extern t_queue* cola_de_blocked;
+extern t_queue* cola_prioridad_vrr;
+extern t_queue** colas_por_recurso;
+extern t_queue* cola_general_de_procesos;
 extern int pid_contador; 
 extern int conexion_kernel_cpu;
 extern int interrupcion_kernel_cpu;
 extern int conexion_kernel_memoria;
+extern int cantidad_recursos;
+extern pthread_mutex_t** mutex_por_recurso;
 extern pthread_mutex_t mutex_cola_de_ready;
 extern pthread_mutex_t mutex_cola_de_new;
 extern pthread_mutex_t mutex_grado_programacion;
 extern pthread_mutex_t mutex_cola_de_exit;
 extern pthread_mutex_t mutex_cola_de_blocked;
 extern pthread_mutex_t mutex_cola_de_execute;
+extern pthread_mutex_t mutex_cola_prioridad_vrr;
+extern pthread_mutex_t mutex_cola_general_de_procesos;
 extern sem_t sem_cola_de_ready;
 extern sem_t sem_cola_de_new;
 extern sem_t sem_multiprogramacion;
 extern sem_t destruir_hilo_interrupcion;
 extern sem_t sem_puedo_mandar_a_cpu;
+extern sem_t sem_cola_prioridad_vrr;
 
 
 #endif

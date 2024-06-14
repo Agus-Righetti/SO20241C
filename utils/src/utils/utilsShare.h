@@ -13,12 +13,12 @@
 #include<commons/string.h>
 #include<commons/config.h>
 #include<commons/bitarray.h> //Biblioteca para manejar bitarray (memoria)
-#include<string.h>           //-> ver si esta repetida
 #include<assert.h>
 #include<readline/readline.h>
 #include<pthread.h>          // Biblioteca para hilos
 #include<semaphore.h>        // Biblioteca para semaforos
 #include<math.h>             // Biblioteca para (ceil)
+#include <time.h>            // Biblioteca para usar clock()
 
 
 // ************* ESTRUCTURAS GLOBALES *************
@@ -36,12 +36,13 @@ typedef enum
 	MOV_OUT,
 
 	PEDIR_TAMANIO,
-	OUT_OF_MEMORY,
+	OUT_OF_MEMORY, // CAMBIAR ESTO
 
     CODIGO,
 	INTERRUPCION,
 	CPU,
 	DESALOJO, // Devolvemos PCB por interrupcion
+
 	MARCO,
 	INTERRUPCION_KERNEL,
 
@@ -54,6 +55,7 @@ typedef enum
 	IO_FS_TRUNCATE,
 	IO_FS_WRITE,
 	IO_FS_READ,
+
 	
 	// Interfaces
 	GENERICA,
@@ -134,7 +136,12 @@ typedef struct {
 	char* direccion_instrucciones; //es el path que me mandan por consola
 	pthread_mutex_t mutex_pcb;
 	t_list* instrucciones;
+<<<<<<< HEAD
 }pcb;
+=======
+	t_queue* recursos_asignados;
+} pcb;
+>>>>>>> kernel_maria
 
 // ************ DECLARACION DE FUNCIONES ************
 // ************ SERIALIZACION Y CONEXIONES GENERALES ************
