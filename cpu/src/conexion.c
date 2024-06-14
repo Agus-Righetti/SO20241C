@@ -106,12 +106,9 @@ void atender_kernel()
 void atender_interrupcion()
 {
     t_list* lista;
-    
-    while(1)
-    {
+    while(1) {
         int cod_op = recibir_operacion(socket_interrupt_kernel);
-        switch (cod_op) 
-        {
+        switch (cod_op) {
             case MENSAJE:
                 recibir_mensaje(socket_interrupt_kernel, log_cpu);
                 break;
@@ -121,7 +118,7 @@ void atender_interrupcion()
                 list_iterate(lista, (void*) iterator);
                 break;
             case INTERRUPCION_KERNEL:
-                log_info(log_cpu, "Me llego una interrupcion de KERNEL");
+                log_info(log_cpu, "Me llego una interrupcion de KERNEL, ahora voy a enviar el pcb");
                 enviar_pcb(socket_cliente_kernel, proceso, DESALOJO, NULL);
                 break;
             case -1:
@@ -133,6 +130,7 @@ void atender_interrupcion()
                 break;
         }
     }
+
 }
 
 void escuchar_memoria()

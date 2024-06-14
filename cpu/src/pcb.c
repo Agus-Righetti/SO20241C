@@ -31,8 +31,7 @@ void recibir_pcb(t_buffer* buffer, pcb** pcb_recibido)
     free(pcb_temp);
 }
 
-void enviar_pcb(int conexion, pcb *proceso, op_code codigo, char* recurso)
-{
+void enviar_pcb(int conexion, pcb *proceso, op_code codigo, char* recurso){
     t_paquete *paquete = crear_paquete_personalizado(PCB_CPU_A_KERNEL);
     agregar_estructura_al_paquete_personalizado(paquete, proceso, sizeof(pcb));
     
@@ -53,7 +52,13 @@ void enviar_pcb(int conexion, pcb *proceso, op_code codigo, char* recurso)
             return; // No hacer nada si el recurso no coincide
         }
     }
+
+    log_info(log_cpu, "Voy a enviar el pcb\n");
+
     enviar_paquete(paquete, conexion);
+
+    log_info(log_cpu, "Ya envie el pcb\n");
+
 	eliminar_paquete(paquete);
 }
 
