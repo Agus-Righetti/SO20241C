@@ -669,7 +669,7 @@ void desalojar_proceso(pcb* proceso){
     //Esto capaz se puede poner desde donde se la llama a la funcion
     log_info(log_kernel, "PID: %d - Desalojado por fin de Quantum", proceso->pid);
 
-    t_paquete* paquete_a_enviar = crear_paquete_personalizado(INTERRUPCION); // Creo un paquete con el codop especifico
+    t_paquete* paquete_a_enviar = crear_paquete_personalizado(INTERRUPCION_KERNEL); // Creo un paquete con el codop especifico
     enviar_paquete(paquete_a_enviar, interrupcion_kernel_cpu); // Lo mando vacio porque lo que interesa es el codop
 
     eliminar_paquete(paquete_a_enviar); // Libero el paquete
