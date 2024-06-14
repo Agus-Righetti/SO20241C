@@ -590,7 +590,7 @@ void instruccion_exit(char** parte)
 {
 	log_info(log_cpu, "PID: %d - Ejecutando: %s", proceso->pid, parte[0]);
 	proceso->program_counter++;
-	enviar_pcb(socket_cliente_kernel, proceso, EXIT, NULL);
+	enviar_pcb(socket_cliente_kernel, proceso, CPU_TERMINA_EJECUCION_PCB, NULL);
 	list_destroy_and_destroy_elements(proceso->instrucciones, free);
 	free(proceso);
 }

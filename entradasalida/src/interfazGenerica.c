@@ -8,10 +8,14 @@ void recibir_operacion_generica_de_kernel(InterfazGenerica* interfaz_generica, o
         int unidades_trabajo = recibir_unidades_trabajo(conexion_io_kernel);
         realizar_sleep(unidades_trabajo * interfaz_generica->tiempo_unidad_trabajo);
         log_info(log_io, "Operacion recibida: IO_GEN_SLEEP. Unidades de trabajo: %d", unidades_trabajo);
-    } else if (codigo == -1) {
+    } 
+    else if (codigo == -1) 
+    {
         log_error(log_io, "KERNEL se desconecto. Terminando servidor");
         exit(1);
-    } else {
+    } 
+    else 
+    {
         log_warning(log_io, "La operacion recibida no es para una interfaz GENERICA.\n");
     }
 }

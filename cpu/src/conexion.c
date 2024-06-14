@@ -104,7 +104,7 @@ void atender_interrupcion()
             log_info(log_cpu, "Me llegaron los siguientes valores:\n");
             list_iterate(lista, (void*) iterator);
             break;
-        case CPU_TERMINA_EJECUCION_PCB: // INTERRUPCION
+        case INTERRUPCION_KERNEL:
             log_info(log_cpu, "Me llego una interrupcion de KERNEL");
             enviar_pcb(socket_cliente_kernel, proceso, DESALOJO, NULL);
             break;
