@@ -6,6 +6,7 @@ void iterator(char* value)
 	log_info(log_kernel, "%s", value);
 }
 
+
 int main(int argc, char* argv[]) 
 {
     decir_hola("Kernel");
@@ -14,11 +15,11 @@ int main(int argc, char* argv[])
     cantidad_recursos = sizeof(config_kernel->instancias_recursos) / sizeof(config_kernel->instancias_recursos[0]);
 
     colas_por_recurso = malloc(cantidad_recursos * sizeof(t_queue*));
-    mutex_por_recurso = malloc(cantidad_recursos * sizeof(pthread_mutex_t*));
+    mutex_por_recurso = malloc(cantidad_recursos * sizeof(pthread_mutex_t));
 
     for (int i = 0; i < cantidad_recursos; i++) {
         colas_por_recurso[i] = queue_create();
-        pthread_mutex_init(mutex_por_recurso[i], NULL);
+        pthread_mutex_init(&mutex_por_recurso[i], NULL);
     }
 
     pthread_mutex_init(&mutex_cola_de_new,NULL);
@@ -82,7 +83,7 @@ int main(int argc, char* argv[])
 
     for (int i = 0; i < cantidad_recursos; i++) {
         queue_destroy(colas_por_recurso[i]);
-        pthread_mutex_destroy(mutex_por_recurso);
+        pthread_mutex_destroy(&mutex_por_recurso[i]);
     }
     free(colas_por_recurso);
     free(mutex_por_recurso);
