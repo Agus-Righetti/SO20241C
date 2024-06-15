@@ -93,12 +93,7 @@ int obtener_marco_segun_pagina (int pid, int nro_pag){
 		log_error(log_memoria, "NRO DE PÁGINA <%d> DEL PROCESO <%d> NO VALIDO", nro_pag, pid);
 		return -1;
 	}
-	// El número de página es válido, controlo el bit de presencia
-	// if(pagina_actual->presencia == 0){
-	// 	// Hubo page fault, la página no está en memoria
-	// 	log_error(log_memoria, "PAGE FAULT: NRO DE PÁGINA <%d> - PROCESO <%d>", nro_pag, pid);
-	// 	return -1;
-	// }
+	
 	// NO PUEDE HABER PAGE FAULT NO HAY MEMORIA VIRTUAL
 	
 	return pagina_actual->frame;

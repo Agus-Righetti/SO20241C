@@ -45,7 +45,8 @@ t_list* leer_archivo_y_cargar_instrucciones(char* archivo_pseudocodigo) {
 
     // EN CONFIG ME DICE DONDE ESTAN LOS PATH
     //char* direccion = strcat(config_memoria->path_instrucciones, archivo_pseudocodigo);
-    // ver si en config tengo que agregar una /
+    // ANTES DE EJECUTAR AGREGARLE AL CONFIG DE MEMORIA->PATH_INSTRUCCIONES UNA BARRA
+
     // POR AHORA DEJO LA LINEA DE ABAJO
     // para no hacer que todos tengan que crear una carpeta "sripts-pruebas"
 
@@ -156,9 +157,10 @@ void liberar_memoria_proceso(t_buffer* buffer){
         t_pagina* pagina_a_eliminar = list_get(tabla_paginas_a_eliminar, i);
 
             liberar_marco(pagina_a_eliminar->frame);
-
     }
-    // la destruyo? revisar
+    
+    log_info(log_memoria, "PID: <%d> - Tamaño: <%d>", pid_a_eliminar, list_size(proceso_a_eliminar->tabla_paginas));
+
     list_destroy(tabla_paginas_a_eliminar);
     list_destroy(proceso_a_eliminar->tabla_paginas);
 

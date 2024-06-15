@@ -23,8 +23,7 @@
 
 // ************* ESTRUCTURAS GLOBALES *************
 // ************* CODIGOS DE OPERACION *************
-typedef enum
-{
+typedef enum {
 	MENSAJE,
 	PAQUETE,
 	INSTRUCCION, 
@@ -83,8 +82,8 @@ typedef enum
 	CPU_RECIBE_NUMERO_DE_MARCO_DE_MEMORIA, // [NUMERO DE MARCO] -> [Int]
 
 	// IO A MEMORIA
-	IO_PIDE_LECTURA_MEMORIA,   // [Direccion Fisica, TAMAÑO, VALOR] 
-	IO_PIDE_ESCRITURA_MEMORIA, // [Direccion Fisica, TAMAÑO, VALOR]
+	IO_PIDE_LECTURA_MEMORIA,   // [PID, Direccion Fisica, TAMAÑO, VALOR] 
+	IO_PIDE_ESCRITURA_MEMORIA, // [PID, Direccion Fisica, TAMAÑO, VALOR]
 
 	IO_RECIBE_TRADUCCION_DE_KERNEL,
 	IO_RECIBE_RESPUESTA_DE_LECTURA_DE_MEM,
