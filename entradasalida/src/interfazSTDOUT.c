@@ -5,7 +5,7 @@ void leer_configuracion_stdout(Interfaz *configuracion)
     iniciar_config_stdout(configuracion);
 
     // Loggeamos el valor de config
-    log_info(log_io, "Lei el TIPO_INTERFAZ %s, el TIEMPO_UNIDAD_TRABAJO %s, el IP_KERNEL %s, el PUERTO_KERNEL %s, el IP_MEMORIA %s y el PUERTO_MEMORIA %s.", 
+    log_info(log_io, "Lei el TIPO_INTERFAZ %s, el TIEMPO_UNIDAD_TRABAJO %d, el IP_KERNEL %s, el PUERTO_KERNEL %d, el IP_MEMORIA %s y el PUERTO_MEMORIA %d.", 
              configuracion->archivo->tipo_interfaz, 
              configuracion->archivo->tiempo_unidad_trabajo,
              configuracion->archivo->ip_kernel, 
@@ -55,11 +55,11 @@ void liberar_configuracion_stdout(Interfaz* configuracion)
     if(configuracion) 
     {
         free(configuracion->archivo->tipo_interfaz);
-        free(configuracion->archivo->tiempo_unidad_trabajo);
+        // free(configuracion->archivo->tiempo_unidad_trabajo);
         free(configuracion->archivo->ip_kernel);
-        free(configuracion->archivo->puerto_kernel);
+        // free(configuracion->archivo->puerto_kernel);
         free(configuracion->archivo->ip_memoria);
-        free(configuracion->archivo->puerto_memoria);
+        // free(configuracion->archivo->puerto_memoria);
         free(configuracion->archivo);
     }
 }
@@ -70,18 +70,22 @@ void recibir_operacion_stdout_de_kernel(Interfaz* configuracion_stdout, op_code 
     if (codigo == IO_STDOUT_WRITE) 
     {
         // Lee los parámetros de la solicitud
-        char* interfaz = recibir_string_del_buffer(conexion_io_kernel);
-        char* registro_direccion = recibir_string_del_buffer(conexion_io_kernel);
-        char* registro_tamano = recibir_string_del_buffer(conexion_io_kernel);
+
+        t_buffer* buffer = recibiendo_paquete_personalizado(conexion_io_kernel);
+
+        char* interfaz = recibir_string_del_buffer(buffer);
+        char* registro_direccion = recibir_string_del_buffer(buffer);
+        char* registro_tamano = recibir_string_del_buffer(buffer);
+        int valor_registro = recibir_int_del_buffer(buffer);
+        int direccion_logica = recibir_int_del_buffer(buffer);
 
         // Convierte los registros a enteros
-        int direccion_logica = obtener_valor_registro(registro_direccion);
-        int tamano = obtener_valor_registro(registro_tamano);
+        // int direccion_logica = obtener_valor_registro(registro_direccion);
 
-        log_info(log_io, "Operacion recibida: IO_STDOUT_WRITE. Interfaz: %s, Dirección Lógica: %d, Tamaño: %d", interfaz, direccion_logica, tamano);
+        log_info(log_io, "Operacion recibida: IO_STDOUT_WRITE. Interfaz: %s, Dirección Lógica: %d, Tamaño: %s", interfaz, direccion_logica, registro_tamano);
 
         // Ejecutar la instrucción
-        ejecutar_instruccion_stdout(configuracion_stdout, direccion_logica, tamano);
+        ejecutar_instruccion_stdout(configuracion_stdout, direccion_logica, atoi (registro_tamano));
 
         // Libera memoria de los registros
         free(interfaz);
@@ -126,9 +130,6 @@ void ejecutar_instruccion_stdout(Interfaz* configuracion_stdout, int direccion_l
                 eliminar_paquete(paquete);
                 close(conexion_io_memoria);
                 break; 
-            case EXIT:
-                error_exit(EXIT);
-                break;
             case -1:
                 log_error(log_io, "MEMORIA se desconecto. Terminando servidor");
                 free(conexion_io_memoria);
@@ -160,9 +161,6 @@ int solicitar_traduccion_direccion(Interfaz* configuracion_stdout, int direccion
                 direccion_fisica = recibir_int_del_buffer(buffer);
                 free(buffer);
                 break;
-            case EXIT:
-                error_exit(EXIT);
-                break;
             case -1:
                 log_error(log_io, "KERNEL se desconecto. Terminando servidor");
                 return EXIT_FAILURE;
@@ -173,9 +171,4 @@ int solicitar_traduccion_direccion(Interfaz* configuracion_stdout, int direccion
     }
     eliminar_paquete(paquete);
     return direccion_fisica;
-}
-
-int obtener_valor_registro(char* registro) // Pedirlo a CPU
-{
-    return (int)dictionary_get(registros, registro);
 }

@@ -88,17 +88,17 @@ void iniciar_diccionario_instrucciones(void)
 void iniciar_diccionario_registros(registros_cpu* registro)
 {
 	registros = dictionary_create();
-	dictionary_put(registros, "PC", (void*)registro->pc);
-	dictionary_put(registros, "AX", (void*)registro->ax);
-	dictionary_put(registros, "BX", (void*)registro->bx);
-	dictionary_put(registros, "CX", (void*)registro->cx);
-	dictionary_put(registros, "DX", (void*)registro->dx);
-	dictionary_put(registros, "EAX", (void*)registro->eax);
-	dictionary_put(registros, "EBX", (void*)registro->ebx);
-	dictionary_put(registros, "ECX", (void*)registro->ecx);
-	dictionary_put(registros, "EDX", (void*)registro->edx);
-	dictionary_put(registros, "SI", (void*)registro->si);
-	dictionary_put(registros, "DI", (void*)registro->di);
+	dictionary_put(registros, "PC", &registro->pc);
+	dictionary_put(registros, "AX", &registro->ax);
+	dictionary_put(registros, "BX", &registro->bx);
+	dictionary_put(registros, "CX", &registro->cx);
+	dictionary_put(registros, "DX", &registro->dx);
+	dictionary_put(registros, "EAX", &registro->eax);
+	dictionary_put(registros, "EBX", &registro->ebx);
+	dictionary_put(registros, "ECX", &registro->ecx);
+	dictionary_put(registros, "EDX", &registro->edx);
+	dictionary_put(registros, "SI", &registro->si);
+	dictionary_put(registros, "DI", &registro->di);
 }
 
 void destruir_diccionarios(void) 
@@ -114,7 +114,6 @@ void solicitar_instrucciones_a_memoria(int socket_cliente_cpu, pcb** pcb_recibid
     if (pcb_recibido == NULL) 
     {
         log_error(log_cpu, "No se pudo reservar memoria para el PCB al recibir el PCB");
-        return NULL;
     }
 
     // Creo el paquete
@@ -244,7 +243,7 @@ void instruccion_mov_in(char **parte)
     // Traducimos la direccion del registro direccion
 	int direccion_fisica = traducir_direccion_logica_a_fisica(parte[2]); 
 	
-	char* instruccion = string_from_format("%s %s %s", parte[0], (char*)dictionary_get(registros, parte[1]), direccion_fisica);
+	char* instruccion = string_from_format("%s %s %d", parte[0], (char*)dictionary_get(registros, parte[1]), direccion_fisica);
 	
     // Pido espacio de memoria para la instruccion + /0
     char* instruccion_alloc = malloc(strlen(instruccion) + 1);
@@ -278,7 +277,7 @@ void instruccion_mov_out(char **parte)
     log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s", proceso->pid, parte[0], parte[1], parte[2]);
 	int direccion_fisica = traducir_direccion_logica_a_fisica(parte[1]);
 	
-	char* instruccion = string_from_format("%s %s %s", parte[0], direccion_fisica, parte[2]);
+	char* instruccion = string_from_format("%s %d %s", parte[0], direccion_fisica, parte[2]);
 	char* instruccion_alloc = malloc(strlen(instruccion) + 1);
 	strcpy(instruccion_alloc, instruccion);
     
@@ -492,7 +491,7 @@ void instruccion_io_gen_sleep(char **parte)
         log_error(log_cpu, "La interfaz indicada no es GENERICA.");
     }
     
-    printf("Solicitando a la interfaz %s que realice un sleep por %d unidades de trabajo...\n", interfaz, parte[2]);
+    printf("Solicitando a la interfaz %s que realice un sleep por %s unidades de trabajo...\n", interfaz, parte[2]);
     log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s", proceso->pid, parte[0], parte[1], parte[2]);
     solicitar_sleep_io(parte[1], unidades_trabajo, proceso->pid); // Esta función enviará la solicitud de sleep al Kernel
     printf("El sleep en la interfaz %s se ha completado.\n", interfaz);
@@ -572,20 +571,24 @@ void instruccion_io_stdout_write(char **parte)
     // Verificar que la cantidad de argumentos sea la correcta
     if (parte[1] == NULL || parte[2] == NULL || parte[3] == NULL) 
     {
-        log_error(log_cpu, "Argumentos incorrectos para la instrucción IO_STDIN_READ.");
+        log_error(log_cpu, "Argumentos incorrectos para la instrucción IO_STDOUT_WRITE.");
         return;
     }
 
     if(strcmp(parte[1], "STDOUT") != 0) 
     {
-        log_error(log_cpu, "La interfaz indicada no es STDIN.");
+        log_error(log_cpu, "La interfaz indicada no es STDOUT.");
     }
 
     char *interfaz = parte[1];
-    char *registro_direccion = parte[2];
+    char *registro_direccion = parte[2]; // Direccion logica
     char *registro_tamano = parte[3];
 
     log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s %s", proceso->pid, parte[0], parte[1], parte[2], parte[3]);
+
+    int valor_registro = (int)dictionary_get(registros, registro_tamano);
+    int direccion_logica = (int)dictionary_get(registros, registro_direccion);
+    // int direccion_fisica = traducir_direccion_logica_a_fisica(registro_direccion);
 
     // Crear paquete para enviar al Kernel
     t_paquete *paquete = crear_paquete_personalizado(IO_STDOUT_WRITE);
@@ -594,6 +597,8 @@ void instruccion_io_stdout_write(char **parte)
     agregar_string_al_paquete_personalizado(paquete, interfaz);
     agregar_string_al_paquete_personalizado(paquete, registro_direccion);
     agregar_string_al_paquete_personalizado(paquete, registro_tamano);
+    agregar_int_al_paquete_personalizado(paquete, valor_registro);
+    agregar_int_al_paquete_personalizado(paquete, direccion_logica);
 
     // Enviar paquete al Kernel
     enviar_paquete(paquete, socket_cliente_kernel);

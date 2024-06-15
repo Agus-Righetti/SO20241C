@@ -23,7 +23,7 @@ void leer_configuracion_stdin(Interfaz *configuracion)
     iniciar_config_stdin(configuracion);
 
     // Loggeamos el valor de config
-    log_info(log_io, "Lei el TIPO_INTERFAZ %s, el IP_KERNEL %s, el PUERTO_KERNEL %s, el IP_MEMORIA %s y el PUERTO_MEMORIA %s.", 
+    log_info(log_io, "Lei el TIPO_INTERFAZ %s, el IP_KERNEL %s, el PUERTO_KERNEL %d, el IP_MEMORIA %s y el PUERTO_MEMORIA %d.", 
              configuracion->archivo->tipo_interfaz, 
              configuracion->archivo->ip_kernel, 
              configuracion->archivo->puerto_kernel, 
@@ -91,9 +91,9 @@ void liberar_configuracion_stdin(Interfaz* configuracion)
     {
         free(configuracion->archivo->tipo_interfaz);
         free(configuracion->archivo->ip_kernel);
-        free(configuracion->archivo->puerto_kernel);
+        // free(configuracion->archivo->puerto_kernel);
         free(configuracion->archivo->ip_memoria);
-        free(configuracion->archivo->puerto_memoria);
+        // free(configuracion->archivo->puerto_memoria);
         free(configuracion->archivo);
     }
 }

@@ -7,6 +7,6 @@ void leer_consola();
 void leer_configuracion_stdin(Interfaz *configuracion);
 void iniciar_config_stdin(Interfaz *configuracion);
 void liberar_configuracion_stdin(Interfaz* configuracion);
-void recibir_operacion_stdin_de_kernel(STDIN, cod_op_io);
+void recibir_operacion_stdout_de_kernel(Interfaz* configuracion_stdout, op_code codigo);
 
 #endif

@@ -28,7 +28,7 @@ void atender_kernel()
                 break;
             case STDOUT:
                 leer_configuracion_stdout(&configuracion);
-                recibir_operacion_stdout_de_kernel(DIALFS, cod_op_io);
+                recibir_operacion_stdout_de_kernel(STDOUT, cod_op_io);
                 liberar_configuracion_stdout(&configuracion);
                 break;
             case DIALFS:

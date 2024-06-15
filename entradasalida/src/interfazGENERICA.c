@@ -59,7 +59,7 @@ void leer_configuracion_generica(Interfaz *configuracion)
     iniciar_config_generica(configuracion);
 
     // Loggeamos el valor de config
-    log_info(log_io, "Lei el TIPO_INTERFAZ %s, el TIEMPO_UNIDAD_TRABAJO %d, el IP_KERNEL %s y el PUERTO_KERNEL %s.", 
+    log_info(log_io, "Lei el TIPO_INTERFAZ %s, el TIEMPO_UNIDAD_TRABAJO %d, el IP_KERNEL %s y el PUERTO_KERNEL %d.", 
              configuracion->archivo->tipo_interfaz, 
              configuracion->archivo->tiempo_unidad_trabajo, 
              configuracion->archivo->ip_kernel, 
@@ -86,7 +86,7 @@ void liberar_configuracion_generica(Interfaz* configuracion)
     if(configuracion) {
         free(configuracion->archivo->tipo_interfaz);
         free(configuracion->archivo->ip_kernel);
-        free(configuracion->archivo->puerto_kernel);
+        // free(configuracion->archivo->puerto_kernel);
         free(configuracion->archivo);
     }
 }

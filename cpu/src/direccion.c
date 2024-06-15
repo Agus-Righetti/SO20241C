@@ -164,21 +164,6 @@ void inicializar_tlb()
     }
 }
 
-// // Recibo una solicitud_traduccion, la traduzco y la mando a kernel
-// void manejar_solicitud_traduccion(int socket_cliente_kernel) // Ver sockets 
-// {
-//     t_buffer* buffer = recibir_buffer(socket_cliente_kernel);
-//     int direccion_logica = recibir_int_del_buffer(buffer);
-
-//     int direccion_fisica = traducir_direccion_logica_a_fisica(direccion_logica);
-
-//     t_paquete* paquete = crear_paquete_personalizado(DEVOLVER_TRADUCCION);
-//     agregar_int_al_paquete_personalizado(paquete, direccion_fisica);
-//     enviar_paquete(paquete, socket_cliente_kernel);
-
-//     eliminar_paquete(paquete);
-// }
-
 // Despues de enviar la dire, kernel recibe la dirección física y envía IO_STDOUT_WRITE a la interfaz I/O.
 void enviar_direccion_fisica_a_kernel(int socket_cliente_kernel, int direccion_fisica) // Ver sockets
 {
