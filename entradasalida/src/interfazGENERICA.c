@@ -5,7 +5,9 @@ void recibir_operacion_generica_de_kernel(InterfazGenerica* interfaz_generica, o
     // Verificar si la operación es para una interfaz genérica
     if (codigo == IO_GEN_SLEEP) 
     {
-        int unidades_trabajo = recibir_unidades_trabajo(conexion_io_kernel);
+        t_buffer* buffer = recibiendo_paquete_personalizado(conexion_io_kernel);
+        int unidades_trabajo = recibir_int_del_buffer(buffer);
+
         realizar_sleep(unidades_trabajo * interfaz_generica->tiempo_unidad_trabajo);
         log_info(log_io, "Operacion recibida: IO_GEN_SLEEP. Unidades de trabajo: %d", unidades_trabajo);
     } 
@@ -64,14 +66,6 @@ void leer_configuracion_generica(Interfaz *configuracion)
              configuracion->archivo->tiempo_unidad_trabajo, 
              configuracion->archivo->ip_kernel, 
              configuracion->archivo->puerto_kernel);
-}
-
-int recibir_unidades_trabajo(int socket)
-{
-    // Implementa la lógica para recibir la cantidad de unidades de trabajo desde el Kernel
-    int unidades_trabajo;
-    recv(socket, &unidades_trabajo, sizeof(unidades_trabajo), 0);
-    return unidades_trabajo;
 }
 
 void realizar_sleep(int tiempo) 

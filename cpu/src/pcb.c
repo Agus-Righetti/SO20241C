@@ -198,15 +198,15 @@ void interpretar_instruccion_de_memoria(t_buffer* buffer)
         case I_IO_FS_DELETE:
             instruccion_io_fs_delete(parte);
             break;
-        // case I_IO_FS_TRUNCATE:
-        //     instruccion_io_fs_truncate(parte);
-        //     break;
-        // case I_IO_FS_WRITE:
-        //     instruccion_io_fs_write(parte);
-        //     break;
-        // case I_IO_FS_READ:
-        //     instruccion_io_fs_read(parte);
-        //     break;
+        case I_IO_FS_TRUNCATE:
+            instruccion_io_fs_truncate(parte);
+            break;
+        case I_IO_FS_WRITE:
+            instruccion_io_fs_write(parte);
+            break;
+        case I_IO_FS_READ:
+            instruccion_io_fs_read(parte);
+            break;
         case I_EXIT:
             instruccion_exit(parte);
             destruir_diccionarios();
@@ -586,8 +586,8 @@ void instruccion_io_stdout_write(char **parte)
 
     log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s %s", proceso->pid, parte[0], parte[1], parte[2], parte[3]);
 
-    int valor_registro = (int)dictionary_get(registros, registro_tamano);
-    int direccion_logica = (int)dictionary_get(registros, registro_direccion);
+    int valor_registro = *(int)dictionary_get(registros, registro_tamano);
+    int direccion_logica = *(int)dictionary_get(registros, registro_direccion);
     // int direccion_fisica = traducir_direccion_logica_a_fisica(registro_direccion);
 
     // Crear paquete para enviar al Kernel
@@ -612,6 +612,18 @@ void instruccion_io_fs_create(char **parte)
 {
     // IO_FS_CREATE Interfaz NombreArchivo
 
+    // Verificar que la cantidad de argumentos sea la correcta
+    if (parte[1] == NULL || parte[2] == NULL) 
+    {
+        log_error(log_cpu, "Argumentos incorrectos para la instruccion IO_FS_CREATE.");
+        return;
+    }
+
+    if(strcmp(parte[1], "DIALFS") != 0) 
+    {
+        log_error(log_cpu, "La interfaz indicada no es DIALFS.");
+    }
+
     log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s", proceso->pid, parte[0], parte[1], parte[2]);
 
     char *interfaz = parte[1];
@@ -626,12 +638,24 @@ void instruccion_io_fs_create(char **parte)
     enviar_paquete(paquete, socket_cliente_kernel);
     eliminar_paquete(paquete);
 
-    // proceso->program_counter++;
+    proceso->program_counter++;
 }
 
 void instruccion_io_fs_delete(char **parte)
 {
     // IO_FS_DELETE Int4 notas.txt
+    
+    // Verificar que la cantidad de argumentos sea la correcta
+    if (parte[1] == NULL || parte[2] == NULL) 
+    {
+        log_error(log_cpu, "Argumentos incorrectos para la instrucción IO_FS_DELETE.");
+        return;
+    }
+
+    if(strcmp(parte[1], "DIALFS") != 0) 
+    {
+        log_error(log_cpu, "La interfaz indicada no es DIALFS.");
+    }
 
     log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s", proceso->pid, parte[0], parte[1], parte[2]);
     
@@ -647,22 +671,129 @@ void instruccion_io_fs_delete(char **parte)
     enviar_paquete(paquete, socket_cliente_kernel);
     eliminar_paquete(paquete);
 
-    // proceso->program_counter++;
+    proceso->program_counter++;
 }
 
 void instruccion_io_fs_truncate(char **parte)
 {
+    // IO_FS_TRUNCATE Int4 notas.txt ECX
+
+    // Verificar que la cantidad de argumentos sea la correcta
+    if (parte[1] == NULL || parte[2] == NULL) 
+    {
+        log_error(log_cpu, "Argumentos incorrectos para la instrucción IO_FS_TRUNCATE.");
+        return;
+    }
+
+    if(strcmp(parte[1], "DIALFS") != 0) 
+    {
+        log_error(log_cpu, "La interfaz indicada no es DIALFS.");
+    }
     
+    // Log de la ejecucion de la instruccion
+    log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s %s", proceso->pid, parte[0], parte[1], parte[2], parte[3]);
+
+    // Extrae los parametros de la instruccion
+    char *interfaz = parte[1];
+    char *nombre_archivo = parte[2];
+    int nuevo_tamanio = atoi(parte[3]);
+
+    // Crear paquete para enviar al kernel con la instruccion IO_FS_TRUNCATE
+    t_paquete *paquete = crear_paquete_personalizado(IO_FS_TRUNCATE);
+    agregar_string_al_paquete_personalizado(paquete, interfaz);
+    agregar_string_al_paquete_personalizado(paquete, nombre_archivo);
+    agregar_int_al_paquete_personalizado(paquete, nuevo_tamanio);
+
+    // Enviar paquete al kernel utilizando el socket_cliente_kernel
+    enviar_paquete(paquete, socket_cliente_kernel);
+    eliminar_paquete(paquete);
+
+    // Incrementar el contador de programa del proceso, si es necesario
+    proceso->program_counter++;
 }
 
 void instruccion_io_fs_write(char **parte)
 {
-    
+    // IO_FS_WRITE Int4 notas.txt AX ECX EDX
+
+    // Verificar que la cantidad de argumentos sea la correcta
+    if (parte[1] == NULL || parte[2] == NULL) 
+    {
+        log_error(log_cpu, "Argumentos incorrectos para la instrucción IO_FS_WRITE.");
+        return;
+    }
+
+    if(strcmp(parte[1], "DIALFS") != 0) 
+    {
+        log_error(log_cpu, "La interfaz indicada no es DIALFS.");
+    }
+
+    // Log de la ejecución de la instrucción
+    log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s %s %s %s", proceso->pid, parte[0], parte[1], parte[2], parte[3], parte[4], parte[5]);
+
+    // Extrae los parámetros de la instrucción
+    char *interfaz = parte[1];
+    char *nombre_archivo = parte[2];
+    int registro_direccion = *(int*)dictionary_get(registros, parte[3]); // Registro que contiene la posición inicial
+    int registro_tamanio = *(int*)dictionary_get(registros, parte[4]); // Registro que contiene el tamaño de los datos
+    int registro_puntero_archivo = *(int*)dictionary_get(registros, parte[5]); // Registro que contiene los datos a escribir
+
+    // Crear paquete para enviar al kernel con la instrucción IO_FS_WRITE
+    t_paquete *paquete = crear_paquete_personalizado(IO_FS_WRITE);
+    agregar_string_al_paquete_personalizado(paquete, interfaz);
+    agregar_string_al_paquete_personalizado(paquete, nombre_archivo);
+    agregar_int_al_paquete_personalizado(paquete, registro_direccion);
+    agregar_int_al_paquete_personalizado(paquete, registro_tamanio);
+    agregar_int_al_paquete_personalizado(paquete, registro_puntero_archivo);
+
+    // Enviar paquete al kernel utilizando el socket_cliente_kernel
+    enviar_paquete(paquete, socket_cliente_kernel);
+    eliminar_paquete(paquete);
+
+    // Incrementar el contador de programa del proceso, si es necesario
+    proceso->program_counter++;
 }
 
 void instruccion_io_fs_read(char **parte)
 {
-    
+    // IO_FS_READ Int4 notas.txt BX ECX EDX
+
+       // Verificar que la cantidad de argumentos sea la correcta
+    if (parte[1] == NULL || parte[2] == NULL) 
+    {
+        log_error(log_cpu, "Argumentos incorrectos para la instrucción IO_FS_READ.");
+        return;
+    }
+
+    if(strcmp(parte[1], "DIALFS") != 0) 
+    {
+        log_error(log_cpu, "La interfaz indicada no es DIALFS.");
+    }
+
+    // Log de la ejecución de la instrucción
+    log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s %s %s %s", proceso->pid, parte[0], parte[1], parte[2], parte[3], parte[4], parte[5]);
+
+    // Extrae los parámetros de la instrucción
+    char *interfaz = parte[1];
+    char *nombre_archivo = parte[2];
+    int registro_direccion = *(int*)dictionary_get(registros, parte[3]); // Registro que contiene la posición inicial
+    int registro_tamanio= *(int*)dictionary_get(registros, parte[4]); // Registro que contiene el tamaño de los datos a leer
+    int registro_puntero_archivo = *(int*)dictionary_get(registros, parte[5]); // Registro donde se almacenarán los datos leídos
+
+    // Crear paquete para enviar al kernel con la instrucción IO_FS_READ
+    t_paquete *paquete = crear_paquete_personalizado(IO_FS_READ);
+    agregar_string_al_paquete_personalizado(paquete, interfaz);
+    agregar_string_al_paquete_personalizado(paquete, nombre_archivo);
+    agregar_int_al_paquete_personalizado(paquete, registro_direccion);
+    agregar_int_al_paquete_personalizado(paquete, registro_tamanio);
+    agregar_int_al_paquete_personalizado(paquete, registro_puntero_archivo);
+
+    // Enviar paquete al kernel utilizando el socket_cliente_kernel
+    enviar_paquete(paquete, socket_cliente_kernel);
+    eliminar_paquete(paquete);
+
+    // Incrementar el contador de programa del proceso, si es necesario
+    proceso->program_counter++;
 }
 
 void instruccion_exit(char** parte) 
