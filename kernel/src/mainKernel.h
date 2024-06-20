@@ -24,6 +24,7 @@ int conexion_kernel_cpu;
 int interrupcion_kernel_cpu;
 int conexion_kernel_memoria;
 int cantidad_recursos;
+bool interrupcion_por_fin_de_proceso;
 pthread_mutex_t mutex_cola_de_ready;
 pthread_mutex_t mutex_cola_de_new;
 pthread_mutex_t mutex_cola_de_exit;

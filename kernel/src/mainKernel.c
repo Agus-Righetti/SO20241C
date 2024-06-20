@@ -12,7 +12,7 @@ int main(int argc, char* argv[])
     decir_hola("Kernel");
     pid_contador = 0; //Va incrementando a medida que arrancamos un nuevo proceso
     
-    
+    interrupcion_por_fin_de_proceso = false;
 
     pthread_mutex_init(&mutex_cola_de_new,NULL);
     pthread_mutex_init(&mutex_cola_de_ready,NULL);

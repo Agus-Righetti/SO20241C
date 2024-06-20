@@ -38,6 +38,7 @@ extern int conexion_kernel_cpu;
 extern int interrupcion_kernel_cpu;
 extern int conexion_kernel_memoria;
 extern int cantidad_recursos;
+extern bool interrupcion_por_fin_de_proceso;
 extern pthread_mutex_t **mutex_por_recurso;
 extern pthread_mutex_t mutex_cola_de_ready;
 extern pthread_mutex_t mutex_cola_de_new;
