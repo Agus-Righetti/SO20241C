@@ -92,7 +92,7 @@ typedef enum {
 	PCB_CPU_A_KERNEL,
 	
 	CPU_TERMINA_EJECUCION_PCB //Flag para ver si el proceso ya se ejecuto del todo (1 o 0)
-}op_code;
+} op_code;
 
 // ************* SERIALIZACION *************
 typedef struct
