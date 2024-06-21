@@ -79,7 +79,14 @@ void leer_consola(void* arg){
         }else if(strcmp(partes[0], "EJECUTAR_SCRIPT") == 0){
             printf("Ha seleccionado la opción EJECUTAR_SCRIPT\n");
             ejecutar_script(partes[1]);
-        }else {
+        }else if(strcmp(partes[0], "INICIAR_PLANIFICACION") == 0){
+            printf("Ha seleccionaldo la opción INICIAR_PLANIFICACION\n");
+            iniciar_planificacion();
+        }else if(strcmp(partes[0], "DETENER_PLANIFICACION") == 0){
+            printf("Ha seleccionaldo la opción DETENER_PLANIFICACION\n");
+            detener_planificacion();
+        }
+        else {
             
             printf("Opción no válida\n");
         }
@@ -95,46 +102,57 @@ void enviar_proceso_a_cpu(){
 
     while(1){ // Para estar constantemente intentando enviar un proceso
 
-        sem_wait(&sem_puedo_mandar_a_cpu); // Espero si ya hay otro proceso ejecutando en CPU (solo se ejecuta de a un proceso)
-        pcb* proceso_seleccionado;
-        if((strcmp(config_kernel->algoritmo_planificacion, "VRR") == 0) && (queue_is_empty(cola_prioridad_vrr) == false))
-        { 
-            // Verifico si es VRR el algoritmo y si la cola de prioridad tiene algo, entonces voy a usar lo de esa cola prioritaria
+        pthread_mutex_lock(&mutex_planificacion_activa);
 
-            pthread_mutex_lock(&mutex_cola_prioridad_vrr); 
-            proceso_seleccionado = queue_pop(cola_prioridad_vrr); // Saco el proceso siguiente de la cola de prioridad
-            pthread_mutex_unlock(&mutex_cola_prioridad_vrr);
-
-        }else{
+        if(planificacion_activa){ // Si la planificación está activa hago el proceso común de mandar a Execute
             
-            sem_wait(&sem_cola_de_ready); // Si no hay nada en la cola de Ready no avanzo
-            log_info(log_kernel, "estoy dsp del semafoto de q hay algo en la cola de ready ");
-            pthread_mutex_lock(&mutex_cola_de_ready);
-            proceso_seleccionado = queue_pop(cola_de_ready); // Saco el proceso siguiente de la cola de Ready
-            pthread_mutex_unlock(&mutex_cola_de_ready);
-
-        }
-
-        if (proceso_seleccionado->estado_del_proceso == READY) // Verifico que el estado del proceso sea READY
-        {
+            pthread_mutex_unlock(&mutex_planificacion_activa);
             
-            pthread_mutex_lock(&proceso_seleccionado->mutex_pcb);
-            proceso_seleccionado->estado_del_proceso = EXECUTE; // Cambio el estado del proceso sacado de la cola de READY
-            pthread_mutex_unlock(&proceso_seleccionado->mutex_pcb);
-
-
-            log_info(log_kernel, "PID: %d - Estado Anterior: READY - Estado Actual: EXECUTE", proceso_seleccionado->pid); // Hago un log obligatorio 
+            sem_wait(&sem_puedo_mandar_a_cpu); // Espero si ya hay otro proceso ejecutando en CPU (solo se ejecuta de a un proceso)
             
-            enviar_pcb(proceso_seleccionado); // Envio el pcb a CPU
+            pcb* proceso_seleccionado;
+            if((strcmp(config_kernel->algoritmo_planificacion, "VRR") == 0) && (queue_is_empty(cola_prioridad_vrr) == false))
+            { 
+                // Verifico si es VRR el algoritmo y si la cola de prioridad tiene algo, entonces voy a usar lo de esa cola prioritaria
 
-            crear_hilo_proceso(proceso_seleccionado); // Inicio un hilo que maneje el algoritmo del proceso
+                pthread_mutex_lock(&mutex_cola_prioridad_vrr); 
+                proceso_seleccionado = queue_pop(cola_prioridad_vrr); // Saco el proceso siguiente de la cola de prioridad
+                pthread_mutex_unlock(&mutex_cola_prioridad_vrr);
 
-        }else
-        {
-            
-            error_show("El estado seleccionado no se encuentra en estado 'READY'"); // Si el proceso seleccionado no se encuentra en READY muestro un error
+            }else{
+                
+                sem_wait(&sem_cola_de_ready); // Si no hay nada en la cola de Ready no avanzo
+                log_info(log_kernel, "estoy dsp del semafoto de q hay algo en la cola de ready ");
+                pthread_mutex_lock(&mutex_cola_de_ready);
+                proceso_seleccionado = queue_pop(cola_de_ready); // Saco el proceso siguiente de la cola de Ready
+                pthread_mutex_unlock(&mutex_cola_de_ready);
 
-        }
+            }
+
+            if (proceso_seleccionado->estado_del_proceso == READY) // Verifico que el estado del proceso sea READY
+            {
+                
+                pthread_mutex_lock(&proceso_seleccionado->mutex_pcb);
+                proceso_seleccionado->estado_del_proceso = EXECUTE; // Cambio el estado del proceso sacado de la cola de READY
+                pthread_mutex_unlock(&proceso_seleccionado->mutex_pcb);
+
+
+                log_info(log_kernel, "PID: %d - Estado Anterior: READY - Estado Actual: EXECUTE", proceso_seleccionado->pid); // Hago un log obligatorio 
+                
+                enviar_pcb(proceso_seleccionado); // Envio el pcb a CPU
+
+                crear_hilo_proceso(proceso_seleccionado); // Inicio un hilo que maneje el algoritmo del proceso
+
+            }else
+            {
+                
+                error_show("El estado seleccionado no se encuentra en estado 'READY'"); // Si el proceso seleccionado no se encuentra en READY muestro un error
+
+            }
+        }else{ // Sino, simplemente no hago nada y vuelvo a consultar hasta que la planificación arranque de nuevo y pueda mandar el proceso que corresponde a Execute
+            pthread_mutex_unlock(&mutex_planificacion_activa);
+            usleep(100000); // Espero 0.1 segundos antes de seguir (así no saturo el CPU tanto con el while(1))
+        } 
     }
 }
 
@@ -145,24 +163,35 @@ void pasar_procesos_de_new_a_ready(){
     //Espera que haya procesos en la cola de New, si el grado de multiprogramacion lo permite, pasa los procesos a Ready para que se ejecuten
     
     pcb * proceso_a_mandar_a_ready;
+
     while(1)
     {
         //log_info(log_kernel, "Entre a pasar_procesos_de_new_a_ready"); 
+        pthread_mutex_lock(&mutex_planificacion_activa);
+
+        if(planificacion_activa){ // Chequeo si la planificación está activa (si lo está paso todo lo que pueda a Ready)
+            pthread_mutex_unlock(&mutex_planificacion_activa);
+
+            sem_wait(&sem_cola_de_new); // Uso semaforos sobre la cola y el grado de multiprogramacion porque son cosas compartidas
+            sem_wait(&sem_multiprogramacion); // Tanto para ver que haya procesos en New como para ver de no pasarme del grado de multiprogramacion
+            pthread_mutex_lock(&mutex_cola_de_new);
+            proceso_a_mandar_a_ready = queue_pop(cola_de_new); // Saco un proceso de la cola de New para despues pasarlo a Ready
+            pthread_mutex_unlock(&mutex_cola_de_new);
+
+            pthread_mutex_lock(&proceso_a_mandar_a_ready->mutex_pcb);
+            proceso_a_mandar_a_ready->estado_del_proceso = READY; // Le asigno el nuevo estado "Ready"
+            pthread_mutex_unlock(&proceso_a_mandar_a_ready->mutex_pcb);
+
+            pthread_mutex_lock(&mutex_cola_de_ready); // Tmbn semaforo porque es seccion critica 
+            queue_push(cola_de_ready,proceso_a_mandar_a_ready); // Ingreso el proceso a la cola de Ready. 
+            pthread_mutex_unlock(&mutex_cola_de_ready);
+            sem_post(&sem_cola_de_ready); // Agrego 1 al semaforo contador de la cola
+
+        }else{ // Sino, simplemente no hago nada, y dejo que se vuelva a chequear constantemente si la planificación está activa para, ahí sí pasar los procesos a Ready
+            pthread_mutex_unlock(&mutex_planificacion_activa);
+            usleep(100000); // Espero 0.1 segundos antes de seguir (así no saturo el CPU tanto con el while(1))
+        }
         
-        sem_wait(&sem_cola_de_new); // Uso semaforos sobre la cola y el grado de multiprogramacion porque son cosas compartidas
-        sem_wait(&sem_multiprogramacion); // Tanto para ver que haya procesos en New como para ver de no pasarme del grado de multiprogramacion
-        pthread_mutex_lock(&mutex_cola_de_new);
-        proceso_a_mandar_a_ready = queue_pop(cola_de_new); // Saco un proceso de la cola de New para despues pasarlo a Ready
-        pthread_mutex_unlock(&mutex_cola_de_new);
-
-        pthread_mutex_lock(&proceso_a_mandar_a_ready->mutex_pcb);
-        proceso_a_mandar_a_ready->estado_del_proceso = READY; // Le asigno el nuevo estado "Ready"
-        pthread_mutex_unlock(&proceso_a_mandar_a_ready->mutex_pcb);
-
-        pthread_mutex_lock(&mutex_cola_de_ready); // Tmbn semaforo porque es seccion critica 
-        queue_push(cola_de_ready,proceso_a_mandar_a_ready); // Ingreso el proceso a la cola de Ready. 
-        pthread_mutex_unlock(&mutex_cola_de_ready);
-        sem_post(&sem_cola_de_ready); // Agrego 1 al semaforo contador de la cola
     }
 }
 
@@ -422,7 +451,7 @@ void finalizar_proceso(char* pid_formato_char){
 }
 
 // ************* EJECUTA UN SCRIPT DE COMANDOS ************* 
-// Tengo que terminar los ifs cuando termine todos los comandos
+// Creo que ya están todos los ifs pero no toy seguro
 void ejecutar_script(char* script_path){
     
     FILE *archivo; // Declaro un archivo
@@ -462,6 +491,13 @@ void ejecutar_script(char* script_path){
         }else if(strcmp(partes[0], "EJECUTAR_SCRIPT") == 0){
             printf("Ha seleccionado la opción EJECUTAR_SCRIPT\n");
             ejecutar_script(partes[1]);
+        }
+        else if(strcmp(partes[0], "INICIAR_PLANIFICACION") == 0){
+            printf("Ha seleccionaldo la opción INICIAR_PLANIFICACION\n");
+            iniciar_planificacion();
+        }else if(strcmp(partes[0], "DETENER_PLANIFICACION") == 0){
+            printf("Ha seleccionaldo la opción DETENER_PLANIFICACION\n");
+            detener_planificacion();
         }else {
             
             printf("Opción no válida\n");
@@ -475,10 +511,29 @@ void ejecutar_script(char* script_path){
     
 }
 
+// ************* DETIENE LA PLANIFICACIÓN DE LOS PROCESOS ************* 
+void detener_planificacion() {
+    pthread_mutex_lock(&mutex_planificacion_activa);
+    if (planificacion_activa) {
+        planificacion_activa = 0;
+        log_info(log_kernel, "Planificación detenida \n");
+    } else {
+        log_info(log_kernel, "La planificación ya se encuentra detenida \n");
+    }
+    pthread_mutex_unlock(&mutex_planificacion_activa);
+}
 
-// Estos son los comandos por consola que faltan hacer
-void detener_planificacion();
-void iniciar_planificacion();
+// ************* REANUDA LA PLANIFICACIÓN DE LOS PROCESOS ************* 
+void iniciar_planificacion() {
+    pthread_mutex_lock(&mutex_planificacion_activa);
+    if (!planificacion_activa) {
+        planificacion_activa = 1;
+        log_info(log_kernel, "Planificación reanudada \n");
+    } else {
+        log_info(log_kernel, "La planificación ya se encuentra iniciada \n");
+    }
+    pthread_mutex_unlock(&mutex_planificacion_activa);
+}
     
 // ----------------------------------------------------------------------------------------
 // ------------- FIN FUNCIONES PROPIAS DE LOS COMANDOS INGRESADOS POR CONSOLA -------------
@@ -904,9 +959,10 @@ void pasar_proceso_a_exit(pcb* proceso){
 
     free(proceso->registros);
     free(proceso); 
+
     if(queue_size(cola_general_de_procesos) < config_kernel->grado_multiprogramacion)
     {
-        sem_post(&sem_multiprogramacion);//agrego 1 al grado de multiprogramacion solo si puedo
+        sem_post(&sem_multiprogramacion); //Agrego 1 al grado de multiprogramacion solo si puedo
     }
     return;
 }

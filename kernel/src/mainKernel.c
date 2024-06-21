@@ -21,6 +21,7 @@ int main(int argc, char* argv[])
     pthread_mutex_init(&mutex_cola_de_blocked,NULL);
     pthread_mutex_init(&mutex_cola_prioridad_vrr,NULL);
     pthread_mutex_init(&mutex_cola_general_de_procesos,NULL);
+    pthread_mutex_init(&mutex_planificacion_activa,NULL);
     cola_de_new = queue_create();
     cola_de_ready = queue_create();
     cola_de_execute = queue_create();
@@ -98,6 +99,7 @@ int main(int argc, char* argv[])
     pthread_mutex_destroy(&mutex_cola_de_blocked);
     pthread_mutex_destroy(&mutex_cola_de_execute);
     pthread_mutex_destroy(&mutex_cola_prioridad_vrr);
+    pthread_mutex_destroy(&mutex_planificacion_activa);
     sem_destroy(&sem_cola_de_ready);
     sem_destroy(&sem_cola_de_new);
     sem_destroy(&sem_multiprogramacion);
