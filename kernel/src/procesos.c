@@ -123,7 +123,7 @@ void enviar_proceso_a_cpu(){
             pthread_mutex_unlock(&proceso_seleccionado->mutex_pcb);
 
 
-            log_info(log_kernel, "LOG POLEMICO --> PID: %d - Estado Anterior: READY - Estado Actual: EXECUTE", proceso_seleccionado->pid); // Hago un log obligatorio 
+            log_info(log_kernel, "PID: %d - Estado Anterior: READY - Estado Actual: EXECUTE", proceso_seleccionado->pid); // Hago un log obligatorio 
             
             enviar_pcb(proceso_seleccionado); // Envio el pcb a CPU
 
@@ -190,7 +190,14 @@ void iniciar_proceso(char* path ){
     nuevo_pcb->pid = pid_contador;
     nuevo_pcb->quantum = config_kernel->quantum; // Al iniciar el proceso tiene todo su quantum disponible
     nuevo_pcb->recursos_asignados = queue_create();
+    if(queue_is_empty(nuevo_pcb->recursos_asignados))
+    {
+        log_info(log_kernel, "la cola esta bien inicializada, esta vacia");
+    }
     nuevo_pcb->registros = malloc(sizeof(registros_cpu)); 
+    if (nuevo_pcb->registros == NULL) {
+        log_error(log_kernel, "Error al asignar memoria para registros\n");
+    }
     nuevo_pcb->registros->ax = 0;
     nuevo_pcb->registros->bx = 0;
     nuevo_pcb->registros->cx = 0;
@@ -498,6 +505,8 @@ void enviar_pcb(pcb* proceso) {
     enviar_paquete(paquete_pcb, conexion_kernel_cpu); // Envio el paquete a través del socket
 
     eliminar_paquete(paquete_pcb); // Libero el paquete
+
+    return;
 }
 
 // ----------------------------------------------------------------------
@@ -592,8 +601,12 @@ void recibir_pcb_hilo(void* arg){
 // ************* RECIBE EL PCB NORMALMENTE (SIN INTERRUPCION) SEGUN ALGORITMO *************
 void recibir_pcb(pcb* proceso) {
 
-    log_info(log_kernel, "Entre a recibir pcb por pid: %d" , proceso->pid);
-    
+    char* estado_anterior = obtener_char_de_estado(proceso->estado_del_proceso);
+
+    pcb* proceso_recibido;
+
+    log_info(log_kernel, "Entre a recibir pcb por pid: %d, su estado es : %s" , proceso->pid, estado_anterior);
+
     clock_t inicio, fin; // Inicio un reloj, cuenta el tiempo que estuvo esperando hasta que llegue el paquete (sirve para VRR)
     int tiempo_que_tardo_en_recibir;
 
@@ -645,7 +658,7 @@ void recibir_pcb(pcb* proceso) {
                 break;
         }
 
-        log_info(log_kernel, "ya recibi el paquete pid: %d" , proceso->pid);
+        //log_info(log_kernel, "ya recibi el paquete pid: %d" , proceso->pid);
         tiempo_que_tardo_en_recibir = (int)((double)(fin - inicio) * 1000.0 / CLOCKS_PER_SEC); // Calculo el tiempo que me tarde en recibir el PCB
 
         if(strcmp(config_kernel->algoritmo_planificacion, "RR") == 0 || strcmp(config_kernel->algoritmo_planificacion, "VRR") == 0)
@@ -654,43 +667,72 @@ void recibir_pcb(pcb* proceso) {
             sem_post(&destruir_hilo_interrupcion);
         }
 
-        proceso = recibir_estructura_del_buffer(buffer); // Asigno al proceso lo que viene del buffer
+        proceso_recibido = recibir_estructura_del_buffer(buffer); // Asigno al proceso lo que viene del buffer
+        
+        estado_anterior = obtener_char_de_estado(proceso_recibido->estado_del_proceso);
+
+        log_info(log_kernel, "ya recibi el paquete pid: %d, con estado: %s" , proceso_recibido->pid, estado_anterior);
 
         // Si estoy haciendo un Wait o Signal, entonces tambien tengo que recibir el indice del recurso necesitado para poder manejarlo
 
         if(codigo_operacion == WAIT)
         {
             int indice_recurso = recibir_int_del_buffer(buffer); // Obtengo el indice del recurso que se usa para manejarlo
-            flag_estado = hacer_wait(indice_recurso, proceso); // Asigno un flag que sirve para manejar el estado del proceso
+            flag_estado = hacer_wait(indice_recurso, proceso_recibido); // Asigno un flag que sirve para manejar el estado del proceso
 
         }else if(codigo_operacion == SIGNAL)
         {
             int indice_recurso = recibir_int_del_buffer(buffer); // Obtengo el indice del recurso que se usa para manejarlo
-            flag_estado = hacer_signal(indice_recurso, proceso); // Asigno un flag que sirve para manejar el estado del proceso
+            flag_estado = hacer_signal(indice_recurso, proceso_recibido); // Asigno un flag que sirve para manejar el estado del proceso
         }
         
         if(strcmp(config_kernel->algoritmo_planificacion, "VRR") == 0) // Si estoy recibiendo a traves del algoritmo VRR
         {
-            proceso->quantum = proceso->quantum - tiempo_que_tardo_en_recibir; // Le asigno el quantum que le queda disponible
+            proceso_recibido->quantum = proceso->quantum - tiempo_que_tardo_en_recibir; // Le asigno el quantum que le queda disponible
         };
 
     }else // Si la interrupción es por fin de proceso, voy a recibir el pcb y lo mando a exit de una
     {
         log_info(log_kernel,"Entre al if para recibir por finalizar proceso");
+
         interrupcion_por_fin_de_proceso = false;
         flag_estado = 1;  
         buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu);
-        proceso = recibir_estructura_del_buffer(buffer);
+        proceso_recibido = recibir_estructura_del_buffer(buffer);
     }
+
+    estado_anterior = obtener_char_de_estado(proceso_recibido->estado_del_proceso);
+
+    log_info(log_kernel, "ya recibi el paquete pid: %d, con estado: %s" , proceso_recibido->pid, estado_anterior);
+    //en esta linea ya da error, nos estan mandando mal el PCB
+    log_info(log_kernel, "el registro AX recibido es: %d " , proceso_recibido->registros->ax);
+
     
-    log_info(log_kernel, "Recibi PID: %d", proceso->pid); 
+    if(proceso_recibido == NULL)
+    {
+        log_info(log_kernel, "Estamos recibiendo mal el proceso");
+
+    } 
+    if(proceso_recibido->registros == NULL)
+    {
+        log_info(log_kernel, "Hay problema en los registros recibidos");
+
+    } 
+
+    // if(queue_is_empty(proceso_recibido->recursos_asignados))
+    // {
+    //     log_info(log_kernel, "el pcb recibido no tiene recursos asignados");
+
+    // } 
+    
+    log_info(log_kernel, "Recibi PID: %d", proceso_recibido->pid); 
     
     free(buffer->stream); // Libero directamente el buffer, no arme paquete asi que no hace falta
     free(buffer);
 
     sem_post(&sem_puedo_mandar_a_cpu); // Aviso que ya volvio el proceso que estaba en CPU, puedo mandar otro
 
-    accionar_segun_estado(proceso, flag_estado); // Mando el proceso a Ready o Exit segun corresponda
+    accionar_segun_estado(proceso_recibido, flag_estado); // Mando el proceso a Ready o Exit segun corresponda
     
     return;
 }
@@ -816,10 +858,12 @@ void pasar_proceso_a_exit(pcb* proceso){
     log_info(log_kernel, "entre a pasar proceso a exit por PID %d", proceso->pid);
     //En esta funcion faltan liberar los recursos q tenia el proceso
     char* estado_anterior = obtener_char_de_estado(proceso->estado_del_proceso); // Devuelvo el estado como string
+    log_info(log_kernel, "entre a pasar proceso a exit  antes del mutex");
 
     pthread_mutex_lock(&proceso->mutex_pcb);
     proceso->estado_del_proceso = EXIT; // Asigno el estado del proceso como Exit
     pthread_mutex_unlock(&proceso->mutex_pcb);
+    log_info(log_kernel, "entre a pasar proceso a exit  dsp del mutex");
 
     if (proceso->recursos_asignados == NULL) {
         log_info(log_kernel, "Error: 'proceso->recursos_asignados' no está inicializado.\n");
@@ -830,15 +874,21 @@ void pasar_proceso_a_exit(pcb* proceso){
     //     int recurso_a_liberar = (int)(intptr_t)queue_peek(proceso->recursos_asignados); // Entonces libero los recursos correspondientes 
     //     hacer_signal(recurso_a_liberar, proceso);
     // }
+
+    
     
     pthread_mutex_lock(&mutex_cola_general_de_procesos); // Bloqueo la cola gral para sacar el proceso q paso a exit
+    log_info(log_kernel, "entre a pasar proceso a exit  dsp del mutex de cola gral");
 
     pcb* primer_pcb_cola_gral = queue_pop(cola_general_de_procesos);
 
     pcb* aux = primer_pcb_cola_gral;
     log_info (log_kernel, "aux = %d y el q busco es igual a = %d" , aux->pid, proceso->pid);
+
     while(aux->pid != proceso->pid)
     {
+        //log_info(log_kernel, "en el while");
+
         queue_push(cola_general_de_procesos, aux); // Agrego el q saque de la cola gral
         aux = queue_pop(cola_general_de_procesos); // Saco el proximo de la cola
     }
@@ -846,13 +896,19 @@ void pasar_proceso_a_exit(pcb* proceso){
 
     log_info(log_kernel, "PID: %d - Estado Anterior: %s - Estado Actual: EXIT", proceso->pid, estado_anterior);
 
+    if(proceso->registros == NULL)
+    {
+        log_info(log_kernel, "Hay un problema con los registros del PCB");
+
+    } 
+
     free(proceso->registros);
     free(proceso); 
     if(queue_size(cola_general_de_procesos) < config_kernel->grado_multiprogramacion)
     {
         sem_post(&sem_multiprogramacion);//agrego 1 al grado de multiprogramacion solo si puedo
     }
-     
+    return;
 }
 
 // ************* PASA EL PROCESO SELECCIONADO A BLOCKED *************
@@ -964,6 +1020,8 @@ void sacar_de_execute(int pid){
     queue_push(cola_general_de_procesos, aux);
     
     pthread_mutex_unlock(&mutex_cola_general_de_procesos);
+
+    sem_post(&destruir_hilo_interrupcion);
     
     desalojar_proceso(aux);
     
