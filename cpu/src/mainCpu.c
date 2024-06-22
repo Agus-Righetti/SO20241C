@@ -19,9 +19,9 @@ int main(int argc, char* argv[])
 	escuchar_kernel();
 
     // Verificar los valores fuera de la función
-    printf("Verificación fuera de la función:\n");
-    printf("El PID es: %d\n", (*pcb_recibido)->pid);
-    printf("El PC es: %d\n", (*pcb_recibido)->program_counter);
+    // printf("Verificación fuera de la función:\n");
+    // printf("El PID es: %d\n", (*pcb_recibido)->pid);
+    // printf("El PC es: %d\n", (*pcb_recibido)->program_counter);
 	
 	// Instrucciones con memoria
 	
