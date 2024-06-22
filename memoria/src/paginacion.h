@@ -14,4 +14,7 @@ t_list* buscar_marcos_libres();
 void eliminar_lista(t_list* lista);
 void eliminar_algo(void* algo);
 
+void guardar_en_memoria(void *dato, size_t tamano, size_t offset) ;
+void* leer_desde_memoria(size_t tamano, size_t offset) ;
+
 #endif

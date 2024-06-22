@@ -60,6 +60,10 @@ int traducir_direccion_logica_a_fisica(int direccion_logica)
     }
 }   
 
+// **************************************************************************************************
+
+// **************************************************************************************************
+
 TLB_Entrada buscar(int numero_pagina) 
 {
     for(int i = 0; i < tlb->cantidad_entradas; i++) 

@@ -253,6 +253,9 @@ void instruccion_mov_in(char **parte)
 
 	log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s", proceso->pid, parte[0], parte[1], parte[2]);
     
+    // Podria abstraer la traduccion y la busqueda en una funcion que me devuelva directo el valor leido en la DL dada
+    void* valor_leido = traducir_y_buscar_en_memoria(parte[2],)
+
     // Traducimos la direccion del registro direccion
 	int direccion_fisica = traducir_direccion_logica_a_fisica(parte[2]); 
 	
