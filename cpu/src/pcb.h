@@ -36,7 +36,7 @@ typedef struct
     int tamanio;
 } t_instruccion;
 
-void recibir_pcb(t_buffer* buffer, pcb** pcb_recibido);
+void recibir_pcb();
 void enviar_pcb(int conexion, pcb *proceso, op_code codigo, char* recurso);
 // void recibir_instruccion(t_list *paquete, t_instruccion *proceso);
 
@@ -56,11 +56,11 @@ void instruccion_resize(char **parte);
 void instruccion_copy_string(char **parte);
 void instruccion_io_gen_sleep(char **parte);
 void solicitar_sleep_io(const char *interfaz, int unidades_trabajo, int pid);
-void intruccion_io_fs_create(char **parte);
-void intruccion_io_fs_delete(char **parte);
-void intruccion_io_fs_truncate(char **parte);
-void intruccion_io_fs_write(char **parte);
-void intruccion_io_fs_read(char **parte);
+void instruccion_io_fs_create(char **parte);
+void instruccion_io_fs_delete(char **parte);
+void instruccion_io_fs_truncate(char **parte);
+void instruccion_io_fs_write(char **parte);
+void instruccion_io_fs_read(char **parte);
 void instruccion_io_stdin_read(char** parte);
 void instruccion_io_stdout_write(char** parte); 
 void instruccion_exit(char** parsed); 

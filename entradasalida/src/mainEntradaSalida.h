@@ -4,8 +4,10 @@
 #include "io_gestor.h"
 #include "configuracion.h"
 #include "cliente.h"
-#include "interfazGenerica.h"
+#include "interfazGENERICA.h"
 #include "interfazSTDIN.h"
+#include "interfazSTDOUT.h"
+#include "interfazDIALFS.h"
 #include "conexion.h"
 
 t_log* log_io;

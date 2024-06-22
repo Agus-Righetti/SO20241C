@@ -23,7 +23,7 @@ t_dictionary* instrucciones;
 t_dictionary* registros;
 
 pcb* proceso = NULL;
-pcb** pcb_recibido = &proceso; // Asignación de la dirección de proceso a pcb_recibido
+// pcb** pcb_recibido = &proceso; // Asignación de la dirección de proceso a pcb_recibido
 
 TLB* tlb; 
 int cantidad_entradas_tlb;

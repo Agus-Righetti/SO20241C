@@ -43,7 +43,7 @@ extern int socket_interrupt_kernel;
 extern pcb* proceso;
 extern t_dictionary* instrucciones;
 extern t_dictionary* registros;
-extern pcb** pcb_recibido;
+// extern pcb** pcb_recibido;
 extern TLB* tlb;
 extern int cantidad_entradas_tlb;
 extern int algoritmo_tlb;

@@ -2,43 +2,48 @@
 
 // PCB -----------------------------------------------------------------------------------------------------------------------------
 
-void recibir_pcb(t_buffer* buffer, pcb** pcb_recibido)
-{
-    pcb* pcb_temp = recibir_estructura_del_buffer(buffer);
-
-    if (pcb_temp == NULL) {
+void recibir_pcb()
+{   
+    t_buffer* buffer_pcb = recibiendo_paquete_personalizado(socket_cliente_kernel);
+    pcb* pcb_recibido = recibir_estructura_del_buffer(buffer_pcb);
+    
+    if (pcb_recibido == NULL) {
         log_error(log_cpu, "No se pudo recibir el PCB. La estructura recibida es NULL.");
         return;
     }
 
-    *pcb_recibido = malloc(sizeof(pcb));
+    // *pcb_recibido = malloc(sizeof(pcb));
 
-    if (*pcb_recibido == NULL) {
-        log_error(log_cpu, "No se pudo asignar memoria para pcb_recibido");
-        free(pcb_temp);
-        return;
-    }
+    // t_buffer * buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu);
+    // proceso = recibir_Estructura_del_buffer(buffer);
+
+    // if (pcb_recibido == NULL) {
+    //     log_error(log_cpu, "No se pudo asignar memoria para pcb_recibido");
+    //     free(pcb_recibido);
+    //     return;
+    // }
 
     // Asignar los valores recibidos a la estructura pasada por referencia
-    (*pcb_recibido)->pid = pcb_temp->pid;
-    (*pcb_recibido)->program_counter = pcb_temp->program_counter;
+    // (*pcb_recibido)->pid = pcb_temp->pid;
+    // (*pcb_recibido)->program_counter = pcb_temp->program_counter;
 
     // Acordarse de sacarlos!!!!!!
-    log_info(log_cpu, "El PID es: %d", (*pcb_recibido)->pid);
-    log_info(log_cpu, "El PC es: %d", (*pcb_recibido)->program_counter);
+    log_info(log_cpu, "El PID es: %d", pcb_recibido->pid);
+    log_info(log_cpu, "El PC es: %d", pcb_recibido->program_counter);
+
+    solicitar_instrucciones_a_memoria(socket_cliente_cpu, pcb_recibido);
+
 
     // Liberar la estructura temporal si es necesario
-    free(pcb_temp);
+    // free(pcb_recibido);
+    free(buffer_pcb);
 }
 
 void enviar_pcb(int conexion, pcb *proceso, op_code codigo, char* recurso){
     t_paquete *paquete = crear_paquete_personalizado(PCB_CPU_A_KERNEL);
     agregar_estructura_al_paquete_personalizado(paquete, proceso, sizeof(pcb));
     
-    if (recurso == NULL) {
-        return; // No hacer nada si el recurso es NULL
-    }
-    else
+    if (recurso != NULL) 
     {
         int recurso_valor = atoi(recurso);
 
@@ -48,8 +53,6 @@ void enviar_pcb(int conexion, pcb *proceso, op_code codigo, char* recurso){
             agregar_int_al_paquete_personalizado(paquete, 1); 
         } else if (recurso_valor == 3) {
             agregar_int_al_paquete_personalizado(paquete, 2); 
-        } else {
-            return; // No hacer nada si el recurso no coincide
         }
     }
 
@@ -60,6 +63,7 @@ void enviar_pcb(int conexion, pcb *proceso, op_code codigo, char* recurso){
     log_info(log_cpu, "Ya envie el pcb\n");
 
 	eliminar_paquete(paquete);
+    return;
 }
 
 // Diccionario ---------------------------------------------------------------------------------------------------------------------
@@ -93,17 +97,17 @@ void iniciar_diccionario_instrucciones(void)
 void iniciar_diccionario_registros(registros_cpu* registro)
 {
 	registros = dictionary_create();
-	dictionary_put(registros, "PC", (void*)registro->pc);
-	dictionary_put(registros, "AX", (void*)registro->ax);
-	dictionary_put(registros, "BX", (void*)registro->bx);
-	dictionary_put(registros, "CX", (void*)registro->cx);
-	dictionary_put(registros, "DX", (void*)registro->dx);
-	dictionary_put(registros, "EAX", (void*)registro->eax);
-	dictionary_put(registros, "EBX", (void*)registro->ebx);
-	dictionary_put(registros, "ECX", (void*)registro->ecx);
-	dictionary_put(registros, "EDX", (void*)registro->edx);
-	dictionary_put(registros, "SI", (void*)registro->si);
-	dictionary_put(registros, "DI", (void*)registro->di);
+	dictionary_put(registros, "PC", &registro->pc);
+	dictionary_put(registros, "AX", &registro->ax);
+	dictionary_put(registros, "BX", &registro->bx);
+	dictionary_put(registros, "CX", &registro->cx);
+	dictionary_put(registros, "DX", &registro->dx);
+	dictionary_put(registros, "EAX", &registro->eax);
+	dictionary_put(registros, "EBX", &registro->ebx);
+	dictionary_put(registros, "ECX", &registro->ecx);
+	dictionary_put(registros, "EDX", &registro->edx);
+	dictionary_put(registros, "SI", &registro->si);
+	dictionary_put(registros, "DI", &registro->di);
 }
 
 void destruir_diccionarios(void) 
@@ -119,7 +123,6 @@ void solicitar_instrucciones_a_memoria(int socket_cliente_cpu, pcb** pcb_recibid
     if (pcb_recibido == NULL) 
     {
         log_error(log_cpu, "No se pudo reservar memoria para el PCB al recibir el PCB");
-        return NULL;
     }
 
     // Creo el paquete
@@ -195,24 +198,24 @@ void interpretar_instruccion_de_memoria(t_buffer* buffer)
         case I_IO_STDIN_READ:
             instruccion_io_stdin_read(parte);
             break;
-        // case I_IO_STDOUT_WRITE:
-        //     instruccion_io_stdout_write(parte);
-        //     break;
-        // case I_IO_FS_CREATE:
-        //     instruccion_io_fs_create(parte);
-        //     break;
-        // case I_IO_FS_DELETE:
-        //     instruccion_io_fs_delete(parte);
-        //     break;
-        // case I_IO_FS_TRUNCATE:
-        //     instruccion_io_fs_truncate(parte);
-        //     break;
-        // case I_IO_FS_WRITE:
-        //     instruccion_io_fs_write(parte);
-        //     break;
-        // case I_IO_FS_READ:
-        //     instruccion_io_fs_read(parte);
-        //     break;
+        case I_IO_STDOUT_WRITE:
+            instruccion_io_stdout_write(parte);
+            break;
+        case I_IO_FS_CREATE:
+            instruccion_io_fs_create(parte);
+            break;
+        case I_IO_FS_DELETE:
+            instruccion_io_fs_delete(parte);
+            break;
+        case I_IO_FS_TRUNCATE:
+            instruccion_io_fs_truncate(parte);
+            break;
+        case I_IO_FS_WRITE:
+            instruccion_io_fs_write(parte);
+            break;
+        case I_IO_FS_READ:
+            instruccion_io_fs_read(parte);
+            break;
         case I_EXIT:
             instruccion_exit(parte);
             destruir_diccionarios();
@@ -249,7 +252,7 @@ void instruccion_mov_in(char **parte)
     // Traducimos la direccion del registro direccion
 	int direccion_fisica = traducir_direccion_logica_a_fisica(parte[2]); 
 	
-	char* instruccion = string_from_format("%s %s %s", parte[0], (char*)dictionary_get(registros, parte[1]), direccion_fisica);
+	char* instruccion = string_from_format("%s %s %d", parte[0], (char*)dictionary_get(registros, parte[1]), direccion_fisica);
 	
     // Pido espacio de memoria para la instruccion + /0
     char* instruccion_alloc = malloc(strlen(instruccion) + 1);
@@ -283,7 +286,7 @@ void instruccion_mov_out(char **parte)
     log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s", proceso->pid, parte[0], parte[1], parte[2]);
 	int direccion_fisica = traducir_direccion_logica_a_fisica(parte[1]);
 	
-	char* instruccion = string_from_format("%s %s %s", parte[0], direccion_fisica, parte[2]);
+	char* instruccion = string_from_format("%s %d %s", parte[0], direccion_fisica, parte[2]);
 	char* instruccion_alloc = malloc(strlen(instruccion) + 1);
 	strcpy(instruccion_alloc, instruccion);
     
@@ -497,7 +500,7 @@ void instruccion_io_gen_sleep(char **parte)
         log_error(log_cpu, "La interfaz indicada no es GENERICA.");
     }
     
-    printf("Solicitando a la interfaz %s que realice un sleep por %d unidades de trabajo...\n", interfaz, parte[2]);
+    printf("Solicitando a la interfaz %s que realice un sleep por %s unidades de trabajo...\n", interfaz, parte[2]);
     log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s", proceso->pid, parte[0], parte[1], parte[2]);
     solicitar_sleep_io(parte[1], unidades_trabajo, proceso->pid); // Esta función enviará la solicitud de sleep al Kernel
     printf("El sleep en la interfaz %s se ha completado.\n", interfaz);
@@ -577,20 +580,24 @@ void instruccion_io_stdout_write(char **parte)
     // Verificar que la cantidad de argumentos sea la correcta
     if (parte[1] == NULL || parte[2] == NULL || parte[3] == NULL) 
     {
-        log_error(log_cpu, "Argumentos incorrectos para la instrucción IO_STDIN_READ.");
+        log_error(log_cpu, "Argumentos incorrectos para la instrucción IO_STDOUT_WRITE.");
         return;
     }
 
     if(strcmp(parte[1], "STDOUT") != 0) 
     {
-        log_error(log_cpu, "La interfaz indicada no es STDIN.");
+        log_error(log_cpu, "La interfaz indicada no es STDOUT.");
     }
 
     char *interfaz = parte[1];
-    char *registro_direccion = parte[2];
+    char *registro_direccion = parte[2]; // Direccion logica
     char *registro_tamano = parte[3];
 
     log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s %s", proceso->pid, parte[0], parte[1], parte[2], parte[3]);
+
+    int valor_registro = (int)dictionary_get(registros, registro_tamano);
+    int direccion_logica = (int)dictionary_get(registros, registro_direccion);
+    // int direccion_fisica = traducir_direccion_logica_a_fisica(registro_direccion);
 
     // Crear paquete para enviar al Kernel
     t_paquete *paquete = crear_paquete_personalizado(IO_STDOUT_WRITE);
@@ -599,6 +606,8 @@ void instruccion_io_stdout_write(char **parte)
     agregar_string_al_paquete_personalizado(paquete, interfaz);
     agregar_string_al_paquete_personalizado(paquete, registro_direccion);
     agregar_string_al_paquete_personalizado(paquete, registro_tamano);
+    agregar_int_al_paquete_personalizado(paquete, valor_registro);
+    agregar_int_al_paquete_personalizado(paquete, direccion_logica);
 
     // Enviar paquete al Kernel
     enviar_paquete(paquete, socket_cliente_kernel);
@@ -608,31 +617,194 @@ void instruccion_io_stdout_write(char **parte)
     proceso->program_counter++;
 }
 
-// void intruccion_io_fs_create(char **parte)
-// {
-//     // IO_FS_CREATE Interfaz NombreArchivo
+void instruccion_io_fs_create(char **parte)
+{
+    // IO_FS_CREATE Interfaz NombreArchivo
 
-// }
+    // Verificar que la cantidad de argumentos sea la correcta
+    if (parte[1] == NULL || parte[2] == NULL) 
+    {
+        log_error(log_cpu, "Argumentos incorrectos para la instruccion IO_FS_CREATE.");
+        return;
+    }
 
-// void intruccion_io_fs_delete(char **parte)
-// {
+    if(strcmp(parte[1], "DIALFS") != 0) 
+    {
+        log_error(log_cpu, "La interfaz indicada no es DIALFS.");
+    }
+
+    log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s", proceso->pid, parte[0], parte[1], parte[2]);
+
+    char *interfaz = parte[1];
+    char *nombre_archivo = parte[2];
+
+    // Crear paquete para enviar al kernel
+    t_paquete* paquete = crear_paquete_personalizado(IO_FS_CREATE);
+    agregar_string_al_paquete_personalizado(paquete, interfaz);
+    agregar_string_al_paquete_personalizado(paquete, nombre_archivo);
+
+    // Enviar paquete al kernel
+    enviar_paquete(paquete, socket_cliente_kernel);
+    eliminar_paquete(paquete);
+
+    proceso->program_counter++;
+}
+
+void instruccion_io_fs_delete(char **parte)
+{
+    // IO_FS_DELETE Int4 notas.txt
     
-// }
+    // Verificar que la cantidad de argumentos sea la correcta
+    if (parte[1] == NULL || parte[2] == NULL) 
+    {
+        log_error(log_cpu, "Argumentos incorrectos para la instrucción IO_FS_DELETE.");
+        return;
+    }
 
-// void intruccion_io_fs_truncate(char **parte)
-// {
-    
-// }
+    if(strcmp(parte[1], "DIALFS") != 0) 
+    {
+        log_error(log_cpu, "La interfaz indicada no es DIALFS.");
+    }
 
-// void intruccion_io_fs_write(char **parte)
-// {
+    log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s", proceso->pid, parte[0], parte[1], parte[2]);
     
-// }
+    char *interfaz = parte[1];
+    char *nombre_archivo = parte[2];
 
-// void intruccion_io_fs_read(char **parte)
-// {
+    // Crear paquete para enviar al kernel
+    t_paquete* paquete = crear_paquete_personalizado(IO_FS_DELETE);
+    agregar_string_al_paquete_personalizado(paquete, interfaz);
+    agregar_string_al_paquete_personalizado(paquete, nombre_archivo);
+
+    // Enviar paquete al kernel
+    enviar_paquete(paquete, socket_cliente_kernel);
+    eliminar_paquete(paquete);
+
+    proceso->program_counter++;
+}
+
+void instruccion_io_fs_truncate(char **parte)
+{
+    // IO_FS_TRUNCATE Int4 notas.txt ECX
+
+    // Verificar que la cantidad de argumentos sea la correcta
+    if (parte[1] == NULL || parte[2] == NULL || parte[3] == NULL) 
+    {
+        log_error(log_cpu, "Argumentos incorrectos para la instrucción IO_FS_TRUNCATE.");
+        return;
+    }
+
+    if(strcmp(parte[1], "DIALFS") != 0) 
+    {
+        log_error(log_cpu, "La interfaz indicada no es DIALFS.");
+    }
     
-// }
+    // Log de la ejecucion de la instruccion
+    log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s %s", proceso->pid, parte[0], parte[1], parte[2], parte[3]);
+
+    // Extrae los parametros de la instruccion
+    char *interfaz = parte[1];
+    char *nombre_archivo = parte[2];
+    int nuevo_tamanio = atoi(parte[3]);
+    // int nuevo_tamanio = *(int*)dictionary_get(registros, parte[3]);
+
+    // Crear paquete para enviar al kernel con la instruccion IO_FS_TRUNCATE
+    t_paquete *paquete = crear_paquete_personalizado(IO_FS_TRUNCATE);
+    agregar_string_al_paquete_personalizado(paquete, interfaz);
+    agregar_string_al_paquete_personalizado(paquete, nombre_archivo);
+    agregar_int_al_paquete_personalizado(paquete, nuevo_tamanio);
+
+    // Enviar paquete al kernel utilizando el socket_cliente_kernel
+    enviar_paquete(paquete, socket_cliente_kernel);
+    eliminar_paquete(paquete);
+
+    // Incrementar el contador de programa del proceso, si es necesario
+    proceso->program_counter++;
+}
+
+void instruccion_io_fs_write(char **parte)
+{
+    // IO_FS_WRITE Int4 notas.txt AX ECX EDX
+
+    // Verificar que la cantidad de argumentos sea la correcta
+    if (parte[1] == NULL || parte[2] == NULL || parte[3] == NULL || parte[4] == NULL || parte[5] == NULL) 
+    {
+        log_error(log_cpu, "Argumentos incorrectos para la instrucción IO_FS_WRITE.");
+        return;
+    }
+
+    if(strcmp(parte[1], "DIALFS") != 0) 
+    {
+        log_error(log_cpu, "La interfaz indicada no es DIALFS.");
+    }
+
+    // Log de la ejecución de la instrucción
+    log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s %s %s %s", proceso->pid, parte[0], parte[1], parte[2], parte[3], parte[4], parte[5]);
+
+    // Extrae los parámetros de la instrucción
+    char *interfaz = parte[1];
+    char *nombre_archivo = parte[2];
+    int registro_direccion = *(int*)dictionary_get(registros, parte[3]); // Registro que contiene la posición inicial
+    int registro_tamanio = *(int*)dictionary_get(registros, parte[4]); // Registro que contiene el tamaño de los datos
+    int registro_puntero_archivo = *(int*)dictionary_get(registros, parte[5]); // Registro que contiene los datos a escribir
+
+    // Crear paquete para enviar al kernel con la instrucción IO_FS_WRITE
+    t_paquete *paquete = crear_paquete_personalizado(IO_FS_WRITE);
+    agregar_string_al_paquete_personalizado(paquete, interfaz);
+    agregar_string_al_paquete_personalizado(paquete, nombre_archivo);
+    agregar_int_al_paquete_personalizado(paquete, registro_direccion);
+    agregar_int_al_paquete_personalizado(paquete, registro_tamanio);
+    agregar_int_al_paquete_personalizado(paquete, registro_puntero_archivo);
+
+    // Enviar paquete al kernel utilizando el socket_cliente_kernel
+    enviar_paquete(paquete, socket_cliente_kernel);
+    eliminar_paquete(paquete);
+
+    // Incrementar el contador de programa del proceso, si es necesario
+    proceso->program_counter++;
+}
+
+void instruccion_io_fs_read(char **parte)
+{
+    // IO_FS_READ Int4 notas.txt BX ECX EDX
+
+    // Verificar que la cantidad de argumentos sea la correcta
+    if (parte[1] == NULL || parte[2] == NULL || parte[3] == NULL || parte[4] == NULL || parte[5] == NULL) 
+    {
+        log_error(log_cpu, "Argumentos incorrectos para la instrucción IO_FS_READ.");
+        return;
+    }
+
+    if(strcmp(parte[1], "DIALFS") != 0) 
+    {
+        log_error(log_cpu, "La interfaz indicada no es DIALFS.");
+    }
+
+    // Log de la ejecución de la instrucción
+    log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s %s %s %s", proceso->pid, parte[0], parte[1], parte[2], parte[3], parte[4], parte[5]);
+
+    // Extrae los parámetros de la instrucción
+    char *interfaz = parte[1];
+    char *nombre_archivo = parte[2];
+    int registro_direccion = *(int*)dictionary_get(registros, parte[3]); // Registro que contiene la posición inicial
+    int registro_tamanio = *(int*)dictionary_get(registros, parte[4]); // Registro que contiene el tamaño de los datos a leer
+    int registro_puntero_archivo = *(int*)dictionary_get(registros, parte[5]); // Registro donde se almacenarán los datos leídos
+
+    // Crear paquete para enviar al kernel con la instrucción IO_FS_READ
+    t_paquete *paquete = crear_paquete_personalizado(IO_FS_READ);
+    agregar_string_al_paquete_personalizado(paquete, interfaz);
+    agregar_string_al_paquete_personalizado(paquete, nombre_archivo);
+    agregar_int_al_paquete_personalizado(paquete, registro_direccion);
+    agregar_int_al_paquete_personalizado(paquete, registro_tamanio);
+    agregar_int_al_paquete_personalizado(paquete, registro_puntero_archivo);
+
+    // Enviar paquete al kernel utilizando el socket_cliente_kernel
+    enviar_paquete(paquete, socket_cliente_kernel);
+    eliminar_paquete(paquete);
+
+    // Incrementar el contador de programa del proceso, si es necesario
+    proceso->program_counter++;
+}
 
 void instruccion_exit(char** parte) 
 {
