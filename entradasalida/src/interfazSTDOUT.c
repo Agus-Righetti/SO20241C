@@ -75,22 +75,23 @@ void recibir_operacion_stdout_de_kernel(Interfaz* configuracion_stdout, op_code 
 
         char* interfaz = recibir_string_del_buffer(buffer);
         char* registro_direccion = recibir_string_del_buffer(buffer);
-        char* registro_tamano = recibir_string_del_buffer(buffer);
+        char* registro_tamanio = recibir_string_del_buffer(buffer);
         int valor_registro = recibir_int_del_buffer(buffer);
         int direccion_logica = recibir_int_del_buffer(buffer);
 
         // Convierte los registros a enteros
         // int direccion_logica = obtener_valor_registro(registro_direccion);
 
-        log_info(log_io, "Operacion recibida: IO_STDOUT_WRITE. Interfaz: %s, Dirección Lógica: %d, Tamaño: %s", interfaz, direccion_logica, registro_tamano);
+        log_info(log_io, "Operacion recibida: IO_STDOUT_WRITE. Interfaz: %s, Dirección Lógica: %d, Tamaño: %s", interfaz, direccion_logica, registro_tamanio);
 
         // Ejecutar la instrucción
-        ejecutar_instruccion_stdout(configuracion_stdout, direccion_logica, atoi (registro_tamano));
+        ejecutar_instruccion_stdout(configuracion_stdout, direccion_logica, atoi (registro_tamanio));
 
         // Libera memoria de los registros
         free(interfaz);
+        free(buffer);
         free(registro_direccion);
-        free(registro_tamano);
+        free(registro_tamanio);
     } 
     else if (codigo == -1)
     {
@@ -103,14 +104,14 @@ void recibir_operacion_stdout_de_kernel(Interfaz* configuracion_stdout, op_code 
     }
 }
 
-void ejecutar_instruccion_stdout(Interfaz* configuracion_stdout, int direccion_logica, int tamano) 
+void ejecutar_instruccion_stdout(Interfaz* configuracion_stdout, int direccion_logica, int tamanio) 
 {
-    int direccion_fisica = solicitar_traduccion_direccion(configuracion_stdout, direccion_logica);
+    int direccion_fisica = solicitar_traduccion_direccion(direccion_logica);
 
     // Envio la solicitud de lectura a memoria
     t_paquete* paquete = crear_paquete_personalizado(IO_PIDE_LECTURA_MEMORIA);
     agregar_int_al_paquete_personalizado(paquete, direccion_fisica);
-    agregar_int_al_paquete_personalizado(paquete, tamano);
+    agregar_int_al_paquete_personalizado(paquete, tamanio);
     enviar_paquete(paquete, conexion_io_memoria);
 
     // Recibo respuesta de memoria    
@@ -119,7 +120,7 @@ void ejecutar_instruccion_stdout(Interfaz* configuracion_stdout, int direccion_l
     {
         switch (cod_op_memoria) 
         {
-            case IO_RECIBE_RESPUESTA_DE_LECTURA_DE_MEM:
+            case IO_RECIBE_RESPUESTA_DE_LECTURA_DE_MEMORIA:
                 t_buffer* buffer = recibiendo_paquete_personalizado(conexion_io_memoria);
                 char* valor_leido = recibir_string_del_buffer(buffer);
                 log_info(log_io, "Valor leído desde la dirección física %d: %s", direccion_fisica, valor_leido);
@@ -140,35 +141,4 @@ void ejecutar_instruccion_stdout(Interfaz* configuracion_stdout, int direccion_l
         }
     }
     eliminar_paquete(paquete);
-}
-
-// Envia la solicitud de traduccion a Kernel y recibe la dire fisica
-int solicitar_traduccion_direccion(Interfaz* configuracion_stdout, int direccion_logica) 
-{
-    int direccion_fisica = -1; // Inicializamos la dirección física como -1 por defecto
-
-    t_paquete* paquete = crear_paquete_personalizado(SOLICITAR_TRADUCCION);
-    agregar_int_al_paquete_personalizado(paquete, direccion_logica);
-    enviar_paquete(paquete, conexion_io_kernel);
-
-    while(1)
-    { 
-        int cod_op_kernel = recibir_operacion(conexion_io_kernel);
-        switch (cod_op_kernel) 
-        {
-            case IO_RECIBE_TRADUCCION_DE_KERNEL:
-                t_buffer* buffer = recibiendo_paquete_personalizado(conexion_io_kernel);
-                direccion_fisica = recibir_int_del_buffer(buffer);
-                free(buffer);
-                break;
-            case -1:
-                log_error(log_io, "KERNEL se desconecto. Terminando servidor");
-                return EXIT_FAILURE;
-            default:
-                log_warning(log_io, "Operacion desconocida. No quieras meter la pata");
-                break;
-        }
-    }
-    eliminar_paquete(paquete);
-    return direccion_fisica;
 }

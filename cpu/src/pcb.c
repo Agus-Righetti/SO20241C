@@ -586,8 +586,8 @@ void instruccion_io_stdout_write(char **parte)
 
     log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s %s", proceso->pid, parte[0], parte[1], parte[2], parte[3]);
 
-    int valor_registro = *(int)dictionary_get(registros, registro_tamano);
-    int direccion_logica = *(int)dictionary_get(registros, registro_direccion);
+    int valor_registro = (int)dictionary_get(registros, registro_tamano);
+    int direccion_logica = (int)dictionary_get(registros, registro_direccion);
     // int direccion_fisica = traducir_direccion_logica_a_fisica(registro_direccion);
 
     // Crear paquete para enviar al Kernel
@@ -679,7 +679,7 @@ void instruccion_io_fs_truncate(char **parte)
     // IO_FS_TRUNCATE Int4 notas.txt ECX
 
     // Verificar que la cantidad de argumentos sea la correcta
-    if (parte[1] == NULL || parte[2] == NULL) 
+    if (parte[1] == NULL || parte[2] == NULL || parte[3] == NULL) 
     {
         log_error(log_cpu, "Argumentos incorrectos para la instrucción IO_FS_TRUNCATE.");
         return;
@@ -697,6 +697,7 @@ void instruccion_io_fs_truncate(char **parte)
     char *interfaz = parte[1];
     char *nombre_archivo = parte[2];
     int nuevo_tamanio = atoi(parte[3]);
+    // int nuevo_tamanio = *(int*)dictionary_get(registros, parte[3]);
 
     // Crear paquete para enviar al kernel con la instruccion IO_FS_TRUNCATE
     t_paquete *paquete = crear_paquete_personalizado(IO_FS_TRUNCATE);
@@ -717,7 +718,7 @@ void instruccion_io_fs_write(char **parte)
     // IO_FS_WRITE Int4 notas.txt AX ECX EDX
 
     // Verificar que la cantidad de argumentos sea la correcta
-    if (parte[1] == NULL || parte[2] == NULL) 
+    if (parte[1] == NULL || parte[2] == NULL || parte[3] == NULL || parte[4] == NULL || parte[5] == NULL) 
     {
         log_error(log_cpu, "Argumentos incorrectos para la instrucción IO_FS_WRITE.");
         return;
@@ -758,8 +759,8 @@ void instruccion_io_fs_read(char **parte)
 {
     // IO_FS_READ Int4 notas.txt BX ECX EDX
 
-       // Verificar que la cantidad de argumentos sea la correcta
-    if (parte[1] == NULL || parte[2] == NULL) 
+    // Verificar que la cantidad de argumentos sea la correcta
+    if (parte[1] == NULL || parte[2] == NULL || parte[3] == NULL || parte[4] == NULL || parte[5] == NULL) 
     {
         log_error(log_cpu, "Argumentos incorrectos para la instrucción IO_FS_READ.");
         return;
@@ -777,7 +778,7 @@ void instruccion_io_fs_read(char **parte)
     char *interfaz = parte[1];
     char *nombre_archivo = parte[2];
     int registro_direccion = *(int*)dictionary_get(registros, parte[3]); // Registro que contiene la posición inicial
-    int registro_tamanio= *(int*)dictionary_get(registros, parte[4]); // Registro que contiene el tamaño de los datos a leer
+    int registro_tamanio = *(int*)dictionary_get(registros, parte[4]); // Registro que contiene el tamaño de los datos a leer
     int registro_puntero_archivo = *(int*)dictionary_get(registros, parte[5]); // Registro donde se almacenarán los datos leídos
 
     // Crear paquete para enviar al kernel con la instrucción IO_FS_READ

@@ -33,6 +33,7 @@ void atender_kernel()
                 break;
             case DIALFS:
                 leer_configuracion_dialfs(&configuracion);
+                recibir_operacion_dialfs_de_kernel(DIALFS, cod_op_io);
                 liberar_configuracion_dialfs(&configuracion);
                 break;
             case -1:
@@ -53,4 +54,35 @@ void escuchar_kernel()
     conexion_io_kernel = conexion_a_kernel(log_io, config_io);
     pthread_create(&thread, NULL, (void*)atender_kernel, NULL);
     pthread_join(thread, NULL);
+}
+
+// Envia la solicitud de traduccion a Kernel y recibe la direccion fisica
+int solicitar_traduccion_direccion(int direccion_logica) 
+{
+    int direccion_fisica = -1; // Inicializamos la dirección física como -1 por defecto
+
+    t_paquete* paquete = crear_paquete_personalizado(SOLICITAR_TRADUCCION);
+    agregar_int_al_paquete_personalizado(paquete, direccion_logica);
+    enviar_paquete(paquete, conexion_io_kernel);
+
+    while(1)
+    { 
+        int cod_op_kernel = recibir_operacion(conexion_io_kernel);
+        switch (cod_op_kernel) 
+        {
+            case IO_RECIBE_TRADUCCION_DE_KERNEL:
+                t_buffer* buffer = recibiendo_paquete_personalizado(conexion_io_kernel);
+                direccion_fisica = recibir_int_del_buffer(buffer);
+                free(buffer);
+                break;
+            case -1:
+                log_error(log_io, "KERNEL se desconecto. Terminando servidor");
+                return EXIT_FAILURE;
+            default:
+                log_warning(log_io, "Operacion desconocida. No quieras meter la pata");
+                break;
+        }
+    }
+    eliminar_paquete(paquete);
+    return direccion_fisica;
 }
