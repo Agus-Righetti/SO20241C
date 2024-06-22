@@ -119,7 +119,7 @@ void atender_interrupcion()
                 break;
             case INTERRUPCION_KERNEL:
                 log_info(log_cpu, "Me llego una interrupcion de KERNEL, ahora voy a enviar el pcb");
-                enviar_pcb(socket_cliente_kernel, proceso, DESALOJO, NULL);
+                enviar_pcb(socket_cliente_kernel, proceso, PCB_CPU_A_KERNEL, NULL);
                 break;
             case -1:
                 log_error(log_cpu, "El cliente se desconecto. Terminando servidor");

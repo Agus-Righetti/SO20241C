@@ -40,11 +40,14 @@ void recibir_pcb()
 }
 
 void enviar_pcb(int conexion, pcb *proceso, op_code codigo, char* recurso){
+    
     t_paquete *paquete = crear_paquete_personalizado(PCB_CPU_A_KERNEL);
     agregar_estructura_al_paquete_personalizado(paquete, proceso, sizeof(pcb));
     
-    if (recurso != NULL) 
-    {
+
+    if (recurso != NULL) {
+        
+        //return; // No hacer nada si el recurso es NULL
         int recurso_valor = atoi(recurso);
 
         if(recurso_valor == 1) {
@@ -54,6 +57,7 @@ void enviar_pcb(int conexion, pcb *proceso, op_code codigo, char* recurso){
         } else if (recurso_valor == 3) {
             agregar_int_al_paquete_personalizado(paquete, 2); 
         }
+
     }
 
     log_info(log_cpu, "Voy a enviar el pcb\n");
