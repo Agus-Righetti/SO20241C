@@ -26,6 +26,13 @@ typedef struct
     io_config* archivo;
 } Interfaz;
 
+typedef struct
+{
+    int bloque_inicial;
+    int tamanio_archivo;
+    int max_path;
+} metadatos_config;
+
 typedef struct 
 {
     Interfaz interfaz;
@@ -34,6 +41,7 @@ typedef struct
 
 extern t_log* log_io;
 extern io_config* config_io;
+extern metadatos_config* config_metadatos;
 extern pcb* proceso;
 
 extern int conexion_io_kernel;

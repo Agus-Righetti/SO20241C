@@ -7,25 +7,11 @@ void recibir_pcb()
     t_buffer* buffer_pcb = recibiendo_paquete_personalizado(socket_cliente_kernel);
     pcb* pcb_recibido = recibir_estructura_del_buffer(buffer_pcb);
     
-    if (pcb_recibido == NULL) {
+    if (pcb_recibido == NULL) 
+    {
         log_error(log_cpu, "No se pudo recibir el PCB. La estructura recibida es NULL.");
         return;
     }
-
-    // *pcb_recibido = malloc(sizeof(pcb));
-
-    // t_buffer * buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu);
-    // proceso = recibir_Estructura_del_buffer(buffer);
-
-    // if (pcb_recibido == NULL) {
-    //     log_error(log_cpu, "No se pudo asignar memoria para pcb_recibido");
-    //     free(pcb_recibido);
-    //     return;
-    // }
-
-    // Asignar los valores recibidos a la estructura pasada por referencia
-    // (*pcb_recibido)->pid = pcb_temp->pid;
-    // (*pcb_recibido)->program_counter = pcb_temp->program_counter;
 
     // Acordarse de sacarlos!!!!!!
     log_info(log_cpu, "El PID es: %d", pcb_recibido->pid);
@@ -33,9 +19,6 @@ void recibir_pcb()
 
     solicitar_instrucciones_a_memoria(socket_cliente_cpu, pcb_recibido);
 
-
-    // Liberar la estructura temporal si es necesario
-    // free(pcb_recibido);
     free(buffer_pcb);
 }
 
@@ -45,9 +28,8 @@ void enviar_pcb(int conexion, pcb *proceso, op_code codigo, char* recurso){
     agregar_estructura_al_paquete_personalizado(paquete, proceso, sizeof(pcb));
     
 
-    if (recurso != NULL) {
-        
-        //return; // No hacer nada si el recurso es NULL
+    if (recurso != NULL) 
+    {
         int recurso_valor = atoi(recurso);
 
         if(recurso_valor == 1) {
@@ -57,7 +39,6 @@ void enviar_pcb(int conexion, pcb *proceso, op_code codigo, char* recurso){
         } else if (recurso_valor == 3) {
             agregar_int_al_paquete_personalizado(paquete, 2); 
         }
-
     }
 
     log_info(log_cpu, "Voy a enviar el pcb\n");
@@ -254,7 +235,7 @@ void instruccion_mov_in(char **parte)
 	log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s", proceso->pid, parte[0], parte[1], parte[2]);
     
     // Podria abstraer la traduccion y la busqueda en una funcion que me devuelva directo el valor leido en la DL dada
-    void* valor_leido = traducir_y_buscar_en_memoria(parte[2],)
+    // void* valor_leido = traducir_y_buscar_en_memoria(parte[2],)
 
     // Traducimos la direccion del registro direccion
 	int direccion_fisica = traducir_direccion_logica_a_fisica(parte[2]); 

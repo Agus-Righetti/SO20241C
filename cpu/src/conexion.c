@@ -75,10 +75,7 @@ void atender_kernel()
                 list_destroy_and_destroy_elements(lista, free);
                 break;
             case PCB_KERNEL_A_CPU: // Execute
-                // t_buffer* buffer = recibiendo_paquete_personalizado(socket_cliente_kernel);
                 recibir_pcb();
-                // solicitar_instrucciones_a_memoria(socket_cliente_cpu, pcb_recibido);
-                // free(buffer);
                 break;
             case SOLICITAR_TRADUCCION:
                 log_info(log_cpu, "Recibi una solicitud de traducción de dirección lógica a física del Kernel");

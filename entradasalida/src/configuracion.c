@@ -2,15 +2,15 @@
 
 // Configuracion ----------------------------------------------------------------------------------------------------------------------
 
-io_config* armar_config(t_log* log_io) {
-
+io_config* armar_config(t_log* log_io) 
+{
     t_config* config_aux;
     io_config* aux_io_config = malloc(sizeof(io_config));  
 
     config_aux = config_create("io.config");
     if (config_aux == NULL)
     {
-        log_info(log_io, "Error: No se pudo crear el config de I/O");
+        log_error(log_io, "Error: No se pudo crear el config de I/O");
         exit(1);
     }
 
@@ -30,6 +30,26 @@ io_config* armar_config(t_log* log_io) {
     config_destroy(config_aux);
 
     return aux_io_config;
+}
+
+metadatos_config* armar_config_metadatos()
+{
+    t_config* config_aux;
+    metadatos_config* aux_metadatos_config = malloc(sizeof(metadatos_config));  
+
+    config_aux = config_create("metadatos.config");
+    if (config_aux == NULL)
+    {
+        log_error(log_io, "Error: No se pudo crear el config de metadatos");
+        exit(1);
+    }
+
+    aux_metadatos_config->bloque_inicial = config_get_int_value(config_aux, "BLOQUE_INICIAL");
+    aux_metadatos_config->tamanio_archivo = config_get_int_value(config_aux, "TAMAÑO_ARCHIVO");
+    aux_metadatos_config->max_path = config_get_int_value(config_aux, "MAX_PATH");
+
+    config_destroy(config_aux);
+    return aux_metadatos_config;
 }
 
 void iterator(char* value) 

@@ -12,6 +12,7 @@
 
 t_log* log_io;
 io_config* config_io;
+metadatos_config* config_metadatos;
 pcb* proceso;
 
 // int socket_servidor_kernel;

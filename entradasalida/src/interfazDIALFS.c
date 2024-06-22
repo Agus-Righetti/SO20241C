@@ -1,17 +1,5 @@
 #include "interfazDIALFS.h"
 
-typedef struct {
-    int bloque_inicial;
-    int tamanio_archivo;
-} Metadata;
-
-// Estructura de configuración del sistema de archivos (ejemplo)
-// typedef struct {
-//     int block_size;
-//     int block_count;
-//     char path_base_dialfs[256];  // Ajusta el tamaño según tus necesidades
-// } InterfazFS;
-
 void leer_configuracion_dialfs(Interfaz *configuracion)
 {
     iniciar_config_dialfs(configuracion);
@@ -157,16 +145,19 @@ void manejar_creacion_archivo(char* nombre_archivo, Interfaz* configuracion_fs)
         
         // Asignar memoria para el archivo de bloques (simulando bloques vacíos)
         char* buffer = malloc(bloques_file_size);
+
+        if (buffer == NULL) {
+            fprintf(stderr, "Error: No se pudo asignar memoria para el archivo de bloques.\n");
+        }
+
         memset(buffer, 0, bloques_file_size); // Inicializar todos los bloques a 0 (libres)
 
         // Escribir el contenido inicial en el archivo (simulación de bloques)
         if (fwrite(buffer, 1, bloques_file_size, archivoFS) != bloques_file_size)
         {
             log_error(log_io, "PID: %d - Error al escribir en el archivo %s.", proceso->pid, nombre_archivo);
-            free(buffer);
-            fclose(archivoFS);
         }
-
+        
         free(buffer);
     }
     else if (strcmp(nombre_archivo, "bitmap.dat") == 0)
@@ -176,14 +167,33 @@ void manejar_creacion_archivo(char* nombre_archivo, Interfaz* configuracion_fs)
 
         // Crear un bitmap inicial con todos los bloques libres (0 indica libre, 1 indica ocupado)
         unsigned char *bitmap_data = malloc(bitmap_size);
+
+        if (bitmap_data == NULL) 
+        {
+            fprintf(stderr, "Error: No se pudo asignar memoria para el bitmap.\n");
+        }
+
         memset(bitmap_data, 0, bitmap_size); // Inicializar todo el bitmap a 0 (todos los bloques libres)
 
+        // Buscar el primer bloque libre
+        int bloque_libre = obtener_primer_bloque_libre(bitmap_data, block_count);
+
+        if (bloque_libre == -1) 
+        {
+            log_error(log_io, "No hay bloques libres disponibles");
+            return;
+        }
+
+        // Actualizar el bitmap en memoria
+        bitmap_data[bloque_libre / 8] |= (1 << (bloque_libre % 8)); // Marcar el bloque como ocupado
+
+        // Actualizar el bitmap
+        fseek(archivoFS, 0, SEEK_SET);
+        
         // Escribir el contenido inicial en el archivo
         if (fwrite(bitmap_data, 1, bitmap_size, archivoFS) != bitmap_size)
         {
             log_error(log_io, "PID: %d - Error al escribir en el archivo %s.", proceso->pid, nombre_archivo);
-            free(bitmap_data);
-            fclose(archivoFS);
         }
 
         free(bitmap_data);
@@ -191,25 +201,40 @@ void manejar_creacion_archivo(char* nombre_archivo, Interfaz* configuracion_fs)
     else
     {
         // Lógica para otros archivos de metadatos
-        char path_metadatos[256];
+
+        armar_config_metadatos();
+        config_set_value(config_metadatos, config_metadatos->bloque_inicial, 0);
+
+        // char path_metadatos[256];
+        char path_metadatos = config_metadatos->max_path;
+
         char* path = configuracion_fs->archivo->path_base_dialfs;
         snprintf(path_metadatos, sizeof(path_metadatos), "%s/%s.metadata", path, nombre_archivo);
 
-        // Escribir la metadata inicial (bloque inicial y tamaño 0)
-        fprintf(archivoFS, "BLOQUE_INICIAL=0\n");
-        fprintf(archivoFS, "TAMANIO_ARCHIVO=0\n");
-
-        // Crear estructura de metadatos
-        Metadata metadata;
-        metadata.bloque_inicial = 25; // Ejemplo: bloque inicial
-        metadata.tamanio_archivo = 1024; // Ejemplo: tamaño del archivo en bytes
+        FILE* metadata_file = fopen(path_metadatos, "wb+");
+        if (metadata_file == NULL)
+        {
+            log_error(log_io, "PID: %d - No se pudo abrir el archivo de metadatos para %s.", proceso->pid, nombre_archivo);
+        }
 
         // Escribir los metadatos en el archivo de metadatos
-        fprintf(archivoFS, "BLOQUE_INICIAL=%d\n", metadata.bloque_inicial);
-        fprintf(archivoFS, "TAMANIO_ARCHIVO=%d\n", metadata.tamanio_archivo);
-
-        fclose(archivoFS);
+        fprintf(archivoFS, "BLOQUE_INICIAL=%d\n", config_metadatos->bloque_inicial);
+        fprintf(archivoFS, "TAMANIO_ARCHIVO=%d\n", config_metadatos->tamanio_archivo);
     }
+    fclose(archivoFS);
+}
+
+int obtener_primer_bloque_libre(unsigned char* bitmap, int block_count) 
+{
+    for (int i = 0; i < block_count; i++) 
+    {
+        if ((bitmap[i / 8] & (1 << (i % 8))) == 0) 
+        { // Si el bit está en 0, el bloque está libre
+            return i;
+        }
+    }
+    
+    return -1; // No hay bloques libres
 }
 
 void manejar_eliminacion_archivo(char* nombre_archivo, Interfaz* configuracion_fs) 
