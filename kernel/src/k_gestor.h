@@ -33,6 +33,7 @@ extern t_queue *cola_de_blocked;
 extern t_queue *cola_prioridad_vrr;
 extern t_queue **colas_por_recurso;
 extern t_queue *cola_general_de_procesos;
+extern t_queue *cola_interfaces_conectadas;
 extern int pid_contador;
 extern int conexion_kernel_cpu;
 extern int interrupcion_kernel_cpu;

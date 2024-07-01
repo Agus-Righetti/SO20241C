@@ -92,8 +92,21 @@ typedef enum {
 	PCB_KERNEL_A_CPU,
 	PCB_CPU_A_KERNEL,
 	
-	CPU_TERMINA_EJECUCION_PCB //Flag para ver si el proceso ya se ejecuto del todo (1 o 0)
+	CPU_TERMINA_EJECUCION_PCB ,//Flag para ver si el proceso ya se ejecuto del todo (1 o 0)
+
+	NUEVA_INTERFAZ //Cuando se conecta una interfaz de io con kernel
+
 } op_code;
+
+typedef struct
+{
+	op_code nombre_interfaz;
+	t_queue* cola_de_espera;
+	bool en_uso;
+	int socket;
+
+}interfaz_kernel;
+
 
 // ************* SERIALIZACION *************
 typedef struct

@@ -29,6 +29,7 @@ int main(int argc, char* argv[])
     cola_de_blocked = queue_create();
     cola_prioridad_vrr = queue_create();
     cola_general_de_procesos = queue_create();
+    cola_interfaces_conectadas = queue_create();
 
     sem_init(&sem_cola_de_new,0,0);
     sem_init(&sem_cola_de_ready,0,0);

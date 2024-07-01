@@ -913,27 +913,26 @@ void pasar_proceso_a_exit(pcb* proceso){
     log_info(log_kernel, "entre a pasar proceso a exit por PID %d", proceso->pid);
     //En esta funcion faltan liberar los recursos q tenia el proceso
     char* estado_anterior = obtener_char_de_estado(proceso->estado_del_proceso); // Devuelvo el estado como string
-    log_info(log_kernel, "entre a pasar proceso a exit  antes del mutex");
+    //log_info(log_kernel, "entre a pasar proceso a exit  antes del mutex");
 
     pthread_mutex_lock(&proceso->mutex_pcb);
     proceso->estado_del_proceso = EXIT; // Asigno el estado del proceso como Exit
     pthread_mutex_unlock(&proceso->mutex_pcb);
-    log_info(log_kernel, "entre a pasar proceso a exit  dsp del mutex");
+    //log_info(log_kernel, "entre a pasar proceso a exit  dsp del mutex");
 
-    if (proceso->recursos_asignados == NULL) {
-        log_info(log_kernel, "Error: 'proceso->recursos_asignados' no está inicializado.\n");
-    }
-
-    // while(queue_is_empty(proceso->recursos_asignados) != true) // Mientras la cola de recursos asignados no esta vacia
-    // {
-    //     int recurso_a_liberar = (int)(intptr_t)queue_peek(proceso->recursos_asignados); // Entonces libero los recursos correspondientes 
-    //     hacer_signal(recurso_a_liberar, proceso);
+    // if (proceso->recursos_asignados == NULL) {
+    //     log_info(log_kernel, "Error: 'proceso->recursos_asignados' no está inicializado.\n");
     // }
 
-    
+    while(queue_is_empty(proceso->recursos_asignados) != true) // Mientras la cola de recursos asignados no esta vacia
+    {
+        int recurso_a_liberar = (int)(intptr_t)queue_peek(proceso->recursos_asignados); // Entonces libero los recursos correspondientes 
+        hacer_signal(recurso_a_liberar, proceso);
+    }
+
     
     pthread_mutex_lock(&mutex_cola_general_de_procesos); // Bloqueo la cola gral para sacar el proceso q paso a exit
-    log_info(log_kernel, "entre a pasar proceso a exit  dsp del mutex de cola gral");
+    //log_info(log_kernel, "entre a pasar proceso a exit  dsp del mutex de cola gral");
 
     pcb* primer_pcb_cola_gral = queue_pop(cola_general_de_procesos);
 
@@ -951,13 +950,16 @@ void pasar_proceso_a_exit(pcb* proceso){
 
     log_info(log_kernel, "PID: %d - Estado Anterior: %s - Estado Actual: EXIT", proceso->pid, estado_anterior);
 
-    if(proceso->registros == NULL)
-    {
-        log_info(log_kernel, "Hay un problema con los registros del PCB");
+    // if(proceso->registros == NULL)
+    // {
+    //     log_info(log_kernel, "Hay un problema con los registros del PCB");
 
-    } 
+    // } 
 
     free(proceso->registros);
+    queue_destroy(proceso->recursos_asignados);
+    list_destroy(proceso->instrucciones);
+    pthread_mutex_destroy(&proceso->mutex_pcb);
     free(proceso); 
 
     if(queue_size(cola_general_de_procesos) < config_kernel->grado_multiprogramacion)
