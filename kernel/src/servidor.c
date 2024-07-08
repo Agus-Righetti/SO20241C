@@ -48,16 +48,4 @@ void server_para_io(kernel_config* config_kernel,t_log* log_kernel){
 	}
 }
 
-void crear_interfaz(op_code interfaz_nueva, int socket)
-{
-	interfaz_kernel* nueva_interfaz = malloc(sizeof(interfaz_kernel)); 
-	nueva_interfaz->nombre_interfaz= interfaz_nueva;
-	nueva_interfaz->cola_de_espera = queue_create();
-	nueva_interfaz->socket = socket;
-	nueva_interfaz->en_uso = false;
-	queue_push(cola_interfaces_conectadas, nueva_interfaz); 
 
-	//aca deberiamos crear un hilo que le mande cosas a la interfaz y reciba cosas de la interfaz, o quizas que el hilo se cree una vez que se le quiere mandar algo a la interfaz, habria que pensarlo
-	//se me ocurre un hilo q quede prendido con un while(1) siempre q la interfaz este prendida, para ver lo q devuelve, y que al pasarle cosas a la interfaz se haga desde la funcion q corresponda
-	return;
-}

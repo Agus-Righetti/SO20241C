@@ -8,8 +8,8 @@
 
 
 
+
 //  *************** DECLARACIÓN DE FUNCIONES **********
 void server_para_io(kernel_config* config_kernel, t_log* log_kernel);
-void crear_interfaz(op_code interfaz_nueva, int socket);
 
 #endif
