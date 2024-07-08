@@ -94,7 +94,8 @@ typedef enum {
 	
 	CPU_TERMINA_EJECUCION_PCB ,//Flag para ver si el proceso ya se ejecuto del todo (1 o 0)
 
-	NUEVA_INTERFAZ //Cuando se conecta una interfaz de io con kernel
+	NUEVA_INTERFAZ ,//Cuando se conecta una interfaz de io con kernel
+	FIN_OP_IO, //Se termino una operacion de entrada salida exitosamente
 
 } op_code;
 
@@ -139,19 +140,7 @@ typedef enum {
 	EXIT,
 } estados;
 
-typedef enum {
-	PC,
-	AX,
-	BX,
-	CX, 
-	DX,
-	EAX,
-	EBX,
-	ECX,
-	EDX,
-	SI,
-	DI, 
-} registros_existentes;
+
 
 typedef struct {
     int pid;
@@ -173,6 +162,8 @@ typedef struct
 	int socket;
 	char* nombre_interfaz;
 	pcb* proceso_en_interfaz; //es el proceso que actualmente esta en la interfaz
+	sem_t sem_puedo_mandar_operacion;
+    sem_t sem_hay_procesos_esperando;
 
 }interfaz_kernel;
 

@@ -14,22 +14,42 @@ void crear_interfaz(op_code interfaz_nueva, int socket, char* nombre_interfaz)
 	nueva_interfaz->tipo_interfaz= interfaz_nueva;
 	nueva_interfaz->cola_de_espera = queue_create();
 	nueva_interfaz->socket = socket;
-	nueva_interfaz->en_uso = false;
     nueva_interfaz->nombre_interfaz = nombre_interfaz;
+    sem_init(&nueva_interfaz->sem_puedo_mandar_operacion, 0,1);
+    sem_init(&nueva_interfaz->sem_hay_procesos_esperando,0,0);
 
     //agrego la interfaz a la cola de las q estan conectadas
 	queue_push(cola_interfaces_conectadas, nueva_interfaz); 
 
 
-	pthread_t hilo_de_escucha_interfaz; // Creo un hilo
+	pthread_t hilo_de_escucha_interfaz, hilo_de_envio_a_interfaz; // Creo un hilo
     thread_args_escucha_io args_hilo = {nueva_interfaz}; // En sus args le cargo el la interfaz
+
 
     //este hilo se quedara escuchando lo que le devuelva la interfaz y hara lo q corresponda con cada proceso q la llamo al recibirlo de nuevo, tendriamos q chequear si la interfaz devuelve un proceso u otra cosa, en cuyo caso tendriamos q sacar el proceso de otro lado para volverlo a poner en ready o lo q sea
     pthread_create(&hilo_de_escucha_interfaz, NULL, (void*)escucha_interfaz,(void*)&args_hilo);
+    pthread_create(&hilo_de_envio_a_interfaz, NULL, (void*)envio_interfaz,(void*)&args_hilo);
+
     pthread_join(hilo_de_escucha_interfaz, NULL); 
+    pthread_cancel(hilo_de_envio_a_interfaz); 
+
 
     return;
 	
+}
+
+void envio_interfaz(thread_args_escucha_io* args)
+{
+    interfaz_kernel* interfaz = args->interfaz;
+    argumentos_para_io* args_mandar_a_io;
+    while(1)
+    {
+        sem_wait(&interfaz->sem_hay_procesos_esperando);
+        sem_wait(&interfaz->sem_puedo_mandar_operacion);
+        args_mandar_a_io = queue_pop(interfaz->cola_de_espera);
+        interfaz->proceso_en_interfaz = args_mandar_a_io->proceso;
+        enviar_instruccion_io(interfaz->socket,args_mandar_a_io);
+    }
 }
 
 void escucha_interfaz(thread_args_escucha_io* args)
@@ -49,6 +69,9 @@ void escucha_interfaz(thread_args_escucha_io* args)
                 interfaz_conectada = false;
                 desconectar_interfaz(interfaz);
 				break;
+            case FIN_OP_IO: //ya se termino la operacion de entrada salida, devuelvo el proceso a ready
+                accionar_segun_estado(interfaz->proceso_en_interfaz,0 ) ;//flag 0 para q lo mande a la cola de ready
+                sem_post(&interfaz->sem_puedo_mandar_operacion);
 			default:
 				log_warning(log_kernel,"Operacion desconocida. No quieras meter la pata");
 				break;
@@ -63,45 +86,20 @@ void desconectar_interfaz(interfaz_kernel* interfaz)
     
 }
 
-int io_gen_sleep(char* nombre_interfaz, int unidades_de_trabajo, pcb* proceso)
+
+
+void enviar_instruccion_io(int socket, argumentos_para_io* args)
 {
-    //ante una petición van a esperar una cantidad de unidades de trabajo, cuyo valor va a venir dado en la petición desde el Kernel.
-    interfaz_kernel* interfaz = verificar_interfaz(nombre_interfaz, GENERICA);
-    argumentos_para_io args;
-    args.unidades_de_trabajo = unidades_de_trabajo;
+    t_paquete* paquete_instruccion = crear_paquete_personalizado(args->operacion); // Creo un paquete personalizado con un codop para que IO reconozca lo que le estoy mandando
 
-    if(interfaz) // si no devuelve null es porq encontro la interfaz q queria y es del tipo q queria
-    {
-        //aca hago lo q tengo q hacer, es decir bloquear el proceso y madnarle la isntruccion a la interfaz
-        pthread_mutex_lock(&mutex_enviando_instruccion_a_io);
-        if(interfaz->en_uso == false) //la interfaz esta disponible para mandar
-        {
-            interfaz->en_uso = true;
-            interfaz->proceso_en_interfaz = proceso;
-            enviar_instruccion_io(interfaz->socket , IO_GEN_SLEEP, args);
-            pasar_proceso_a_blocked(proceso);
-
-        }else{// la interfaz esta ocupada, pongo al proceso en la cola de espera
-            queue_push(interfaz->cola_de_espera, proceso);
-            pasar_proceso_a_blocked(proceso);
-        }
-        pthread_mutex_unlock(&mutex_enviando_instruccion_a_io);
-        return -1; //que no haga nada porq ya lo bloquie yo
-
-    }else return 1;//mando el proceso a exit
-
-}
-
-void enviar_instruccion_io(int socket, op_code instruccion, argumentos_para_io args)
-{
-    t_paquete* paquete_instruccion = crear_paquete_personalizado(instruccion); // Creo un paquete personalizado con un codop para que IO reconozca lo que le estoy mandando
-
-    switch (instruccion)
+    switch (args->operacion)
     {
         case IO_GEN_SLEEP:
-            agregar_int_al_paquete_personalizado(paquete_instruccion, args.unidades_de_trabajo);
+            agregar_int_al_paquete_personalizado(paquete_instruccion, args->unidades_de_trabajo);
             break;
-        
+        case IO_STDIN_READ:
+            agregar_int_al_paquete_personalizado(paquete_instruccion, args->registro_direccion);
+            agregar_int_al_paquete_personalizado(paquete_instruccion, args->registro_tamano);
         default:
             break;
     }
@@ -143,4 +141,49 @@ void* verificar_interfaz(char* nombre_interfaz_buscada, op_code tipo_interfaz_bu
     }
 
     return NULL;
+}
+//********************************FUNCIONES DE INSTRUCCIONES DE IO**********************
+
+int io_gen_sleep(char* nombre_interfaz, int unidades_de_trabajo, pcb* proceso)
+{
+    //ante una petición van a esperar una cantidad de unidades de trabajo, cuyo valor va a venir dado en la petición desde el Kernel.
+    interfaz_kernel* interfaz = verificar_interfaz(nombre_interfaz, GENERICA);
+    argumentos_para_io* args;
+    args->unidades_de_trabajo = unidades_de_trabajo;
+    args->proceso = proceso;
+    args->operacion = IO_STDIN_READ;
+
+    if(interfaz) // si no devuelve null es porq encontro la interfaz q queria y es del tipo q queria
+    {
+        //aca hago lo q tengo q hacer, es decir bloquear el proceso y madnarle la isntruccion a la interfaz
+        queue_push(interfaz->cola_de_espera, args);
+        sem_post(&interfaz->sem_hay_procesos_esperando);
+        pasar_proceso_a_blocked(proceso);
+
+        return -1; //que no haga nada porq ya lo bloquie yo
+
+    }else return 1;//mando el proceso a exit
+
+}
+
+int io_stdin_read(char* nombre_interfaz, uint32_t registro_direccion, uint32_t registro_tamano, pcb* proceso)
+{
+    // Esta instrucción solicita al Kernel que mediante la interfaz ingresada se lea desde el STDIN (Teclado) un valor cuyo tamaño está delimitado por el valor del Registro Tamaño y el mismo se guarde a partir de la Dirección Lógica almacenada en el Registro Dirección.
+
+    interfaz_kernel* interfaz = verificar_interfaz(nombre_interfaz, STDIN);
+    argumentos_para_io* args;
+    args->registro_direccion = registro_direccion;
+    args->registro_tamano = registro_tamano;
+    args->proceso = proceso;
+    args->operacion = IO_STDIN_READ;
+
+    if(interfaz) // si no devuelve null es porq encontro la interfaz q queria y es del tipo q queria
+    {
+        
+        queue_push(interfaz->cola_de_espera, args);
+        pasar_proceso_a_blocked(proceso);
+        sem_post(&interfaz->sem_hay_procesos_esperando);
+        return -1; //que no haga nada porq ya lo bloquie yo
+
+    }else return 1;//mando el proceso a exit
 }

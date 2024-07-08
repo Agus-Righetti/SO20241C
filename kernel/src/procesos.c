@@ -673,6 +673,7 @@ void recibir_pcb(pcb* proceso) {
 
     int flag_estado; // Declaro un flag que me va a servir para manejar el estado del proceso posteriormente
     int indice_recurso;
+    char* nombre_interfaz;
     t_buffer* buffer; // Buffer para recibir el paquete
 
 
@@ -724,17 +725,22 @@ void recibir_pcb(pcb* proceso) {
                 buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
                 fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
                 proceso_recibido = recibir_estructura_del_buffer(buffer);
-                char* nombre_interfaz = recibir_string_del_buffer(buffer);
+                nombre_interfaz = recibir_string_del_buffer(buffer);
                 int unidades_de_trabajo = recibir_int_del_buffer(buffer);
                 flag_estado = io_gen_sleep(nombre_interfaz, unidades_de_trabajo, proceso_recibido);
                 break;
-            
+            //le tengo q decir a CPU q me los mande como ints a los valores del registro
             case IO_STDIN_READ: //(Interfaz, Registro Dirección, Registro Tamaño)
                 buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
                 fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
                 proceso_recibido = recibir_estructura_del_buffer(buffer);
+                nombre_interfaz = recibir_string_del_buffer(buffer);
+                uint32_t registro_direccion = recibir_int_del_buffer(buffer);
+                uint32_t registro_tamano = recibir_int_del_buffer(buffer);
+                flag_estado = io_stdin_read(nombre_interfaz, registro_direccion, registro_tamano, proceso_recibido);
+
                 break;
-            
+//A PARTIR DE ACA NO LAS HICE-------------------------------------------------
             case IO_STDOUT_WRITE: //(Interfaz, Registro Dirección, Registro Tamaño)
                 buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
                 fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
