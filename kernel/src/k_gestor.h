@@ -51,6 +51,7 @@ extern pthread_mutex_t mutex_cola_de_execute;
 extern pthread_mutex_t mutex_cola_prioridad_vrr;
 extern pthread_mutex_t mutex_cola_general_de_procesos;
 extern pthread_mutex_t mutex_planificacion_activa;
+extern pthread_mutex_t mutex_enviando_instruccion_a_io;
 extern sem_t sem_cola_de_ready;
 extern sem_t sem_cola_de_new;
 extern sem_t sem_multiprogramacion;

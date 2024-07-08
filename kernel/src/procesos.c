@@ -668,14 +668,18 @@ void recibir_pcb(pcb* proceso) {
     inicio = clock(); // En este momento comienzo a esperar
 
     int codigo_operacion = recibir_operacion(conexion_kernel_cpu); // Recibo el codigo de operacion para ver como actúo según eso
+    
+
 
     int flag_estado; // Declaro un flag que me va a servir para manejar el estado del proceso posteriormente
-    
+    int indice_recurso;
     t_buffer* buffer; // Buffer para recibir el paquete
+
+
     
     if (!interrupcion_por_fin_de_proceso) // Verifico si la interrupción es por fin de proceso o por planificación
     {
-        log_info(log_kernel, "Entre al if para recibir normal");
+        //log_info(log_kernel, "Entre al if para recibir normal");
         switch(codigo_operacion) // Segun el codigo de operacion actuo 
         {
             case PCB_CPU_A_KERNEL: 
@@ -683,6 +687,7 @@ void recibir_pcb(pcb* proceso) {
                 buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
                 fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
                 flag_estado = 0; // El proceso todavia no termino
+                proceso_recibido = recibir_estructura_del_buffer(buffer);
 
                 break;
 
@@ -691,7 +696,7 @@ void recibir_pcb(pcb* proceso) {
                 buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
                 fin = clock(); // Termino el tiempo desde que empecé a esperar la recepción
                 flag_estado = 1; // El proceso ya finalizo, no quedan rafagas por ejecutar
-
+                proceso_recibido = recibir_estructura_del_buffer(buffer);
                 break;
 
             case SIGNAL:
@@ -699,49 +704,66 @@ void recibir_pcb(pcb* proceso) {
                 buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
                 fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
 
+                proceso_recibido = recibir_estructura_del_buffer(buffer);
+                indice_recurso = recibir_int_del_buffer(buffer); // Obtengo el indice del recurso que se usa para manejarlo
+                flag_estado = hacer_signal(indice_recurso, proceso_recibido); // Asigno un flag que sirve para manejar el estado del proceso
+        
                 break;
 
             case WAIT:
         
                 buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
                 fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
+                proceso_recibido = recibir_estructura_del_buffer(buffer);
+                indice_recurso = recibir_int_del_buffer(buffer); // Obtengo el indice del recurso que se usa para manejarlo
+                flag_estado = hacer_wait(indice_recurso, proceso_recibido);
 
                 break;
             case IO_GEN_SLEEP: //(Interfaz, Unidades de trabajo)
 
                 buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
                 fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
-
+                proceso_recibido = recibir_estructura_del_buffer(buffer);
+                char* nombre_interfaz = recibir_string_del_buffer(buffer);
+                int unidades_de_trabajo = recibir_int_del_buffer(buffer);
+                flag_estado = io_gen_sleep(nombre_interfaz, unidades_de_trabajo, proceso_recibido);
                 break;
             
             case IO_STDIN_READ: //(Interfaz, Registro Dirección, Registro Tamaño)
                 buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
                 fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
+                proceso_recibido = recibir_estructura_del_buffer(buffer);
                 break;
             
             case IO_STDOUT_WRITE: //(Interfaz, Registro Dirección, Registro Tamaño)
                 buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
                 fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
+                proceso_recibido = recibir_estructura_del_buffer(buffer);
                 break;
             case IO_FS_CREATE: // (Interfaz, Nombre Archivo)
                 buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
                 fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
+                proceso_recibido = recibir_estructura_del_buffer(buffer);
                 break;
             case IO_FS_DELETE: //(Interfaz, Nombre Archivo)
                 buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
                 fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
+                proceso_recibido = recibir_estructura_del_buffer(buffer);
                 break;
             case IO_FS_TRUNCATE: //(Interfaz, Nombre Archivo, Registro Tamaño)
                 buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
                 fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
+                proceso_recibido = recibir_estructura_del_buffer(buffer);
                 break;
             case IO_FS_WRITE: //(Interfaz, Nombre Archivo, Registro Dirección, Registro Tamaño, Registro Puntero Archivo)
                 buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
                 fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
+                proceso_recibido = recibir_estructura_del_buffer(buffer);
                 break;
             case IO_FS_READ: //(Interfaz, Nombre Archivo, Registro Dirección, Registro Tamaño, Registro Puntero Archivo)
                 buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
                 fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
+                proceso_recibido = recibir_estructura_del_buffer(buffer);
                 break;
             
             default:
@@ -758,25 +780,6 @@ void recibir_pcb(pcb* proceso) {
             sem_post(&destruir_hilo_interrupcion);
         }
 
-        proceso_recibido = recibir_estructura_del_buffer(buffer); // Asigno al proceso lo que viene del buffer
-        
-        estado_anterior = obtener_char_de_estado(proceso_recibido->estado_del_proceso);
-
-        log_info(log_kernel, "ya recibi el paquete pid: %d, con estado: %s" , proceso_recibido->pid, estado_anterior);
-
-        // Si estoy haciendo un Wait o Signal, entonces tambien tengo que recibir el indice del recurso necesitado para poder manejarlo
-
-        if(codigo_operacion == WAIT)
-        {
-            int indice_recurso = recibir_int_del_buffer(buffer); // Obtengo el indice del recurso que se usa para manejarlo
-            flag_estado = hacer_wait(indice_recurso, proceso_recibido); // Asigno un flag que sirve para manejar el estado del proceso
-
-        }else if(codigo_operacion == SIGNAL)
-        {
-            int indice_recurso = recibir_int_del_buffer(buffer); // Obtengo el indice del recurso que se usa para manejarlo
-            flag_estado = hacer_signal(indice_recurso, proceso_recibido); // Asigno un flag que sirve para manejar el estado del proceso
-        }
-        
         if(strcmp(config_kernel->algoritmo_planificacion, "VRR") == 0) // Si estoy recibiendo a traves del algoritmo VRR
         {
             proceso_recibido->quantum = proceso->quantum - tiempo_que_tardo_en_recibir; // Le asigno el quantum que le queda disponible
@@ -791,30 +794,6 @@ void recibir_pcb(pcb* proceso) {
         buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu);
         proceso_recibido = recibir_estructura_del_buffer(buffer);
     }
-
-    estado_anterior = obtener_char_de_estado(proceso_recibido->estado_del_proceso);
-
-    log_info(log_kernel, "ya recibi el paquete pid: %d, con estado: %s" , proceso_recibido->pid, estado_anterior);
-    //en esta linea ya da error, nos estan mandando mal el PCB
-    log_info(log_kernel, "el registro AX recibido es: %d " , proceso_recibido->registros->ax);
-
-    
-    if(proceso_recibido == NULL)
-    {
-        log_info(log_kernel, "Estamos recibiendo mal el proceso");
-
-    } 
-    if(proceso_recibido->registros == NULL)
-    {
-        log_info(log_kernel, "Hay problema en los registros recibidos");
-
-    } 
-
-    // if(queue_is_empty(proceso_recibido->recursos_asignados))
-    // {
-    //     log_info(log_kernel, "el pcb recibido no tiene recursos asignados");
-
-    // } 
     
     log_info(log_kernel, "Recibi PID: %d", proceso_recibido->pid); 
     

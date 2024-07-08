@@ -36,6 +36,7 @@ pthread_mutex_t mutex_grado_programacion;
 pthread_mutex_t mutex_cola_prioridad_vrr;
 pthread_mutex_t mutex_cola_general_de_procesos;
 pthread_mutex_t mutex_planificacion_activa;
+pthread_mutex_t mutex_enviando_instruccion_a_io;
 sem_t sem_cola_de_ready;
 sem_t sem_cola_de_new;
 sem_t sem_multiprogramacion;

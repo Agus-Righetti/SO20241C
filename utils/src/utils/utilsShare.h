@@ -98,15 +98,7 @@ typedef enum {
 
 } op_code;
 
-typedef struct
-{
-	op_code tipo_interfaz;
-	t_queue* cola_de_espera;
-	bool en_uso;
-	int socket;
-	char* nombre_interfaz;
 
-}interfaz_kernel;
 
 
 // ************* SERIALIZACION *************
@@ -147,6 +139,20 @@ typedef enum {
 	EXIT,
 } estados;
 
+typedef enum {
+	PC,
+	AX,
+	BX,
+	CX, 
+	DX,
+	EAX,
+	EBX,
+	ECX,
+	EDX,
+	SI,
+	DI, 
+} registros_existentes;
+
 typedef struct {
     int pid;
 	estados estado_del_proceso;
@@ -158,6 +164,17 @@ typedef struct {
 	t_list* instrucciones;
 	t_queue* recursos_asignados;
 } pcb;
+
+typedef struct
+{
+	op_code tipo_interfaz;
+	t_queue* cola_de_espera;
+	bool en_uso;
+	int socket;
+	char* nombre_interfaz;
+	pcb* proceso_en_interfaz; //es el proceso que actualmente esta en la interfaz
+
+}interfaz_kernel;
 
 // ************ DECLARACION DE FUNCIONES ************
 // ************ SERIALIZACION Y CONEXIONES GENERALES ************

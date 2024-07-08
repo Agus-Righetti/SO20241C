@@ -4,6 +4,7 @@
 #include "configuracion.h"
 #include "cliente.h"
 #include "k_gestor.h"
+#include "manejo_io.h"
 
 //  *************** DECLARACIÓN DE FUNCIONES **********
 void leer_consola ();
