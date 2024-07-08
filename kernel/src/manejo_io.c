@@ -187,3 +187,24 @@ int io_stdin_read(char* nombre_interfaz, uint32_t registro_direccion, uint32_t r
 
     }else return 1;//mando el proceso a exit
 }
+
+int io_stdout_write(char* nombre_interfaz, uint32_t registro_direccion, uint32_t registro_tamano, pcb* proceso)
+{
+    interfaz_kernel* interfaz = verificar_interfaz(nombre_interfaz, STDOUT);
+    argumentos_para_io* args;
+    args->registro_direccion = registro_direccion;
+    args->registro_tamano = registro_tamano;
+    args->proceso = proceso;
+    args->operacion = IO_STDOUT_WRITE;
+
+    if(interfaz) // si no devuelve null es porq encontro la interfaz q queria y es del tipo q queria
+    {
+        
+        queue_push(interfaz->cola_de_espera, args);
+        pasar_proceso_a_blocked(proceso);
+        sem_post(&interfaz->sem_hay_procesos_esperando);
+        return -1; //que no haga nada porq ya lo bloquie yo
+
+    }else return 1;//mando el proceso a exit
+}
+

@@ -611,14 +611,6 @@ void crear_hilo_proceso(pcb* proceso){
     }
 }
 
-// ************* LLAMA A RECIBIR_PCB_POR_FIN_DE_PROCESO (RECIBO POR FIN DE PROCESO) A TRAVES DE UN HILO *************
-// void recibir_pcb_por_fin_proceso_hilo(void* arg)
-// {
-//     thread_args_procesos_kernel* args = (thread_args_procesos_kernel*)arg; // Creo un hilo
-//     pcb* proceso = args->proceso; // Le cargo el proceso en los args
-
-//     recibir_pcb_por_fin_proceso(proceso);
-// }
 
 // ************* LLAMA A RECIBIR_PCB (RECIBO NORMAL) A TRAVES DE UN HILO *************
 void recibir_pcb_hilo(void* arg){
@@ -629,29 +621,6 @@ void recibir_pcb_hilo(void* arg){
     recibir_pcb(proceso);
 }
 
-// ************* RECIBE EL PCB POR FIN DE PROCESO DESDE CONSOLA *************
-// void recibir_pcb_por_fin_proceso(pcb* proceso){
-    
-//     t_buffer* buffer; // Buffer para recibir el paquete
-    
-//     int flag_estado;
-    
-//     log_info(log_kernel, "Estoy esperando el pcb q me tiene q mandar cpu");
-//     buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
-//     flag_estado = 1; // Tengo q mandar el proceso a exit
-//     log_info(log_kernel, "ya recibi el pcb!!");
-
-//     proceso = recibir_estructura_del_buffer(buffer); // Asigno al proceso lo que viene del buffer
-
-//     free(buffer->stream); // Libero directamente el buffer, no arme paquete asi que no hace falta
-//     free(buffer);
-
-//     sem_post(&sem_puedo_mandar_a_cpu); // Aviso que ya volvio el proceso que estaba en CPU, puedo mandar otro
-    
-//     accionar_segun_estado(proceso, flag_estado);
-
-    
-// }
 
 // ************* RECIBE EL PCB NORMALMENTE (SIN INTERRUPCION) SEGUN ALGORITMO *************
 void recibir_pcb(pcb* proceso) {
@@ -674,6 +643,10 @@ void recibir_pcb(pcb* proceso) {
     int flag_estado; // Declaro un flag que me va a servir para manejar el estado del proceso posteriormente
     int indice_recurso;
     char* nombre_interfaz;
+    int unidades_de_trabajo;
+    int registro_direccion;
+    int registro_tamano;
+    int registro_puntero_archivo;
     t_buffer* buffer; // Buffer para recibir el paquete
 
 
@@ -726,7 +699,7 @@ void recibir_pcb(pcb* proceso) {
                 fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
                 proceso_recibido = recibir_estructura_del_buffer(buffer);
                 nombre_interfaz = recibir_string_del_buffer(buffer);
-                int unidades_de_trabajo = recibir_int_del_buffer(buffer);
+                unidades_de_trabajo = recibir_int_del_buffer(buffer);
                 flag_estado = io_gen_sleep(nombre_interfaz, unidades_de_trabajo, proceso_recibido);
                 break;
             //le tengo q decir a CPU q me los mande como ints a los valores del registro
@@ -735,17 +708,24 @@ void recibir_pcb(pcb* proceso) {
                 fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
                 proceso_recibido = recibir_estructura_del_buffer(buffer);
                 nombre_interfaz = recibir_string_del_buffer(buffer);
-                uint32_t registro_direccion = recibir_int_del_buffer(buffer);
-                uint32_t registro_tamano = recibir_int_del_buffer(buffer);
+                registro_direccion = recibir_int_del_buffer(buffer);
+                registro_tamano = recibir_int_del_buffer(buffer);
                 flag_estado = io_stdin_read(nombre_interfaz, registro_direccion, registro_tamano, proceso_recibido);
 
                 break;
-//A PARTIR DE ACA NO LAS HICE-------------------------------------------------
+
             case IO_STDOUT_WRITE: //(Interfaz, Registro Dirección, Registro Tamaño)
                 buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
                 fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
                 proceso_recibido = recibir_estructura_del_buffer(buffer);
+                nombre_interfaz = recibir_string_del_buffer(buffer);
+                registro_direccion = recibir_int_del_buffer(buffer);
+                registro_tamano = recibir_int_del_buffer(buffer);
+                flag_estado = io_stdout_write(nombre_interfaz, registro_direccion, registro_tamano, proceso_recibido);
+
                 break;
+            
+//A PARTIR DE ACA NO LAS HICE-------------------------------------------------
             case IO_FS_CREATE: // (Interfaz, Nombre Archivo)
                 buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
                 fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 

@@ -12,10 +12,10 @@ typedef struct{
 
 typedef struct{
     int unidades_de_trabajo;
-    uint32_t registro_direccion;
-    uint32_t registro_tamano;
+    int registro_direccion;
+    int registro_tamano;
     char* nombre_archivo;
-    uint32_t registro_puntero_archivo;
+    int registro_puntero_archivo;
     pcb* proceso;
     op_code operacion;
 }argumentos_para_io;
@@ -28,6 +28,8 @@ void enviar_instruccion_io(int socket, argumentos_para_io* args);
 void* verificar_interfaz(char* nombre_interfaz_buscada, op_code tipo_interfaz_buscada);
 int io_stdin_read(char* nombre_interfaz, uint32_t registro_direccion, uint32_t registro_tamano, pcb* proceso);
 void envio_interfaz(thread_args_escucha_io* args);
+int io_stdout_write(char* nombre_interfaz, uint32_t registro_direccion, uint32_t registro_tamano, pcb* proceso);
+
 
 
 

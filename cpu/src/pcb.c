@@ -13,6 +13,7 @@ void recibir_pcb()
         return;
     }
 
+    proceso = pcb_recibido;
     // Acordarse de sacarlos!!!!!!
     log_info(log_cpu, "El PID es: %d", pcb_recibido->pid);
     log_info(log_cpu, "El PC es: %d", pcb_recibido->program_counter);
