@@ -6,7 +6,7 @@
 //A cada interfaz accedemos desde la queue que arme q es global que se llama cola_interfaces_conectadas buscando la q corresponda por el nombre (el nombre es un ENUM)
 //Al desconectarse una interfaz tenemos q sacarla de la cola de interfaces conectadas, borrar su cola de procesos en espera y poner los procesos en estado ready o lo que corresopnda nuevamente y luego hacer el free de la estructura.
 
-void crear_interfaz(op_code interfaz_nueva, int socket)
+void crear_interfaz(op_code interfaz_nueva, int socket, char* nombre_interfaz)
 {
     //inicializo una nueva interfaz
 
@@ -15,6 +15,7 @@ void crear_interfaz(op_code interfaz_nueva, int socket)
 	nueva_interfaz->cola_de_espera = queue_create();
 	nueva_interfaz->socket = socket;
 	nueva_interfaz->en_uso = false;
+    nueva_interfaz->nombre_interfaz = nombre_interfaz;
 
     //agrego la interfaz a la cola de las q estan conectadas
 	queue_push(cola_interfaces_conectadas, nueva_interfaz); 

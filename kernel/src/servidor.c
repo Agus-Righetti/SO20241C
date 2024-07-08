@@ -1,4 +1,6 @@
 #include "servidor.h"
+#include "manejo_io.h"
+
 
 //********* DESARROLLO SERVER KERNEL PARA RECIBIR A IO *****
 void server_para_io(kernel_config* config_kernel,t_log* log_kernel){
@@ -34,7 +36,8 @@ void server_para_io(kernel_config* config_kernel,t_log* log_kernel){
 			case NUEVA_INTERFAZ: //pedir que manden esto con el nombre de la interfaz
 				buffer = recibiendo_paquete_personalizado(client_io);
 				op_code interfaz_nueva = recibir_int_del_buffer(buffer); //va a decir si es gen, stdin, etc
-				crear_interfaz(interfaz_nueva, client_io);
+				//falta inciiar nombre_interfaz
+				crear_interfaz(interfaz_nueva, client_io, nombre_interfaz);
 				break;
 			//case -1:
 				//log_error(log_kernel, "El cliente se desconecto. Terminando servidor");

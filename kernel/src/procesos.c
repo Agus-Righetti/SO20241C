@@ -707,6 +707,42 @@ void recibir_pcb(pcb* proceso) {
                 fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
 
                 break;
+            case IO_GEN_SLEEP: //(Interfaz, Unidades de trabajo)
+
+                buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
+                fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
+
+                break;
+            
+            case IO_STDIN_READ: //(Interfaz, Registro Dirección, Registro Tamaño)
+                buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
+                fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
+                break;
+            
+            case IO_STDOUT_WRITE: //(Interfaz, Registro Dirección, Registro Tamaño)
+                buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
+                fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
+                break;
+            case IO_FS_CREATE: // (Interfaz, Nombre Archivo)
+                buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
+                fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
+                break;
+            case IO_FS_DELETE: //(Interfaz, Nombre Archivo)
+                buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
+                fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
+                break;
+            case IO_FS_TRUNCATE: //(Interfaz, Nombre Archivo, Registro Tamaño)
+                buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
+                fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
+                break;
+            case IO_FS_WRITE: //(Interfaz, Nombre Archivo, Registro Dirección, Registro Tamaño, Registro Puntero Archivo)
+                buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
+                fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
+                break;
+            case IO_FS_READ: //(Interfaz, Nombre Archivo, Registro Dirección, Registro Tamaño, Registro Puntero Archivo)
+                buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
+                fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
+                break;
             
             default:
                 log_error(log_kernel, "El codigo de operacion no es reconocido :(");

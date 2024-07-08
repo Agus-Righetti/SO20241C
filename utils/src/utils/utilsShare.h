@@ -100,10 +100,11 @@ typedef enum {
 
 typedef struct
 {
-	op_code nombre_interfaz;
+	op_code tipo_interfaz;
 	t_queue* cola_de_espera;
 	bool en_uso;
 	int socket;
+	char* nombre_interfaz;
 
 }interfaz_kernel;
 
