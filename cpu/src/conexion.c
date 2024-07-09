@@ -10,6 +10,7 @@ void atender_memoria()
     t_buffer* buffer;
 
     int cod_op_memoria = recibir_operacion(socket_cliente_cpu);
+
     while(1)
     {
         switch (cod_op_memoria) 
@@ -33,9 +34,9 @@ void atender_memoria()
                 buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
                 log_info(log_cpu, "PID: %d - FETCH - Program Counter: %d", proceso->pid, proceso->program_counter);
                 //proceso->program_counter++; // Esto hay que sacarlo porque usan la variable global, y aumentarlo en pcb.c
-                char* instruccion_recibida = recibir_string_del_buffer(buffer);
-                interpretar_instruccion_de_memoria(instruccion_recibida);
-                free(buffer); 
+                char* instruccion_recibida = recibir_string_del_buffer(buffer); // Obtengo la instrucción posta del buffer
+                interpretar_instruccion_de_memoria(instruccion_recibida); // Mando la instrucción para hacer un decode
+                free(buffer); // Libero el buffer
                 break;
             case EXIT:
                 error_exit(EXIT);

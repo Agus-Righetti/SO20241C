@@ -684,6 +684,7 @@ void recibir_pcb(pcb* proceso) {
                 flag_estado = hacer_wait(indice_recurso, proceso_recibido);
 
                 break;
+
             case IO_GEN_SLEEP: //(Interfaz, Unidades de trabajo)
 
                 buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
@@ -693,6 +694,7 @@ void recibir_pcb(pcb* proceso) {
                 unidades_de_trabajo = recibir_int_del_buffer(buffer);
                 flag_estado = io_gen_sleep(nombre_interfaz, unidades_de_trabajo, proceso_recibido);
                 break;
+
             //le tengo q decir a CPU q me los mande como ints a los valores del registro
             case IO_STDIN_READ: //(Interfaz, Registro Dirección, Registro Tamaño)
                 buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
@@ -706,6 +708,7 @@ void recibir_pcb(pcb* proceso) {
                 break;
 
             case IO_STDOUT_WRITE: //(Interfaz, Registro Dirección, Registro Tamaño)
+
                 buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
                 fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
                 proceso_recibido = recibir_estructura_del_buffer(buffer);
@@ -717,22 +720,29 @@ void recibir_pcb(pcb* proceso) {
                 break;
             
             case IO_FS_CREATE: // (Interfaz, Nombre Archivo)
+
                 buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
                 fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
                 proceso_recibido = recibir_estructura_del_buffer(buffer);
                 nombre_interfaz = recibir_string_del_buffer(buffer);
                 nombre_archivo = recibir_string_del_buffer(buffer);
                 flag_estado = io_fs_create(nombre_interfaz, nombre_archivo, proceso_recibido);
+
                 break;
+
             case IO_FS_DELETE: //(Interfaz, Nombre Archivo)
+
                 buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
                 fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
                 proceso_recibido = recibir_estructura_del_buffer(buffer);
                 nombre_interfaz = recibir_string_del_buffer(buffer);
                 nombre_archivo = recibir_string_del_buffer(buffer);
                 flag_estado = io_fs_delete(nombre_interfaz, nombre_archivo, proceso_recibido);
+
                 break;
+
             case IO_FS_TRUNCATE: //(Interfaz, Nombre Archivo, Registro Tamaño)
+
                 buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
                 fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
                 proceso_recibido = recibir_estructura_del_buffer(buffer);
@@ -740,8 +750,11 @@ void recibir_pcb(pcb* proceso) {
                 nombre_archivo = recibir_string_del_buffer(buffer);
                 registro_tamano = recibir_int_del_buffer(buffer);
                 flag_estado = io_fs_truncate(nombre_interfaz, nombre_archivo, registro_tamano, proceso_recibido);
+
                 break;
+
             case IO_FS_WRITE: //(Interfaz, Nombre Archivo, Registro Dirección, Registro Tamaño, Registro Puntero Archivo)
+
                 buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
                 fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
                 proceso_recibido = recibir_estructura_del_buffer(buffer);
@@ -751,8 +764,11 @@ void recibir_pcb(pcb* proceso) {
                 registro_tamano = recibir_int_del_buffer(buffer);
                 registro_puntero_archivo = recibir_int_del_buffer(buffer);
                 flag_estado = io_fs_write(nombre_interfaz, nombre_archivo, registro_direccion, registro_tamano, registro_puntero_archivo, proceso_recibido);
+
                 break;
+
             case IO_FS_READ: //(Interfaz, Nombre Archivo, Registro Dirección, Registro Tamaño, Registro Puntero Archivo)
+            
                 buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
                 fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
                 proceso_recibido = recibir_estructura_del_buffer(buffer);
