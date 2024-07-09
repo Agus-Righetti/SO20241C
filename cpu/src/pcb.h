@@ -37,11 +37,11 @@ typedef struct
 } t_instruccion;
 
 void recibir_pcb();
-void enviar_pcb(int conexion, pcb *proceso, op_code codigo, char* recurso);
+void enviar_pcb(int conexion, argumentos_cpu* args);
 // void recibir_instruccion(t_list *paquete, t_instruccion *proceso);
 
 void iniciar_diccionario_instrucciones(void);
-void iniciar_diccionario_registros(registros_cpu* registro);
+void iniciar_diccionario_registros();
 void destruir_diccionarios(void); 
 void interpretar_instruccion_de_memoria(t_buffer* buffer);
 
@@ -68,7 +68,7 @@ void instruccion_wait(char** parte);
 void instruccion_signal(char **parte);
 
 void error_exit(op_code codigo);
-void solicitar_instrucciones_a_memoria(int socket_cliente_cpu, pcb** pcb_recibido); 
+void solicitar_instrucciones_a_memoria(int socket_cliente_cpu); 
 // void recibir_instruccion_de_memoria(int socket_servidor_memoria);
 void enviar_instruccion(int conexion, t_instruccion* instruccion, op_code codigo);
 int copiar_bytes(uint32_t direccion_origen, uint32_t direccion_destino, int tamanio);

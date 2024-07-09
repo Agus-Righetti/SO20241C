@@ -83,9 +83,10 @@ void enviar_pcb(int conexion, argumentos_cpu* args){
 
             break;
 
-        case IO_STDOUT_WRITE: // Falta
-
-
+        case IO_STDOUT_WRITE:
+            agregar_string_al_paquete_personalizado(paquete, args->nombre_interfaz);
+            agregar_int_al_paquete_personalizado(paquete, args->registro_direccion);
+            agregar_int_al_paquete_personalizado(paquete, args->registro_tamano);
 
             break;
 
@@ -229,8 +230,8 @@ void solicitar_instrucciones_a_memoria(int socket_cliente_cpu)
     // Acordarse de sacarlo!!!!!!
     log_info(log_cpu, "Le pedi instruccion a Memoria");
     printf("Verificación fuera de la función:\n");
-    printf("El PID es: %d\n", (*pcb_recibido)->pid);
-    printf("El PC es: %d\n", (*pcb_recibido)->program_counter);
+    printf("El PID es: %d\n", pcb_recibido->pid);
+    printf("El PC es: %d\n", pcb_recibido->program_counter);
 }
 
 // Instrucciones -------------------------------------------------------------------------------------------------------------------
@@ -338,7 +339,7 @@ void instruccion_set(char **parte)
 	// Obtiene el valor del registro desde el diccionario 'registros' usando 'parte[1]' como clave y copia el valor de 'parte[2]' en el registro encontrado.
     memcpy(dictionary_get(registros, parte[1]), parte[2], strlen(parte[2])); // Acá, ahora, modifica dentro del diccionario el valor del registro correspondiente (como ahora está cambiado, entonces modifica el registro del pcb que tengo en este momento posta)
     
-    //proceso->registros->ax = partes[2]; // 
+    
 	// proceso->program_counter++; // Esto está mal, tendría que sumar el program counter pero del pcb_recibido, no del global
     pcb_recibido->program_counter++; // Ahora sí, si sí puedo tener el pcb como "global" de todo el pcb.c entonces god
 }
@@ -364,17 +365,17 @@ void instruccion_mov_in(char **parte)
 
 	strcpy(instruccion_alloc, instruccion); // Le copio la instruccion a instruccion_alloc
 
-	list_replace_and_destroy_element(proceso->instrucciones, proceso->program_counter, instruccion_alloc, free);
+	list_replace_and_destroy_element(pcb_recibido->instrucciones, pcb_recibido->program_counter, instruccion_alloc, free);
 	
-    log_trace(log_cpu, "PID: %d - Instruccion traducida: %s", proceso->pid, (char*)list_get(proceso->instrucciones, proceso->program_counter));
+    log_trace(log_cpu, "PID: %d - Instruccion traducida: %s", pcb_recibido->pid, (char*)list_get(pcb_recibido->instrucciones, pcb_recibido->program_counter));
 	
     t_instruccion* instruccion_proceso = malloc(sizeof(t_instruccion));
-	generar_instruccion(proceso, instruccion_proceso, list_get(proceso->instrucciones, proceso->program_counter));
+	generar_instruccion(pcb_recibido, instruccion_proceso, list_get(pcb_recibido->instrucciones, pcb_recibido->program_counter));
 
     // Enviamos la instruccion a memoria
     enviar_instruccion(socket_cliente_cpu, instruccion_proceso, MOV_IN);
 	// log_warning(log_cpu, "PID: %d - Advertencia: Instruccion sin realizar", proceso->pid);
-	proceso->program_counter++;
+	pcb_recibido->program_counter++;
 }
 
 void generar_instruccion(pcb* proceso, t_instruccion* instruccion_proceso, char* instruccion) 
@@ -388,22 +389,22 @@ void instruccion_mov_out(char **parte)
     // MOV_OUT registro_direccion registro_datos
     // MOV_OUT EDX ECX
 
-    log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s", proceso->pid, parte[0], parte[1], parte[2]);
+    log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s", pcb_recibido->pid, parte[0], parte[1], parte[2]);
 	int direccion_fisica = traducir_direccion_logica_a_fisica(parte[1]);
 	
 	char* instruccion = string_from_format("%s %d %s", parte[0], direccion_fisica, parte[2]);
 	char* instruccion_alloc = malloc(strlen(instruccion) + 1);
 	strcpy(instruccion_alloc, instruccion);
     
-	list_replace_and_destroy_element(proceso->instrucciones, proceso->program_counter, instruccion_alloc, free);
-	log_trace(log_cpu, "PID: %d - Instruccion traducida: %s", proceso->pid, (char*)list_get(proceso->instrucciones, proceso->program_counter));
+	list_replace_and_destroy_element(pcb_recibido->instrucciones, pcb_recibido->program_counter, instruccion_alloc, free);
+	log_trace(log_cpu, "PID: %d - Instruccion traducida: %s", pcb_recibido->pid, (char*)list_get(pcb_recibido->instrucciones, proceso->program_counter));
 	t_instruccion* instruccion_proceso = malloc(sizeof(t_instruccion));
 	
-    generar_instruccion(proceso, instruccion_proceso, list_get(proceso->instrucciones, proceso->program_counter));
+    generar_instruccion(pcb_recibido, instruccion_proceso, list_get(pcb_recibido->instrucciones, pcb_recibido->program_counter));
 	enviar_instruccion(socket_cliente_cpu, instruccion_proceso, MOV_OUT);
     
 	// log_warning(log_cpu, "PID: %d - Advertencia: Instruccion sin realizar", proceso->pid);
-	proceso->program_counter++;
+	pcb_recibido->program_counter++;
 }
 
 void enviar_instruccion(int conexion, t_instruccion* instruccion, op_code codigo)
@@ -462,7 +463,7 @@ void instruccion_jnz(char **parte)
 void instruccion_resize(char **parte)
 {
     // RESIZE 128
-    log_info(log_cpu, "PID: %d - Ejecutando: %s - %s", proceso->pid, parte[0], parte[1]);
+    log_info(log_cpu, "PID: %d - Ejecutando: %s - %s", pcb_recibido->pid, parte[0], parte[1]);
 
     // Verificar si se proporcionó el tamaño como parámetro
     if (parte[1] == NULL) 
@@ -476,7 +477,7 @@ void instruccion_resize(char **parte)
 
     // Solicitar a la memoria ajustar el tamaño del proceso
     t_paquete *paquete = crear_paquete_personalizado(CPU_MANDA_RESIZE_A_MEMORIA); // [PID, TAMAÑO] -> [Int, Int]
-    agregar_int_al_paquete_personalizado(paquete, proceso->pid);
+    agregar_int_al_paquete_personalizado(paquete, pcb_recibido->pid);
     agregar_int_al_paquete_personalizado(paquete, nuevo_tamanio);
     enviar_paquete(paquete, socket_cliente_cpu);
 	eliminar_paquete(paquete);
@@ -488,7 +489,7 @@ void instruccion_resize(char **parte)
         switch (cod_op_memoria){
             case CPU_RECIBE_OUT_OF_MEMORY_DE_MEMORIA: // VACIO
                 printf("Error: No se pudo ajustar el tamaño del proceso. Out of Memory.\n");
-                enviar_pcb(socket_cliente_kernel, proceso, OUT_OF_MEMORY, NULL);
+                enviar_pcb(socket_cliente_kernel, pcb_recibido, OUT_OF_MEMORY, NULL);
                 free(buffer);
                 break;
             case CPU_RECIBE_OK_DEL_RESIZE:
@@ -505,14 +506,14 @@ void instruccion_resize(char **parte)
                 break;
             }
     } 
-    proceso->program_counter++; 
+    pcb_recibido->program_counter++; 
 }
     
 
 void instruccion_copy_string(char **parte)
 {
     // COPY_STRING 8
-    log_info(log_cpu, "PID: %d - Ejecutando: %s - %s", proceso->pid, parte[0], parte[1]);
+    log_info(log_cpu, "PID: %d - Ejecutando: %s - %s", pcb_recibido->pid, parte[0], parte[1]);
 
     // Verificar si se proporcionó el tamaño como parámetro
     if (parte[1] == NULL) 
@@ -535,7 +536,7 @@ void instruccion_copy_string(char **parte)
         printf("Error al copiar los bytes en la dirección de memoria apuntada por DI\n");
     }
 
-    proceso->program_counter++;
+    pcb_recibido->program_counter++;
 }
 
 // Función para copiar bytes desde una dirección de memoria a otra
@@ -564,19 +565,19 @@ void instruccion_wait(char** parte)
         return;
     }
 
-	log_info(log_cpu, "PID: %d - Ejecutando: %s - %s", proceso->pid, parte[0], parte[1]);
-	proceso->program_counter++;
+	log_info(log_cpu, "PID: %d - Ejecutando: %s - %s", pcb_recibido->pid, parte[0], parte[1]);
+	pcb_recibido->program_counter++;
     argumentos_cpu* args = malloc(sizeof(argumentos_cpu));
     
-    args->proceso = proceso; //Este proceso es global, no deberia ser global
+    args->proceso = pcb_recibido; //Este proceso es global, no deberia ser global
     args->recurso = atoi(parte[1]);
-    args->operacion = SIGNAL;
+    args-> = WAIT;
 
     // Enviar solicitud de SIGNAL al kernel
     enviar_pcb(socket_cliente_kernel, args);
 	
-    list_destroy_and_destroy_elements(proceso->instrucciones, free);
-	free(proceso);
+    list_destroy_and_destroy_elements(pcb_recibido->instrucciones, free);
+	//free(proceso);
 }
 
 void instruccion_signal(char **parte)
@@ -589,10 +590,10 @@ void instruccion_signal(char **parte)
     }
     argumentos_cpu* args = malloc(sizeof(argumentos_cpu));
     // Log de ejecucion de la instruccion
-	log_info(log_cpu, "PID: %d - Ejecutando: %s - %s", proceso->pid, parte[0], parte[1]);
-    proceso->program_counter++;
+	log_info(log_cpu, "PID: %d - Ejecutando: %s - %s", pcb_recibido->pid, parte[0], parte[1]);
+    pcb_recibido->program_counter++;
 
-    args->proceso = proceso; //Este proceso es global, no deberia ser global
+    args->proceso = pcb_recibido; 
     args->recurso = atoi(parte[1]);
     args->operacion = SIGNAL;
 
@@ -600,7 +601,7 @@ void instruccion_signal(char **parte)
     // Enviar solicitud de SIGNAL al kernel
     enviar_pcb(socket_cliente_kernel, args);
 
-    list_destroy_and_destroy_elements(proceso->instrucciones, free); // No sabemos por qué se liberan las instrucciones
+    list_destroy_and_destroy_elements(pcb_recibido->instrucciones, free); // No sabemos por qué se liberan las instrucciones
     
     //free(proceso);
 }
@@ -608,12 +609,14 @@ void instruccion_signal(char **parte)
 void instruccion_io_gen_sleep(char **parte)
 {
     // IO_GEN_SLEEP Int1 10
+    log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s", pcb_recibido->pid, parte[0], parte[1], parte[2]);
 
     argumentos_cpu* args = malloc(sizeof(argumentos_cpu));
     args->nombre_interfaz = parte[1];
     args->unidades_de_trabajo = atoi(parte[2]);
     pcb_recibido->program_counter++;
-    args->proceso = pcb_recibido; //VARIABLE GLOBAL, NO
+    args->proceso = pcb_recibido;
+    args->operacion = IO_GEN_SLEEP;
 
     enviar_pcb(socket_cliente_kernel, args);
 
@@ -625,7 +628,6 @@ void instruccion_io_gen_sleep(char **parte)
     //Todas las instrucciones de Entrada Salida se las tienen q mandar a kernel q es el q las ejecuta
     //le mandan a kernel el cod op de la operacion con los argumetnos y kernel hace todo
     //printf("Solicitando a la interfaz %s que realice un sleep por %s unidades de trabajo...\n", interfaz, parte[2]);
-    log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s", proceso->pid, parte[0], parte[1], parte[2]);
     //solicitar_sleep_io(parte[1], unidades_trabajo, proceso->pid); // Esta función enviará la solicitud de sleep al Kernel
 }
 
@@ -657,12 +659,12 @@ void instruccion_io_stdin_read(char** parte)
         return;
     }
 
-    if(strcmp(parte[1], "STDIN") != 0) 
-    {
-        log_error(log_cpu, "La interfaz indicada no es STDIN.");
-    }
+    // if(strcmp(parte[1], "STDIN") != 0) 
+    // {
+    //     log_error(log_cpu, "La interfaz indicada no es STDIN.");
+    // }
 
-    log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s %s", proceso->pid, parte[0], parte[1], parte[2], parte[3]);
+    log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s %s", pcb_recibido->pid, parte[0], parte[1], parte[2], parte[3]);
 
     // Extraer los registros de la instrucción
     // char* interfaz = parte[1];
@@ -682,27 +684,28 @@ void instruccion_io_stdin_read(char** parte)
     args->registro_tamano = atoi(parte[3]);
     pcb_recibido->program_counter++; // Siempre primero sumo el PC y después recién asigno el proceso a args así está actualizado
     args->proceso = pcb_recibido;
+    args->operacion = IO_STDIN_READ;
 
     enviar_pcb(socket_cliente_kernel, args);
 }
 
-void enviar_solicitud_a_kernel(Interfaz* interfaz, int direccion_fisica, int tamanio, int conexion) 
-{
-    t_paquete* paquete = crear_paquete_personalizado(IO_STDIN_READ);
+// void enviar_solicitud_a_kernel(Interfaz* interfaz, int direccion_fisica, int tamanio, int conexion) 
+// {
+//     t_paquete* paquete = crear_paquete_personalizado(IO_STDIN_READ);
 
-    // Agregar la estructura Interfaz al paquete
-    agregar_estructura_al_paquete_personalizado(paquete, interfaz, sizeof(Interfaz));
+//     // Agregar la estructura Interfaz al paquete
+//     agregar_estructura_al_paquete_personalizado(paquete, interfaz, sizeof(Interfaz));
 
-    // Agregar la dirección fisica al paquete
-    agregar_estructura_al_paquete_personalizado(paquete, &direccion_fisica, sizeof(int));
+//     // Agregar la dirección fisica al paquete
+//     agregar_estructura_al_paquete_personalizado(paquete, &direccion_fisica, sizeof(int));
 
-    // Agregar el tamaño al paquete
-    agregar_estructura_al_paquete_personalizado(paquete, &tamanio, sizeof(int));
+//     // Agregar el tamaño al paquete
+//     agregar_estructura_al_paquete_personalizado(paquete, &tamanio, sizeof(int));
 
-    // Enviar el paquete al socket cliente
-    enviar_paquete(paquete, socket_cliente_kernel);
-    eliminar_paquete(paquete);
-}
+//     // Enviar el paquete al socket cliente
+//     enviar_paquete(paquete, socket_cliente_kernel);
+//     eliminar_paquete(paquete);
+// }
 
 void instruccion_io_stdout_write(char **parte) // ESTE NO LO ENTIENDO PORQUE MANDA BANDA DE COSAS
 {
@@ -720,32 +723,40 @@ void instruccion_io_stdout_write(char **parte) // ESTE NO LO ENTIENDO PORQUE MAN
         log_error(log_cpu, "La interfaz indicada no es STDOUT.");
     }    
 
-    char *interfaz = parte[1];
+    // char *interfaz = parte[1];
     char *registro_direccion = parte[2]; // Direccion logica
     char *registro_tamano = parte[3];
 
-    log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s %s", proceso->pid, parte[0], parte[1], parte[2], parte[3]);
+    log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s %s", pcb_recibido->pid, parte[0], parte[1], parte[2], parte[3]);
 
     int valor_registro = (int)dictionary_get(registros, registro_tamano);
     int direccion_logica = (int)dictionary_get(registros, registro_direccion);
-    int direccion_fisica = traducir_direccion_logica_a_fisica(registro_direccion);
+    int direccion_fisica = traducir_direccion_logica_a_fisica(registro_direccion);    
 
-    // Crear paquete para enviar al Kernel
-    t_paquete *paquete = crear_paquete_personalizado(IO_STDOUT_WRITE);
+    argumentos_cpu* args = malloc(sizeof(argumentos_cpu));
+    args->nombre_interfaz = parte[1];
+    args->registro_direccion = direccion_fisica;
+    args->registro_tamano = valor_registro;
+    pcb_recibido->program_counter++; // Siempre primero sumo el PC y después recién asigno el proceso a args así está actualizado
+    args->proceso = pcb_recibido;
+    args->operacion = IO_STDOUT_WRITE;
 
-    // Agregar los datos al paquete
-    agregar_string_al_paquete_personalizado(paquete, interfaz);
-    agregar_string_al_paquete_personalizado(paquete, registro_direccion);
-    agregar_string_al_paquete_personalizado(paquete, registro_tamano);
-    agregar_int_al_paquete_personalizado(paquete, valor_registro);
-    agregar_int_al_paquete_personalizado(paquete, direccion_logica);
+    enviar_pcb(socket_cliente_kernel, args);
 
-    // Enviar paquete al Kernel
-    enviar_paquete(paquete, socket_cliente_kernel);
-    eliminar_paquete(paquete);
+    // // Crear paquete para enviar al Kernel
+    // t_paquete *paquete = crear_paquete_personalizado(IO_STDOUT_WRITE);
 
-    // Incrementar el program counter del proceso
-    proceso->program_counter++;
+    // // Agregar los datos al paquete
+    // agregar_string_al_paquete_personalizado(paquete, interfaz);
+    // agregar_string_al_paquete_personalizado(paquete, registro_direccion);
+    // agregar_string_al_paquete_personalizado(paquete, registro_tamano);
+    // agregar_int_al_paquete_personalizado(paquete, valor_registro);
+    // agregar_int_al_paquete_personalizado(paquete, direccion_logica);
+
+    // // Enviar paquete al Kernel
+    // enviar_paquete(paquete, socket_cliente_kernel);
+    // eliminar_paquete(paquete);
+
 }
 
 void instruccion_io_fs_create(char **parte)
@@ -759,12 +770,12 @@ void instruccion_io_fs_create(char **parte)
         return;
     }
 
-    if(strcmp(parte[1], "DIALFS") != 0) 
-    {
-        log_error(log_cpu, "La interfaz indicada no es DIALFS.");
-    }
+    // if(strcmp(parte[1], "DIALFS") != 0) 
+    // {
+    //     log_error(log_cpu, "La interfaz indicada no es DIALFS.");
+    // }
 
-    log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s", proceso->pid, parte[0], parte[1], parte[2]);
+    log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s", pcb_recibido->pid, parte[0], parte[1], parte[2]);
 
 
     argumentos_cpu* args = malloc(sizeof(argumentos_cpu));
@@ -772,6 +783,8 @@ void instruccion_io_fs_create(char **parte)
     args->nombre_archivo = parte[2];
     pcb_recibido->program_counter++;
     args->proceso = pcb_recibido;
+    args->operacion = IO_FS_CREATE;
+
 
     enviar_pcb(socket_cliente_kernel, args);
 
@@ -801,18 +814,19 @@ void instruccion_io_fs_delete(char **parte)
         return;
     }
 
-    if(strcmp(parte[1], "DIALFS") != 0) 
-    {
-        log_error(log_cpu, "La interfaz indicada no es DIALFS.");
-    }
+    // if(strcmp(parte[1], "DIALFS") != 0) 
+    // {
+    //     log_error(log_cpu, "La interfaz indicada no es DIALFS.");
+    // }
 
-    log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s", proceso->pid, parte[0], parte[1], parte[2]);
+    log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s", pcb_recibido->pid, parte[0], parte[1], parte[2]);
     
     argumentos_cpu* args = malloc(sizeof(argumentos_cpu));
     args->nombre_interfaz = parte[1];
     args->nombre_archivo = parte[2];
     pcb_recibido->program_counter++;
     args->proceso = pcb_recibido;
+    args->operacion = IO_FS_DELETE;
 
     enviar_pcb(socket_cliente_kernel, args);
 
@@ -842,20 +856,22 @@ void instruccion_io_fs_truncate(char **parte)
         return;
     }
 
-    if(strcmp(parte[1], "DIALFS") != 0) 
-    {
-        log_error(log_cpu, "La interfaz indicada no es DIALFS.");
-    }
+    // if(strcmp(parte[1], "DIALFS") != 0) 
+    // {
+    //     log_error(log_cpu, "La interfaz indicada no es DIALFS.");
+    // }
     
     // Log de la ejecucion de la instruccion
-    log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s %s", proceso->pid, parte[0], parte[1], parte[2], parte[3]);
-
+    log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s %s", pcb_recibido->pid, parte[0], parte[1], parte[2], parte[3]);
+    int nuevo_tamanio = *(int*)dictionary_get(registros, parte[3]);
+    
     argumentos_cpu* args = malloc(sizeof(argumentos_cpu));
     args->nombre_interfaz = parte[1];
     args->nombre_archivo = parte[2];
-    args->registro_tamano = parte[3];
+    args->registro_tamano = nuevo_tamanio;
     pcb_recibido->program_counter++;
     args->proceso = pcb_recibido;
+    args->operacion = IO_FS_TRUNCATE;
 
     enviar_pcb(socket_cliente_kernel, args);
 
@@ -890,13 +906,13 @@ void instruccion_io_fs_write(char **parte)
         return;
     }
 
-    if(strcmp(parte[1], "DIALFS") != 0) 
-    {
-        log_error(log_cpu, "La interfaz indicada no es DIALFS.");
-    }
+    // if(strcmp(parte[1], "DIALFS") != 0) 
+    // {
+    //     log_error(log_cpu, "La interfaz indicada no es DIALFS.");
+    // }
 
     // Log de la ejecución de la instrucción
-    log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s %s %s %s", proceso->pid, parte[0], parte[1], parte[2], parte[3], parte[4], parte[5]);
+    log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s %s %s %s", pcb_recibido->pid, parte[0], parte[1], parte[2], parte[3], parte[4], parte[5]);
 
     // // Extrae los parámetros de la instrucción
     // char *interfaz = parte[1];
@@ -920,14 +936,18 @@ void instruccion_io_fs_write(char **parte)
     // // Incrementar el contador de programa del proceso, si es necesario
     // proceso->program_counter++;
 
+    int direccion_fisica = traducir_direccion_logica_a_fisica(registro_direccion);
+
     argumentos_cpu* args = malloc(sizeof(argumentos_cpu));
     args->nombre_interfaz = parte[1];
     args->nombre_archivo = parte[2];
-    args->registro_direccion = registro_direccion;
+    args->registro_direccion = direccion_fisica; 
     args->registro_tamano = registro_tamanio;
     args->registro_puntero_archivo = registro_puntero_archivo;
     pcb_recibido->program_counter++;
     args->proceso = pcb_recibido;
+    args->operacion = IO_FS_WRITE;
+
 
     enviar_pcb(socket_cliente_kernel, args);
 
@@ -944,13 +964,13 @@ void instruccion_io_fs_read(char **parte)
         return;
     }
 
-    if(strcmp(parte[1], "DIALFS") != 0) 
-    {
-        log_error(log_cpu, "La interfaz indicada no es DIALFS.");
-    }
+    // if(strcmp(parte[1], "DIALFS") != 0) 
+    // {
+    //     log_error(log_cpu, "La interfaz indicada no es DIALFS.");
+    // }
 
     // Log de la ejecución de la instrucción
-    log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s %s %s %s", proceso->pid, parte[0], parte[1], parte[2], parte[3], parte[4], parte[5]);
+    log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s %s %s %s", pcb_recibido->pid, parte[0], parte[1], parte[2], parte[3], parte[4], parte[5]);
 
     // // Extrae los parámetros de la instrucción
     // char *interfaz = parte[1];
@@ -974,14 +994,17 @@ void instruccion_io_fs_read(char **parte)
     // // Incrementar el contador de programa del proceso, si es necesario
     // proceso->program_counter++;
 
+    int direccion_fisica = traducir_direccion_logica_a_fisica(registro_direccion);
+
     argumentos_cpu* args = malloc(sizeof(argumentos_cpu));
     args->nombre_interfaz = parte[1];
     args->nombre_archivo = parte[2];
-    args->registro_direccion = registro_direccion;
+    args->registro_direccion = direccion_fisica;
     args->registro_tamano = registro_tamanio;
     args->registro_puntero_archivo = registro_puntero_archivo;
     pcb_recibido->program_counter++;
     args->proceso = pcb_recibido;
+    args->operacion = IO_FS_READ;
 
     enviar_pcb(socket_cliente_kernel, args);
 
@@ -989,11 +1012,12 @@ void instruccion_io_fs_read(char **parte)
 
 void instruccion_exit(char** parte) 
 {
-	log_info(log_cpu, "PID: %d - Ejecutando: %s", proceso->pid, parte[0]);
+	log_info(log_cpu, "PID: %d - Ejecutando: %s", pcb_recibido->pid, parte[0]);
 
     argumentos_cpu* args = malloc(sizeof(argumentos_cpu));
     pcb_recibido->program_counter++;
     args->proceso = pcb_recibido;
+    args->operacion = CPU_TERMINA_EJECUCION_PCB;
 
     enviar_pcb(socket_cliente_kernel, args);
 
@@ -1005,7 +1029,7 @@ void instruccion_exit(char** parte)
 
 void error_exit(op_code codigo) 
 {
-	enviar_pcb(socket_cliente_kernel, proceso, CODIGO, NULL);
-	list_destroy_and_destroy_elements(proceso->instrucciones, free);
-	free(proceso);
+	// enviar_pcb(socket_cliente_kernel, proceso, CODIGO, NULL);
+	// list_destroy_and_destroy_elements(proceso->instrucciones, free);
+	// free(proceso);
 }
