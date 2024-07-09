@@ -182,17 +182,17 @@ void iniciar_diccionario_registros()
 {
     //aca deberia ser los registros del proceso q estamos ejecutando, no registros cualqiueras.
 	registros = dictionary_create();
-	dictionary_put(registros, "PC", &pcb_recibido->registro->pc);
-	dictionary_put(registros, "AX", &pcb_recibido->registro->ax);
-	dictionary_put(registros, "BX", &pcb_recibido->registro->bx);
-	dictionary_put(registros, "CX", &pcb_recibido->registro->cx);
-	dictionary_put(registros, "DX", &pcb_recibido->registro->dx);
-	dictionary_put(registros, "EAX", &pcb_recibido->registro->eax);
-	dictionary_put(registros, "EBX", &pcb_recibido->registro->ebx);
-	dictionary_put(registros, "ECX", &pcb_recibido->registro->ecx);
-	dictionary_put(registros, "EDX", &pcb_recibido->registro->edx);
-	dictionary_put(registros, "SI", &pcb_recibido->registro->si);
-	dictionary_put(registros, "DI", &pcb_recibido->registro->di);
+	dictionary_put(registros, "PC", &pcb_recibido->registros->pc);
+	dictionary_put(registros, "AX", &pcb_recibido->registros->ax);
+	dictionary_put(registros, "BX", &pcb_recibido->registros->bx);
+	dictionary_put(registros, "CX", &pcb_recibido->registros->cx);
+	dictionary_put(registros, "DX", &pcb_recibido->registros->dx);
+	dictionary_put(registros, "EAX", &pcb_recibido->registros->eax);
+	dictionary_put(registros, "EBX", &pcb_recibido->registros->ebx);
+	dictionary_put(registros, "ECX", &pcb_recibido->registros->ecx);
+	dictionary_put(registros, "EDX", &pcb_recibido->registros->edx);
+	dictionary_put(registros, "SI", &pcb_recibido->registros->si);
+	dictionary_put(registros, "DI", &pcb_recibido->registros->di);
 }
 
 void destruir_diccionarios(void) 
@@ -323,9 +323,11 @@ void interpretar_instruccion_de_memoria(char* instruccion)
             destruir_diccionarios();
             return;
     }
+
     log_warning(log_cpu, "PID: %d - Advertencia: Sin instrucciones por ejecutar - Ejecutando: EXIT", proceso->pid);
 	error_exit(EXIT);
     destruir_diccionarios();
+    
     return;
 }
 
@@ -460,7 +462,7 @@ void instruccion_jnz(char **parte)
     }
 }
 
-void instruccion_resize(char **parte)
+void instruccion_resize(char **parte) // ACA HAY QUE MANEJAR UN ENVIO DE PCB QUE ESTA COMENTADO EN EL SWITCH
 {
     // RESIZE 128
     log_info(log_cpu, "PID: %d - Ejecutando: %s - %s", pcb_recibido->pid, parte[0], parte[1]);
@@ -489,7 +491,7 @@ void instruccion_resize(char **parte)
         switch (cod_op_memoria){
             case CPU_RECIBE_OUT_OF_MEMORY_DE_MEMORIA: // VACIO
                 printf("Error: No se pudo ajustar el tamaño del proceso. Out of Memory.\n");
-                enviar_pcb(socket_cliente_kernel, pcb_recibido, OUT_OF_MEMORY, NULL);
+                //enviar_pcb(socket_cliente_kernel, pcb_recibido, OUT_OF_MEMORY, NULL);
                 free(buffer);
                 break;
             case CPU_RECIBE_OK_DEL_RESIZE:
@@ -554,6 +556,8 @@ int copiar_bytes(uint32_t direccion_origen, uint32_t direccion_destino, int tama
         memcpy((void *)direccion_destino, (void *)direccion_origen, tamanio);
         return 1;
     } 
+
+    return 0; // Agrego eso para que, si no entra en ningun if, devuelva algo
 }
 
 void instruccion_wait(char** parte)
@@ -571,7 +575,7 @@ void instruccion_wait(char** parte)
     
     args->proceso = pcb_recibido; //Este proceso es global, no deberia ser global
     args->recurso = atoi(parte[1]);
-    args-> = WAIT;
+    args->operacion = WAIT;
 
     // Enviar solicitud de SIGNAL al kernel
     enviar_pcb(socket_cliente_kernel, args);
@@ -729,9 +733,9 @@ void instruccion_io_stdout_write(char **parte) // ESTE NO LO ENTIENDO PORQUE MAN
 
     log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s %s", pcb_recibido->pid, parte[0], parte[1], parte[2], parte[3]);
 
-    int valor_registro = (int)dictionary_get(registros, registro_tamano);
-    int direccion_logica = (int)dictionary_get(registros, registro_direccion);
-    int direccion_fisica = traducir_direccion_logica_a_fisica(registro_direccion);    
+    int valor_registro = atoi(dictionary_get(registros, registro_tamano));
+    int direccion_logica = atoi(dictionary_get(registros, registro_direccion));
+    int direccion_fisica = traducir_direccion_logica_a_fisica(direccion_logica);    
 
     argumentos_cpu* args = malloc(sizeof(argumentos_cpu));
     args->nombre_interfaz = parte[1];

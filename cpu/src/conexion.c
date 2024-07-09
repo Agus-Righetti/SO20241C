@@ -102,7 +102,7 @@ void atender_kernel()
     }
 }
 
-void atender_interrupcion()
+void atender_interrupcion() // ACA HAY QUE MANEJAR EL ENVIAR PCB DENTRO DEL SWITCH (ESTA COMENTADO)
 {
     t_list* lista;
     while(1) {
@@ -118,7 +118,7 @@ void atender_interrupcion()
                 break;
             case INTERRUPCION_KERNEL:
                 log_info(log_cpu, "Me llego una interrupcion de KERNEL, ahora voy a enviar el pcb");
-                enviar_pcb(socket_cliente_kernel, proceso, PCB_CPU_A_KERNEL, NULL);
+                //enviar_pcb(socket_cliente_kernel, proceso, PCB_CPU_A_KERNEL, NULL);
                 break;
             case -1:
                 log_error(log_cpu, "El cliente se desconecto. Terminando servidor");
