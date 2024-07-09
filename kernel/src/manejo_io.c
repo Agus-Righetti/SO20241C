@@ -164,6 +164,7 @@ void* verificar_interfaz(char* nombre_interfaz_buscada, op_code tipo_interfaz_bu
 
     if(queue_is_empty(cola_interfaces_conectadas) == false){ // Si la cola no está vacía
 
+        pthread_mutex_lock(&mutex_cola_de_interfaces);
         aux  = queue_pop(cola_interfaces_conectadas);
         char* primer_nombre = aux->nombre_interfaz;
 
@@ -178,6 +179,8 @@ void* verificar_interfaz(char* nombre_interfaz_buscada, op_code tipo_interfaz_bu
                 return NULL; //No esta la interfaz con ese nombre, retorno null
             }
         }
+        queue_push(cola_interfaces_conectadas, aux);
+        pthread_mutex_unlock(&mutex_cola_de_interfaces);
         //Si llegamos a este punto es porque se encontro la interfaz
         if(aux->tipo_interfaz == tipo_interfaz_buscada)
         {

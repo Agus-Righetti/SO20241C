@@ -32,9 +32,10 @@ void atender_memoria()
                 log_info(log_cpu, "Recibi una instruccion de memoria");
                 buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
                 log_info(log_cpu, "PID: %d - FETCH - Program Counter: %d", proceso->pid, proceso->program_counter);
-                proceso->program_counter++;
-                interpretar_instruccion_de_memoria(buffer);
-                free(buffer);
+                //proceso->program_counter++; // Esto hay que sacarlo porque usan la variable global, y aumentarlo en pcb.c
+                char* instruccion_recibida = recibir_string_del_buffer(buffer);
+                interpretar_instruccion_de_memoria(instruccion_recibida);
+                free(buffer); 
                 break;
             case EXIT:
                 error_exit(EXIT);

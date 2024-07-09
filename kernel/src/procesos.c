@@ -734,8 +734,6 @@ void recibir_pcb(pcb* proceso) {
                 nombre_archivo = recibir_string_del_buffer(buffer);
                 flag_estado = io_fs_create(nombre_interfaz, nombre_archivo, proceso_recibido);
                 break;
-//A PARTIR DE ACA NO LAS HICE-------------------------------------------------
-
             case IO_FS_DELETE: //(Interfaz, Nombre Archivo)
                 buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
                 fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
@@ -809,9 +807,10 @@ void recibir_pcb(pcb* proceso) {
     
     free(buffer->stream); // Libero directamente el buffer, no arme paquete asi que no hace falta
     free(buffer);
-
+    //sem_wait(planificacion_activada)
+    //sem_post(planificacion_activada)
     sem_post(&sem_puedo_mandar_a_cpu); // Aviso que ya volvio el proceso que estaba en CPU, puedo mandar otro
-
+   
     accionar_segun_estado(proceso_recibido, flag_estado); // Mando el proceso a Ready o Exit segun corresponda
     
     return;
@@ -1111,8 +1110,7 @@ void sacar_de_execute(int pid){
 
 }
 
-void sacar_de_blocked(int pid)
-{
+void sacar_de_blocked(int pid){
     //sabemos q el proceso esta bloqueado, no sabemos donde
     //busco en las colas de los recursos
 

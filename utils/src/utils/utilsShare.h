@@ -158,7 +158,7 @@ typedef struct
 {
 	op_code tipo_interfaz;
 	t_queue* cola_de_espera;
-	bool en_uso;
+	bool en_uso; // Sacar
 	int socket;
 	char* nombre_interfaz;
 	pcb* proceso_en_interfaz; //es el proceso que actualmente esta en la interfaz
@@ -177,6 +177,18 @@ typedef struct{
     pcb* proceso;
     op_code operacion;
 }argumentos_para_io;
+
+typedef struct{
+	int recurso;
+	int unidades_de_trabajo;
+	int registro_direccion;
+    int registro_tamano;
+    char* nombre_archivo;
+	char* nombre_interfaz;
+    int registro_puntero_archivo;
+    pcb* proceso;
+    op_code operacion;
+}argumentos_cpu;
 
 // ************ DECLARACION DE FUNCIONES ************
 // ************ SERIALIZACION Y CONEXIONES GENERALES ************

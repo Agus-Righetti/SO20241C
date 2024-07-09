@@ -13,7 +13,6 @@ void recibir_pcb()
         return;
     }
 
-    proceso = pcb_recibido;
     // Acordarse de sacarlos!!!!!!
     log_info(log_cpu, "El PID es: %d", pcb_recibido->pid);
     log_info(log_cpu, "El PC es: %d", pcb_recibido->program_counter);
@@ -23,30 +22,55 @@ void recibir_pcb()
     free(buffer_pcb);
 }
 
-void enviar_pcb(int conexion, pcb *proceso, op_code codigo, char* recurso){
+void enviar_pcb(int conexion, argumentos_cpu* args){
     
-    t_paquete *paquete = crear_paquete_personalizado(PCB_CPU_A_KERNEL);
-    agregar_estructura_al_paquete_personalizado(paquete, proceso, sizeof(pcb));
-    
+    t_paquete *paquete = crear_paquete_personalizado(codigo);
 
-    if (recurso != NULL) 
+    // en todos los casos vamos a mandar el pcb, por lo cual esto no lo pongo en el switch
+
+    agregar_estructura_al_paquete_personalizado(paquete, args->proceso, sizeof(pcb));
+   
+    switch(args->operacion) // Según el código de operación voy a agregar cosas diferentes al paquete (siempre siendo el pcb + otras cosas)
     {
-        int recurso_valor = atoi(recurso);
-
-        if(recurso_valor == 1) {
-            agregar_int_al_paquete_personalizado(paquete, 0);
-        } else if (recurso_valor == 2) {
-            agregar_int_al_paquete_personalizado(paquete, 1); 
-        } else if (recurso_valor == 3) {
-            agregar_int_al_paquete_personalizado(paquete, 2); 
-        }
+        case PCB_CPU_A_KERNEL: // Si es el caso más sencillo, entonces no agrego nada, sólo mando el pcb
+            break;
+        case WAIT:
+        case SIGNAL:
+            if(args->recurso == 1) {
+                agregar_int_al_paquete_personalizado(paquete, 0);
+            } else if (args->recurso == 2) {
+                agregar_int_al_paquete_personalizado(paquete, 1); 
+            } else if (args->recurso == 3) {
+                agregar_int_al_paquete_personalizado(paquete, 2); 
+            }
+            break;
+        case IO_GEN_SLEEP:
+            agregar_int_al_paquete_personalizado(paquete, args->unidades_de_trabajo);
+            break;
+        case IO_STDIN_READ:
+            break;
+        case IO_STDOUT_WRITE:
+            break;
+        case IO_FS_CREATE:
+            break;
+        case IO_FS_DELETE:
+            break;
+        case IO_FS_TRUNCATE:
+            break;
+        case IO_FS_WRITE:
+            break;
+        
+        case IO_FS_READ:
+            break;	
     }
-
+    
     log_info(log_cpu, "Voy a enviar el pcb\n");
 
     enviar_paquete(paquete, conexion);
 
     log_info(log_cpu, "Ya envie el pcb\n");
+
+    free(args); //libero los args
 
 	eliminar_paquete(paquete);
     return;
@@ -82,6 +106,7 @@ void iniciar_diccionario_instrucciones(void)
 
 void iniciar_diccionario_registros(registros_cpu* registro)
 {
+    //aca deberia ser los registros del proceso q estamos ejecutando, no registros cualqiueras.
 	registros = dictionary_create();
 	dictionary_put(registros, "PC", &registro->pc);
 	dictionary_put(registros, "AX", &registro->ax);
@@ -104,7 +129,7 @@ void destruir_diccionarios(void)
 
 // Instrucciones memoria -----------------------------------------------------------------------------------------------------------
 
-void solicitar_instrucciones_a_memoria(int socket_cliente_cpu, pcb** pcb_recibido) // Tendrian que ir **?
+void solicitar_instrucciones_a_memoria(int socket_cliente_cpu, pcb* pcb_recibido)
 {   
     if (pcb_recibido == NULL) 
     {
@@ -115,8 +140,8 @@ void solicitar_instrucciones_a_memoria(int socket_cliente_cpu, pcb** pcb_recibid
     t_paquete* paquete = crear_paquete_personalizado(CPU_PIDE_INSTRUCCION_A_MEMORIA); 
 
     // Agregamos el pc y el pid al paquete
-    agregar_int_al_paquete_personalizado(paquete, (*pcb_recibido)->pid); 
-    agregar_int_al_paquete_personalizado(paquete, (*pcb_recibido)->program_counter);
+    agregar_int_al_paquete_personalizado(paquete, pcb_recibido->pid); 
+    agregar_int_al_paquete_personalizado(paquete, pcb_recibido->program_counter);
 
     // Envio el paquete a memoria
     enviar_paquete(paquete, socket_cliente_cpu);
@@ -131,20 +156,17 @@ void solicitar_instrucciones_a_memoria(int socket_cliente_cpu, pcb** pcb_recibid
 
 // Instrucciones -------------------------------------------------------------------------------------------------------------------
 
-void interpretar_instruccion_de_memoria(t_buffer* buffer)
+void interpretar_instruccion_de_memoria(char* instruccion)
 {   
-    if (buffer == NULL) 
-    {
-        error_show("No se recibio el proceso por parte de MEMORIA");
-        exit(1);
-    }
-
     iniciar_diccionario_instrucciones();
     iniciar_diccionario_registros(&proceso->registros);
     
     // [MOV_IN EAX EBX] -> UNA instruccion la recibimos como una lista de string
-    char** parte = string_split((char*)list_get(proceso->instrucciones, proceso->program_counter), " "); // Partes de la instruccion actual
-	int instruccion_enum = (int)(intptr_t)dictionary_get(instrucciones, parte[0]);
+    //char** parte = string_split((char*)list_get(proceso->instrucciones, proceso->program_counter), " "); // Partes de la instruccion actual
+	char** parte = string_split(instruccion, " ");
+    //MOV_IN AX BX
+    //parte[0]= "MOV_IN"
+    int instruccion_enum = (int)(intptr_t)dictionary_get(instrucciones, parte[0]);
 
     switch (instruccion_enum) 
     {
@@ -225,6 +247,7 @@ void instruccion_set(char **parte)
     
 	// Obtiene el valor del registro desde el diccionario 'registros' usando 'parte[1]' como clave y copia el valor de 'parte[2]' en el registro encontrado.
     memcpy(dictionary_get(registros, parte[1]), parte[2], strlen(parte[2]));
+    //proceso->registros->ax = partes[2];
 	proceso->program_counter++; 
 }
 
@@ -450,9 +473,15 @@ void instruccion_wait(char** parte)
 
 	log_info(log_cpu, "PID: %d - Ejecutando: %s - %s", proceso->pid, parte[0], parte[1]);
 	proceso->program_counter++;
+    argumentos_cpu* args = malloc(sizeof(argumentos_cpu));
     
-    // Indico al kernel que el proceso está esperando algo
-	enviar_pcb(socket_cliente_kernel, proceso, WAIT, parte[1]);
+    args->proceso = proceso; //Este proceso es global, no deberia ser global
+    args->recurso = atoi(parte[1]);
+    args->operacion = SIGNAL;
+
+    // Enviar solicitud de SIGNAL al kernel
+    enviar_pcb(socket_cliente_kernel, args);
+
 	
     list_destroy_and_destroy_elements(proceso->instrucciones, free);
 	free(proceso);
@@ -466,54 +495,63 @@ void instruccion_signal(char **parte)
         log_error(log_cpu, "No se ha proporcionado el nombre del recurso.");
         return;
     }
-
+    argumentos_cpu* args = malloc(sizeof(argumentos_cpu));
     // Log de ejecucion de la instruccion
 	log_info(log_cpu, "PID: %d - Ejecutando: %s - %s", proceso->pid, parte[0], parte[1]);
     proceso->program_counter++;
 
-    // Enviar solicitud de SIGNAL al kernel
-    enviar_pcb(socket_cliente_kernel, proceso, SIGNAL, parte[1]);
+    args->proceso = proceso; //Este proceso es global, no deberia ser global
+    args->recurso = atoi(parte[1]);
+    args->operacion = SIGNAL;
 
-    list_destroy_and_destroy_elements(proceso->instrucciones, free);
-    free(proceso);
+
+    // Enviar solicitud de SIGNAL al kernel
+    enviar_pcb(socket_cliente_kernel, args);
+
+    list_destroy_and_destroy_elements(proceso->instrucciones, free); // No sabemos por qué se liberan las instrucciones
+    //free(proceso);
 }
 
 void instruccion_io_gen_sleep(char **parte)
 {
     // IO_GEN_SLEEP Int1 10
-    char *interfaz = parte[1];
-    int unidades_trabajo = atoi(parte[2]);
 
-    if(parte[1] != GENERICA) 
-    {
-        log_error(log_cpu, "La interfaz indicada no es GENERICA.");
-    }
+    argumentos_cpu* args = malloc(sizeof(argumentos_cpu));
+    args->nombre_interfaz = parte[1];
+    args->unidades_de_trabajo = atoi(parte[2]);
+    proceso->program_counter++;
+    args->proceso = proceso; //VARIABLE GLOBAL, NO
+
+    enviar_pcb(socket_cliente_kernel, args);
+
+    // if(parte[1] != GENERICA) 
+    // {
+    //     log_error(log_cpu, "La interfaz indicada no es GENERICA.");
+    // }
     
     //Todas las instrucciones de Entrada Salida se las tienen q mandar a kernel q es el q las ejecuta
     //le mandan a kernel el cod op de la operacion con los argumetnos y kernel hace todo
-    printf("Solicitando a la interfaz %s que realice un sleep por %s unidades de trabajo...\n", interfaz, parte[2]);
+    //printf("Solicitando a la interfaz %s que realice un sleep por %s unidades de trabajo...\n", interfaz, parte[2]);
     log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s", proceso->pid, parte[0], parte[1], parte[2]);
-    solicitar_sleep_io(parte[1], unidades_trabajo, proceso->pid); // Esta función enviará la solicitud de sleep al Kernel
-    printf("El sleep en la interfaz %s se ha completado.\n", interfaz);
-    proceso->program_counter++;
+    //solicitar_sleep_io(parte[1], unidades_trabajo, proceso->pid); // Esta función enviará la solicitud de sleep al Kernel
 }
 
-void solicitar_sleep_io(const char *interfaz, int unidades_trabajo, int pid)
-{
-    // Crear y enviar el paquete al Kernel
-    t_paquete *paquete = crear_paquete_personalizado(IO_GEN_SLEEP);
+// void solicitar_sleep_io(const char *interfaz, int unidades_trabajo, int pid)
+// {
+//     // Crear y enviar el paquete al Kernel
+//     t_paquete *paquete = crear_paquete_personalizado(IO_GEN_SLEEP);
 
-    // Agregar la información necesaria al paquete
-    agregar_estructura_al_paquete_personalizado(paquete, &proceso, sizeof(pcb)); 
-    agregar_estructura_al_paquete_personalizado(paquete, &unidades_trabajo, sizeof(int));
-    agregar_estructura_al_paquete_personalizado(paquete, interfaz, strlen(interfaz) + 1);
+//     // Agregar la información necesaria al paquete
+//     agregar_estructura_al_paquete_personalizado(paquete, &proceso, sizeof(pcb)); 
+//     agregar_estructura_al_paquete_personalizado(paquete, &unidades_trabajo, sizeof(int));
+//     agregar_estructura_al_paquete_personalizado(paquete, interfaz, strlen(interfaz) + 1);
 
-    // Enviar el paquete al Kernel
-    enviar_paquete(paquete, socket_cliente_kernel);
+//     // Enviar el paquete al Kernel
+//     enviar_paquete(paquete, socket_cliente_kernel);
 
-    // Liberar el paquete
-    eliminar_paquete(paquete);
-}
+//     // Liberar el paquete
+//     eliminar_paquete(paquete);
+// }
 
 void instruccion_io_stdin_read(char** parte)
 {
