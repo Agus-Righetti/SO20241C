@@ -489,6 +489,8 @@ void instruccion_io_gen_sleep(char **parte)
         log_error(log_cpu, "La interfaz indicada no es GENERICA.");
     }
     
+    //Todas las instrucciones de Entrada Salida se las tienen q mandar a kernel q es el q las ejecuta
+    //le mandan a kernel el cod op de la operacion con los argumetnos y kernel hace todo
     printf("Solicitando a la interfaz %s que realice un sleep por %s unidades de trabajo...\n", interfaz, parte[2]);
     log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s", proceso->pid, parte[0], parte[1], parte[2]);
     solicitar_sleep_io(parte[1], unidades_trabajo, proceso->pid); // Esta función enviará la solicitud de sleep al Kernel

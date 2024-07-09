@@ -98,8 +98,25 @@ void enviar_instruccion_io(int socket, argumentos_para_io* args)
             agregar_int_al_paquete_personalizado(paquete_instruccion, args->unidades_de_trabajo);
             break;
         case IO_STDIN_READ:
+        case IO_STDOUT_WRITE:
             agregar_int_al_paquete_personalizado(paquete_instruccion, args->registro_direccion);
             agregar_int_al_paquete_personalizado(paquete_instruccion, args->registro_tamano);
+            break;
+        case IO_FS_CREATE:
+        case IO_FS_DELETE:
+            agregar_string_al_paquete_personalizado(paquete_instruccion, args->nombre_archivo);
+            break;
+        case IO_FS_TRUNCATE:
+            agregar_string_al_paquete_personalizado(paquete_instruccion, args->nombre_archivo);
+            agregar_int_al_paquete_personalizado(paquete_instruccion, args->registro_tamano);
+            break;
+        case IO_FS_WRITE:
+        case IO_FS_READ:
+            agregar_string_al_paquete_personalizado(paquete_instruccion, args->nombre_archivo);
+            agregar_int_al_paquete_personalizado(paquete_instruccion, args->registro_direccion);
+            agregar_int_al_paquete_personalizado(paquete_instruccion, args->registro_tamano);
+            agregar_int_al_paquete_personalizado(paquete_instruccion, args->registro_puntero_archivo);
+            break;
         default:
             break;
     }
@@ -207,4 +224,103 @@ int io_stdout_write(char* nombre_interfaz, uint32_t registro_direccion, uint32_t
 
     }else return 1;//mando el proceso a exit
 }
+
+int io_fs_create(char* nombre_interfaz, char* nombre_archivo, pcb* proceso)
+{
+    interfaz_kernel* interfaz = verificar_interfaz(nombre_interfaz, DIALFS);
+    argumentos_para_io* args;
+    args->nombre_archivo = nombre_archivo;
+    args->operacion = IO_FS_CREATE;
+
+    if(interfaz) // si no devuelve null es porq encontro la interfaz q queria y es del tipo q queria
+    {
+        
+        queue_push(interfaz->cola_de_espera, args);
+        pasar_proceso_a_blocked(proceso);
+        sem_post(&interfaz->sem_hay_procesos_esperando);
+        return -1; //que no haga nada porq ya lo bloquie yo
+
+    }else return 1;//mando el proceso a exit
+}
+
+int io_fs_delete(char* nombre_interfaz, char* nombre_archivo, pcb* proceso)
+{
+    interfaz_kernel* interfaz = verificar_interfaz(nombre_interfaz, DIALFS);
+    argumentos_para_io* args;
+    args->nombre_archivo = nombre_archivo;
+    args->operacion = IO_FS_DELETE;
+    
+    if(interfaz) // si no devuelve null es porq encontro la interfaz q queria y es del tipo q queria
+    {
+        
+        queue_push(interfaz->cola_de_espera, args);
+        pasar_proceso_a_blocked(proceso);
+        sem_post(&interfaz->sem_hay_procesos_esperando);
+        return -1; //que no haga nada porq ya lo bloquie yo
+
+    }else return 1;//mando el proceso a exit
+}
+
+int io_fs_truncate(char* nombre_interfaz, char* nombre_archivo, int registro_tamano, pcb* proceso)
+{
+    interfaz_kernel* interfaz = verificar_interfaz(nombre_interfaz, DIALFS);
+    argumentos_para_io* args;
+    args->nombre_archivo = nombre_archivo;
+    args->registro_tamano = registro_tamano;
+    args->operacion = IO_FS_TRUNCATE;
+    
+    if(interfaz) // si no devuelve null es porq encontro la interfaz q queria y es del tipo q queria
+    {
+        
+        queue_push(interfaz->cola_de_espera, args);
+        pasar_proceso_a_blocked(proceso);
+        sem_post(&interfaz->sem_hay_procesos_esperando);
+        return -1; //que no haga nada porq ya lo bloquie yo
+
+    }else return 1;//mando el proceso a exit
+}
+
+int io_fs_write(char* nombre_interfaz, char* nombre_archivo, int registro_direccion, int registro_tamano, int registro_puntero_archivo, pcb* proceso)
+{
+    interfaz_kernel* interfaz = verificar_interfaz(nombre_interfaz, DIALFS);
+    argumentos_para_io* args;
+    args->nombre_archivo = nombre_archivo;
+    args->registro_tamano = registro_tamano;
+    args->registro_direccion = registro_direccion;
+    args->registro_puntero_archivo = registro_puntero_archivo;
+    args->operacion = IO_FS_WRITE;
+    
+    if(interfaz) // si no devuelve null es porq encontro la interfaz q queria y es del tipo q queria
+    {
+        
+        queue_push(interfaz->cola_de_espera, args);
+        pasar_proceso_a_blocked(proceso);
+        sem_post(&interfaz->sem_hay_procesos_esperando);
+        return -1; //que no haga nada porq ya lo bloquie yo
+
+    }else return 1;//mando el proceso a exit
+}
+
+int io_fs_read(char* nombre_interfaz, char* nombre_archivo, int registro_direccion, int registro_tamano, int registro_puntero_archivo, pcb* proceso)
+{
+    interfaz_kernel* interfaz = verificar_interfaz(nombre_interfaz, DIALFS);
+    argumentos_para_io* args;
+    args->nombre_archivo = nombre_archivo;
+    args->registro_tamano = registro_tamano;
+    args->registro_direccion = registro_direccion;
+    args->registro_puntero_archivo = registro_puntero_archivo;
+    args->operacion = IO_FS_READ;
+    
+    if(interfaz) // si no devuelve null es porq encontro la interfaz q queria y es del tipo q queria
+    {
+        
+        queue_push(interfaz->cola_de_espera, args);
+        pasar_proceso_a_blocked(proceso);
+        sem_post(&interfaz->sem_hay_procesos_esperando);
+        return -1; //que no haga nada porq ya lo bloquie yo
+
+    }else return 1;//mando el proceso a exit
+}
+
+
 

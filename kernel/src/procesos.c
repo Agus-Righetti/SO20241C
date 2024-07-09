@@ -647,6 +647,7 @@ void recibir_pcb(pcb* proceso) {
     int registro_direccion;
     int registro_tamano;
     int registro_puntero_archivo;
+    char* nombre_archivo;
     t_buffer* buffer; // Buffer para recibir el paquete
 
 
@@ -725,31 +726,53 @@ void recibir_pcb(pcb* proceso) {
 
                 break;
             
-//A PARTIR DE ACA NO LAS HICE-------------------------------------------------
             case IO_FS_CREATE: // (Interfaz, Nombre Archivo)
                 buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
                 fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
                 proceso_recibido = recibir_estructura_del_buffer(buffer);
+                nombre_interfaz = recibir_string_del_buffer(buffer);
+                nombre_archivo = recibir_string_del_buffer(buffer);
+                flag_estado = io_fs_create(nombre_interfaz, nombre_archivo, proceso_recibido);
                 break;
+//A PARTIR DE ACA NO LAS HICE-------------------------------------------------
+
             case IO_FS_DELETE: //(Interfaz, Nombre Archivo)
                 buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
                 fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
                 proceso_recibido = recibir_estructura_del_buffer(buffer);
+                nombre_interfaz = recibir_string_del_buffer(buffer);
+                nombre_archivo = recibir_string_del_buffer(buffer);
+                flag_estado = io_fs_delete(nombre_interfaz, nombre_archivo, proceso_recibido);
                 break;
             case IO_FS_TRUNCATE: //(Interfaz, Nombre Archivo, Registro Tamaño)
                 buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
                 fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
                 proceso_recibido = recibir_estructura_del_buffer(buffer);
+                nombre_interfaz = recibir_string_del_buffer(buffer);
+                nombre_archivo = recibir_string_del_buffer(buffer);
+                registro_tamano = recibir_int_del_buffer(buffer);
+                flag_estado = io_fs_truncate(nombre_interfaz, nombre_archivo, registro_tamano, proceso_recibido);
                 break;
             case IO_FS_WRITE: //(Interfaz, Nombre Archivo, Registro Dirección, Registro Tamaño, Registro Puntero Archivo)
                 buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
                 fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
                 proceso_recibido = recibir_estructura_del_buffer(buffer);
+                nombre_interfaz = recibir_string_del_buffer(buffer);
+                nombre_archivo = recibir_string_del_buffer(buffer);
+                registro_direccion = recibir_int_del_buffer(buffer);
+                registro_tamano = recibir_int_del_buffer(buffer);
+                registro_puntero_archivo = recibir_int_del_buffer(buffer);
+                flag_estado = io_fs_write(nombre_interfaz, nombre_archivo, registro_direccion, registro_tamano, registro_puntero_archivo, proceso_recibido);
                 break;
             case IO_FS_READ: //(Interfaz, Nombre Archivo, Registro Dirección, Registro Tamaño, Registro Puntero Archivo)
                 buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
                 fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
                 proceso_recibido = recibir_estructura_del_buffer(buffer);
+                nombre_archivo = recibir_string_del_buffer(buffer);
+                registro_direccion = recibir_int_del_buffer(buffer);
+                registro_tamano = recibir_int_del_buffer(buffer);
+                registro_puntero_archivo = recibir_int_del_buffer(buffer);
+                flag_estado = io_fs_read(nombre_interfaz, nombre_archivo, registro_direccion, registro_tamano, registro_puntero_archivo, proceso_recibido);
                 break;
             
             default:
