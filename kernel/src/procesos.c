@@ -102,57 +102,47 @@ void enviar_proceso_a_cpu(){
 
     while(1){ // Para estar constantemente intentando enviar un proceso
 
-        pthread_mutex_lock(&mutex_planificacion_activa);
-
-        if(planificacion_activa){ // Si la planificación está activa hago el proceso común de mandar a Execute
+       sem_wait(&sem_puedo_mandar_a_cpu); // Espero si ya hay otro proceso ejecutando en CPU (solo se ejecuta de a un proceso)
             
-            pthread_mutex_unlock(&mutex_planificacion_activa);
-            
-            sem_wait(&sem_puedo_mandar_a_cpu); // Espero si ya hay otro proceso ejecutando en CPU (solo se ejecuta de a un proceso)
-            
-            pcb* proceso_seleccionado;
-            if((strcmp(config_kernel->algoritmo_planificacion, "VRR") == 0) && (queue_is_empty(cola_prioridad_vrr) == false))
-            { 
-                // Verifico si es VRR el algoritmo y si la cola de prioridad tiene algo, entonces voy a usar lo de esa cola prioritaria
+        pcb* proceso_seleccionado;
+        if((strcmp(config_kernel->algoritmo_planificacion, "VRR") == 0) && (queue_is_empty(cola_prioridad_vrr) == false))
+        { 
+            // Verifico si es VRR el algoritmo y si la cola de prioridad tiene algo, entonces voy a usar lo de esa cola prioritaria
 
-                pthread_mutex_lock(&mutex_cola_prioridad_vrr); 
-                proceso_seleccionado = queue_pop(cola_prioridad_vrr); // Saco el proceso siguiente de la cola de prioridad
-                pthread_mutex_unlock(&mutex_cola_prioridad_vrr);
-
-            }else{
+            pthread_mutex_lock(&mutex_cola_prioridad_vrr); 
+            proceso_seleccionado = queue_pop(cola_prioridad_vrr); // Saco el proceso siguiente de la cola de prioridad
+            pthread_mutex_unlock(&mutex_cola_prioridad_vrr);
+        
+        }else{
                 
-                sem_wait(&sem_cola_de_ready); // Si no hay nada en la cola de Ready no avanzo
-                log_info(log_kernel, "estoy dsp del semafoto de q hay algo en la cola de ready ");
-                pthread_mutex_lock(&mutex_cola_de_ready);
-                proceso_seleccionado = queue_pop(cola_de_ready); // Saco el proceso siguiente de la cola de Ready
-                pthread_mutex_unlock(&mutex_cola_de_ready);
+            sem_wait(&sem_cola_de_ready); // Si no hay nada en la cola de Ready no avanzo
+            log_info(log_kernel, "estoy dsp del semafoto de q hay algo en la cola de ready ");
+            pthread_mutex_lock(&mutex_cola_de_ready);
+            proceso_seleccionado = queue_pop(cola_de_ready); // Saco el proceso siguiente de la cola de Ready
+            pthread_mutex_unlock(&mutex_cola_de_ready);
 
-            }
+        }
 
-            if (proceso_seleccionado->estado_del_proceso == READY) // Verifico que el estado del proceso sea READY
-            {
+        if (proceso_seleccionado->estado_del_proceso == READY) // Verifico que el estado del proceso sea READY
+        {
                 
-                pthread_mutex_lock(&proceso_seleccionado->mutex_pcb);
-                proceso_seleccionado->estado_del_proceso = EXECUTE; // Cambio el estado del proceso sacado de la cola de READY
-                pthread_mutex_unlock(&proceso_seleccionado->mutex_pcb);
+            pthread_mutex_lock(&proceso_seleccionado->mutex_pcb);
+            proceso_seleccionado->estado_del_proceso = EXECUTE; // Cambio el estado del proceso sacado de la cola de READY
+            pthread_mutex_unlock(&proceso_seleccionado->mutex_pcb);
 
 
-                log_info(log_kernel, "PID: %d - Estado Anterior: READY - Estado Actual: EXECUTE", proceso_seleccionado->pid); // Hago un log obligatorio 
+            log_info(log_kernel, "PID: %d - Estado Anterior: READY - Estado Actual: EXECUTE", proceso_seleccionado->pid); // Hago un log obligatorio 
                 
-                enviar_pcb(proceso_seleccionado); // Envio el pcb a CPU
+            enviar_pcb(proceso_seleccionado); // Envio el pcb a CPU
 
-                crear_hilo_proceso(proceso_seleccionado); // Inicio un hilo que maneje el algoritmo del proceso
+            crear_hilo_proceso(proceso_seleccionado); // Inicio un hilo que maneje el algoritmo del proceso
 
-            }else
-            {
+        }else
+        {
                 
-                error_show("El estado seleccionado no se encuentra en estado 'READY'"); // Si el proceso seleccionado no se encuentra en READY muestro un error
+            error_show("El estado seleccionado no se encuentra en estado 'READY'"); // Si el proceso seleccionado no se encuentra en READY muestro un error
 
-            }
-        }else{ // Sino, simplemente no hago nada y vuelvo a consultar hasta que la planificación arranque de nuevo y pueda mandar el proceso que corresponde a Execute
-            pthread_mutex_unlock(&mutex_planificacion_activa);
-            usleep(100000); // Espero 0.1 segundos antes de seguir (así no saturo el CPU tanto con el while(1))
-        } 
+        }     
     }
 }
 
@@ -166,31 +156,29 @@ void pasar_procesos_de_new_a_ready(){
 
     while(1)
     {
+
+        sem_wait(&sem_planificacion_activa); // Para bloquear todo si la planificación está detenida
+        sem_post(&sem_planificacion_activa); // Para que, si sí está activo, a la próxima vuelta no se bloquee
+
         //log_info(log_kernel, "Entre a pasar_procesos_de_new_a_ready"); 
-        pthread_mutex_lock(&mutex_planificacion_activa);
 
-        if(planificacion_activa){ // Chequeo si la planificación está activa (si lo está paso todo lo que pueda a Ready)
-            pthread_mutex_unlock(&mutex_planificacion_activa);
+        pthread_mutex_unlock(&mutex_planificacion_activa);
 
-            sem_wait(&sem_cola_de_new); // Uso semaforos sobre la cola y el grado de multiprogramacion porque son cosas compartidas
-            sem_wait(&sem_multiprogramacion); // Tanto para ver que haya procesos en New como para ver de no pasarme del grado de multiprogramacion
-            pthread_mutex_lock(&mutex_cola_de_new);
-            proceso_a_mandar_a_ready = queue_pop(cola_de_new); // Saco un proceso de la cola de New para despues pasarlo a Ready
-            pthread_mutex_unlock(&mutex_cola_de_new);
+        sem_wait(&sem_cola_de_new); // Uso semaforos sobre la cola y el grado de multiprogramacion porque son cosas compartidas
+        sem_wait(&sem_multiprogramacion); // Tanto para ver que haya procesos en New como para ver de no pasarme del grado de multiprogramacion
+        pthread_mutex_lock(&mutex_cola_de_new);
+        proceso_a_mandar_a_ready = queue_pop(cola_de_new); // Saco un proceso de la cola de New para despues pasarlo a Ready
+        pthread_mutex_unlock(&mutex_cola_de_new);
 
-            pthread_mutex_lock(&proceso_a_mandar_a_ready->mutex_pcb);
-            proceso_a_mandar_a_ready->estado_del_proceso = READY; // Le asigno el nuevo estado "Ready"
-            pthread_mutex_unlock(&proceso_a_mandar_a_ready->mutex_pcb);
+        pthread_mutex_lock(&proceso_a_mandar_a_ready->mutex_pcb);
+        proceso_a_mandar_a_ready->estado_del_proceso = READY; // Le asigno el nuevo estado "Ready"
+        pthread_mutex_unlock(&proceso_a_mandar_a_ready->mutex_pcb);
 
-            pthread_mutex_lock(&mutex_cola_de_ready); // Tmbn semaforo porque es seccion critica 
-            queue_push(cola_de_ready,proceso_a_mandar_a_ready); // Ingreso el proceso a la cola de Ready. 
-            pthread_mutex_unlock(&mutex_cola_de_ready);
-            sem_post(&sem_cola_de_ready); // Agrego 1 al semaforo contador de la cola
+        pthread_mutex_lock(&mutex_cola_de_ready); // Tmbn semaforo porque es seccion critica 
+        queue_push(cola_de_ready,proceso_a_mandar_a_ready); // Ingreso el proceso a la cola de Ready. 
+        pthread_mutex_unlock(&mutex_cola_de_ready);
+        sem_post(&sem_cola_de_ready); // Agrego 1 al semaforo contador de la cola
 
-        }else{ // Sino, simplemente no hago nada, y dejo que se vuelva a chequear constantemente si la planificación está activa para, ahí sí pasar los procesos a Ready
-            pthread_mutex_unlock(&mutex_planificacion_activa);
-            usleep(100000); // Espero 0.1 segundos antes de seguir (así no saturo el CPU tanto con el while(1))
-        }
         
     }
 }
@@ -516,6 +504,7 @@ void detener_planificacion() {
     pthread_mutex_lock(&mutex_planificacion_activa);
     if (planificacion_activa) {
         planificacion_activa = 0;
+        sem_wait(&sem_planificacion_activa);
         log_info(log_kernel, "Planificación detenida \n");
     } else {
         log_info(log_kernel, "La planificación ya se encuentra detenida \n");
@@ -528,6 +517,7 @@ void iniciar_planificacion() {
     pthread_mutex_lock(&mutex_planificacion_activa);
     if (!planificacion_activa) {
         planificacion_activa = 1;
+        sem_post(&sem_planificacion_activa);
         log_info(log_kernel, "Planificación reanudada \n");
     } else {
         log_info(log_kernel, "La planificación ya se encuentra iniciada \n");
@@ -809,10 +799,13 @@ void recibir_pcb(pcb* proceso) {
     free(buffer);
     //sem_wait(planificacion_activada)
     //sem_post(planificacion_activada)
+
+    sem_wait(&sem_planificacion_activa); // Si la planificación está activa, dejo que se manden procesos a execute
     sem_post(&sem_puedo_mandar_a_cpu); // Aviso que ya volvio el proceso que estaba en CPU, puedo mandar otro
-   
+    sem_post(&sem_planificacion_activa); // Está activa, entonces aumento para que el próximo chequeo no lo bloquee
+
     accionar_segun_estado(proceso_recibido, flag_estado); // Mando el proceso a Ready o Exit segun corresponda
-    
+
     return;
 }
 
@@ -874,6 +867,9 @@ void desalojar_proceso(pcb* proceso){
 
 // ************* SEGUN EL FLAG QUE TENGA EL PROCESO VOY A CAMBIARLE EL ESTADO *************
 void accionar_segun_estado(pcb* proceso, int flag){
+
+    sem_wait(&sem_planificacion_activa); // Si la planificación está activa entonces sigo (paso de 1 a 0 el sem)
+    sem_post(&sem_planificacion_activa); // Estoy acá si la planificación sigue activa, entonces aumento para que no se bloquee a la próxima
 
     log_info(log_kernel, "entre a accionar segun estado por proceso pid: %d, flag: %d" , proceso->pid, flag);
 
