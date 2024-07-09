@@ -23,6 +23,8 @@ int main(int argc, char* argv[])
     pthread_mutex_init(&mutex_cola_general_de_procesos,NULL);
     pthread_mutex_init(&mutex_planificacion_activa,NULL);
     pthread_mutex_init(&mutex_enviando_instruccion_a_io, NULL);
+    pthread_mutex_init(&mutex_cola_de_interfaces,NULL);
+
     cola_de_new = queue_create();
     cola_de_ready = queue_create();
     cola_de_execute = queue_create();

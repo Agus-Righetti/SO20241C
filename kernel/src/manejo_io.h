@@ -10,15 +10,7 @@ typedef struct{
     interfaz_kernel* interfaz;
 }thread_args_escucha_io;
 
-typedef struct{
-    int unidades_de_trabajo;
-    int registro_direccion;
-    int registro_tamano;
-    char* nombre_archivo;
-    int registro_puntero_archivo;
-    pcb* proceso;
-    op_code operacion;
-}argumentos_para_io;
+
 
 void crear_interfaz(op_code interfaz_nueva, int socket, char* nombre_interfaz);
 void escucha_interfaz(thread_args_escucha_io* args);
@@ -32,7 +24,8 @@ int io_stdout_write(char* nombre_interfaz, uint32_t registro_direccion, uint32_t
 int io_fs_create(char* nombre_interfaz, char* nombre_archivo, pcb* proceso);
 int io_fs_delete(char* nombre_interfaz, char* nombre_archivo, pcb* proceso);
 int io_fs_truncate(char* nombre_interfaz, char* nombre_archivo, int registro_tamano, pcb* proceso_recibido);
-
+int io_fs_write(char* nombre_interfaz, char* nombre_archivo, int registro_direccion, int registro_tamano, int registro_puntero_archivo, pcb* proceso);
+int io_fs_read(char* nombre_interfaz, char* nombre_archivo, int registro_direccion, int registro_tamano, int registro_puntero_archivo, pcb* proceso);
 
 
 

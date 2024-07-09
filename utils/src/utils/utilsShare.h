@@ -164,8 +164,19 @@ typedef struct
 	pcb* proceso_en_interfaz; //es el proceso que actualmente esta en la interfaz
 	sem_t sem_puedo_mandar_operacion;
     sem_t sem_hay_procesos_esperando;
+	pthread_mutex_t * mutex_cola;
 
 }interfaz_kernel;
+
+typedef struct{
+    int unidades_de_trabajo;
+    int registro_direccion;
+    int registro_tamano;
+    char* nombre_archivo;
+    int registro_puntero_archivo;
+    pcb* proceso;
+    op_code operacion;
+}argumentos_para_io;
 
 // ************ DECLARACION DE FUNCIONES ************
 // ************ SERIALIZACION Y CONEXIONES GENERALES ************

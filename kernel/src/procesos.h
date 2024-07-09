@@ -35,6 +35,8 @@ void liberar_array_strings(char **array);
 void sacar_de_cola_de_ready(int pid);
 void sacar_de_cola_de_new(int pid);
 void sacar_de_execute(int pid);
+void sacar_de_blocked(int pid);
+
 void detener_planificacion();
 void iniciar_planificacion();
 

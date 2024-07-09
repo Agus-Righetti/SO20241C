@@ -17,6 +17,7 @@ void crear_interfaz(op_code interfaz_nueva, int socket, char* nombre_interfaz)
     nueva_interfaz->nombre_interfaz = nombre_interfaz;
     sem_init(&nueva_interfaz->sem_puedo_mandar_operacion, 0,1);
     sem_init(&nueva_interfaz->sem_hay_procesos_esperando,0,0);
+    pthread_mutex_init(nueva_interfaz->mutex_cola, NULL);
 
     //agrego la interfaz a la cola de las q estan conectadas
 	queue_push(cola_interfaces_conectadas, nueva_interfaz); 
@@ -46,7 +47,9 @@ void envio_interfaz(thread_args_escucha_io* args)
     {
         sem_wait(&interfaz->sem_hay_procesos_esperando);
         sem_wait(&interfaz->sem_puedo_mandar_operacion);
+        pthread_mutex_lock(interfaz->mutex_cola);
         args_mandar_a_io = queue_pop(interfaz->cola_de_espera);
+        pthread_mutex_unlock(interfaz->mutex_cola);
         interfaz->proceso_en_interfaz = args_mandar_a_io->proceso;
         enviar_instruccion_io(interfaz->socket,args_mandar_a_io);
     }
@@ -70,7 +73,12 @@ void escucha_interfaz(thread_args_escucha_io* args)
                 desconectar_interfaz(interfaz);
 				break;
             case FIN_OP_IO: //ya se termino la operacion de entrada salida, devuelvo el proceso a ready
-                accionar_segun_estado(interfaz->proceso_en_interfaz,0 ) ;//flag 0 para q lo mande a la cola de ready
+                if(interfaz->proceso_en_interfaz->pid == pid_eliminar)
+                {
+                    accionar_segun_estado(interfaz->proceso_en_interfaz,1) ; //lo mando a exit
+
+                }else accionar_segun_estado(interfaz->proceso_en_interfaz,0); // lo mando a ready 
+                //flag 0 para q lo mande a la cola de ready
                 sem_post(&interfaz->sem_puedo_mandar_operacion);
 			default:
 				log_warning(log_kernel,"Operacion desconocida. No quieras meter la pata");
@@ -81,9 +89,28 @@ void escucha_interfaz(thread_args_escucha_io* args)
     return;
 }
 
+
 void desconectar_interfaz(interfaz_kernel* interfaz)
 {
-    
+    interfaz_kernel* interfaz_aux;
+    pthread_mutex_lock(&mutex_cola_de_interfaces);
+    interfaz_aux = queue_pop(cola_interfaces_conectadas);
+    while(interfaz_aux->nombre_interfaz != interfaz->nombre_interfaz)
+    {
+        queue_push(cola_interfaces_conectadas, interfaz_aux);
+        interfaz_aux = queue_pop(cola_interfaces_conectadas);
+    }
+    pthread_mutex_unlock(&mutex_cola_de_interfaces);
+
+    //tengo q mandar estos a procesos a ready o exit???
+    queue_destroy(interfaz_aux->cola_de_espera);// faltaria hacer algo con los procesos de la cola de espera
+
+    sem_destroy(&interfaz_aux->sem_puedo_mandar_operacion);
+    sem_destroy(&interfaz_aux->sem_hay_procesos_esperando);
+    pthread_mutex_destroy(interfaz_aux->mutex_cola);
+
+    free(interfaz_aux);
+    return;
 }
 
 
@@ -121,6 +148,7 @@ void enviar_instruccion_io(int socket, argumentos_para_io* args)
             break;
     }
    
+    free(args);
 
     enviar_paquete(paquete_instruccion, socket); // Envio el paquete a través del socket
 
@@ -165,7 +193,7 @@ int io_gen_sleep(char* nombre_interfaz, int unidades_de_trabajo, pcb* proceso)
 {
     //ante una petición van a esperar una cantidad de unidades de trabajo, cuyo valor va a venir dado en la petición desde el Kernel.
     interfaz_kernel* interfaz = verificar_interfaz(nombre_interfaz, GENERICA);
-    argumentos_para_io* args;
+    argumentos_para_io* args = malloc(sizeof(argumentos_para_io));
     args->unidades_de_trabajo = unidades_de_trabajo;
     args->proceso = proceso;
     args->operacion = IO_STDIN_READ;
@@ -173,7 +201,9 @@ int io_gen_sleep(char* nombre_interfaz, int unidades_de_trabajo, pcb* proceso)
     if(interfaz) // si no devuelve null es porq encontro la interfaz q queria y es del tipo q queria
     {
         //aca hago lo q tengo q hacer, es decir bloquear el proceso y madnarle la isntruccion a la interfaz
+        pthread_mutex_lock(interfaz->mutex_cola);
         queue_push(interfaz->cola_de_espera, args);
+        pthread_mutex_unlock(interfaz->mutex_cola);
         sem_post(&interfaz->sem_hay_procesos_esperando);
         pasar_proceso_a_blocked(proceso);
 
@@ -188,7 +218,7 @@ int io_stdin_read(char* nombre_interfaz, uint32_t registro_direccion, uint32_t r
     // Esta instrucción solicita al Kernel que mediante la interfaz ingresada se lea desde el STDIN (Teclado) un valor cuyo tamaño está delimitado por el valor del Registro Tamaño y el mismo se guarde a partir de la Dirección Lógica almacenada en el Registro Dirección.
 
     interfaz_kernel* interfaz = verificar_interfaz(nombre_interfaz, STDIN);
-    argumentos_para_io* args;
+    argumentos_para_io* args = malloc(sizeof(argumentos_para_io));
     args->registro_direccion = registro_direccion;
     args->registro_tamano = registro_tamano;
     args->proceso = proceso;
@@ -196,8 +226,9 @@ int io_stdin_read(char* nombre_interfaz, uint32_t registro_direccion, uint32_t r
 
     if(interfaz) // si no devuelve null es porq encontro la interfaz q queria y es del tipo q queria
     {
-        
+        pthread_mutex_lock(interfaz->mutex_cola);
         queue_push(interfaz->cola_de_espera, args);
+        pthread_mutex_unlock(interfaz->mutex_cola);
         pasar_proceso_a_blocked(proceso);
         sem_post(&interfaz->sem_hay_procesos_esperando);
         return -1; //que no haga nada porq ya lo bloquie yo
@@ -208,7 +239,7 @@ int io_stdin_read(char* nombre_interfaz, uint32_t registro_direccion, uint32_t r
 int io_stdout_write(char* nombre_interfaz, uint32_t registro_direccion, uint32_t registro_tamano, pcb* proceso)
 {
     interfaz_kernel* interfaz = verificar_interfaz(nombre_interfaz, STDOUT);
-    argumentos_para_io* args;
+    argumentos_para_io* args = malloc(sizeof(argumentos_para_io));
     args->registro_direccion = registro_direccion;
     args->registro_tamano = registro_tamano;
     args->proceso = proceso;
@@ -217,7 +248,9 @@ int io_stdout_write(char* nombre_interfaz, uint32_t registro_direccion, uint32_t
     if(interfaz) // si no devuelve null es porq encontro la interfaz q queria y es del tipo q queria
     {
         
+        pthread_mutex_lock(interfaz->mutex_cola);
         queue_push(interfaz->cola_de_espera, args);
+        pthread_mutex_unlock(interfaz->mutex_cola);
         pasar_proceso_a_blocked(proceso);
         sem_post(&interfaz->sem_hay_procesos_esperando);
         return -1; //que no haga nada porq ya lo bloquie yo
@@ -228,14 +261,15 @@ int io_stdout_write(char* nombre_interfaz, uint32_t registro_direccion, uint32_t
 int io_fs_create(char* nombre_interfaz, char* nombre_archivo, pcb* proceso)
 {
     interfaz_kernel* interfaz = verificar_interfaz(nombre_interfaz, DIALFS);
-    argumentos_para_io* args;
+    argumentos_para_io* args = malloc(sizeof(argumentos_para_io));
     args->nombre_archivo = nombre_archivo;
     args->operacion = IO_FS_CREATE;
 
     if(interfaz) // si no devuelve null es porq encontro la interfaz q queria y es del tipo q queria
     {
-        
+        pthread_mutex_lock(interfaz->mutex_cola);
         queue_push(interfaz->cola_de_espera, args);
+        pthread_mutex_unlock(interfaz->mutex_cola);
         pasar_proceso_a_blocked(proceso);
         sem_post(&interfaz->sem_hay_procesos_esperando);
         return -1; //que no haga nada porq ya lo bloquie yo
@@ -246,14 +280,15 @@ int io_fs_create(char* nombre_interfaz, char* nombre_archivo, pcb* proceso)
 int io_fs_delete(char* nombre_interfaz, char* nombre_archivo, pcb* proceso)
 {
     interfaz_kernel* interfaz = verificar_interfaz(nombre_interfaz, DIALFS);
-    argumentos_para_io* args;
+    argumentos_para_io* args = malloc(sizeof(argumentos_para_io));
     args->nombre_archivo = nombre_archivo;
     args->operacion = IO_FS_DELETE;
     
     if(interfaz) // si no devuelve null es porq encontro la interfaz q queria y es del tipo q queria
     {
-        
+        pthread_mutex_lock(interfaz->mutex_cola);
         queue_push(interfaz->cola_de_espera, args);
+        pthread_mutex_unlock(interfaz->mutex_cola);
         pasar_proceso_a_blocked(proceso);
         sem_post(&interfaz->sem_hay_procesos_esperando);
         return -1; //que no haga nada porq ya lo bloquie yo
@@ -264,15 +299,16 @@ int io_fs_delete(char* nombre_interfaz, char* nombre_archivo, pcb* proceso)
 int io_fs_truncate(char* nombre_interfaz, char* nombre_archivo, int registro_tamano, pcb* proceso)
 {
     interfaz_kernel* interfaz = verificar_interfaz(nombre_interfaz, DIALFS);
-    argumentos_para_io* args;
+    argumentos_para_io* args = malloc(sizeof(argumentos_para_io));
     args->nombre_archivo = nombre_archivo;
     args->registro_tamano = registro_tamano;
     args->operacion = IO_FS_TRUNCATE;
     
     if(interfaz) // si no devuelve null es porq encontro la interfaz q queria y es del tipo q queria
     {
-        
+        pthread_mutex_lock(interfaz->mutex_cola);
         queue_push(interfaz->cola_de_espera, args);
+        pthread_mutex_unlock(interfaz->mutex_cola);
         pasar_proceso_a_blocked(proceso);
         sem_post(&interfaz->sem_hay_procesos_esperando);
         return -1; //que no haga nada porq ya lo bloquie yo
@@ -283,7 +319,7 @@ int io_fs_truncate(char* nombre_interfaz, char* nombre_archivo, int registro_tam
 int io_fs_write(char* nombre_interfaz, char* nombre_archivo, int registro_direccion, int registro_tamano, int registro_puntero_archivo, pcb* proceso)
 {
     interfaz_kernel* interfaz = verificar_interfaz(nombre_interfaz, DIALFS);
-    argumentos_para_io* args;
+    argumentos_para_io* args = malloc(sizeof(argumentos_para_io));
     args->nombre_archivo = nombre_archivo;
     args->registro_tamano = registro_tamano;
     args->registro_direccion = registro_direccion;
@@ -292,8 +328,9 @@ int io_fs_write(char* nombre_interfaz, char* nombre_archivo, int registro_direcc
     
     if(interfaz) // si no devuelve null es porq encontro la interfaz q queria y es del tipo q queria
     {
-        
+        pthread_mutex_lock(interfaz->mutex_cola);
         queue_push(interfaz->cola_de_espera, args);
+        pthread_mutex_unlock(interfaz->mutex_cola);
         pasar_proceso_a_blocked(proceso);
         sem_post(&interfaz->sem_hay_procesos_esperando);
         return -1; //que no haga nada porq ya lo bloquie yo
@@ -304,7 +341,7 @@ int io_fs_write(char* nombre_interfaz, char* nombre_archivo, int registro_direcc
 int io_fs_read(char* nombre_interfaz, char* nombre_archivo, int registro_direccion, int registro_tamano, int registro_puntero_archivo, pcb* proceso)
 {
     interfaz_kernel* interfaz = verificar_interfaz(nombre_interfaz, DIALFS);
-    argumentos_para_io* args;
+    argumentos_para_io* args = malloc(sizeof(argumentos_para_io));
     args->nombre_archivo = nombre_archivo;
     args->registro_tamano = registro_tamano;
     args->registro_direccion = registro_direccion;
@@ -313,8 +350,9 @@ int io_fs_read(char* nombre_interfaz, char* nombre_archivo, int registro_direcci
     
     if(interfaz) // si no devuelve null es porq encontro la interfaz q queria y es del tipo q queria
     {
-        
+        pthread_mutex_lock(interfaz->mutex_cola);
         queue_push(interfaz->cola_de_espera, args);
+        pthread_mutex_unlock(interfaz->mutex_cola);
         pasar_proceso_a_blocked(proceso);
         sem_post(&interfaz->sem_hay_procesos_esperando);
         return -1; //que no haga nada porq ya lo bloquie yo

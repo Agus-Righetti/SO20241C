@@ -441,7 +441,7 @@ void finalizar_proceso(char* pid_formato_char){
                 sacar_de_execute(pid);
                 break;
             case BLOCKED:
-                //sacar_de_cola_de_blocked(pid);
+                sacar_de_blocked(pid);
                 break;
             case NEW:
                 sacar_de_cola_de_new(pid);
@@ -768,6 +768,7 @@ void recibir_pcb(pcb* proceso) {
                 buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
                 fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
                 proceso_recibido = recibir_estructura_del_buffer(buffer);
+                nombre_interfaz = recibir_string_del_buffer(buffer);
                 nombre_archivo = recibir_string_del_buffer(buffer);
                 registro_direccion = recibir_int_del_buffer(buffer);
                 registro_tamano = recibir_int_del_buffer(buffer);
@@ -1088,7 +1089,7 @@ void sacar_de_execute(int pid){
     //Si un proceso esta en execute hay que mandar la interrupcion para que cpu devuelva el proceso
     // Busco el proceso para mandarselo a desalojar proceso
 
-    log_info(log_kernel, "Entre a sacar de execute");
+    //log_info(log_kernel, "Entre a sacar de execute");
 
     interrupcion_por_fin_de_proceso = true;
 
@@ -1107,6 +1108,74 @@ void sacar_de_execute(int pid){
     
     desalojar_proceso(aux);
     
+
+}
+
+void sacar_de_blocked(int pid)
+{
+    //sabemos q el proceso esta bloqueado, no sabemos donde
+    //busco en las colas de los recursos
+
+    pcb* aux;
+    int primer_pid;
+    bool encontrado = false;
+
+
+    for(int i=0 ; i < cantidad_recursos && encontrado == false ;i++)
+    {
+        pthread_mutex_lock(mutex_por_recurso[i]);
+
+        aux = queue_pop(colas_por_recurso[i]);
+        primer_pid = aux->pid;
+        while(aux->pid != pid)
+        {
+            queue_push(colas_por_recurso[i], aux);
+            aux = queue_pop(colas_por_recurso[i]);
+            if(aux->pid == primer_pid)
+            {
+                queue_push(colas_por_recurso[i], aux);
+                break;
+            };
+        };
+        pthread_mutex_unlock(mutex_por_recurso[i]);
+        if(aux->pid == pid) 
+        {
+            encontrado = true;
+        };
+    }
+    interfaz_kernel* interfaz_aux;
+    argumentos_para_io* args_aux ;
+    while(encontrado == false)//No lo encontre en las colas por recursos tengo q buscarlo en las interfaces IO
+    {
+        interfaz_aux = queue_pop(cola_interfaces_conectadas);
+        pthread_mutex_lock(interfaz_aux->mutex_cola);
+        args_aux = queue_pop(interfaz_aux->cola_de_espera);
+        primer_pid = args_aux->proceso->pid;
+
+        while(args_aux->proceso->pid != pid)
+        {
+            queue_push(interfaz_aux->cola_de_espera, args_aux);
+            args_aux = queue_pop(interfaz_aux->cola_de_espera);
+            if(args_aux->proceso->pid == primer_pid)
+            {
+                queue_push(interfaz_aux->cola_de_espera, args_aux);
+                break;
+            };
+
+        };
+        pthread_mutex_unlock(interfaz_aux->mutex_cola);
+        queue_push(cola_interfaces_conectadas, interfaz_aux);
+        if(args_aux->proceso->pid == pid)
+        {
+            encontrado = true;
+        }
+    }
+
+    if(encontrado) //si no lo encontre es porq estaba en io
+    {
+        pasar_proceso_a_exit(aux);
+
+    }else pid_eliminar = pid;
 
 }
 // -------------------------------------------------------------
