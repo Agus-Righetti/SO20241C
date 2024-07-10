@@ -34,5 +34,6 @@ int cant_marcos;
 //******** SEMÁFOROS ***********
 pthread_mutex_t mutex_bitmap_marcos;
 pthread_mutex_t mutex_espacio_usuario;
+sem_t sem_lista_procesos;
 
 #endif

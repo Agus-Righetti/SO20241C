@@ -67,9 +67,14 @@ int main(int argc, char* argv[])
     // ************* Esto es para funcionar como cliente con la Memoria *************
     conexion_kernel_memoria = conexion_a_memoria(log_kernel, config_kernel);
     // ************* Esto es para funcionar como servidor para el I/O *************
-    server_para_io(config_kernel, log_kernel);
+    
+    log_info(log_kernel, "Estoy justo antes de server_para_io");
+    pthread_t thread_escucha_conexion_io = hilo_io();
+    
+    //server_para_io(config_kernel, log_kernel);
 
     //************* HILO CONSOLA *************
+    log_info(log_kernel, "Estoy por crear el hilo consola");
     pthread_t thread_consola = hilo_consola ();
 
     //*************HILO GESTOR DE LOS PROCESOS A ENVIAR A CPU*************
@@ -80,6 +85,8 @@ int main(int argc, char* argv[])
     pthread_detach(thread_enviar_procesos_cpu);
 
     pthread_detach(thread_pasar_procesos_new_a_ready);
+
+    pthread_detach(thread_escucha_conexion_io);
 
     pthread_join(thread_consola, NULL);
 

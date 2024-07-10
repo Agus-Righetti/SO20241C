@@ -5,7 +5,7 @@
 int conexion_a_memoria()
 { 
     // socket_cliente_cpu -> conexion_cpu_memoria
-    int socket_cliente_cpu = crear_conexion(config_cpu->ip_memoria, config_cpu->puerto_memoria);
+    socket_cliente_cpu = crear_conexion(config_cpu->ip_memoria, config_cpu->puerto_memoria);
     
     if(socket_cliente_cpu == -1)
     {

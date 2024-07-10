@@ -25,7 +25,9 @@ io_config* armar_config(t_log* log_io)
     aux_io_config->block_count = config_get_int_value(config_aux, "BLOCK_COUNT");
     aux_io_config->retraso_compactacion = config_get_int_value(config_aux, "RETRASO_COMPACTACION");
 
-    // log_info(log_io, "Se creo el struct config_io con exito");
+    log_info(log_io, "Se creo el struct config_io con exito");
+    log_info(log_io, "Puerto memoria: %s", aux_io_config->puerto_memoria);
+    log_info(log_io, "Ip memoria: %s", aux_io_config->ip_memoria);
 
     config_destroy(config_aux);
 

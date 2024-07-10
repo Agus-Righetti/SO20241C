@@ -16,6 +16,7 @@ void atender_cpu(){
                 buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
                 usleep(config_memoria->retardo_respuesta *1000);
 				cpu_pide_instruccion(buffer);
+                log_info(log_memoria, "Mande instruccion");
                 free(buffer);
                 break;
 
@@ -56,6 +57,7 @@ void atender_cpu(){
                 log_error(log_memoria, "CPU se desconecto.");
                 control = 0; 
                 break;
+
             default:
                 log_warning(log_memoria,"Operacion desconocida. No quieras meter la pata");
                 break;

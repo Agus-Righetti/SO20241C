@@ -9,9 +9,22 @@ pthread_t hilo_consola (){
 
     pthread_t thread_consola; 
             
+    log_info(log_kernel, "Entré a hilo consola");
     pthread_create(&thread_consola, NULL, (void*)leer_consola, NULL);
 
+
     return thread_consola;
+}
+
+pthread_t hilo_io(){ 
+
+    pthread_t thread_io; 
+            
+    log_info(log_kernel, "Entré a hilo io");
+    pthread_create(&thread_io, NULL, (void*)server_para_io, NULL);
+
+
+    return thread_io;
 }
 
 // ************* CREO HILO PARA ENVIAR PROCESOS A CPU CONSTANTEMENTE *************
@@ -48,8 +61,10 @@ pthread_t hilo_pasar_de_new_a_ready(){
 
 // ************* SIRVE PARA LEER LOS COMANDOS DESDE LA CONSOLA (DESDE HILO_CONSOLA) *************
 void leer_consola(void* arg){
+
+    log_info(log_kernel, "Entre a leer consola");
     
-     while(1) { // Para mantener esperando comandos constantemente
+    while(1) { // Para mantener esperando comandos constantemente
         
         char* lectura = readline("Ingrese comando: \n"); // Pido que se ingrese un comando
 
@@ -156,16 +171,12 @@ void pasar_procesos_de_new_a_ready(){
 
     while(1)
     {
+        sem_wait(&sem_cola_de_new); // Uso semaforos sobre la cola y el grado de multiprogramacion porque son cosas compartidas
+        sem_wait(&sem_multiprogramacion); // Tanto para ver que haya procesos en New como para ver de no pasarme del grado de multiprogramacion
 
         sem_wait(&sem_planificacion_activa); // Para bloquear todo si la planificación está detenida
         sem_post(&sem_planificacion_activa); // Para que, si sí está activo, a la próxima vuelta no se bloquee
 
-        //log_info(log_kernel, "Entre a pasar_procesos_de_new_a_ready"); 
-
-        pthread_mutex_unlock(&mutex_planificacion_activa);
-
-        sem_wait(&sem_cola_de_new); // Uso semaforos sobre la cola y el grado de multiprogramacion porque son cosas compartidas
-        sem_wait(&sem_multiprogramacion); // Tanto para ver que haya procesos en New como para ver de no pasarme del grado de multiprogramacion
         pthread_mutex_lock(&mutex_cola_de_new);
         proceso_a_mandar_a_ready = queue_pop(cola_de_new); // Saco un proceso de la cola de New para despues pasarlo a Ready
         pthread_mutex_unlock(&mutex_cola_de_new);
@@ -545,9 +556,13 @@ void enviar_pcb(pcb* proceso) {
 
     t_paquete* paquete_pcb = crear_paquete_personalizado(PCB_KERNEL_A_CPU); // Creo un paquete personalizado con un codop para que CPU reconozca lo que le estoy mandando
 
+    log_info(log_kernel, "El proceso que estoy por mandar a CPU tiene un PID: %d", proceso->pid);
+
     agregar_estructura_al_paquete_personalizado(paquete_pcb, proceso, sizeof(pcb)); // Agrego el struct pcb al paquete
 
     enviar_paquete(paquete_pcb, conexion_kernel_cpu); // Envio el paquete a través del socket
+    
+    log_info(log_kernel, "El proceso que mandé a CPU tiene un PID: %d", proceso->pid);
 
     eliminar_paquete(paquete_pcb); // Libero el paquete
 
@@ -627,8 +642,6 @@ void recibir_pcb(pcb* proceso) {
     inicio = clock(); // En este momento comienzo a esperar
 
     int codigo_operacion = recibir_operacion(conexion_kernel_cpu); // Recibo el codigo de operacion para ver como actúo según eso
-    
-
 
     int flag_estado; // Declaro un flag que me va a servir para manejar el estado del proceso posteriormente
     int indice_recurso;
@@ -640,8 +653,6 @@ void recibir_pcb(pcb* proceso) {
     char* nombre_archivo;
     t_buffer* buffer; // Buffer para recibir el paquete
 
-
-    
     if (!interrupcion_por_fin_de_proceso) // Verifico si la interrupción es por fin de proceso o por planificación
     {
         //log_info(log_kernel, "Entre al if para recibir normal");
@@ -779,6 +790,11 @@ void recibir_pcb(pcb* proceso) {
                 registro_puntero_archivo = recibir_int_del_buffer(buffer);
                 flag_estado = io_fs_read(nombre_interfaz, nombre_archivo, registro_direccion, registro_tamano, registro_puntero_archivo, proceso_recibido);
                 break;
+            case OUT_OF_MEMORY:
+                buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
+                fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
+                proceso_recibido = recibir_estructura_del_buffer(buffer);
+                flag_estado = 1; //paso el proceso a exit
             
             default:
                 log_error(log_kernel, "El codigo de operacion no es reconocido :(");

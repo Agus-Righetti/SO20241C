@@ -9,10 +9,12 @@ void atender_memoria()
     t_instruccion* instruccion;
     t_buffer* buffer;
 
-    int cod_op_memoria = recibir_operacion(socket_cliente_cpu);
+    int cod_op_memoria;
 
     while(1)
     {
+        cod_op_memoria = recibir_operacion(socket_cliente_cpu);
+        log_info(log_cpu, "estoy en el while de atender memoria");
         switch (cod_op_memoria) 
         {
             case MENSAJE:  
@@ -32,7 +34,7 @@ void atender_memoria()
             case CPU_RECIBE_INSTRUCCION_DE_MEMORIA:
                 log_info(log_cpu, "Recibi una instruccion de memoria");
                 buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
-                log_info(log_cpu, "PID: %d - FETCH - Program Counter: %d", proceso->pid, proceso->program_counter);
+                //log_info(log_cpu, "PID: %d - FETCH - Program Counter: %d", proceso->pid, proceso->program_counter);
                 //proceso->program_counter++; // Esto hay que sacarlo porque usan la variable global, y aumentarlo en pcb.c
                 char* instruccion_recibida = recibir_string_del_buffer(buffer); // Obtengo la instrucción posta del buffer
                 interpretar_instruccion_de_memoria(instruccion_recibida); // Mando la instrucción para hacer un decode
@@ -62,7 +64,9 @@ void atender_kernel()
    	t_list* lista;
 
     while(1)
-    { 
+    {  
+        log_info(log_cpu, "Estoy en el while de atender kernel");
+
         int cod_op_kernel = recibir_operacion(socket_cliente_kernel);
 
         switch (cod_op_kernel) 
@@ -77,7 +81,13 @@ void atender_kernel()
                 list_destroy_and_destroy_elements(lista, free);
                 break;
             case PCB_KERNEL_A_CPU: // Execute
+
+                log_info(log_cpu, "Estoy antes de entrar a recibir_pcb()");
+
                 recibir_pcb();
+
+                log_info(log_cpu, "Estoy después de entrar a recibir_pcb()");
+
                 break;
             case SOLICITAR_TRADUCCION:
                 log_info(log_cpu, "Recibi una solicitud de traducción de dirección lógica a física del Kernel");
@@ -118,7 +128,12 @@ void atender_interrupcion() // ACA HAY QUE MANEJAR EL ENVIAR PCB DENTRO DEL SWIT
                 break;
             case INTERRUPCION_KERNEL:
                 log_info(log_cpu, "Me llego una interrupcion de KERNEL, ahora voy a enviar el pcb");
-                //enviar_pcb(socket_cliente_kernel, proceso, PCB_CPU_A_KERNEL, NULL);
+                
+                argumentos_cpu* args = malloc(sizeof(argumentos_cpu));
+                //args->proceso = pcb_recibido;
+                args->operacion = PCB_CPU_A_KERNEL;
+                enviar_pcb(socket_cliente_kernel, args);
+
                 break;
             case -1:
                 log_error(log_cpu, "El cliente se desconecto. Terminando servidor");
@@ -132,21 +147,30 @@ void atender_interrupcion() // ACA HAY QUE MANEJAR EL ENVIAR PCB DENTRO DEL SWIT
 
 }
 
-void escuchar_memoria()
+pthread_t escuchar_memoria()
 {
     log_info(log_cpu, "Estoy escuchando memoria\n");
     pthread_t hilo_memoria;
+
     pthread_create(&hilo_memoria, NULL, (void*) atender_memoria, NULL);
-    pthread_join(hilo_memoria, NULL);
+    
+    return hilo_memoria;
 }
 
-void escuchar_kernel()
+pthread_t escuchar_kernel()
 {
-    pthread_t hilo_dispatch, hilo_interrupt;
-    server_para_kernel();
-    interrupcion_para_kernel();
+    pthread_t hilo_dispatch;
+    
     pthread_create(&hilo_dispatch, NULL,(void*)atender_kernel, NULL);
+
+    return hilo_dispatch;
+}
+
+pthread_t escuchar_kernel_interrupcion(){
+    
+    pthread_t hilo_interrupt;
+    
     pthread_create(&hilo_interrupt, NULL, (void*)atender_interrupcion, NULL);
-    pthread_join(hilo_dispatch, NULL);
-    pthread_join(hilo_interrupt, NULL);
+    
+    return hilo_interrupt;
 }

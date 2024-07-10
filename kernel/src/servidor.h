@@ -10,6 +10,6 @@
 
 
 //  *************** DECLARACIÓN DE FUNCIONES **********
-void server_para_io(kernel_config* config_kernel, t_log* log_kernel);
+void server_para_io();
 
 #endif

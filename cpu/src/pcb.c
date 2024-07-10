@@ -8,7 +8,9 @@ pcb* pcb_recibido;
 // Entonces cuando recibo un nuevo pcb, lo limpio al de acá y asigno el nuevo, creo que estaría bien 
 
 void recibir_pcb(){
-
+    
+    log_info(log_cpu, "entre a recibir pcb");
+    
     t_buffer* buffer_pcb = recibiendo_paquete_personalizado(socket_cliente_kernel);
     pcb_recibido = NULL;
     pcb_recibido = recibir_estructura_del_buffer(buffer_pcb);
@@ -37,25 +39,17 @@ void enviar_pcb(int conexion, argumentos_cpu* args){
 
     // en todos los casos vamos a mandar el pcb, por lo cual esto no lo pongo en el switch
 
-    agregar_estructura_al_paquete_personalizado(paquete, args->proceso, sizeof(pcb));
+    log_info(log_cpu, "El PID del proceso que estoy por meter al paquete es: %d", pcb_recibido->pid);
+
+    agregar_estructura_al_paquete_personalizado(paquete, pcb_recibido, sizeof(pcb));
    
     switch(args->operacion) // Según el código de operación voy a agregar cosas diferentes al paquete (siempre siendo el pcb + otras cosas)
     {
         case PCB_CPU_A_KERNEL: // Si es el caso más sencillo, entonces no agrego nada, sólo mando el pcb
+        case OUT_OF_MEMORY:  
             break;
 
         case WAIT:
-
-            if(args->recurso == 1) {
-                agregar_int_al_paquete_personalizado(paquete, 0);
-            } else if (args->recurso == 2) {
-                agregar_int_al_paquete_personalizado(paquete, 1); 
-            } else if (args->recurso == 3) {
-                agregar_int_al_paquete_personalizado(paquete, 2); 
-            }
-
-            break;
-
         case SIGNAL:
 
             if(args->recurso == 1) {
@@ -358,8 +352,10 @@ void instruccion_mov_in(char **parte)
     // void* valor_leido = traducir_y_buscar_en_memoria(parte[2],)
 
     // Traducimos la direccion del registro direccion
-	int direccion_fisica = traducir_direccion_logica_a_fisica(parte[2]); 
-	
+    char *registro_direccion = parte[2]; // Direccion logica
+    int direccion_logica = *(int*)dictionary_get(registros, registro_direccion);
+    int direccion_fisica = traducir_direccion_logica_a_fisica(direccion_logica); 
+
 	char* instruccion = string_from_format("%s %s %d", parte[0], (char*)dictionary_get(registros, parte[1]), direccion_fisica);
 	
     // Pido espacio de memoria para la instruccion + /0
@@ -392,8 +388,11 @@ void instruccion_mov_out(char **parte)
     // MOV_OUT EDX ECX
 
     log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s", pcb_recibido->pid, parte[0], parte[1], parte[2]);
-	int direccion_fisica = traducir_direccion_logica_a_fisica(parte[1]);
 	
+    char *registro_direccion = parte[2]; // Direccion logica
+    int direccion_logica = *(int*)(dictionary_get(registros, registro_direccion));
+    int direccion_fisica = traducir_direccion_logica_a_fisica(direccion_logica); 
+
 	char* instruccion = string_from_format("%s %d %s", parte[0], direccion_fisica, parte[2]);
 	char* instruccion_alloc = malloc(strlen(instruccion) + 1);
 	strcpy(instruccion_alloc, instruccion);
@@ -441,24 +440,24 @@ void instruccion_sub(char **parte)
     // Realizar la resta y almacenar el resultado en el registro destino
     *registro_destino -= *registro_origen;
     
-    proceso->program_counter++;
+    pcb_recibido->program_counter++;
 }
 
 void instruccion_jnz(char **parte)
 {
     // JNZ AX 4
-    log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s", proceso->pid, parte[0], parte[1], parte[2]);
+    log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s", pcb_recibido->pid, parte[0], parte[1], parte[2]);
     
-    int *registro = dictionary_get(registros, parte[1]);
+    int registro = *(int*)dictionary_get(registros, parte[1]);
     int instruccion = atoi(parte[2]); // Convertir la instrucción a un entero
     
-    if (*registro != 0) 
+    if (registro != 0) 
     {
-        proceso->program_counter = instruccion;
+        pcb_recibido->program_counter = instruccion;
     } 
     else 
     {
-        proceso->program_counter++;
+        pcb_recibido->program_counter++;
     }
 }
 
@@ -491,12 +490,18 @@ void instruccion_resize(char **parte) // ACA HAY QUE MANEJAR UN ENVIO DE PCB QUE
         switch (cod_op_memoria){
             case CPU_RECIBE_OUT_OF_MEMORY_DE_MEMORIA: // VACIO
                 printf("Error: No se pudo ajustar el tamaño del proceso. Out of Memory.\n");
-                //enviar_pcb(socket_cliente_kernel, pcb_recibido, OUT_OF_MEMORY, NULL);
-                free(buffer);
+                
+                argumentos_cpu* args = malloc(sizeof(argumentos_cpu));
+                args->proceso = pcb_recibido; //Este proceso es global, no deberia ser global
+                args->operacion = OUT_OF_MEMORY;
+
+                enviar_pcb(socket_cliente_kernel, args);
+	                
+                
                 break;
             case CPU_RECIBE_OK_DEL_RESIZE:
                 printf("El tamaño del proceso se ha ajustado correctamente a %d\n", nuevo_tamanio);
-                free(buffer);
+                
                 break;
             case -1:
                 log_error(log_cpu, "MEMORIA se desconecto. Terminando servidor");
@@ -527,7 +532,7 @@ void instruccion_copy_string(char **parte)
     // Obtener el tamaño de la copia
     int tamanio = atoi(parte[1]);
 
-    registros_cpu* registros;
+    //registros_cpu* registros;
 
     uint32_t direccion_origen = (uint32_t)dictionary_get(registros, "SI");
     uint32_t direccion_destino = (uint32_t)dictionary_get(registros, "DI");
@@ -675,7 +680,10 @@ void instruccion_io_stdin_read(char** parte)
     char* direccion = parte[2];
 
     // // Obtener la dirección lógica y el tamaño desde los registros
-    int direccion_fisica = traducir_direccion_logica_a_fisica(direccion);
+    int direccion_logica = *(int*)dictionary_get(registros, direccion);
+    int direccion_fisica = traducir_direccion_logica_a_fisica(direccion_logica); 
+    int registro_tamano = *(int*)dictionary_get(registros, parte[3]);
+
     // int tamanio = atoi(parte[3]);
 
     // // Enviar la solicitud al kernel
@@ -685,7 +693,7 @@ void instruccion_io_stdin_read(char** parte)
     argumentos_cpu* args = malloc(sizeof(argumentos_cpu));
     args->nombre_interfaz = parte[1];
     args->registro_direccion = direccion_fisica;
-    args->registro_tamano = atoi(parte[3]);
+    args->registro_tamano = registro_tamano;
     pcb_recibido->program_counter++; // Siempre primero sumo el PC y después recién asigno el proceso a args así está actualizado
     args->proceso = pcb_recibido;
     args->operacion = IO_STDIN_READ;
@@ -733,9 +741,9 @@ void instruccion_io_stdout_write(char **parte) // ESTE NO LO ENTIENDO PORQUE MAN
 
     log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s %s", pcb_recibido->pid, parte[0], parte[1], parte[2], parte[3]);
 
-    int valor_registro = atoi(dictionary_get(registros, registro_tamano));
-    int direccion_logica = atoi(dictionary_get(registros, registro_direccion));
-    int direccion_fisica = traducir_direccion_logica_a_fisica(direccion_logica);    
+    int valor_registro = *(int*)dictionary_get(registros, registro_tamano);
+    int direccion_logica = *(int*)dictionary_get(registros, registro_direccion);
+    int direccion_fisica = traducir_direccion_logica_a_fisica(direccion_logica);     
 
     argumentos_cpu* args = malloc(sizeof(argumentos_cpu));
     args->nombre_interfaz = parte[1];

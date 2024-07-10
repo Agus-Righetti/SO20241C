@@ -3,7 +3,8 @@
 
 
 //********* DESARROLLO SERVER KERNEL PARA RECIBIR A IO *****
-void server_para_io(kernel_config* config_kernel,t_log* log_kernel){
+void server_para_io(){
+	
     int server_kernel = iniciar_servidor(config_kernel->puerto_escucha, log_kernel);
 	
 	if (server_kernel == -1)
@@ -48,7 +49,7 @@ void server_para_io(kernel_config* config_kernel,t_log* log_kernel){
 				log_warning(log_kernel,"Operacion desconocida. No quieras meter la pata");
 				break;
 
-	};
+		};
 	}
 }
 
