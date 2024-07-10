@@ -128,8 +128,6 @@ void manejar_creacion_archivo(char* nombre_archivo, int pid)
         return;
     }
 
-    int tamanio = 0;
-    
     bitarray_set_bit(bitmap, index_bloque_inicial); // Seteo el bloque ocupado en el bitmap
     strcat(nombre_archivo, ".config");
 
@@ -139,13 +137,13 @@ void manejar_creacion_archivo(char* nombre_archivo, int pid)
     t_config *config = config_create(config_file_path);
     if (config == NULL) {
         fprintf(stderr, "Error: No se pudo cargar el archivo de configuración %s\n", config_file_path);
-        return 1;
+        return;
     }
 
     char* bloque_inicial = pasar_a_string(index_bloque_inicial);
-    char* tamanio_char = pasar_a_string(0);
+    
     config_set_value(config, "BLOQUE_INICIAL", bloque_inicial);
-    config_set_value(config, "TAMANIO", tamanio_char);
+    config_set_value(config, "TAMANIO", "0");
 
     // Guardar los cambios en el archivo
     config_save(config) ;
@@ -155,7 +153,7 @@ void manejar_creacion_archivo(char* nombre_archivo, int pid)
     // Liberar memoria utilizada por la configuración
     config_destroy(config);
 
-    return 0;
+    
     // Armamos el archivo metadata de este archivo
     
     
@@ -248,6 +246,7 @@ void manejar_creacion_archivo(char* nombre_archivo, int pid)
     //     fprintf(archivoFS, "TAMANIO_ARCHIVO=%d\n", config_metadatos->tamanio_archivo);
     // }
     // fclose(archivoFS);
+    return;
 }
 
 int obtener_primer_bloque_libre(unsigned char* bitmap, int block_count) 
@@ -265,10 +264,11 @@ int obtener_primer_bloque_libre(unsigned char* bitmap, int block_count)
 
 char* pasar_a_string(int valor)
 {
-    char valor_char[50];
-    sprintf(valor_char, "%d", valor);
-    return valor_char;
+    static char buffer[20]; // Asegúrate de que el tamaño sea suficiente
+    snprintf(buffer, sizeof(buffer), "%d", valor);
+    return buffer;
 }
+
 void manejar_eliminacion_archivo(char* nombre_archivo, Interfaz* configuracion_fs) 
 {
     // Lógica para otros archivos según sea necesario
@@ -378,7 +378,7 @@ void manejar_escritura_archivo(Interfaz* configuracion_fs, char* nombre_archivo,
                 break; 
             case -1:
                 log_error(log_io, "Error al leer datos de memoria para escribir en %s.", nombre_archivo);
-                free(conexion_io_memoria);
+                //free(conexion_io_memoria);
                 return;
             default:
                 log_warning(log_io,"Operacion desconocida. No quieras meter la pata");
@@ -489,7 +489,7 @@ void manejar_lectura_archivo(char* nombre_archivo, int direccion, int tamanio, i
                 break; 
             case -1:
                 log_error(log_io, "Error al leer datos de memoria para leer en %s.", nombre_archivo);
-                free(conexion_io_memoria);
+                //free(conexion_io_memoria);
                 return;
             default:
                 log_warning(log_io,"Operacion desconocida. No quieras meter la pata");
@@ -512,7 +512,7 @@ void crear_archivos_gestion_fs(){
 
     if (bloques_dat == NULL) {
         perror("Error al abrir el archivo");
-        return 1;
+        return;
     }
 
     int tamanio = config_io->block_size * config_io->block_count;
@@ -521,7 +521,7 @@ void crear_archivos_gestion_fs(){
     if (fseek(bloques_dat, tamanio - 1, SEEK_SET) != 0) {
         perror("Error al establecer el tamaño del archivo");
         fclose(bloques_dat);
-        return 1;
+        return;
     }
 
     // Escribe un byte en la última posición para establecer el tamaño
@@ -535,7 +535,7 @@ void crear_archivos_gestion_fs(){
     FILE *bitmap_file = fopen("bitmap.dat", "r+b");  // Abre el archivo en modo lectura y escritura binaria
     if (bitmap_file == NULL) {
         perror("Error al abrir bitmap.dat");
-        return 1;
+        return;
     }
 
     // 1. Calcular el tamaño del bitmap en bytes
@@ -546,7 +546,7 @@ void crear_archivos_gestion_fs(){
     if (bitmap_buffer == NULL) {
         perror("Error al reservar memoria para el bitmap");
         fclose(bitmap_file);
-        return 1;
+        return;
     }
 
     // 3. Inicializar el bitmap en 0 (todos los bloques libres)
@@ -562,7 +562,7 @@ void crear_archivos_gestion_fs(){
         fprintf(stderr, "Error al crear el bitmap\n");
         free(bitmap_buffer);
         fclose(bitmap_file);
-        return 1;
+        return;
     }
 
     free(bitmap_buffer);
