@@ -35,11 +35,16 @@ void server_para_io(){
 				list_iterate(lista, (void*) iterator);
 				break;
 			case NUEVA_INTERFAZ: //pedir que manden esto con el nombre de la interfaz
+
 				buffer = recibiendo_paquete_personalizado(client_io);
+				
 				op_code tipo_interfaz = recibir_int_del_buffer(buffer); //va a decir si es gen, stdin, etc
-				//falta inciiar nombre_interfaz
+				//falta iniciar nombre_interfaz
+
 				char* nombre_interfaz = recibir_string_del_buffer(buffer);
+
 				crear_interfaz(tipo_interfaz, client_io, nombre_interfaz);
+				
 				break;
 			//case -1:
 				//log_error(log_kernel, "El cliente se desconecto. Terminando servidor");

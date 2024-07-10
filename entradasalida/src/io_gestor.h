@@ -3,6 +3,7 @@
 
 #include <utils/hello.h>
 #include <utils/utilsShare.h>
+#include <cliente.h>
 
 // Estructuras globales ---------------------------------------------------------------------------------------------------------------
 
@@ -18,6 +19,7 @@ typedef struct
     int block_size;
     int block_count;
     int retraso_compactacion;
+    char* nombre;
 } io_config;
 
 typedef struct 

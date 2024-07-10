@@ -118,7 +118,9 @@ void desconectar_interfaz(interfaz_kernel* interfaz)
 void enviar_instruccion_io(int socket, argumentos_para_io* args)
 {
     t_paquete* paquete_instruccion = crear_paquete_personalizado(args->operacion); // Creo un paquete personalizado con un codop para que IO reconozca lo que le estoy mandando
-
+    
+    agregar_int_al_paquete_personalizado(paquete_instruccion, args->proceso->pid); //le mando el pid del proceso
+    
     switch (args->operacion)
     {
         case IO_GEN_SLEEP:

@@ -318,9 +318,9 @@ void interpretar_instruccion_de_memoria(char* instruccion)
             return;
     }
 
-    log_warning(log_cpu, "PID: %d - Advertencia: Sin instrucciones por ejecutar - Ejecutando: EXIT", proceso->pid);
-	error_exit(EXIT);
-    destruir_diccionarios();
+    // log_warning(log_cpu, "PID: %d - Advertencia: Sin instrucciones por ejecutar - Ejecutando: EXIT", pcb_recibido->pid);
+	// error_exit(EXIT);
+    // destruir_diccionarios();
     
     return;
 }
@@ -338,6 +338,8 @@ void instruccion_set(char **parte)
     
 	// proceso->program_counter++; // Esto está mal, tendría que sumar el program counter pero del pcb_recibido, no del global
     pcb_recibido->program_counter++; // Ahora sí, si sí puedo tener el pcb como "global" de todo el pcb.c entonces god
+    log_info(log_cpu, "El valor nuevo es %d", pcb_recibido->registros->ax);
+    log_info(log_cpu, "El valor nuevo es %d", pcb_recibido->program_counter);
 }
 
 void instruccion_mov_in(char **parte)
