@@ -8,8 +8,9 @@
 #include "interfazSTDOUT.h"
 #include "interfazDIALFS.h"
 
-void escuchar_memoria();
-void escuchar_kernel();
+pthread_t escuchar_memoria();
+pthread_t escuchar_kernel();
+void atender_a_memoria();
 void atender_kernel();
 int solicitar_traduccion_direccion(int direccion_logica); 
 

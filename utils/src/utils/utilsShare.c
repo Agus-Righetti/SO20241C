@@ -51,6 +51,7 @@ int recibir_operacion(int socket_cliente)
 		return cod_op;
 	else
 	{
+		printf("ACA");
 		close(socket_cliente);
 		return -1;
 	}

@@ -5,7 +5,10 @@
 
 // Declaracion de funciones ----------------------------------------------------------------------------------------------------------
 
-int conexion_a_memoria(t_log* log_io, io_config* config_io);
-int conexion_a_kernel(t_log* log_io, io_config* config_io);
+int conexion_a_memoria();
+int conexion_a_kernel();
+
+op_code obtener_tipo_interfaz(char* char_interfaz);
+void avisar_fin_io_a_kernel();
 
 #endif

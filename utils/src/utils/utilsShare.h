@@ -102,18 +102,12 @@ typedef enum {
 	
 	CPU_TERMINA_EJECUCION_PCB ,//Flag para ver si el proceso ya se ejecuto del todo (1 o 0)
 
-	NUEVA_INTERFAZ //Cuando se conecta una interfaz de io con kernel
+	NUEVA_INTERFAZ ,//Cuando se conecta una interfaz de io con kernel
+	FIN_OP_IO, //Se termino una operacion de entrada salida exitosamente
 
 } op_code;
 
-typedef struct
-{
-	op_code nombre_interfaz;
-	t_queue* cola_de_espera;
-	bool en_uso;
-	int socket;
 
-}interfaz_kernel;
 
 
 // ************* SERIALIZACION *************
@@ -154,6 +148,8 @@ typedef enum {
 	EXIT,
 } estados;
 
+
+
 typedef struct {
     int pid;
 	estados estado_del_proceso;
@@ -171,6 +167,41 @@ typedef struct {
 	int offset;
 	int bytes_a_operar; // Se que no es DF -> pero es muy util para hacer manejo de paginas
 } t_direccion_fisica;
+typedef struct
+{
+	op_code tipo_interfaz;
+	t_queue* cola_de_espera;
+	bool en_uso; // Sacar
+	int socket;
+	char* nombre_interfaz;
+	pcb* proceso_en_interfaz; //es el proceso que actualmente esta en la interfaz
+	sem_t sem_puedo_mandar_operacion;
+    sem_t sem_hay_procesos_esperando;
+	pthread_mutex_t * mutex_cola;
+
+}interfaz_kernel;
+
+typedef struct{
+    int unidades_de_trabajo;
+    int registro_direccion;
+    int registro_tamano;
+    char* nombre_archivo;
+    int registro_puntero_archivo;
+    pcb* proceso;
+    op_code operacion;
+}argumentos_para_io;
+
+typedef struct{
+	int recurso;
+	int unidades_de_trabajo;
+	int registro_direccion;
+    int registro_tamano;
+    char* nombre_archivo;
+	char* nombre_interfaz;
+    int registro_puntero_archivo;
+    pcb* proceso;
+    op_code operacion;
+}argumentos_cpu;
 
 // ************ DECLARACION DE FUNCIONES ************
 // ************ SERIALIZACION Y CONEXIONES GENERALES ************

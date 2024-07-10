@@ -40,6 +40,7 @@ extern int interrupcion_kernel_cpu;
 extern int conexion_kernel_memoria;
 extern int cantidad_recursos;
 extern int planificacion_activa;
+extern int pid_eliminar;
 extern bool interrupcion_por_fin_de_proceso;
 extern pthread_mutex_t **mutex_por_recurso;
 extern pthread_mutex_t mutex_cola_de_ready;
@@ -51,12 +52,16 @@ extern pthread_mutex_t mutex_cola_de_execute;
 extern pthread_mutex_t mutex_cola_prioridad_vrr;
 extern pthread_mutex_t mutex_cola_general_de_procesos;
 extern pthread_mutex_t mutex_planificacion_activa;
+extern pthread_mutex_t mutex_enviando_instruccion_a_io;
+extern pthread_mutex_t mutex_cola_de_interfaces;
+
 extern sem_t sem_cola_de_ready;
 extern sem_t sem_cola_de_new;
 extern sem_t sem_multiprogramacion;
 extern sem_t destruir_hilo_interrupcion;
 extern sem_t sem_puedo_mandar_a_cpu;
 extern sem_t sem_cola_prioridad_vrr;
+extern sem_t sem_planificacion_activa;
 
 extern t_queue **colas_por_recurso;
 extern pthread_mutex_t **mutex_por_recurso;

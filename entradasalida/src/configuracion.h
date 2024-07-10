@@ -5,7 +5,7 @@
 
 // Declaracion de funciones ----------------------------------------------------------------------------------------------------------
 
-io_config* armar_config(t_log* log_io);
+io_config* armar_config(t_log* log_io, char* nombre_config) ;
 
 void iterator(char* value);
 

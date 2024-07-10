@@ -26,6 +26,7 @@ int interrupcion_kernel_cpu;
 int conexion_kernel_memoria;
 int cantidad_recursos;
 int planificacion_activa = 1;
+int pid_eliminar = -1;
 bool interrupcion_por_fin_de_proceso;
 pthread_mutex_t mutex_cola_de_ready;
 pthread_mutex_t mutex_cola_de_new;
@@ -36,12 +37,16 @@ pthread_mutex_t mutex_grado_programacion;
 pthread_mutex_t mutex_cola_prioridad_vrr;
 pthread_mutex_t mutex_cola_general_de_procesos;
 pthread_mutex_t mutex_planificacion_activa;
+pthread_mutex_t mutex_enviando_instruccion_a_io;
+pthread_mutex_t mutex_cola_de_interfaces;
+
 sem_t sem_cola_de_ready;
 sem_t sem_cola_de_new;
 sem_t sem_multiprogramacion;
 sem_t destruir_hilo_interrupcion;
 sem_t sem_puedo_mandar_a_cpu;
 sem_t sem_cola_prioridad_vrr;
+sem_t sem_planificacion_activa;
 
 t_queue** colas_por_recurso;
 pthread_mutex_t** mutex_por_recurso;

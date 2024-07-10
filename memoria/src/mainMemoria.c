@@ -10,6 +10,9 @@ int main() {
     pthread_mutex_init(&mutex_bitmap_marcos, NULL);
     pthread_mutex_init(&mutex_espacio_usuario, NULL);
 
+    // ************ LISTA PROCESOS ************
+    sem_init(&sem_lista_procesos, 0, 1);
+
     // ********* INICIALIZO MEMORIA COMO SERVIDOR *********
     inicializar_servidor();
     
@@ -37,7 +40,9 @@ int main() {
     bitarray_destroy(bitmap_marcos);
     pthread_mutex_destroy(&mutex_bitmap_marcos);
     pthread_mutex_destroy(&mutex_espacio_usuario);
+    
     free(espacio_usuario);
+    sem_destroy(&sem_lista_procesos);
 
     return EXIT_SUCCESS;
 }

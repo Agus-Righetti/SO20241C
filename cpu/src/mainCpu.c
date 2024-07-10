@@ -12,17 +12,32 @@ int main(int argc, char* argv[])
 
     // Conexion CPU --> Memoria -------------------------------------------------------------------------------------------------------
 
-	int socket_cliente_cpu = conexion_a_memoria();
+	socket_cliente_cpu = conexion_a_memoria();
 
-	// Server para recibir a Kernel ---------------------------------------------------------------------------------------------------
-	
-	escuchar_kernel();
-	
 	// Instrucciones con memoria
 	
-	escuchar_memoria();
+	pthread_t hilo_escuchar_memoria = escuchar_memoria();
+
+	// Inicializo los servidores para kernel ----------------------------------
+	
+	server_para_kernel();
+    interrupcion_para_kernel();
+
+	// hilos para recibir a Kernel ---------------------------------------------------------------------------------------------------
+	
+	pthread_t hilo_escuchar_kernel = escuchar_kernel();
+	
+	pthread_t hilo_escuchar_kernel_interrupcion = escuchar_kernel_interrupcion();
+	
+
+	pthread_detach(hilo_escuchar_kernel);
+	
+	pthread_detach(hilo_escuchar_kernel_interrupcion);
+
+	pthread_join(hilo_escuchar_memoria, NULL);
    
 	terminar_programa();
+	
 	liberar_conexion(socket_cliente_kernel);
 	return EXIT_SUCCESS;
 }

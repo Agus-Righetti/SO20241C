@@ -7,7 +7,10 @@ int main(int argc, char* argv[])
     // Log y config de uso general ----------------------------------------------------------------------------------------------------
 
     log_io = log_create("io.log", "IO", 1, LOG_LEVEL_DEBUG);
-    config_io = armar_config(log_io);
+    
+    config_io = armar_config(log_io, argv[1]); //En argv[1] esta el nombre de config pasado por parametro
+
+    log_info(log_io, "El nombre de la config es: %s", config_io->nombre);
 
     // Interfaz* configuracion_fs;
 
@@ -20,14 +23,25 @@ int main(int argc, char* argv[])
     // manejar_creacion_archivo("bitmap.dat", configuracion_fs);
     // manejar_creacion_archivo("notas.txt", configuracion_fs);
 
+    // Las conexiones de sockets acá
+
+    conexion_io_kernel = conexion_a_kernel();
+
+    conexion_io_memoria = conexion_a_memoria(); 
+
+
     // Conexion IO --> Memoria --------------------------------------------------------------------------------------------------------
 
-    escuchar_memoria(); 
+    pthread_t hilo_escuchar_memoria = escuchar_memoria();
 
     // Conexion IO --> Kernel ---------------------------------------------------------------------------------------------------------
     
-    escuchar_kernel();
+    pthread_t hilo_escuchar_kernel = escuchar_kernel();
   
+    pthread_detach(hilo_escuchar_memoria);
+
+    pthread_join(hilo_escuchar_kernel, NULL);
+
     // terminar_programa(log_io, config_io);
 
     return 0;

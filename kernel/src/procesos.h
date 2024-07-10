@@ -4,12 +4,14 @@
 #include "configuracion.h"
 #include "cliente.h"
 #include "k_gestor.h"
+#include "manejo_io.h"
 
 //  *************** DECLARACIÓN DE FUNCIONES **********
 void leer_consola ();
 pthread_t hilo_consola ();
 pthread_t hilo_enviar_procesos_cpu ();
 pthread_t hilo_pasar_de_new_a_ready();
+pthread_t hilo_io();
 void iniciar_proceso(char* path );
 void enviar_proceso_a_cpu();
 void enviar_pcb(pcb* proceso);
@@ -34,6 +36,8 @@ void liberar_array_strings(char **array);
 void sacar_de_cola_de_ready(int pid);
 void sacar_de_cola_de_new(int pid);
 void sacar_de_execute(int pid);
+void sacar_de_blocked(int pid);
+
 void detener_planificacion();
 void iniciar_planificacion();
 

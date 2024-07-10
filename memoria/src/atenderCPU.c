@@ -7,6 +7,7 @@ void cpu_pide_instruccion(t_buffer* un_buffer){        //[PID, IP]
 	int pid = recibir_int_del_buffer(un_buffer);
 	int ip = recibir_int_del_buffer(un_buffer);
 
+	sem_wait(&sem_lista_procesos);
     //tengo que obtener proceso buscando con los PID
     t_proceso* un_proceso = obtener_proceso_por_id(pid);
 
@@ -15,6 +16,7 @@ void cpu_pide_instruccion(t_buffer* un_buffer){        //[PID, IP]
     
 	//Enviar_instruccion a CPU
 	enviar_una_instruccion_a_cpu(instruccion);
+	sem_post(&sem_lista_procesos);
 
     log_info(log_memoria, "Instruccion enviada a CPU");
 }

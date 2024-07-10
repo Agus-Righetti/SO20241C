@@ -3,10 +3,10 @@
 
 #include "io_gestor.h"
 
-void leer_consola();
-void leer_configuracion_stdin(Interfaz *configuracion);
-void iniciar_config_stdin(Interfaz *configuracion);
-void liberar_configuracion_stdin(Interfaz* configuracion);
-void recibir_operacion_stdout_de_kernel(Interfaz* configuracion_stdout, op_code codigo);
+void leer_consola(int registro_direccion, int registro_tamano, int pid);
+// void leer_configuracion_stdin(Interfaz *configuracion);
+// void iniciar_config_stdin(Interfaz *configuracion);
+// void liberar_configuracion_stdin(Interfaz* configuracion);
+// void recibir_operacion_stdout_de_kernel(Interfaz* configuracion_stdout, op_code codigo);
 
 #endif

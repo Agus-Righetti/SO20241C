@@ -9,9 +9,22 @@ pthread_t hilo_consola (){
 
     pthread_t thread_consola; 
             
+    log_info(log_kernel, "Entré a hilo consola");
     pthread_create(&thread_consola, NULL, (void*)leer_consola, NULL);
 
+
     return thread_consola;
+}
+
+pthread_t hilo_io(){ 
+
+    pthread_t thread_io; 
+            
+    log_info(log_kernel, "Entré a hilo io");
+    pthread_create(&thread_io, NULL, (void*)server_para_io, NULL);
+
+
+    return thread_io;
 }
 
 // ************* CREO HILO PARA ENVIAR PROCESOS A CPU CONSTANTEMENTE *************
@@ -48,8 +61,10 @@ pthread_t hilo_pasar_de_new_a_ready(){
 
 // ************* SIRVE PARA LEER LOS COMANDOS DESDE LA CONSOLA (DESDE HILO_CONSOLA) *************
 void leer_consola(void* arg){
+
+    log_info(log_kernel, "Entre a leer consola");
     
-     while(1) { // Para mantener esperando comandos constantemente
+    while(1) { // Para mantener esperando comandos constantemente
         
         char* lectura = readline("Ingrese comando: \n"); // Pido que se ingrese un comando
 
@@ -102,57 +117,47 @@ void enviar_proceso_a_cpu(){
 
     while(1){ // Para estar constantemente intentando enviar un proceso
 
-        pthread_mutex_lock(&mutex_planificacion_activa);
-
-        if(planificacion_activa){ // Si la planificación está activa hago el proceso común de mandar a Execute
+       sem_wait(&sem_puedo_mandar_a_cpu); // Espero si ya hay otro proceso ejecutando en CPU (solo se ejecuta de a un proceso)
             
-            pthread_mutex_unlock(&mutex_planificacion_activa);
-            
-            sem_wait(&sem_puedo_mandar_a_cpu); // Espero si ya hay otro proceso ejecutando en CPU (solo se ejecuta de a un proceso)
-            
-            pcb* proceso_seleccionado;
-            if((strcmp(config_kernel->algoritmo_planificacion, "VRR") == 0) && (queue_is_empty(cola_prioridad_vrr) == false))
-            { 
-                // Verifico si es VRR el algoritmo y si la cola de prioridad tiene algo, entonces voy a usar lo de esa cola prioritaria
+        pcb* proceso_seleccionado;
+        if((strcmp(config_kernel->algoritmo_planificacion, "VRR") == 0) && (queue_is_empty(cola_prioridad_vrr) == false))
+        { 
+            // Verifico si es VRR el algoritmo y si la cola de prioridad tiene algo, entonces voy a usar lo de esa cola prioritaria
 
-                pthread_mutex_lock(&mutex_cola_prioridad_vrr); 
-                proceso_seleccionado = queue_pop(cola_prioridad_vrr); // Saco el proceso siguiente de la cola de prioridad
-                pthread_mutex_unlock(&mutex_cola_prioridad_vrr);
-
-            }else{
+            pthread_mutex_lock(&mutex_cola_prioridad_vrr); 
+            proceso_seleccionado = queue_pop(cola_prioridad_vrr); // Saco el proceso siguiente de la cola de prioridad
+            pthread_mutex_unlock(&mutex_cola_prioridad_vrr);
+        
+        }else{
                 
-                sem_wait(&sem_cola_de_ready); // Si no hay nada en la cola de Ready no avanzo
-                log_info(log_kernel, "estoy dsp del semafoto de q hay algo en la cola de ready ");
-                pthread_mutex_lock(&mutex_cola_de_ready);
-                proceso_seleccionado = queue_pop(cola_de_ready); // Saco el proceso siguiente de la cola de Ready
-                pthread_mutex_unlock(&mutex_cola_de_ready);
+            sem_wait(&sem_cola_de_ready); // Si no hay nada en la cola de Ready no avanzo
+            log_info(log_kernel, "estoy dsp del semafoto de q hay algo en la cola de ready ");
+            pthread_mutex_lock(&mutex_cola_de_ready);
+            proceso_seleccionado = queue_pop(cola_de_ready); // Saco el proceso siguiente de la cola de Ready
+            pthread_mutex_unlock(&mutex_cola_de_ready);
 
-            }
+        }
 
-            if (proceso_seleccionado->estado_del_proceso == READY) // Verifico que el estado del proceso sea READY
-            {
+        if (proceso_seleccionado->estado_del_proceso == READY) // Verifico que el estado del proceso sea READY
+        {
                 
-                pthread_mutex_lock(&proceso_seleccionado->mutex_pcb);
-                proceso_seleccionado->estado_del_proceso = EXECUTE; // Cambio el estado del proceso sacado de la cola de READY
-                pthread_mutex_unlock(&proceso_seleccionado->mutex_pcb);
+            pthread_mutex_lock(&proceso_seleccionado->mutex_pcb);
+            proceso_seleccionado->estado_del_proceso = EXECUTE; // Cambio el estado del proceso sacado de la cola de READY
+            pthread_mutex_unlock(&proceso_seleccionado->mutex_pcb);
 
 
-                log_info(log_kernel, "PID: %d - Estado Anterior: READY - Estado Actual: EXECUTE", proceso_seleccionado->pid); // Hago un log obligatorio 
+            log_info(log_kernel, "PID: %d - Estado Anterior: READY - Estado Actual: EXECUTE", proceso_seleccionado->pid); // Hago un log obligatorio 
                 
-                enviar_pcb(proceso_seleccionado); // Envio el pcb a CPU
+            enviar_pcb(proceso_seleccionado); // Envio el pcb a CPU
 
-                crear_hilo_proceso(proceso_seleccionado); // Inicio un hilo que maneje el algoritmo del proceso
+            crear_hilo_proceso(proceso_seleccionado); // Inicio un hilo que maneje el algoritmo del proceso
 
-            }else
-            {
+        }else
+        {
                 
-                error_show("El estado seleccionado no se encuentra en estado 'READY'"); // Si el proceso seleccionado no se encuentra en READY muestro un error
+            error_show("El estado seleccionado no se encuentra en estado 'READY'"); // Si el proceso seleccionado no se encuentra en READY muestro un error
 
-            }
-        }else{ // Sino, simplemente no hago nada y vuelvo a consultar hasta que la planificación arranque de nuevo y pueda mandar el proceso que corresponde a Execute
-            pthread_mutex_unlock(&mutex_planificacion_activa);
-            usleep(100000); // Espero 0.1 segundos antes de seguir (así no saturo el CPU tanto con el while(1))
-        } 
+        }     
     }
 }
 
@@ -166,31 +171,25 @@ void pasar_procesos_de_new_a_ready(){
 
     while(1)
     {
-        //log_info(log_kernel, "Entre a pasar_procesos_de_new_a_ready"); 
-        pthread_mutex_lock(&mutex_planificacion_activa);
+        sem_wait(&sem_cola_de_new); // Uso semaforos sobre la cola y el grado de multiprogramacion porque son cosas compartidas
+        sem_wait(&sem_multiprogramacion); // Tanto para ver que haya procesos en New como para ver de no pasarme del grado de multiprogramacion
 
-        if(planificacion_activa){ // Chequeo si la planificación está activa (si lo está paso todo lo que pueda a Ready)
-            pthread_mutex_unlock(&mutex_planificacion_activa);
+        sem_wait(&sem_planificacion_activa); // Para bloquear todo si la planificación está detenida
+        sem_post(&sem_planificacion_activa); // Para que, si sí está activo, a la próxima vuelta no se bloquee
 
-            sem_wait(&sem_cola_de_new); // Uso semaforos sobre la cola y el grado de multiprogramacion porque son cosas compartidas
-            sem_wait(&sem_multiprogramacion); // Tanto para ver que haya procesos en New como para ver de no pasarme del grado de multiprogramacion
-            pthread_mutex_lock(&mutex_cola_de_new);
-            proceso_a_mandar_a_ready = queue_pop(cola_de_new); // Saco un proceso de la cola de New para despues pasarlo a Ready
-            pthread_mutex_unlock(&mutex_cola_de_new);
+        pthread_mutex_lock(&mutex_cola_de_new);
+        proceso_a_mandar_a_ready = queue_pop(cola_de_new); // Saco un proceso de la cola de New para despues pasarlo a Ready
+        pthread_mutex_unlock(&mutex_cola_de_new);
 
-            pthread_mutex_lock(&proceso_a_mandar_a_ready->mutex_pcb);
-            proceso_a_mandar_a_ready->estado_del_proceso = READY; // Le asigno el nuevo estado "Ready"
-            pthread_mutex_unlock(&proceso_a_mandar_a_ready->mutex_pcb);
+        pthread_mutex_lock(&proceso_a_mandar_a_ready->mutex_pcb);
+        proceso_a_mandar_a_ready->estado_del_proceso = READY; // Le asigno el nuevo estado "Ready"
+        pthread_mutex_unlock(&proceso_a_mandar_a_ready->mutex_pcb);
 
-            pthread_mutex_lock(&mutex_cola_de_ready); // Tmbn semaforo porque es seccion critica 
-            queue_push(cola_de_ready,proceso_a_mandar_a_ready); // Ingreso el proceso a la cola de Ready. 
-            pthread_mutex_unlock(&mutex_cola_de_ready);
-            sem_post(&sem_cola_de_ready); // Agrego 1 al semaforo contador de la cola
+        pthread_mutex_lock(&mutex_cola_de_ready); // Tmbn semaforo porque es seccion critica 
+        queue_push(cola_de_ready,proceso_a_mandar_a_ready); // Ingreso el proceso a la cola de Ready. 
+        pthread_mutex_unlock(&mutex_cola_de_ready);
+        sem_post(&sem_cola_de_ready); // Agrego 1 al semaforo contador de la cola
 
-        }else{ // Sino, simplemente no hago nada, y dejo que se vuelva a chequear constantemente si la planificación está activa para, ahí sí pasar los procesos a Ready
-            pthread_mutex_unlock(&mutex_planificacion_activa);
-            usleep(100000); // Espero 0.1 segundos antes de seguir (así no saturo el CPU tanto con el while(1))
-        }
         
     }
 }
@@ -441,7 +440,7 @@ void finalizar_proceso(char* pid_formato_char){
                 sacar_de_execute(pid);
                 break;
             case BLOCKED:
-                //sacar_de_cola_de_blocked(pid);
+                sacar_de_blocked(pid);
                 break;
             case NEW:
                 sacar_de_cola_de_new(pid);
@@ -516,6 +515,7 @@ void detener_planificacion() {
     pthread_mutex_lock(&mutex_planificacion_activa);
     if (planificacion_activa) {
         planificacion_activa = 0;
+        sem_wait(&sem_planificacion_activa);
         log_info(log_kernel, "Planificación detenida \n");
     } else {
         log_info(log_kernel, "La planificación ya se encuentra detenida \n");
@@ -528,6 +528,7 @@ void iniciar_planificacion() {
     pthread_mutex_lock(&mutex_planificacion_activa);
     if (!planificacion_activa) {
         planificacion_activa = 1;
+        sem_post(&sem_planificacion_activa);
         log_info(log_kernel, "Planificación reanudada \n");
     } else {
         log_info(log_kernel, "La planificación ya se encuentra iniciada \n");
@@ -555,9 +556,13 @@ void enviar_pcb(pcb* proceso) {
 
     t_paquete* paquete_pcb = crear_paquete_personalizado(PCB_KERNEL_A_CPU); // Creo un paquete personalizado con un codop para que CPU reconozca lo que le estoy mandando
 
+    log_info(log_kernel, "El proceso que estoy por mandar a CPU tiene un PID: %d", proceso->pid);
+
     agregar_estructura_al_paquete_personalizado(paquete_pcb, proceso, sizeof(pcb)); // Agrego el struct pcb al paquete
 
     enviar_paquete(paquete_pcb, conexion_kernel_cpu); // Envio el paquete a través del socket
+    
+    log_info(log_kernel, "El proceso que mandé a CPU tiene un PID: %d", proceso->pid);
 
     eliminar_paquete(paquete_pcb); // Libero el paquete
 
@@ -611,14 +616,6 @@ void crear_hilo_proceso(pcb* proceso){
     }
 }
 
-// ************* LLAMA A RECIBIR_PCB_POR_FIN_DE_PROCESO (RECIBO POR FIN DE PROCESO) A TRAVES DE UN HILO *************
-// void recibir_pcb_por_fin_proceso_hilo(void* arg)
-// {
-//     thread_args_procesos_kernel* args = (thread_args_procesos_kernel*)arg; // Creo un hilo
-//     pcb* proceso = args->proceso; // Le cargo el proceso en los args
-
-//     recibir_pcb_por_fin_proceso(proceso);
-// }
 
 // ************* LLAMA A RECIBIR_PCB (RECIBO NORMAL) A TRAVES DE UN HILO *************
 void recibir_pcb_hilo(void* arg){
@@ -629,29 +626,6 @@ void recibir_pcb_hilo(void* arg){
     recibir_pcb(proceso);
 }
 
-// ************* RECIBE EL PCB POR FIN DE PROCESO DESDE CONSOLA *************
-// void recibir_pcb_por_fin_proceso(pcb* proceso){
-    
-//     t_buffer* buffer; // Buffer para recibir el paquete
-    
-//     int flag_estado;
-    
-//     log_info(log_kernel, "Estoy esperando el pcb q me tiene q mandar cpu");
-//     buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
-//     flag_estado = 1; // Tengo q mandar el proceso a exit
-//     log_info(log_kernel, "ya recibi el pcb!!");
-
-//     proceso = recibir_estructura_del_buffer(buffer); // Asigno al proceso lo que viene del buffer
-
-//     free(buffer->stream); // Libero directamente el buffer, no arme paquete asi que no hace falta
-//     free(buffer);
-
-//     sem_post(&sem_puedo_mandar_a_cpu); // Aviso que ya volvio el proceso que estaba en CPU, puedo mandar otro
-    
-//     accionar_segun_estado(proceso, flag_estado);
-
-    
-// }
 
 // ************* RECIBE EL PCB NORMALMENTE (SIN INTERRUPCION) SEGUN ALGORITMO *************
 void recibir_pcb(pcb* proceso) {
@@ -670,12 +644,18 @@ void recibir_pcb(pcb* proceso) {
     int codigo_operacion = recibir_operacion(conexion_kernel_cpu); // Recibo el codigo de operacion para ver como actúo según eso
 
     int flag_estado; // Declaro un flag que me va a servir para manejar el estado del proceso posteriormente
-    
+    int indice_recurso;
+    char* nombre_interfaz;
+    int unidades_de_trabajo;
+    int registro_direccion;
+    int registro_tamano;
+    int registro_puntero_archivo;
+    char* nombre_archivo;
     t_buffer* buffer; // Buffer para recibir el paquete
-    
+
     if (!interrupcion_por_fin_de_proceso) // Verifico si la interrupción es por fin de proceso o por planificación
     {
-        log_info(log_kernel, "Entre al if para recibir normal");
+        //log_info(log_kernel, "Entre al if para recibir normal");
         switch(codigo_operacion) // Segun el codigo de operacion actuo 
         {
             case PCB_CPU_A_KERNEL: 
@@ -683,6 +663,7 @@ void recibir_pcb(pcb* proceso) {
                 buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
                 fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
                 flag_estado = 0; // El proceso todavia no termino
+                proceso_recibido = recibir_estructura_del_buffer(buffer);
 
                 break;
 
@@ -691,7 +672,7 @@ void recibir_pcb(pcb* proceso) {
                 buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
                 fin = clock(); // Termino el tiempo desde que empecé a esperar la recepción
                 flag_estado = 1; // El proceso ya finalizo, no quedan rafagas por ejecutar
-
+                proceso_recibido = recibir_estructura_del_buffer(buffer);
                 break;
 
             case SIGNAL:
@@ -699,14 +680,121 @@ void recibir_pcb(pcb* proceso) {
                 buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
                 fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
 
+                proceso_recibido = recibir_estructura_del_buffer(buffer);
+                indice_recurso = recibir_int_del_buffer(buffer); // Obtengo el indice del recurso que se usa para manejarlo
+                flag_estado = hacer_signal(indice_recurso, proceso_recibido); // Asigno un flag que sirve para manejar el estado del proceso
+        
                 break;
 
             case WAIT:
         
                 buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
                 fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
+                proceso_recibido = recibir_estructura_del_buffer(buffer);
+                indice_recurso = recibir_int_del_buffer(buffer); // Obtengo el indice del recurso que se usa para manejarlo
+                flag_estado = hacer_wait(indice_recurso, proceso_recibido);
 
                 break;
+
+            case IO_GEN_SLEEP: //(Interfaz, Unidades de trabajo)
+
+                buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
+                fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
+                proceso_recibido = recibir_estructura_del_buffer(buffer);
+                nombre_interfaz = recibir_string_del_buffer(buffer);
+                unidades_de_trabajo = recibir_int_del_buffer(buffer);
+                flag_estado = io_gen_sleep(nombre_interfaz, unidades_de_trabajo, proceso_recibido);
+                break;
+
+            //le tengo q decir a CPU q me los mande como ints a los valores del registro
+            case IO_STDIN_READ: //(Interfaz, Registro Dirección, Registro Tamaño)
+                buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
+                fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
+                proceso_recibido = recibir_estructura_del_buffer(buffer);
+                nombre_interfaz = recibir_string_del_buffer(buffer);
+                registro_direccion = recibir_int_del_buffer(buffer);
+                registro_tamano = recibir_int_del_buffer(buffer);
+                flag_estado = io_stdin_read(nombre_interfaz, registro_direccion, registro_tamano, proceso_recibido);
+
+                break;
+
+            case IO_STDOUT_WRITE: //(Interfaz, Registro Dirección, Registro Tamaño)
+
+                buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
+                fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
+                proceso_recibido = recibir_estructura_del_buffer(buffer);
+                nombre_interfaz = recibir_string_del_buffer(buffer);
+                registro_direccion = recibir_int_del_buffer(buffer);
+                registro_tamano = recibir_int_del_buffer(buffer);
+                flag_estado = io_stdout_write(nombre_interfaz, registro_direccion, registro_tamano, proceso_recibido);
+
+                break;
+            
+            case IO_FS_CREATE: // (Interfaz, Nombre Archivo)
+
+                buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
+                fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
+                proceso_recibido = recibir_estructura_del_buffer(buffer);
+                nombre_interfaz = recibir_string_del_buffer(buffer);
+                nombre_archivo = recibir_string_del_buffer(buffer);
+                flag_estado = io_fs_create(nombre_interfaz, nombre_archivo, proceso_recibido);
+
+                break;
+
+            case IO_FS_DELETE: //(Interfaz, Nombre Archivo)
+
+                buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
+                fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
+                proceso_recibido = recibir_estructura_del_buffer(buffer);
+                nombre_interfaz = recibir_string_del_buffer(buffer);
+                nombre_archivo = recibir_string_del_buffer(buffer);
+                flag_estado = io_fs_delete(nombre_interfaz, nombre_archivo, proceso_recibido);
+
+                break;
+
+            case IO_FS_TRUNCATE: //(Interfaz, Nombre Archivo, Registro Tamaño)
+
+                buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
+                fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
+                proceso_recibido = recibir_estructura_del_buffer(buffer);
+                nombre_interfaz = recibir_string_del_buffer(buffer);
+                nombre_archivo = recibir_string_del_buffer(buffer);
+                registro_tamano = recibir_int_del_buffer(buffer);
+                flag_estado = io_fs_truncate(nombre_interfaz, nombre_archivo, registro_tamano, proceso_recibido);
+
+                break;
+
+            case IO_FS_WRITE: //(Interfaz, Nombre Archivo, Registro Dirección, Registro Tamaño, Registro Puntero Archivo)
+
+                buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
+                fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
+                proceso_recibido = recibir_estructura_del_buffer(buffer);
+                nombre_interfaz = recibir_string_del_buffer(buffer);
+                nombre_archivo = recibir_string_del_buffer(buffer);
+                registro_direccion = recibir_int_del_buffer(buffer);
+                registro_tamano = recibir_int_del_buffer(buffer);
+                registro_puntero_archivo = recibir_int_del_buffer(buffer);
+                flag_estado = io_fs_write(nombre_interfaz, nombre_archivo, registro_direccion, registro_tamano, registro_puntero_archivo, proceso_recibido);
+
+                break;
+
+            case IO_FS_READ: //(Interfaz, Nombre Archivo, Registro Dirección, Registro Tamaño, Registro Puntero Archivo)
+            
+                buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
+                fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
+                proceso_recibido = recibir_estructura_del_buffer(buffer);
+                nombre_interfaz = recibir_string_del_buffer(buffer);
+                nombre_archivo = recibir_string_del_buffer(buffer);
+                registro_direccion = recibir_int_del_buffer(buffer);
+                registro_tamano = recibir_int_del_buffer(buffer);
+                registro_puntero_archivo = recibir_int_del_buffer(buffer);
+                flag_estado = io_fs_read(nombre_interfaz, nombre_archivo, registro_direccion, registro_tamano, registro_puntero_archivo, proceso_recibido);
+                break;
+            case OUT_OF_MEMORY:
+                buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
+                fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
+                proceso_recibido = recibir_estructura_del_buffer(buffer);
+                flag_estado = 1; //paso el proceso a exit
             
             default:
                 log_error(log_kernel, "El codigo de operacion no es reconocido :(");
@@ -722,25 +810,6 @@ void recibir_pcb(pcb* proceso) {
             sem_post(&destruir_hilo_interrupcion);
         }
 
-        proceso_recibido = recibir_estructura_del_buffer(buffer); // Asigno al proceso lo que viene del buffer
-        
-        estado_anterior = obtener_char_de_estado(proceso_recibido->estado_del_proceso);
-
-        log_info(log_kernel, "ya recibi el paquete pid: %d, con estado: %s" , proceso_recibido->pid, estado_anterior);
-
-        // Si estoy haciendo un Wait o Signal, entonces tambien tengo que recibir el indice del recurso necesitado para poder manejarlo
-
-        if(codigo_operacion == WAIT)
-        {
-            int indice_recurso = recibir_int_del_buffer(buffer); // Obtengo el indice del recurso que se usa para manejarlo
-            flag_estado = hacer_wait(indice_recurso, proceso_recibido); // Asigno un flag que sirve para manejar el estado del proceso
-
-        }else if(codigo_operacion == SIGNAL)
-        {
-            int indice_recurso = recibir_int_del_buffer(buffer); // Obtengo el indice del recurso que se usa para manejarlo
-            flag_estado = hacer_signal(indice_recurso, proceso_recibido); // Asigno un flag que sirve para manejar el estado del proceso
-        }
-        
         if(strcmp(config_kernel->algoritmo_planificacion, "VRR") == 0) // Si estoy recibiendo a traves del algoritmo VRR
         {
             proceso_recibido->quantum = proceso->quantum - tiempo_que_tardo_en_recibir; // Le asigno el quantum que le queda disponible
@@ -755,40 +824,20 @@ void recibir_pcb(pcb* proceso) {
         buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu);
         proceso_recibido = recibir_estructura_del_buffer(buffer);
     }
-
-    estado_anterior = obtener_char_de_estado(proceso_recibido->estado_del_proceso);
-
-    log_info(log_kernel, "ya recibi el paquete pid: %d, con estado: %s" , proceso_recibido->pid, estado_anterior);
-    //en esta linea ya da error, nos estan mandando mal el PCB
-    log_info(log_kernel, "el registro AX recibido es: %d " , proceso_recibido->registros->ax);
-
-    
-    if(proceso_recibido == NULL)
-    {
-        log_info(log_kernel, "Estamos recibiendo mal el proceso");
-
-    } 
-    if(proceso_recibido->registros == NULL)
-    {
-        log_info(log_kernel, "Hay problema en los registros recibidos");
-
-    } 
-
-    // if(queue_is_empty(proceso_recibido->recursos_asignados))
-    // {
-    //     log_info(log_kernel, "el pcb recibido no tiene recursos asignados");
-
-    // } 
     
     log_info(log_kernel, "Recibi PID: %d", proceso_recibido->pid); 
     
     free(buffer->stream); // Libero directamente el buffer, no arme paquete asi que no hace falta
     free(buffer);
+    //sem_wait(planificacion_activada)
+    //sem_post(planificacion_activada)
 
+    sem_wait(&sem_planificacion_activa); // Si la planificación está activa, dejo que se manden procesos a execute
     sem_post(&sem_puedo_mandar_a_cpu); // Aviso que ya volvio el proceso que estaba en CPU, puedo mandar otro
+    sem_post(&sem_planificacion_activa); // Está activa, entonces aumento para que el próximo chequeo no lo bloquee
 
     accionar_segun_estado(proceso_recibido, flag_estado); // Mando el proceso a Ready o Exit segun corresponda
-    
+
     return;
 }
 
@@ -850,6 +899,9 @@ void desalojar_proceso(pcb* proceso){
 
 // ************* SEGUN EL FLAG QUE TENGA EL PROCESO VOY A CAMBIARLE EL ESTADO *************
 void accionar_segun_estado(pcb* proceso, int flag){
+
+    sem_wait(&sem_planificacion_activa); // Si la planificación está activa entonces sigo (paso de 1 a 0 el sem)
+    sem_post(&sem_planificacion_activa); // Estoy acá si la planificación sigue activa, entonces aumento para que no se bloquee a la próxima
 
     log_info(log_kernel, "entre a accionar segun estado por proceso pid: %d, flag: %d" , proceso->pid, flag);
 
@@ -1064,7 +1116,7 @@ void sacar_de_execute(int pid){
     //Si un proceso esta en execute hay que mandar la interrupcion para que cpu devuelva el proceso
     // Busco el proceso para mandarselo a desalojar proceso
 
-    log_info(log_kernel, "Entre a sacar de execute");
+    //log_info(log_kernel, "Entre a sacar de execute");
 
     interrupcion_por_fin_de_proceso = true;
 
@@ -1083,6 +1135,73 @@ void sacar_de_execute(int pid){
     
     desalojar_proceso(aux);
     
+
+}
+
+void sacar_de_blocked(int pid){
+    //sabemos q el proceso esta bloqueado, no sabemos donde
+    //busco en las colas de los recursos
+
+    pcb* aux;
+    int primer_pid;
+    bool encontrado = false;
+
+
+    for(int i=0 ; i < cantidad_recursos && encontrado == false ;i++)
+    {
+        pthread_mutex_lock(mutex_por_recurso[i]);
+
+        aux = queue_pop(colas_por_recurso[i]);
+        primer_pid = aux->pid;
+        while(aux->pid != pid)
+        {
+            queue_push(colas_por_recurso[i], aux);
+            aux = queue_pop(colas_por_recurso[i]);
+            if(aux->pid == primer_pid)
+            {
+                queue_push(colas_por_recurso[i], aux);
+                break;
+            };
+        };
+        pthread_mutex_unlock(mutex_por_recurso[i]);
+        if(aux->pid == pid) 
+        {
+            encontrado = true;
+        };
+    }
+    interfaz_kernel* interfaz_aux;
+    argumentos_para_io* args_aux ;
+    while(encontrado == false)//No lo encontre en las colas por recursos tengo q buscarlo en las interfaces IO
+    {
+        interfaz_aux = queue_pop(cola_interfaces_conectadas);
+        pthread_mutex_lock(interfaz_aux->mutex_cola);
+        args_aux = queue_pop(interfaz_aux->cola_de_espera);
+        primer_pid = args_aux->proceso->pid;
+
+        while(args_aux->proceso->pid != pid)
+        {
+            queue_push(interfaz_aux->cola_de_espera, args_aux);
+            args_aux = queue_pop(interfaz_aux->cola_de_espera);
+            if(args_aux->proceso->pid == primer_pid)
+            {
+                queue_push(interfaz_aux->cola_de_espera, args_aux);
+                break;
+            };
+
+        };
+        pthread_mutex_unlock(interfaz_aux->mutex_cola);
+        queue_push(cola_interfaces_conectadas, interfaz_aux);
+        if(args_aux->proceso->pid == pid)
+        {
+            encontrado = true;
+        }
+    }
+
+    if(encontrado) //si no lo encontre es porq estaba en io
+    {
+        pasar_proceso_a_exit(aux);
+
+    }else pid_eliminar = pid;
 
 }
 // -------------------------------------------------------------

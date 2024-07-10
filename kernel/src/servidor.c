@@ -1,7 +1,10 @@
 #include "servidor.h"
+#include "manejo_io.h"
+
 
 //********* DESARROLLO SERVER KERNEL PARA RECIBIR A IO *****
-void server_para_io(kernel_config* config_kernel,t_log* log_kernel){
+void server_para_io(){
+	
     int server_kernel = iniciar_servidor(config_kernel->puerto_escucha, log_kernel);
 	
 	if (server_kernel == -1)
@@ -32,9 +35,16 @@ void server_para_io(kernel_config* config_kernel,t_log* log_kernel){
 				list_iterate(lista, (void*) iterator);
 				break;
 			case NUEVA_INTERFAZ: //pedir que manden esto con el nombre de la interfaz
+
 				buffer = recibiendo_paquete_personalizado(client_io);
-				op_code interfaz_nueva = recibir_int_del_buffer(buffer); //va a decir si es gen, stdin, etc
-				crear_interfaz(interfaz_nueva, client_io);
+				
+				op_code tipo_interfaz = recibir_int_del_buffer(buffer); //va a decir si es gen, stdin, etc
+				//falta iniciar nombre_interfaz
+
+				char* nombre_interfaz = recibir_string_del_buffer(buffer);
+
+				crear_interfaz(tipo_interfaz, client_io, nombre_interfaz);
+				
 				break;
 			//case -1:
 				//log_error(log_kernel, "El cliente se desconecto. Terminando servidor");
@@ -44,20 +54,8 @@ void server_para_io(kernel_config* config_kernel,t_log* log_kernel){
 				log_warning(log_kernel,"Operacion desconocida. No quieras meter la pata");
 				break;
 
-	};
+		};
 	}
 }
 
-void crear_interfaz(op_code interfaz_nueva, int socket)
-{
-	interfaz_kernel* nueva_interfaz = malloc(sizeof(interfaz_kernel)); 
-	nueva_interfaz->nombre_interfaz= interfaz_nueva;
-	nueva_interfaz->cola_de_espera = queue_create();
-	nueva_interfaz->socket = socket;
-	nueva_interfaz->en_uso = false;
-	queue_push(cola_interfaces_conectadas, nueva_interfaz); 
 
-	//aca deberiamos crear un hilo que le mande cosas a la interfaz y reciba cosas de la interfaz, o quizas que el hilo se cree una vez que se le quiere mandar algo a la interfaz, habria que pensarlo
-	//se me ocurre un hilo q quede prendido con un while(1) siempre q la interfaz este prendida, para ver lo q devuelve, y que al pasarle cosas a la interfaz se haga desde la funcion q corresponda
-	return;
-}
