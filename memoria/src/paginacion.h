@@ -4,7 +4,6 @@
 #include "m_gestor.h"
 
 // *************** DECLARACIÓN DE FUNCIONES **********
-//**************** TODAVIA FALTA ARREGLAR *******************
 void ocupar_marco(int posicion);
 void liberar_marco(int posicion);
 t_pagina* crear_pagina(t_frame* un_frame);
@@ -14,7 +13,19 @@ t_list* buscar_marcos_libres();
 void eliminar_lista(t_list* lista);
 void eliminar_algo(void* algo);
 
-void guardar_en_memoria(void *dato, size_t tamano, size_t offset) ;
-void* leer_desde_memoria(size_t tamano, size_t offset) ;
+//******************************************************************
+//********************** ESCRITURA EN PAG **************************
+void guardar_uint8_en_memoria (int pid, t_list* direcciones_fisicas, uint8_t valor);
+void enviar_ok_1B_escritura_cpu(int pid, t_direccion_fisica* dir_actual, uint8_t valor);
+
+void guardar_uint32_en_memoria (int pid, t_list* direcciones_fisicas, uint32_t valor);
+void enviar_ok_4B_escritura_cpu(int pid, t_direccion_fisica* dir_actual, uint32_t valor);
+
+void leer_uint8_en_memoria (int pid, t_list* direcciones_fisicas);
+void enviar_lectura_1B_a_cpu(int pid, t_direccion_fisica* dir_actual, uint8_t valor);
+
+void leer_uint32_en_memoria (int pid, t_list* direcciones_fisicas);
+void enviar_lectura_4B_a_cpu(int pid, t_direccion_fisica* dir_actual, uint32_t valor);
+
 
 #endif

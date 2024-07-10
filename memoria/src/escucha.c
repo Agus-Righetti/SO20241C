@@ -19,6 +19,38 @@ void atender_cpu(){
                 free(buffer);
                 break;
 
+            case CPU_PIDE_GUARDAR_REGISTRO_1B:
+                log_info(log_memoria, "CPU me pide guardar un byte en memoria");
+                buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
+                usleep(config_memoria->retardo_respuesta *1000);
+				cpu_pide_guardar_1B(buffer);
+                free(buffer);
+                break;
+
+            case CPU_PIDE_GUARDAR_REGISTRO_4B:
+                log_info(log_memoria, "CPU me pide guardar cuatro bytes en memoria");
+                buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
+                usleep(config_memoria->retardo_respuesta *1000);
+				cpu_pide_guardar_4B(buffer);
+                free(buffer);
+                break;
+
+            case CPU_PIDE_LEER_REGISTRO_1B:
+                log_info(log_memoria, "CPU me pide leer un byte en memoria");
+                buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
+                usleep(config_memoria->retardo_respuesta *1000);
+				cpu_pide_leer_1B(buffer);
+                free(buffer);
+                break;
+
+            case CPU_PIDE_LEER_REGISTRO_4B:
+                log_info(log_memoria, "CPU me pide guardar cuatro bytes en memoria");
+                buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
+                usleep(config_memoria->retardo_respuesta *1000);
+				cpu_pide_leer_4B(buffer);
+                free(buffer);
+                break;
+
             case ACCESO_A_TABLA_DE_PAGINA:
             // ME DAN UNA PAG RESPONDO NUMERO DE MARCO
                 log_info(log_memoria, "CPU consulta un marco segun una pagina");
@@ -148,7 +180,7 @@ void recibir_escuchar_cpu(){
     server_para_cpu();
     pthread_t hilo_escucha_cpu;
     pthread_create(&hilo_escucha_cpu, NULL, (void*)atender_cpu, NULL);
-    pthread_detach(hilo_escucha_cpu);
+    pthread_join(hilo_escucha_cpu, NULL);
 }
 
 // *************************************** KERNEL ***************************************
