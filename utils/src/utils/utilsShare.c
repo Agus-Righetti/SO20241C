@@ -243,6 +243,28 @@ void agregar_int_al_paquete_personalizado(t_paquete* paquete, int valor){
 	paquete->buffer->size += sizeof(int);
 }
 
+void agregar_uint32_al_paquete_personalizado(t_paquete* paquete, uint32_t valor){
+	if(paquete->buffer->size == 0){
+		paquete->buffer->stream = malloc(sizeof(uint32_t));
+		memcpy(paquete->buffer->stream, &valor, sizeof(uint32_t));
+	}else{
+		paquete->buffer->stream = realloc(paquete->buffer->stream, paquete->buffer->size + sizeof(uint32_t));
+		memcpy(paquete->buffer->stream + paquete->buffer->size, &valor, sizeof(uint32_t));
+	}
+	paquete->buffer->size += sizeof(uint32_t);
+}
+
+void agregar_uint8_al_paquete_personalizado(t_paquete* paquete, uint8_t valor){
+	if(paquete->buffer->size == 0){
+		paquete->buffer->stream = malloc(sizeof(uint8_t));
+		memcpy(paquete->buffer->stream, &valor, sizeof(uint8_t));
+	}else{
+		paquete->buffer->stream = realloc(paquete->buffer->stream, paquete->buffer->size + sizeof(uint8_t));
+		memcpy(paquete->buffer->stream + paquete->buffer->size, &valor, sizeof(uint8_t));
+	}
+	paquete->buffer->size += sizeof(uint8_t);
+}
+
 void agregar_string_al_paquete_personalizado(t_paquete* paquete, char* string){
 	int size_string = strlen(string)+1;
 
@@ -403,4 +425,77 @@ void* recibir_estructura_del_buffer(t_buffer* buffer){
 	buffer->size = nuevo_size;
 
 	return estructura;
+}
+
+
+uint32_t recibir_uint32_del_buffer(t_buffer* buffer){
+	if(buffer->size == 0){
+		printf("\n[ERROR] Al intentar extraer un INT de un t_buffer vacio\n\n");
+		exit(EXIT_FAILURE);
+	}
+
+	if(buffer->size < 0){
+		printf("\n[ERROR] Esto es raro. El t_buffer contiene un size NEGATIVO \n\n");
+		exit(EXIT_FAILURE);
+	}
+
+	uint32_t valor_a_devolver;
+	memcpy(&valor_a_devolver, buffer->stream, sizeof(uint32_t));
+
+	uint32_t nuevo_size = buffer->size - sizeof(uint32_t);
+	if(nuevo_size == 0){
+		free(buffer->stream);
+		buffer->stream = NULL;
+		buffer->size = 0;
+		return valor_a_devolver;
+	}
+	if(nuevo_size < 0){
+		printf("\n[ERROR_uint32_t]: BUFFER CON TAMAÑO NEGATIVO\n\n");
+		//free(valor_a_devolver);
+		//return 0;
+		exit(EXIT_FAILURE);
+	}
+	void* nuevo_buffer = malloc(nuevo_size);
+	memcpy(nuevo_buffer, buffer->stream + sizeof(uint32_t), nuevo_size);
+	free(buffer->stream);
+	buffer->stream = nuevo_buffer;
+	buffer->size = nuevo_size;
+
+	return valor_a_devolver;
+}
+
+uint8_t recibir_uint8_del_buffer(t_buffer* buffer){
+	if(buffer->size == 0){
+		printf("\n[ERROR] Al intentar extraer un INT de un t_buffer vacio\n\n");
+		exit(EXIT_FAILURE);
+	}
+
+	if(buffer->size < 0){
+		printf("\n[ERROR] Esto es raro. El t_buffer contiene un size NEGATIVO \n\n");
+		exit(EXIT_FAILURE);
+	}
+
+	uint8_t valor_a_devolver;
+	memcpy(&valor_a_devolver, buffer->stream, sizeof(uint8_t));
+
+	uint8_t nuevo_size = buffer->size - sizeof(uint8_t);
+	if(nuevo_size == 0){
+		free(buffer->stream);
+		buffer->stream = NULL;
+		buffer->size = 0;
+		return valor_a_devolver;
+	}
+	if(nuevo_size < 0){
+		printf("\n[ERROR_uint8_t]: BUFFER CON TAMAÑO NEGATIVO\n\n");
+		//free(valor_a_devolver);
+		//return 0;
+		exit(EXIT_FAILURE);
+	}
+	void* nuevo_buffer = malloc(nuevo_size);
+	memcpy(nuevo_buffer, buffer->stream + sizeof(uint8_t), nuevo_size);
+	free(buffer->stream);
+	buffer->stream = nuevo_buffer;
+	buffer->size = nuevo_size;
+
+	return valor_a_devolver;
 }

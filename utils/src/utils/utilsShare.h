@@ -69,10 +69,13 @@ typedef enum {
 	CPU_PIDE_INSTRUCCION_A_MEMORIA, // [PID, IP] -> [Int, Int]
 	CPU_MANDA_RESIZE_A_MEMORIA,     // [PID, TAMAÑO] -> [Int, Int]
 	CPU_PIDE_MARCO_A_MEMORIA,
-
-	ACCESO_A_TABLA_DE_PAGINA,       // [PID, NUMERO PAG] -> [Int, Int]
-	CPU_PIDE_LECTURA_MEMORIA,       // [Direccion Fisica, TAMAÑO, VALOR]
-	CPU_PIDE_ESCRITURA_MEMORIA,     // [Direccion Fisica, TAMAÑO, VALOR]
+	CPU_PIDE_LECTURA_MEMORIA,       // [Direccion Fisica, TAMAÑO] -> revisar
+	CPU_PIDE_ESCRITURA_MEMORIA,     // [Direccion Fisica, TAMAÑO, VALOR] -> revisar 
+	ACCESO_A_TABLA_DE_PAGINA,       // [PID, NUMERO PAG] -> [Int, Int] -> revisar
+	CPU_PIDE_GUARDAR_REGISTRO_1B,   // [PID, DFs, VALOR] _> [Int, lista, uint8]
+	CPU_PIDE_GUARDAR_REGISTRO_4B,   // [PID, DFs, VALOR] _> [Int, lista, uint32]
+	CPU_PIDE_LEER_REGISTRO_1B,      // [PID, DFs] _> [Int, lista]
+	CPU_PIDE_LEER_REGISTRO_4B,      // [PID, DFs] _> [Int, lista]
 
 	// MEMORIA A CPU
 	CPU_RECIBE_INSTRUCCION_DE_MEMORIA,     // [Instruccion] -> [String, String, String, String, String]
@@ -80,6 +83,11 @@ typedef enum {
 	CPU_RECIBE_OUT_OF_MEMORY_DE_MEMORIA,   // VACIO
 	CPU_RECIBE_OK_DEL_RESIZE,              // VACIO 
 	CPU_RECIBE_NUMERO_DE_MARCO_DE_MEMORIA, // [NUMERO DE MARCO] -> [Int]
+	CPU_RECIBE_LECTURA_DE_MEMORIA,         // 
+	CPU_RECIBE_OK_1B_DE_ESCRITURA,         // [PID, DF, VALOR] -> [Int, Direccion_fisica, uint_8] 
+	CPU_RECIBE_OK_4B_DE_ESCRITURA,         // [PID, DF, VALOR] -> [Int, Direccion_fisica, uint_32]
+	CPU_RECIBE_LECTURA_1B,                 // [PID, DF, VALOR] -> [Int, Direccion_fisica, uint_8]
+	CPU_RECIBE_LECTURA_4B,                 // [PID, DF, VALOR] -> [Int, Direccion_fisica, uint_32]
 
 	// IO A MEMORIA
 	IO_PIDE_LECTURA_MEMORIA,   // [PID, Direccion Fisica, TAMAÑO, VALOR] 
@@ -158,6 +166,12 @@ typedef struct {
 	t_queue* recursos_asignados;
 } pcb;
 
+typedef struct {
+    int nro_marco;
+	int offset;
+	int bytes_a_operar; // Se que no es DF -> pero es muy util para hacer manejo de paginas
+} t_direccion_fisica;
+
 // ************ DECLARACION DE FUNCIONES ************
 // ************ SERIALIZACION Y CONEXIONES GENERALES ************
 void* recibir_buffer(int*, int);
@@ -176,15 +190,19 @@ void enviar_paquete(t_paquete* paquete, int socket_cliente);
 void liberar_conexion(int socket_cliente);
 void eliminar_paquete(t_paquete* paquete);
 
-//******* PAQUETES PERSONALIZADOS **********
+// ******* PAQUETES PERSONALIZADOS **********
 t_paquete* crear_paquete_personalizado(op_code code_op);
 void agregar_int_al_paquete_personalizado(t_paquete* paquete, int valor);
 void agregar_string_al_paquete_personalizado(t_paquete* paquete, char* string);
 void agregar_estructura_al_paquete_personalizado(t_paquete* paquete, void* estructura, int size);
+void agregar_uint32_al_paquete_personalizado(t_paquete* paquete, uint32_t valor);
+void agregar_uint8_al_paquete_personalizado(t_paquete* paquete, uint8_t valor);
 
 t_buffer* recibiendo_paquete_personalizado(int socket_conexion);
 int recibir_int_del_buffer(t_buffer* buffer);
 char* recibir_string_del_buffer(t_buffer* buffer);
 void* recibir_estructura_del_buffer(t_buffer* buffer);
+uint32_t recibir_uint32_del_buffer(t_buffer* buffer);
+uint8_t recibir_uint8_del_buffer(t_buffer* buffer);
 
 #endif

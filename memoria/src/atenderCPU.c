@@ -223,3 +223,38 @@ void enviar_ok_del_resize_a_cpu(){
 	enviar_paquete(paquete, socket_cliente_cpu);
 	eliminar_paquete(paquete);
 }
+
+void cpu_pide_guardar_1B(t_buffer* un_buffer){    // [PID, DFs, VALOR] -> [Int, lista, uint8]
+	int pid = recibir_int_del_buffer(un_buffer);
+	void* direcciones_fisicas = recibir_estructura_del_buffer(un_buffer);
+	//int tamanio = recibir_int_del_buffer(un_buffer);
+	uint8_t valor = recibir_uint8_del_buffer(un_buffer);
+
+	guardar_uint8_en_memoria (pid, direcciones_fisicas, valor);
+}
+
+void cpu_pide_guardar_4B(t_buffer* un_buffer){    // [PID, DFs, VALOR] -> [Int, lista, uint32]
+	int pid = recibir_int_del_buffer(un_buffer);
+	void* direcciones_fisicas = recibir_estructura_del_buffer(un_buffer);
+	//int tamanio = recibir_int_del_buffer(un_buffer);
+	uint32_t valor = recibir_uint8_del_buffer(un_buffer);
+	
+	guardar_uint32_en_memoria (pid, direcciones_fisicas, valor);
+}
+
+void cpu_pide_leer_1B(t_buffer* un_buffer){    // [PID, DFs] -> [Int, lista]
+	int pid = recibir_int_del_buffer(un_buffer);
+	void* direcciones_fisicas = recibir_estructura_del_buffer(un_buffer);
+	//int tamanio = recibir_int_del_buffer(un_buffer);
+	
+	leer_uint8_en_memoria (pid, direcciones_fisicas);
+}
+
+
+void cpu_pide_leer_4B(t_buffer* un_buffer){    // [PID, DFs] -> [Int, lista]
+	int pid = recibir_int_del_buffer(un_buffer);
+	void* direcciones_fisicas = recibir_estructura_del_buffer(un_buffer);
+	//int tamanio = recibir_int_del_buffer(un_buffer);
+	
+	leer_uint32_en_memoria (pid, direcciones_fisicas);
+}
