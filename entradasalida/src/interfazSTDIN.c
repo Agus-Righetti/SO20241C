@@ -43,6 +43,8 @@ void leer_consola(int direccion_fisica, int tamanio, int pid) {
 
     free(leido);
 
+    
+
     //PEDIR A MEMORIA - VICKY ACÁ SOS VOS
     
     //ahora le tenemos q decir a memoria q lo guarde en la direccion del registro direccion

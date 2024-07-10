@@ -48,5 +48,8 @@ extern pcb* proceso;
 
 extern int conexion_io_kernel;
 extern int conexion_io_memoria;
+extern t_bitarray *bitmap;
+extern FILE* bloques_dat;
+extern t_queue* cola_archivos_en_fs;
 
 #endif

@@ -44,6 +44,9 @@ int main(int argc, char* argv[])
 
     // terminar_programa(log_io, config_io);
 
+    bitarray_destroy(bitmap);
+
+
     return 0;
 }
 

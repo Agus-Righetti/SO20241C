@@ -56,9 +56,15 @@ void atender_kernel()
                 break;
             
             case IO_FS_CREATE: // (Interfaz, Nombre Archivo)
+                
+                nombre_archivo = recibir_string_del_buffer(buffer);
+                manejar_creacion_archivo(nombre_archivo, pid);
+            
+                break;
+                
             case IO_FS_DELETE: //(Interfaz, Nombre Archivo)
 
-                nombre_archivo = recibir_string_del_buffer(buffer);                
+                nombre_archivo = recibir_string_del_buffer(buffer);
 
                 break;
 
@@ -70,6 +76,14 @@ void atender_kernel()
                 break;
 
             case IO_FS_WRITE: //(Interfaz, Nombre Archivo, Registro Dirección, Registro Tamaño, Registro Puntero Archivo)
+
+                nombre_archivo = recibir_string_del_buffer(buffer);
+                registro_direccion = recibir_int_del_buffer(buffer);
+                registro_tamano = recibir_int_del_buffer(buffer);
+                registro_puntero_archivo = recibir_int_del_buffer(buffer);
+
+                break;
+
             case IO_FS_READ: //(Interfaz, Nombre Archivo, Registro Dirección, Registro Tamaño, Registro Puntero Archivo)
             
                 nombre_archivo = recibir_string_del_buffer(buffer);
@@ -184,6 +198,7 @@ void atender_a_memoria(){
                 if(strcmp(config_io->tipo_interfaz, "STDOUT"))
                 {
                     printf("Valor leído en memoria: %s", valor_a_mostrar);
+                    avisar_fin_io_a_kernel();
                 }
                 
                 break;

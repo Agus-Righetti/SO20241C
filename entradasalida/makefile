@@ -64,7 +64,7 @@
 include settings.mk
 
 #make start CONFIG_FILE=[nombre_archivo].config
-#si solo hago make_start lo hace con el default que es io.config
+#si solo hago make start lo hace con el default que es io.config
 
 # Set compiler options
 CC=gcc

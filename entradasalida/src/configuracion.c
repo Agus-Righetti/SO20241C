@@ -45,6 +45,12 @@ io_config* armar_config(t_log* log_io, char* nombre_config)
         aux_io_config->block_size = config_get_int_value(config_aux, "BLOCK_SIZE");
         aux_io_config->block_count = config_get_int_value(config_aux, "BLOCK_COUNT");
         aux_io_config->retraso_compactacion = config_get_int_value(config_aux, "RETRASO_COMPACTACION");
+
+        crear_archivos_gestion_fs();
+
+        cola_archivos_en_fs = queue_create();
+
+        
         break;
 
     default:
@@ -58,27 +64,27 @@ io_config* armar_config(t_log* log_io, char* nombre_config)
     return aux_io_config;
 }
 
-metadatos_config* armar_config_metadatos()
-{
-    t_config* config_aux;
-    metadatos_config* aux_metadatos_config = malloc(sizeof(metadatos_config));  
+// metadatos_config* armar_config_metadatos()
+// {
+//     t_config* config_aux;
+//     metadatos_config* aux_metadatos_config = malloc(sizeof(metadatos_config));  
 
-    config_aux = config_create("metadatos.config");
-    if (config_aux == NULL)
-    {
-        log_error(log_io, "Error: No se pudo crear el config de metadatos");
-        exit(1);
-    }
+//     config_aux = config_create("metadatos.config");
+//     if (config_aux == NULL)
+//     {
+//         log_error(log_io, "Error: No se pudo crear el config de metadatos");
+//         exit(1);
+//     }
 
-    aux_metadatos_config->bloque_inicial = config_get_int_value(config_aux, "BLOQUE_INICIAL");
-    aux_metadatos_config->tamanio_archivo = config_get_int_value(config_aux, "TAMAÑO_ARCHIVO");
-    aux_metadatos_config->max_path = config_get_int_value(config_aux, "MAX_PATH");
+//     aux_metadatos_config->bloque_inicial = config_get_int_value(config_aux, "BLOQUE_INICIAL");
+//     aux_metadatos_config->tamanio_archivo = config_get_int_value(config_aux, "TAMAÑO_ARCHIVO");
+//     aux_metadatos_config->max_path = config_get_int_value(config_aux, "MAX_PATH");
 
-    config_destroy(config_aux);
-    return aux_metadatos_config;
-}
+//     config_destroy(config_aux);
+//     return aux_metadatos_config;
+// }
 
-void iterator(char* value) 
-{
-	log_info(log_io, "%s", value);
-}
+// void iterator(char* value) 
+// {
+// 	log_info(log_io, "%s", value);
+// }

@@ -1,227 +1,253 @@
 #include "interfazDIALFS.h"
 
-void leer_configuracion_dialfs(Interfaz *configuracion)
-{
-    iniciar_config_dialfs(configuracion);
+// void leer_configuracion_dialfs(Interfaz *configuracion)
+// {
+//     iniciar_config_dialfs(configuracion);
 
-    // Loggeamos el valor de config
-    log_info(log_io, "Lei el TIPO_INTERFAZ %s, el TIEMPO_UNIDAD_TRABAJO %d, el IP_KERNEL %s, el PUERTO_KERNEL %d, el IP_MEMORIA %s, el PUERTO_MEMORIA %d, el PATH_BASE_DIALFS %s, el BLOCK_SIZE %d, el BLOCK_COUNT %d y el RETRASO_COMPACTACION %d.", 
-             configuracion->archivo->tipo_interfaz, 
-             configuracion->archivo->tiempo_unidad_trabajo,
-             configuracion->archivo->ip_kernel, 
-             configuracion->archivo->puerto_kernel, 
-             configuracion->archivo->ip_memoria,
-             configuracion->archivo->puerto_memoria,
-             configuracion->archivo->path_base_dialfs,
-             configuracion->archivo->block_size,
-             configuracion->archivo->block_count,
-             configuracion->archivo->retraso_compactacion);
-}
+//     // Loggeamos el valor de config
+//     log_info(log_io, "Lei el TIPO_INTERFAZ %s, el TIEMPO_UNIDAD_TRABAJO %d, el IP_KERNEL %s, el PUERTO_KERNEL %d, el IP_MEMORIA %s, el PUERTO_MEMORIA %d, el PATH_BASE_DIALFS %s, el BLOCK_SIZE %d, el BLOCK_COUNT %d y el RETRASO_COMPACTACION %d.", 
+//              configuracion->archivo->tipo_interfaz, 
+//              configuracion->archivo->tiempo_unidad_trabajo,
+//              configuracion->archivo->ip_kernel, 
+//              configuracion->archivo->puerto_kernel, 
+//              configuracion->archivo->ip_memoria,
+//              configuracion->archivo->puerto_memoria,
+//              configuracion->archivo->path_base_dialfs,
+//              configuracion->archivo->block_size,
+//              configuracion->archivo->block_count,
+//              configuracion->archivo->retraso_compactacion);
+// }
 
-void iniciar_config_dialfs(Interfaz *configuracion)
-{   
-    if (configuracion == NULL) 
-    {
-        printf("El puntero de configuración es NULL\n");
-        exit(2);
-    }
+// void iniciar_config_dialfs(Interfaz *configuracion)
+// {   
+//     if (configuracion == NULL) 
+//     {
+//         printf("El puntero de configuración es NULL\n");
+//         exit(2);
+//     }
 
-    // Asignar memoria para configuracion->archivo
-    configuracion->archivo = malloc(sizeof(io_config));
-    if (configuracion->archivo == NULL) 
-    {
-        printf("No se puede crear la config archivo\n");
-        exit(2);
-    }
+//     // Asignar memoria para configuracion->archivo
+//     configuracion->archivo = malloc(sizeof(io_config));
+//     if (configuracion->archivo == NULL) 
+//     {
+//         printf("No se puede crear la config archivo\n");
+//         exit(2);
+//     }
 
-    // Inicializa la estructura del archivo de configuración desde el archivo de configuración
-    t_config* config = config_create("./io.config");
-    if (config == NULL) 
-    {
-        printf("No se puede leer el archivo de config\n");
-        free(configuracion->archivo);
-        exit(2);
-    }
+//     // Inicializa la estructura del archivo de configuración desde el archivo de configuración
+//     t_config* config = config_create("./io.config");
+//     if (config == NULL) 
+//     {
+//         printf("No se puede leer el archivo de config\n");
+//         free(configuracion->archivo);
+//         exit(2);
+//     }
     
-    configuracion->archivo->tipo_interfaz = strdup(config_get_string_value(config, "TIPO_INTERFAZ"));
-    configuracion->archivo->tiempo_unidad_trabajo = config_get_int_value(config, "TIEMPO_UNIDAD_TRABAJO");
-    configuracion->archivo->ip_kernel = strdup(config_get_string_value(config, "IP_KERNEL"));
-    configuracion->archivo->puerto_kernel = config_get_int_value(config, "PUERTO_KERNEL");
-    configuracion->archivo->ip_memoria = strdup(config_get_string_value(config, "IP_MEMORIA"));
-    configuracion->archivo->puerto_memoria = config_get_int_value(config, "PUERTO_MEMORIA");
-    configuracion->archivo->path_base_dialfs = strdup(config_get_string_value(config, "PATH_BASE_DIALFS"));
-    configuracion->archivo->block_size = config_get_int_value(config, "BLOCK_SIZE");
-    configuracion->archivo->block_count = config_get_int_value(config, "BLOCK_COUNT");
-    configuracion->archivo->retraso_compactacion = config_get_int_value(config, "RETRASO_COMPACTACION");
+//     configuracion->archivo->tipo_interfaz = strdup(config_get_string_value(config, "TIPO_INTERFAZ"));
+//     configuracion->archivo->tiempo_unidad_trabajo = config_get_int_value(config, "TIEMPO_UNIDAD_TRABAJO");
+//     configuracion->archivo->ip_kernel = strdup(config_get_string_value(config, "IP_KERNEL"));
+//     configuracion->archivo->puerto_kernel = config_get_int_value(config, "PUERTO_KERNEL");
+//     configuracion->archivo->ip_memoria = strdup(config_get_string_value(config, "IP_MEMORIA"));
+//     configuracion->archivo->puerto_memoria = config_get_int_value(config, "PUERTO_MEMORIA");
+//     configuracion->archivo->path_base_dialfs = strdup(config_get_string_value(config, "PATH_BASE_DIALFS"));
+//     configuracion->archivo->block_size = config_get_int_value(config, "BLOCK_SIZE");
+//     configuracion->archivo->block_count = config_get_int_value(config, "BLOCK_COUNT");
+//     configuracion->archivo->retraso_compactacion = config_get_int_value(config, "RETRASO_COMPACTACION");
 
-    // Liberar el t_config
+//     // Liberar el t_config
+//     config_destroy(config);
+// }
+
+// void liberar_configuracion_dialfs(Interfaz* configuracion)
+// {
+//     if(configuracion) 
+//     {
+//         free(configuracion->archivo->tipo_interfaz);
+//         // free(configuracion->archivo->tiempo_unidad_trabajo);
+//         free(configuracion->archivo->ip_kernel);
+//         // free(configuracion->archivo->puerto_kernel);
+//         free(configuracion->archivo->ip_memoria);
+//         // free(configuracion->archivo->puerto_memoria);
+//         free(configuracion->archivo->path_base_dialfs);
+//         // free(configuracion->archivo->block_size);
+//         // free(configuracion->archivo->block_count);
+//         // free(configuracion->archivo->retraso_compactacion);
+//         free(configuracion->archivo);
+//     }
+// }
+
+// void recibir_operacion_dialfs_de_kernel(Interfaz* configuracion_fs, op_code codigo) 
+// {
+//     switch (codigo) 
+//     {
+//         t_buffer* buffer = recibiendo_paquete_personalizado(conexion_io_kernel);
+//         char* nombre_archivo = recibir_string_del_buffer(buffer);
+
+//         case IO_FS_CREATE:
+//             manejar_creacion_archivo(nombre_archivo, configuracion_fs);
+//             break;
+//         case IO_FS_DELETE:
+//             manejar_eliminacion_archivo(nombre_archivo, configuracion_fs);
+//             break;
+//         case IO_FS_TRUNCATE:
+//             int nuevo_tamanio = recibir_int_del_buffer(buffer);
+//             manejar_truncado_archivo(nombre_archivo, nuevo_tamanio, configuracion_fs);
+//             break;
+//         case IO_FS_WRITE:
+//             int direccion = recibir_int_del_buffer(buffer);
+//             int tamanio = recibir_int_del_buffer(buffer);
+//             int puntero_archivo = recibir_int_del_buffer(buffer);
+//             manejar_escritura_archivo(nombre_archivo, direccion, tamanio, puntero_archivo, configuracion_fs);
+//             break;
+//         case IO_FS_READ:
+//             direccion = recibir_int_del_buffer(buffer);
+//             tamanio = recibir_int_del_buffer(buffer);
+//             puntero_archivo = recibir_int_del_buffer(buffer);
+//             manejar_lectura_archivo(nombre_archivo, direccion, tamanio, puntero_archivo, configuracion_fs);
+//             break;
+//         default:
+//             log_warning(log_io, "Operacion desconocida recibida desde Kernel.\n");
+//             break;
+
+//         free(buffer);
+//         free(nombre_archivo);
+//     }
+// }
+
+void manejar_creacion_archivo(char* nombre_archivo, int pid) 
+{
+
+
+    //tenemos que armar el metadata del archivo y cambiar los bloques libres del bitarray y bloquesdat
+
+    int index_bloque_inicial = buscar_bloque_libre();
+
+    if(index_bloque_inicial == -1){
+        
+        log_error(log_io, "No hay bloques libres");
+        return;
+    }
+
+    int tamanio = 0;
+    
+    bitarray_set_bit(bitmap, index_bloque_inicial); // Seteo el bloque ocupado en el bitmap
+    strcat(nombre_archivo, ".config");
+
+    char *config_file_path = nombre_archivo;
+
+    // Crear la configuración desde el archivo
+    t_config *config = config_create(config_file_path);
+    if (config == NULL) {
+        fprintf(stderr, "Error: No se pudo cargar el archivo de configuración %s\n", config_file_path);
+        return 1;
+    }
+
+    char* bloque_inicial = pasar_a_string(index_bloque_inicial);
+    char* tamanio_char = pasar_a_string(0);
+    config_set_value(config, "BLOQUE_INICIAL", bloque_inicial);
+    config_set_value(config, "TAMANIO", tamanio_char);
+
+    // Guardar los cambios en el archivo
+    config_save(config) ;
+     
+    queue_push(cola_archivos_en_fs, nombre_archivo);
+
+    // Liberar memoria utilizada por la configuración
     config_destroy(config);
-}
 
-void liberar_configuracion_dialfs(Interfaz* configuracion)
-{
-    if(configuracion) 
-    {
-        free(configuracion->archivo->tipo_interfaz);
-        // free(configuracion->archivo->tiempo_unidad_trabajo);
-        free(configuracion->archivo->ip_kernel);
-        // free(configuracion->archivo->puerto_kernel);
-        free(configuracion->archivo->ip_memoria);
-        // free(configuracion->archivo->puerto_memoria);
-        free(configuracion->archivo->path_base_dialfs);
-        // free(configuracion->archivo->block_size);
-        // free(configuracion->archivo->block_count);
-        // free(configuracion->archivo->retraso_compactacion);
-        free(configuracion->archivo);
-    }
-}
+    return 0;
+    // Armamos el archivo metadata de este archivo
+    
+    
+    
 
-void recibir_operacion_dialfs_de_kernel(Interfaz* configuracion_fs, op_code codigo) 
-{
-    switch (codigo) 
-    {
-        t_buffer* buffer = recibiendo_paquete_personalizado(conexion_io_kernel);
-        char* nombre_archivo = recibir_string_del_buffer(buffer);
+    // int block_size = config_io->block_size;
+    // int block_count = config_io->block_count;
 
-        case IO_FS_CREATE:
-            manejar_creacion_archivo(nombre_archivo, configuracion_fs);
-            break;
-        case IO_FS_DELETE:
-            manejar_eliminacion_archivo(nombre_archivo, configuracion_fs);
-            break;
-        case IO_FS_TRUNCATE:
-            int nuevo_tamanio = recibir_int_del_buffer(buffer);
-            manejar_truncado_archivo(nombre_archivo, nuevo_tamanio, configuracion_fs);
-            break;
-        case IO_FS_WRITE:
-            int direccion = recibir_int_del_buffer(buffer);
-            int tamanio = recibir_int_del_buffer(buffer);
-            int puntero_archivo = recibir_int_del_buffer(buffer);
-            manejar_escritura_archivo(nombre_archivo, direccion, tamanio, puntero_archivo, configuracion_fs);
-            break;
-        case IO_FS_READ:
-            direccion = recibir_int_del_buffer(buffer);
-            tamanio = recibir_int_del_buffer(buffer);
-            puntero_archivo = recibir_int_del_buffer(buffer);
-            manejar_lectura_archivo(nombre_archivo, direccion, tamanio, puntero_archivo, configuracion_fs);
-            break;
-        default:
-            log_warning(log_io, "Operacion desconocida recibida desde Kernel.\n");
-            break;
-
-        free(buffer);
-        free(nombre_archivo);
-    }
-}
-
-void manejar_creacion_archivo(char* nombre_archivo, Interfaz* configuracion_fs) 
-{
-    FILE* archivoFS;
-
-    // Verificar si el archivo ya existe
-    if (access(nombre_archivo, F_OK) != -1) 
-    {
-        log_error(log_io, "PID: %d - El archivo %s ya existe.", proceso->pid, nombre_archivo);
-        archivoFS = fopen(nombre_archivo, "rb+"); // Abrir en modo lectura/escritura binaria
-    }
-    else
-    {   
-        log_error(log_io, "PID: %d - Crear archivo: %s.", proceso->pid, nombre_archivo);
-        archivoFS = fopen(nombre_archivo, "wb+"); // Crear archivo en modo escritura/lectura binaria
-    }
-
-    if (archivoFS == NULL)
-    {
-        log_error(log_io, "PID: %d - Error al abrir/crear el archivo %s.", proceso->pid, nombre_archivo);
-    }
-
-    int block_size = configuracion_fs->archivo->block_size;
-    int block_count = configuracion_fs->archivo->block_count;
-
-    if (strcmp(nombre_archivo, "bloques.dat") == 0)
-    {
-        // Calcular el tamaño total del archivo bloques.dat
-        int bloques_file_size = block_size * block_count;
+    // if (strcmp(nombre_archivo, "bloques.dat") == 0)
+    // {
+    //     // Calcular el tamaño total del archivo bloques.dat
+    //     int bloques_file_size = block_size * block_count;
         
-        // Asignar memoria para el archivo de bloques (simulando bloques vacíos)
-        char* buffer = malloc(bloques_file_size);
+    //     // Asignar memoria para el archivo de bloques (simulando bloques vacíos)
+    //     char* buffer = malloc(bloques_file_size);
 
-        if (buffer == NULL) {
-            fprintf(stderr, "Error: No se pudo asignar memoria para el archivo de bloques.\n");
-        }
+    //     if (buffer == NULL) {
+    //         fprintf(stderr, "Error: No se pudo asignar memoria para el archivo de bloques.\n");
+    //     }
 
-        memset(buffer, 0, bloques_file_size); // Inicializar todos los bloques a 0 (libres)
+    //     memset(buffer, 0, bloques_file_size); // Inicializar todos los bloques a 0 (libres)
 
-        // Escribir el contenido inicial en el archivo (simulación de bloques)
-        if (fwrite(buffer, 1, bloques_file_size, archivoFS) != bloques_file_size)
-        {
-            log_error(log_io, "PID: %d - Error al escribir en el archivo %s.", proceso->pid, nombre_archivo);
-        }
+    //     // Escribir el contenido inicial en el archivo (simulación de bloques)
+    //     if (fwrite(buffer, 1, bloques_file_size, archivoFS) != bloques_file_size)
+    //     {
+    //         log_error(log_io, "PID: %d - Error al escribir en el archivo %s.", proceso->pid, nombre_archivo);
+    //     }
         
-        free(buffer);
-    }
-    else if (strcmp(nombre_archivo, "bitmap.dat") == 0)
-    {
-        // Calcular el tamaño necesario para el bitmap en bytes
-        int bitmap_size = (block_count + 7) / 8; // 8 bits por byte
+    //     free(buffer);
+    // }
+    // else if (strcmp(nombre_archivo, "bitmap.dat") == 0)
+    // {
+    //     // Calcular el tamaño necesario para el bitmap en bytes
+    //     int bitmap_size = (block_count + 7) / 8; // 8 bits por byte
 
-        // Crear un bitmap inicial con todos los bloques libres (0 indica libre, 1 indica ocupado)
-        unsigned char *bitmap_data = malloc(bitmap_size);
+    //     // Crear un bitmap inicial con todos los bloques libres (0 indica libre, 1 indica ocupado)
+    //     unsigned char *bitmap_data = malloc(bitmap_size);
 
-        if (bitmap_data == NULL) 
-        {
-            fprintf(stderr, "Error: No se pudo asignar memoria para el bitmap.\n");
-        }
+    //     if (bitmap_data == NULL) 
+    //     {
+    //         fprintf(stderr, "Error: No se pudo asignar memoria para el bitmap.\n");
+    //     }
 
-        memset(bitmap_data, 0, bitmap_size); // Inicializar todo el bitmap a 0 (todos los bloques libres)
+    //     memset(bitmap_data, 0, bitmap_size); // Inicializar todo el bitmap a 0 (todos los bloques libres)
 
-        // Buscar el primer bloque libre
-        int bloque_libre = obtener_primer_bloque_libre(bitmap_data, block_count);
+    //     // Buscar el primer bloque libre
+    //     int bloque_libre = obtener_primer_bloque_libre(bitmap_data, block_count);
 
-        if (bloque_libre == -1) 
-        {
-            log_error(log_io, "No hay bloques libres disponibles");
-            return;
-        }
+    //     if (bloque_libre == -1) 
+    //     {
+    //         log_error(log_io, "No hay bloques libres disponibles");
+    //         return;
+    //     }
 
-        // Actualizar el bitmap en memoria
-        bitmap_data[bloque_libre / 8] |= (1 << (bloque_libre % 8)); // Marcar el bloque como ocupado
+    //     // Actualizar el bitmap en memoria
+    //     bitmap_data[bloque_libre / 8] |= (1 << (bloque_libre % 8)); // Marcar el bloque como ocupado
 
-        // Actualizar el bitmap
-        fseek(archivoFS, 0, SEEK_SET);
+    //     // Actualizar el bitmap
+    //     fseek(archivoFS, 0, SEEK_SET);
         
-        // Escribir el contenido inicial en el archivo
-        if (fwrite(bitmap_data, 1, bitmap_size, archivoFS) != bitmap_size)
-        {
-            log_error(log_io, "PID: %d - Error al escribir en el archivo %s.", proceso->pid, nombre_archivo);
-        }
+    //     // Escribir el contenido inicial en el archivo
+    //     if (fwrite(bitmap_data, 1, bitmap_size, archivoFS) != bitmap_size)
+    //     {
+    //         log_error(log_io, "PID: %d - Error al escribir en el archivo %s.", proceso->pid, nombre_archivo);
+    //     }
 
-        free(bitmap_data);
-    }
-    else
-    {
-        // Lógica para otros archivos de metadatos
+    //     free(bitmap_data);
+    // }
+    // else
+    // {
+    //     // Lógica para otros archivos de metadatos
 
-        armar_config_metadatos();
-        config_set_value(config_metadatos, config_metadatos->bloque_inicial, 0);
+    //     armar_config_metadatos();
+    //     config_set_value(config_metadatos, config_metadatos->bloque_inicial, 0);
 
-        // char path_metadatos[256];
-        char path_metadatos = config_metadatos->max_path;
+    //     // char path_metadatos[256];
+    //     char path_metadatos = config_metadatos->max_path;
 
-        char* path = configuracion_fs->archivo->path_base_dialfs;
-        snprintf(path_metadatos, sizeof(path_metadatos), "%s/%s.metadata", path, nombre_archivo);
+    //     char* path = configuracion_fs->archivo->path_base_dialfs;
+    //     snprintf(path_metadatos, sizeof(path_metadatos), "%s/%s.metadata", path, nombre_archivo);
 
-        FILE* metadata_file = fopen(path_metadatos, "wb+");
-        if (metadata_file == NULL)
-        {
-            log_error(log_io, "PID: %d - No se pudo abrir el archivo de metadatos para %s.", proceso->pid, nombre_archivo);
-        }
+    //     FILE* metadata_file = fopen(path_metadatos, "wb+");
+    //     if (metadata_file == NULL)
+    //     {
+    //         log_error(log_io, "PID: %d - No se pudo abrir el archivo de metadatos para %s.", proceso->pid, nombre_archivo);
+    //     }
 
-        // Escribir los metadatos en el archivo de metadatos
-        fprintf(archivoFS, "BLOQUE_INICIAL=%d\n", config_metadatos->bloque_inicial);
-        fprintf(archivoFS, "TAMANIO_ARCHIVO=%d\n", config_metadatos->tamanio_archivo);
-    }
-    fclose(archivoFS);
+    //     // Escribir los metadatos en el archivo de metadatos
+    //     fprintf(archivoFS, "BLOQUE_INICIAL=%d\n", config_metadatos->bloque_inicial);
+    //     fprintf(archivoFS, "TAMANIO_ARCHIVO=%d\n", config_metadatos->tamanio_archivo);
+    // }
+    // fclose(archivoFS);
 }
 
 int obtener_primer_bloque_libre(unsigned char* bitmap, int block_count) 
@@ -237,6 +263,12 @@ int obtener_primer_bloque_libre(unsigned char* bitmap, int block_count)
     return -1; // No hay bloques libres
 }
 
+char* pasar_a_string(int valor)
+{
+    char valor_char[50];
+    sprintf(valor_char, "%d", valor);
+    return valor_char;
+}
 void manejar_eliminacion_archivo(char* nombre_archivo, Interfaz* configuracion_fs) 
 {
     // Lógica para otros archivos según sea necesario
@@ -468,4 +500,93 @@ void manejar_lectura_archivo(char* nombre_archivo, int direccion, int tamanio, i
     eliminar_paquete(paquete);
     close(conexion_io_memoria);
     free(datos_leidos);
+}
+
+
+void crear_archivos_gestion_fs(){
+
+
+    // CREO Y DEFINO EL TAMAÑO DEL ARCHIVO bloques.dat
+
+    bloques_dat = fopen("bloques.dat", "wb");
+
+    if (bloques_dat == NULL) {
+        perror("Error al abrir el archivo");
+        return 1;
+    }
+
+    int tamanio = config_io->block_size * config_io->block_count;
+
+    // Mueve el puntero al final del archivo para definir su tamaño
+    if (fseek(bloques_dat, tamanio - 1, SEEK_SET) != 0) {
+        perror("Error al establecer el tamaño del archivo");
+        fclose(bloques_dat);
+        return 1;
+    }
+
+    // Escribe un byte en la última posición para establecer el tamaño
+    fputc('\0', bloques_dat);
+
+    fclose(bloques_dat);
+   
+
+    // CREO EL ARCHIVO CON EL BITMAP
+
+    FILE *bitmap_file = fopen("bitmap.dat", "r+b");  // Abre el archivo en modo lectura y escritura binaria
+    if (bitmap_file == NULL) {
+        perror("Error al abrir bitmap.dat");
+        return 1;
+    }
+
+    // 1. Calcular el tamaño del bitmap en bytes
+    size_t bitmap_size_bytes = (config_io->block_count + 7) / 8;  // 1 bit por bloque
+
+    // 2. Reservar memoria para el bitmap en un buffer
+    char *bitmap_buffer = (char *)malloc(bitmap_size_bytes);
+    if (bitmap_buffer == NULL) {
+        perror("Error al reservar memoria para el bitmap");
+        fclose(bitmap_file);
+        return 1;
+    }
+
+    // 3. Inicializar el bitmap en 0 (todos los bloques libres)
+    memset(bitmap_buffer, 0, bitmap_size_bytes);
+
+    // 4. Escribir el bitmap inicializado de vuelta al archivo
+    fseek(bitmap_file, 0, SEEK_SET);  // Mueve el puntero al inicio del archivo
+    fwrite(bitmap_buffer, sizeof(char), bitmap_size_bytes, bitmap_file);
+
+    // 5. Crear el bitarray utilizando la función proporcionada
+    bitmap = bitarray_create_with_mode(bitmap_buffer, bitmap_size_bytes, LSB_FIRST);
+    if (bitmap == NULL) {
+        fprintf(stderr, "Error al crear el bitmap\n");
+        free(bitmap_buffer);
+        fclose(bitmap_file);
+        return 1;
+    }
+
+    free(bitmap_buffer);
+    fclose(bitmap_file);
+    // bitarray_set_bit(bitmap, 0);  // Por ejemplo, establece el primer bloque como ocupado
+    // bitarray_set_bit(bitmap, 1);  // Y el segundo bloque como ocupado
+
+    // bitarray_clean_bit(bitmap, 0) // Pone el bit número 0 libre
+    
+
+}
+
+int buscar_bloque_libre(){
+    
+    size_t max_bits = bitarray_get_max_bit(bitmap);
+
+    for (size_t bit_index = 0; bit_index < max_bits; bit_index++)
+    {
+        if(!bitarray_test_bit(bitmap, bit_index)){
+            
+            return (int)bit_index;
+            
+        }
+    }
+    
+    return -1;
 }
