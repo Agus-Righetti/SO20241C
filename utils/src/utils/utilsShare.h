@@ -69,13 +69,13 @@ typedef enum {
 	CPU_PIDE_INSTRUCCION_A_MEMORIA, // [PID, IP] -> [Int, Int]
 	CPU_MANDA_RESIZE_A_MEMORIA,     // [PID, TAMAÑO] -> [Int, Int]
 	CPU_PIDE_MARCO_A_MEMORIA,
-	CPU_PIDE_LECTURA_MEMORIA,       // [Direccion Fisica, TAMAÑO] -> revisar
-	CPU_PIDE_ESCRITURA_MEMORIA,     // [Direccion Fisica, TAMAÑO, VALOR] -> revisar 
 	ACCESO_A_TABLA_DE_PAGINA,       // [PID, NUMERO PAG] -> [Int, Int] -> revisar
 	CPU_PIDE_GUARDAR_REGISTRO_1B,   // [PID, DFs, VALOR] _> [Int, lista, uint8]
 	CPU_PIDE_GUARDAR_REGISTRO_4B,   // [PID, DFs, VALOR] _> [Int, lista, uint32]
 	CPU_PIDE_LEER_REGISTRO_1B,      // [PID, DFs] _> [Int, lista]
 	CPU_PIDE_LEER_REGISTRO_4B,      // [PID, DFs] _> [Int, lista]
+	CPU_PIDE_LEER_STRING,           // [PID, DFs, Tamanio]
+	CPU_PIDE_GUARDAR_STRING,
 
 	// MEMORIA A CPU
 	CPU_RECIBE_INSTRUCCION_DE_MEMORIA,     // [Instruccion] -> [String, String, String, String, String]
@@ -84,10 +84,16 @@ typedef enum {
 	CPU_RECIBE_OK_DEL_RESIZE,              // VACIO 
 	CPU_RECIBE_NUMERO_DE_MARCO_DE_MEMORIA, // [NUMERO DE MARCO] -> [Int]
 	CPU_RECIBE_LECTURA_DE_MEMORIA,         // 
-	CPU_RECIBE_OK_1B_DE_ESCRITURA,         // [PID, DF, VALOR] -> [Int, Direccion_fisica, uint_8] 
-	CPU_RECIBE_OK_4B_DE_ESCRITURA,         // [PID, DF, VALOR] -> [Int, Direccion_fisica, uint_32]
-	CPU_RECIBE_LECTURA_1B,                 // [PID, DF, VALOR] -> [Int, Direccion_fisica, uint_8]
-	CPU_RECIBE_LECTURA_4B,                 // [PID, DF, VALOR] -> [Int, Direccion_fisica, uint_32]
+	CPU_RECIBE_OK_1B_DE_ESCRITURA,         // [PID, DF, VALOR] -> [Int, Direccion_fisica, uint8] 
+	CPU_RECIBE_OK_4B_DE_ESCRITURA,         // [PID, DF, VALOR] -> [Int, Direccion_fisica, uint32]
+	CPU_RECIBE_ULT_OK_4B_DE_ESCRITURA,     // [PID, DF, VALOR, VALOR_COMPLETO] -> [Int, Direccion_fisica, uint32, uint32]
+	CPU_RECIBE_LECTURA_1B,                 // [PID, DF, VALOR] -> [Int, Direccion_fisica, uint8]
+	CPU_RECIBE_LECTURA_4B,                 // [PID, DF, VALOR] -> [Int, Direccion_fisica, uint32]
+	CPU_RECIBE_LECTURA_U_4B,               // [PID, DF, VALOR, VALOR_COMPLETO] -> [Int, Direccion_fisica, uint32, uint32]
+	CPU_RECIBE_OK_STRING_DE_ESCRITURA,
+	CPU_RECIBE_ULT_OK_STRING_DE_ESCRITURA,
+	CPU_RECIBE_LECTURA_STRING,
+	CPU_RECIBE_LECTURA_U_STRING,
 
 	// IO A MEMORIA
 	IO_PIDE_LECTURA_MEMORIA,   // [PID, Direccion Fisica, TAMAÑO, VALOR] 

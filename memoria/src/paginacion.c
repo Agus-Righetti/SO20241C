@@ -158,17 +158,19 @@ void leer_uint32_en_memoria (int pid, t_list* direcciones_fisicas){
 
         log_info(log_memoria, "PID: %d - Accion: LEER - Direccion fisica: [%d - %d] - Tamaño %d ", pid, dir_actual->nro_marco ,dir_actual->offset, dir_actual->bytes_a_operar);
 
-        enviar_lectura_4B_a_cpu(pid, dir_actual, valor_leido);
+        enviar_lectura_ult_4B_a_cpu(pid, dir_actual, valor_leido, valor_leido);
 
     } else {
         int bytes_ya_operados = 0;
         uint32_t valor_leido ;
+        uint32_t valor_leido_reconstruido;
 
         // Voy a leer el dato de a poco
-        while (cantidad_marcos_por_leer >= indice_dir){
+        if(cantidad_marcos_por_leer > indice_dir){
             pthread_mutex_lock(&mutex_espacio_usuario);
             memcpy(valor_leido_puntero + bytes_ya_operados, espacio_usuario + despl_esp_usuario, dir_actual->bytes_a_operar); 
-            memcpy((uint8_t*)&valor_leido + bytes_ya_operados, espacio_usuario + despl_esp_usuario, dir_actual->bytes_a_operar); 
+            memcpy((uint8_t*)&valor_leido, espacio_usuario + despl_esp_usuario, dir_actual->bytes_a_operar); 
+            memcpy((uint8_t*)&valor_leido_reconstruido + bytes_ya_operados, espacio_usuario + despl_esp_usuario, dir_actual->bytes_a_operar); 
             pthread_mutex_unlock(&mutex_espacio_usuario);
 
             log_info(log_memoria, "PID: %d - Accion: LEER - Direccion fisica: [%d - %d] - Tamaño %d ", pid, dir_actual->nro_marco ,dir_actual->offset, dir_actual->bytes_a_operar);
@@ -178,12 +180,24 @@ void leer_uint32_en_memoria (int pid, t_list* direcciones_fisicas){
             bytes_ya_operados = bytes_ya_operados + dir_actual->bytes_a_operar;
             indice_dir += 1;
             dir_actual = list_get(direcciones_fisicas, indice_dir);
+
+        } else if(cantidad_marcos_por_leer == indice_dir){
+            // es la ultima lectura
+            pthread_mutex_lock(&mutex_espacio_usuario);
+            memcpy(valor_leido_puntero + bytes_ya_operados, espacio_usuario + despl_esp_usuario, dir_actual->bytes_a_operar); 
+            memcpy((uint8_t*)&valor_leido, espacio_usuario + despl_esp_usuario, dir_actual->bytes_a_operar); 
+            memcpy((uint8_t*)&valor_leido_reconstruido + bytes_ya_operados, espacio_usuario + despl_esp_usuario, dir_actual->bytes_a_operar); 
+            pthread_mutex_unlock(&mutex_espacio_usuario);
+
+            log_info(log_memoria, "PID: %d - Accion: LEER - Direccion fisica: [%d - %d] - Tamaño %d ", pid, dir_actual->nro_marco ,dir_actual->offset, dir_actual->bytes_a_operar);
+
+            enviar_lectura_ult_4B_a_cpu(pid, dir_actual, valor_leido, valor_leido_reconstruido);
+
         }
 
     }
 
 }
-
 
 void enviar_lectura_4B_a_cpu(int pid, t_direccion_fisica* dir_actual, uint32_t valor){
 
@@ -192,6 +206,19 @@ void enviar_lectura_4B_a_cpu(int pid, t_direccion_fisica* dir_actual, uint32_t v
     agregar_int_al_paquete_personalizado(paquete, pid);
     agregar_estructura_al_paquete_personalizado(paquete, &dir_actual, sizeof(t_direccion_fisica));
     agregar_uint32_al_paquete_personalizado(paquete, valor);
+
+	enviar_paquete(paquete, socket_cliente_cpu);
+	eliminar_paquete(paquete);
+}
+
+void enviar_lectura_ult_4B_a_cpu(int pid, t_direccion_fisica* dir_actual, uint32_t valor, uint32_t valor_leido_reconstruido){
+
+    t_paquete* paquete = crear_paquete_personalizado(CPU_RECIBE_LECTURA_U_4B);
+
+    agregar_int_al_paquete_personalizado(paquete, pid);
+    agregar_estructura_al_paquete_personalizado(paquete, &dir_actual, sizeof(t_direccion_fisica));
+    agregar_uint32_al_paquete_personalizado(paquete, valor);
+    agregar_uint32_al_paquete_personalizado(paquete, valor_leido_reconstruido);
 
 	enviar_paquete(paquete, socket_cliente_cpu);
 	eliminar_paquete(paquete);
@@ -285,7 +312,7 @@ void guardar_uint32_en_memoria (int pid, t_list* direcciones_fisicas, uint32_t v
         uint32_t valor_escrito ;
 
         // Tengo que particionar el dato y guardarlo
-        while (cantidad_marcos_por_guardar >= indice_dir){
+        if (cantidad_marcos_por_guardar > indice_dir){
             pthread_mutex_lock(&mutex_espacio_usuario);
             memcpy(espacio_usuario + despl_esp_usuario, valor_puntero + bytes_ya_operados, dir_actual->bytes_a_operar); 
             memcpy(espacio_usuario + despl_esp_usuario, (uint8_t*)&valor_escrito + bytes_ya_operados, dir_actual->bytes_a_operar); 
@@ -298,12 +325,22 @@ void guardar_uint32_en_memoria (int pid, t_list* direcciones_fisicas, uint32_t v
             bytes_ya_operados = bytes_ya_operados + dir_actual->bytes_a_operar;
             indice_dir += 1;
             dir_actual = list_get(direcciones_fisicas, indice_dir);
+
+        } else if (cantidad_marcos_por_guardar == indice_dir){
+            // es la ultima escritura
+            pthread_mutex_lock(&mutex_espacio_usuario);
+            memcpy(espacio_usuario + despl_esp_usuario, valor_puntero + bytes_ya_operados, dir_actual->bytes_a_operar); 
+            memcpy(espacio_usuario + despl_esp_usuario, (uint8_t*)&valor_escrito + bytes_ya_operados, dir_actual->bytes_a_operar); 
+            pthread_mutex_unlock(&mutex_espacio_usuario);
+
+            log_info(log_memoria, "PID: %d - Accion: ESCRIBIR - Direccion fisica: [%d - %d] - Tamaño %d ", pid, dir_actual->nro_marco ,dir_actual->offset, dir_actual->bytes_a_operar);
+
+            enviar_ult_ok_4B_escritura_cpu(pid, dir_actual, valor_escrito, valor);
+
         }
 
     }
-
 }
-
 
 void enviar_ok_4B_escritura_cpu(int pid, t_direccion_fisica* dir_actual, uint32_t valor){
 
@@ -317,6 +354,18 @@ void enviar_ok_4B_escritura_cpu(int pid, t_direccion_fisica* dir_actual, uint32_
 	eliminar_paquete(paquete);
 }
 
+void enviar_ult_ok_4B_escritura_cpu(int pid, t_direccion_fisica* dir_actual, uint32_t valor, uint32_t valor_completo){
+
+    t_paquete* paquete = crear_paquete_personalizado(CPU_RECIBE_ULT_OK_4B_DE_ESCRITURA);
+
+    agregar_int_al_paquete_personalizado(paquete, pid);
+    agregar_estructura_al_paquete_personalizado(paquete, &dir_actual, sizeof(t_direccion_fisica));
+    agregar_uint32_al_paquete_personalizado(paquete, valor);
+    agregar_uint32_al_paquete_personalizado(paquete, valor_completo);
+
+	enviar_paquete(paquete, socket_cliente_cpu);
+	eliminar_paquete(paquete);
+}
 
 void guardar_uint8_en_memoria (int pid, t_list* direcciones_fisicas, uint8_t valor){
     // podria revisar que este dentro de su espacio -> ver
@@ -360,20 +409,88 @@ void enviar_ok_1B_escritura_cpu(int pid, t_direccion_fisica* dir_actual, uint8_t
 	eliminar_paquete(paquete);
 }
 
-//**************************************************************************************
-// uint32_t registro_ecx = 6489;
-//     void* registro_ecx_puntero = &registro_ecx;
 
-//     uint32_t registro_ecx_reconstruido = 0;
-//     void* registro_ecx_reconstruido_puntero = &registro_ecx_reconstruido;
+// void guardar_string_en_memoria (int pid, t_list* direcciones_fisicas, char* valor, int tamanio){
     
-//     memcpy(espacio_usuario, registro_ecx_puntero, 2);
-//     memcpy(espacio_usuario + 28, registro_ecx_puntero + 2, 2);
+//     // int cantidad_marcos_por_guardar = list_size(direcciones_fisicas);
+
+//     // if (cantidad_marcos_por_guardar == 0) {
+//     //     log_error(log_memoria, "ERROR: no hay direcciones físicas para escribir.");
+//     //     return;
+//     // }
+
+//     // int indice_dir = 1;
+//     // t_direccion_fisica* dir_actual = list_get(direcciones_fisicas, indice_dir);
+
+//     // int despl_esp_usuario = dir_actual->nro_marco * config_memoria->tam_pagina + dir_actual->offset ;
     
-//     printf("El valor de ECX completo es: %d \n", registro_ecx);
-//     printf("El valor de ECX antes de reconstruirlo: %d \n", registro_ecx_reconstruido);
+//     // // Si solo hay una DF -> solo guardo el dato entero en un marco
+//     // if(cantidad_marcos_por_guardar == 1){
+
+//     //     pthread_mutex_lock(&mutex_espacio_usuario);
+//     //     memcpy(espacio_usuario + despl_esp_usuario, valor_puntero, 4);  
+//     //     pthread_mutex_unlock(&mutex_espacio_usuario);
+
+//     //     log_info(log_memoria, "PID: %d - Accion: ESCRIBIR - Direccion fisica: [%d - %d] - Tamaño %d ", pid, dir_actual->nro_marco ,dir_actual->offset, dir_actual->bytes_a_operar);
+
+//     //     enviar_ok_string_escritura_cpu(pid, dir_actual, valor);
+
+//     // } else {
+//     //     int bytes_ya_operados = 0;
+//     //     uint32_t valor_escrito ;
+
+//     //     // Tengo que particionar el dato y guardarlo
+//     //     if (cantidad_marcos_por_guardar > indice_dir){
+//     //         pthread_mutex_lock(&mutex_espacio_usuario);
+//     //         memcpy(espacio_usuario + despl_esp_usuario, valor_puntero + bytes_ya_operados, dir_actual->bytes_a_operar); 
+//     //         memcpy(espacio_usuario + despl_esp_usuario, (char*)&valor_escrito + bytes_ya_operados, dir_actual->bytes_a_operar); 
+//     //         pthread_mutex_unlock(&mutex_espacio_usuario);
+
+//     //         log_info(log_memoria, "PID: %d - Accion: ESCRIBIR - Direccion fisica: [%d - %d] - Tamaño %d ", pid, dir_actual->nro_marco ,dir_actual->offset, dir_actual->bytes_a_operar);
+
+//     //         enviar_ok_string_escritura_cpu(pid, dir_actual, valor_escrito);
+
+//     //         bytes_ya_operados = bytes_ya_operados + dir_actual->bytes_a_operar;
+//     //         indice_dir += 1;
+//     //         dir_actual = list_get(direcciones_fisicas, indice_dir);
+
+//     //     } else if (cantidad_marcos_por_guardar == indice_dir){
+//     //         // es la ultima escritura
+//     //         pthread_mutex_lock(&mutex_espacio_usuario);
+//     //         memcpy(espacio_usuario + despl_esp_usuario, valor_puntero + bytes_ya_operados, dir_actual->bytes_a_operar); 
+//     //         memcpy(espacio_usuario + despl_esp_usuario, (uint8_t*)&valor_escrito + bytes_ya_operados, dir_actual->bytes_a_operar); 
+//     //         pthread_mutex_unlock(&mutex_espacio_usuario);
+
+//     //         log_info(log_memoria, "PID: %d - Accion: ESCRIBIR - Direccion fisica: [%d - %d] - Tamaño %d ", pid, dir_actual->nro_marco ,dir_actual->offset, dir_actual->bytes_a_operar);
+
+//     //         enviar_ult_ok_4B_escritura_cpu(pid, dir_actual, valor_escrito, valor);
+
+//     //     }
+
+//     // }
+// }
+
+
+// void leer_string_en_memoria (int pid, t_list* direcciones_fisicas, int tamanio){
+//     log_info(log_memoria, "PID:");
+
+// }
+
+// // enviar_ok_string_escritura_cpu(pid, dir_actual, valor);
+// //**************************************************************************************
+// // uint32_t registro_ecx = 6489;
+// //     void* registro_ecx_puntero = &registro_ecx;
+
+// //     uint32_t registro_ecx_reconstruido = 0;
+// //     void* registro_ecx_reconstruido_puntero = &registro_ecx_reconstruido;
     
-//     memcpy(registro_ecx_reconstruido_puntero, espacio_usuario, 2);
-//     memcpy(registro_ecx_reconstruido_puntero + 2, espacio_usuario + 28, 2);
+// //     memcpy(espacio_usuario, registro_ecx_puntero, 2);
+// //     memcpy(espacio_usuario + 28, registro_ecx_puntero + 2, 2);
     
-//     printf("El valor de ECX despues de reconstruirlo: %d \n", registro_ecx_reconstruido);
+// //     printf("El valor de ECX completo es: %d \n", registro_ecx);
+// //     printf("El valor de ECX antes de reconstruirlo: %d \n", registro_ecx_reconstruido);
+    
+// //     memcpy(registro_ecx_reconstruido_puntero, espacio_usuario, 2);
+// //     memcpy(registro_ecx_reconstruido_puntero + 2, espacio_usuario + 28, 2);
+    
+// //     printf("El valor de ECX despues de reconstruirlo: %d \n", registro_ecx_reconstruido);

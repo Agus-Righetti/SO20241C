@@ -10,17 +10,17 @@ int traducir_direccion_logica_a_fisica(int direccion_logica)
 
     if(respuesta.pid != -1)
     {
-        log_info(log_cpu, "PID: %d - TLB HIT - Pagina: %d", proceso->pid, numero_pagina);
+        log_info(log_cpu, "PID: %d - TLB HIT - Pagina: %d", pcb_recibido->pid, numero_pagina);
         return (respuesta.numero_marco * tamanio_pagina) + desplazamiento;
     } 
     else 
     {
         // No esta en TLB -> tiene que buscar en memoria
-        log_info(log_cpu, "PID: %d - TLB MISS - Pagina: %d", proceso->pid, numero_pagina);
+        log_info(log_cpu, "PID: %d - TLB MISS - Pagina: %d", pcb_recibido->pid, numero_pagina);
 
         // Tengo el numero de pag -> hago una consulta a memoria por el marco
         t_paquete *paquete = crear_paquete_personalizado(CPU_PIDE_MARCO_A_MEMORIA); // [PID, NUMERO DE PAGINA]
-        agregar_int_al_paquete_personalizado(paquete, proceso->pid);
+        agregar_int_al_paquete_personalizado(paquete, pcb_recibido->pid);
         agregar_int_al_paquete_personalizado(paquete, numero_pagina);
         enviar_paquete(paquete, socket_cliente_cpu);
 
@@ -32,11 +32,11 @@ int traducir_direccion_logica_a_fisica(int direccion_logica)
                 case CPU_RECIBE_NUMERO_DE_MARCO_DE_MEMORIA:
                     t_buffer* buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
                     int marco = recibir_int_del_buffer(buffer);
-                    log_info(log_cpu, "PID: %d - OBTENER MARCO - Página: %d - Marco: %d", proceso->pid, numero_pagina, marco);
+                    log_info(log_cpu, "PID: %d - OBTENER MARCO - Página: %d - Marco: %d", pcb_recibido->pid, numero_pagina, marco);
                     
                     // Agregarlo a la tlb
                     TLB_Entrada nueva_entrada;
-                    nueva_entrada.pid = proceso->pid;
+                    nueva_entrada.pid = pcb_recibido->pid;
                     nueva_entrada.numero_pagina = numero_pagina;
                     nueva_entrada.numero_marco = marco;
                     actualizar_tlb(&nueva_entrada); 
@@ -44,13 +44,11 @@ int traducir_direccion_logica_a_fisica(int direccion_logica)
                     return (marco * tamanio_pagina) + desplazamiento;
                     break; 
                 case EXIT:
-                    error_exit(EXIT);
+                    //error_exit(EXIT);
                     break;
                 case -1:
                     log_error(log_cpu, "MEMORIA se desconecto. Terminando servidor");
-                    free(socket_cliente_cpu);
                     exit(1);
-                    return;
                 default:
                     log_warning(log_cpu,"Operacion desconocida. No quieras meter la pata");
                     break;

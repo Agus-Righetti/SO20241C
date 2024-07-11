@@ -4,7 +4,7 @@
 #include "io_gestor.h"
 #include "conexion.h"
 
-
+extern size_t bitarray_size;
 
 
 void leer_configuracion_dialfs(Interfaz *configuracion);

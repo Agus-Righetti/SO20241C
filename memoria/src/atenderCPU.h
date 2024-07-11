@@ -15,10 +15,12 @@ void enviar_una_instruccion_a_cpu(char* instruccion);
 // ****************** LECTURA DE MEMORIA *************
 void cpu_pide_leer_1B(t_buffer* un_buffer);
 void cpu_pide_leer_4B(t_buffer* un_buffer);
+void cpu_pide_leer_string(t_buffer* un_buffer);
 
 // ***************** ESCRITURA DE MEMORIA ************
 void cpu_pide_guardar_1B(t_buffer* un_buffer);
 void cpu_pide_guardar_4B(t_buffer* un_buffer);
+void cpu_pide_guardar_string(t_buffer* un_buffer);
 
 // **************** ACCESO A TABLA DE PAG ************
 void cpu_pide_numero_de_marco(t_buffer* un_buffer);

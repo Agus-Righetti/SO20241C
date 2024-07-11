@@ -3,7 +3,7 @@
 // PCB -----------------------------------------------------------------------------------------------------------------------------
 
 // No se puede tener el pcb como global, pero capaz se puede tenerlo de forma que no sea local de cada función
-pcb* pcb_recibido; 
+//pcb* pcb_recibido; 
 
 // Entonces cuando recibo un nuevo pcb, lo limpio al de acá y asigno el nuevo, creo que estaría bien 
 
@@ -312,7 +312,7 @@ void interpretar_instruccion_de_memoria(char* instruccion)
             destruir_diccionarios();
             break;
         case -1:
-            log_warning(log_cpu, "PID: %d - Advertencia: No se pudo interpretar la instrucción - Ejecutando: EXIT", proceso->pid);
+            log_warning(log_cpu, "PID: %d - Advertencia: No se pudo interpretar la instrucción - Ejecutando: EXIT", pcb_recibido->pid);
             error_exit(EXIT);
             destruir_diccionarios();
             return;
@@ -341,41 +341,50 @@ void instruccion_set(char **parte)
     log_info(log_cpu, "El valor nuevo es %d", pcb_recibido->registros->ax);
     log_info(log_cpu, "El valor nuevo es %d", pcb_recibido->program_counter);
 }
-
-void instruccion_mov_in(char **parte)
-{
+void instruccion_mov_in(char **parte) {
     // MOV_IN registro_datos registro_direccion
-    // MOV_IN EDX ECX
 
-	//log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s", proceso->pid, parte[0], parte[1], parte[2]);
+    // Todos los MOV_IN van a ser de 4 bytes, con la excepción de que el registro datos sea AX, BX, CX, DX donde pasan a ser de 1 byte
+
 	log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s", pcb_recibido->pid, parte[0], parte[1], parte[2]);
-
-    // Podria abstraer la traduccion y la busqueda en una funcion que me devuelva directo el valor leido en la DL dada
-    // void* valor_leido = traducir_y_buscar_en_memoria(parte[2],)
 
     // Traducimos la direccion del registro direccion
     char *registro_direccion = parte[2]; // Direccion logica
     int direccion_logica = *(int*)dictionary_get(registros, registro_direccion);
-    int direccion_fisica = traducir_direccion_logica_a_fisica(direccion_logica); 
 
-	char* instruccion = string_from_format("%s %s %d", parte[0], (char*)dictionary_get(registros, parte[1]), direccion_fisica);
-	
-    // Pido espacio de memoria para la instruccion + /0
-    char* instruccion_alloc = malloc(strlen(instruccion) + 1);
+    // revisar bien como funciona -> 
 
-	strcpy(instruccion_alloc, instruccion); // Le copio la instruccion a instruccion_alloc
+    char *registro_dato = parte[1];
 
-	list_replace_and_destroy_element(pcb_recibido->instrucciones, pcb_recibido->program_counter, instruccion_alloc, free);
-	
-    log_trace(log_cpu, "PID: %d - Instruccion traducida: %s", pcb_recibido->pid, (char*)list_get(pcb_recibido->instrucciones, pcb_recibido->program_counter));
-	
-    t_instruccion* instruccion_proceso = malloc(sizeof(t_instruccion));
-	generar_instruccion(pcb_recibido, instruccion_proceso, list_get(pcb_recibido->instrucciones, pcb_recibido->program_counter));
+    t_list* direcciones_fisicas;
 
-    // Enviamos la instruccion a memoria
-    enviar_instruccion(socket_cliente_cpu, instruccion_proceso, MOV_IN);
-	// log_warning(log_cpu, "PID: %d - Advertencia: Instruccion sin realizar", proceso->pid);
-	pcb_recibido->program_counter++;
+    if(es_Registro_de_1B(registro_dato)){
+        direcciones_fisicas = traducir_dl_a_df_completa(direccion_logica, 1);
+
+        // Ahora tengo todas las DF -> necesito leer en memoria el dato
+        peticion_lectura_a_memoria(CPU_PIDE_LEER_REGISTRO_1B, pcb_recibido->pid, direcciones_fisicas);
+        uint8_t valor_leido_de_memoria = espero_rta_lectura_1B_de_memoria();
+
+        // REVISAR ESTO
+        uint8_t* valor_registro_dato = dictionary_get(registros, registro_dato);
+        *valor_registro_dato = valor_leido_de_memoria;
+
+    } else {
+        // la lectura sera de 4 bytes
+        direcciones_fisicas = traducir_dl_a_df_completa(direccion_logica, 4);
+
+        // Ahora tengo todas las DF -> necesito leer en memoria el dato
+        peticion_lectura_a_memoria(CPU_PIDE_LEER_REGISTRO_4B, pcb_recibido->pid, direcciones_fisicas);
+
+        uint32_t valor_leido_de_memoria = espero_rta_lectura_4B_de_memoria();
+
+        // REVISAR ESTO
+        uint32_t* valor_registro_dato = dictionary_get(registros, registro_dato);
+        *valor_registro_dato = valor_leido_de_memoria;
+    }
+    
+    // Aumento el PC para que lea la proxima instruccion
+    pcb_recibido->program_counter++;
 }
 
 void generar_instruccion(pcb* proceso, t_instruccion* instruccion_proceso, char* instruccion) 
@@ -384,29 +393,46 @@ void generar_instruccion(pcb* proceso, t_instruccion* instruccion_proceso, char*
 	instruccion_proceso->instruccion = instruccion;
 }
 
-void instruccion_mov_out(char **parte)
-{
+void instruccion_mov_out(char **parte) {
     // MOV_OUT registro_direccion registro_datos
-    // MOV_OUT EDX ECX
+    // Todos los MOV_OUT van a ser de 4 bytes, con la excepción de que el registro datos sea AX, BX, CX, DX donde pasan a ser de 1 byte  
 
     log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s", pcb_recibido->pid, parte[0], parte[1], parte[2]);
-	
-    char *registro_direccion = parte[2]; // Direccion logica
-    int direccion_logica = *(int*)(dictionary_get(registros, registro_direccion));
-    int direccion_fisica = traducir_direccion_logica_a_fisica(direccion_logica); 
 
-	char* instruccion = string_from_format("%s %d %s", parte[0], direccion_fisica, parte[2]);
-	char* instruccion_alloc = malloc(strlen(instruccion) + 1);
-	strcpy(instruccion_alloc, instruccion);
+    // Leo el registro de datos
+    char *registro_dato = parte[2];
+
+	// Traducimos la direccion del registro direccion
+    // ver por que lo tratan como un char
+    char *registro_direccion = parte[1]; // Direccion logica
+    int direccion_logica = *(int*)(dictionary_get(registros, registro_direccion));
     
-	list_replace_and_destroy_element(pcb_recibido->instrucciones, pcb_recibido->program_counter, instruccion_alloc, free);
-	log_trace(log_cpu, "PID: %d - Instruccion traducida: %s", pcb_recibido->pid, (char*)list_get(pcb_recibido->instrucciones, proceso->program_counter));
-	t_instruccion* instruccion_proceso = malloc(sizeof(t_instruccion));
-	
-    generar_instruccion(pcb_recibido, instruccion_proceso, list_get(pcb_recibido->instrucciones, pcb_recibido->program_counter));
-	enviar_instruccion(socket_cliente_cpu, instruccion_proceso, MOV_OUT);
-    
-	// log_warning(log_cpu, "PID: %d - Advertencia: Instruccion sin realizar", proceso->pid);
+    t_list* direcciones_fisicas;
+    if(es_Registro_de_1B(registro_dato)){
+        direcciones_fisicas = traducir_dl_a_df_completa(direccion_logica, 1);
+
+        uint8_t valor_registro_dato = dictionary_get(registros, registro_dato);
+
+        // Ahora tengo todas las DF -> necesito escribir en memoria el dato
+        peticion_escritura_1B_a_memoria(pcb_recibido->pid, direcciones_fisicas, valor_registro_dato); 
+        // [PID, DFs, VALOR] _> [Int, lista, uint8]
+        espero_rta_escritura_1B_de_memoria();
+
+    } else {
+        // la escritura sera de 4 bytes
+        direcciones_fisicas = traducir_dl_a_df_completa(direccion_logica, 4);
+
+        uint32_t valor_registro_dato = dictionary_get(registros, registro_dato);
+
+        // Ahora tengo todas las DF -> necesito leer en memoria el dato
+        peticion_escritura_4B_a_memoria(pcb_recibido->pid, direcciones_fisicas, valor_registro_dato);
+
+        espero_rta_escritura_4B_de_memoria();
+
+        
+    }
+
+    // Aumento el PC para que lea la proxima instruccion
 	pcb_recibido->program_counter++;
 }
 
@@ -422,20 +448,20 @@ void enviar_instruccion(int conexion, t_instruccion* instruccion, op_code codigo
 void instruccion_sum(char **parte)
 {
     // SUM AX BX
-    log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s", proceso->pid, parte[0], parte[1], parte[2]);
+    log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s", pcb_recibido->pid, parte[0], parte[1], parte[2]);
     int *registro_destino = dictionary_get(registros, parte[1]);
     int *registro_origen = dictionary_get(registros, parte[2]);
     
     // Realizar la suma y almacenar el resultado en el registro destino
     *registro_destino += *registro_origen;
     
-    proceso->program_counter++;
+    pcb_recibido->program_counter++;
 }
 
 void instruccion_sub(char **parte)
 {
     // SUB AX BX
-    log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s", proceso->pid, parte[0], parte[1], parte[2]);
+    log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s", pcb_recibido->pid, parte[0], parte[1], parte[2]);
     int *registro_destino = dictionary_get(registros, parte[1]);
     int *registro_origen = dictionary_get(registros, parte[2]);
     
@@ -463,6 +489,7 @@ void instruccion_jnz(char **parte)
     }
 }
 
+
 void instruccion_resize(char **parte) // ACA HAY QUE MANEJAR UN ENVIO DE PCB QUE ESTA COMENTADO EN EL SWITCH
 {
     // RESIZE 128
@@ -486,9 +513,10 @@ void instruccion_resize(char **parte) // ACA HAY QUE MANEJAR UN ENVIO DE PCB QUE
 	eliminar_paquete(paquete);
 
     // Escucha para recibir el ok o el out of memory
+    int control = 0;
+
     int cod_op_memoria = recibir_operacion(socket_cliente_cpu);
-    while(1) {
-        t_buffer* buffer;
+    while(control == 0) {
         switch (cod_op_memoria){
             case CPU_RECIBE_OUT_OF_MEMORY_DE_MEMORIA: // VACIO
                 printf("Error: No se pudo ajustar el tamaño del proceso. Out of Memory.\n");
@@ -503,13 +531,11 @@ void instruccion_resize(char **parte) // ACA HAY QUE MANEJAR UN ENVIO DE PCB QUE
                 break;
             case CPU_RECIBE_OK_DEL_RESIZE:
                 printf("El tamaño del proceso se ha ajustado correctamente a %d\n", nuevo_tamanio);
-                
                 break;
+
             case -1:
                 log_error(log_cpu, "MEMORIA se desconecto. Terminando servidor");
-                free(socket_cliente_cpu);
-                exit(1);
-                return;
+                //exit(1);
             default:
                 log_warning(log_cpu,"Operacion desconocida. No quieras meter la pata");
                 break;
@@ -519,9 +545,9 @@ void instruccion_resize(char **parte) // ACA HAY QUE MANEJAR UN ENVIO DE PCB QUE
 }
     
 
-void instruccion_copy_string(char **parte)
-{
-    // COPY_STRING 8
+void instruccion_copy_string(char **parte) {
+    // COPY_STRING (TAMAÑO EN BYTES)
+
     log_info(log_cpu, "PID: %d - Ejecutando: %s - %s", pcb_recibido->pid, parte[0], parte[1]);
 
     // Verificar si se proporcionó el tamaño como parámetro
@@ -534,16 +560,25 @@ void instruccion_copy_string(char **parte)
     // Obtener el tamaño de la copia
     int tamanio = atoi(parte[1]);
 
-    //registros_cpu* registros;
+    // // 1ero necesito obtener el STRING
+    // // registro "SI" tiene DL de donde esta almacenado en memoria 
+    // uint32_t dl_origen = (uint32_t)dictionary_get(registros, "SI");
+    // // Busco dirección física origen
+    // t_list* df_origen = traducir_dl_a_df_completa(dl_origen, tamanio);
 
-    uint32_t direccion_origen = (uint32_t)dictionary_get(registros, "SI");
-    uint32_t direccion_destino = (uint32_t)dictionary_get(registros, "DI");
+    // // Tengo que ir a leer el dato -> el string
+    // peticion_lectura_string_a_memoria(pcb_recibido->pid, dl_origen, tamanio);
+    // char* puntero_al_string =  espero_rta_lectura_string_de_memoria();
 
-    if (copiar_bytes(direccion_origen, direccion_destino, tamanio) == 1) {
-        printf("Se han copiado correctamente %d bytes desde la dirección de memoria apuntada por SI hacia la dirección de memoria apuntada por DI\n", tamanio);
-    } else {
-        printf("Error al copiar los bytes en la dirección de memoria apuntada por DI\n");
-    }
+    // // registro "DI" tiene DL en donde tengo que guardar el dato
+    // uint32_t dl_destino = (uint32_t)dictionary_get(registros, "DI");
+    // // Busco dirección física destino
+    // t_list* df_destino = traducir_dl_a_df_completa(dl_destino, tamanio);
+
+    // peticion_escritura_string_a_memoria(pcb_recibido->pid, df_destino, string_leido); 
+
+    // espero_rta_escritura_string_de_memoria();
+
 
     pcb_recibido->program_counter++;
 }

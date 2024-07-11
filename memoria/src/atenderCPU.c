@@ -63,7 +63,7 @@ void enviar_una_instruccion_a_cpu(char* instruccion){
 // Tamaño
 // Valor
 // Ante un pedido de lectura, devolver el valor que se encuentra a partir de la dirección física pedida.
-// Ante un pedido de escritura, escribir lo indicado a partir de la dirección física pedida. En caso satisfactorio se responderá un mensaje de ‘OK’.
+// Ante un pedido de escritura, escribir lo indicado a partir de la dirección física pedida. En caso satisfactorio se responderá un mensaje de OK.
 
 // FALTA IMPLEMENTAR
 
@@ -233,6 +233,7 @@ void cpu_pide_guardar_1B(t_buffer* un_buffer){    // [PID, DFs, VALOR] -> [Int, 
 	uint8_t valor = recibir_uint8_del_buffer(un_buffer);
 
 	guardar_uint8_en_memoria (pid, direcciones_fisicas, valor);
+
 }
 
 void cpu_pide_guardar_4B(t_buffer* un_buffer){    // [PID, DFs, VALOR] -> [Int, lista, uint32]
@@ -242,6 +243,7 @@ void cpu_pide_guardar_4B(t_buffer* un_buffer){    // [PID, DFs, VALOR] -> [Int, 
 	uint32_t valor = recibir_uint8_del_buffer(un_buffer);
 	
 	guardar_uint32_en_memoria (pid, direcciones_fisicas, valor);
+
 }
 
 void cpu_pide_leer_1B(t_buffer* un_buffer){    // [PID, DFs] -> [Int, lista]
@@ -250,13 +252,33 @@ void cpu_pide_leer_1B(t_buffer* un_buffer){    // [PID, DFs] -> [Int, lista]
 	//int tamanio = recibir_int_del_buffer(un_buffer);
 	
 	leer_uint8_en_memoria (pid, direcciones_fisicas);
+	
 }
 
 
 void cpu_pide_leer_4B(t_buffer* un_buffer){    // [PID, DFs] -> [Int, lista]
 	int pid = recibir_int_del_buffer(un_buffer);
 	void* direcciones_fisicas = recibir_estructura_del_buffer(un_buffer);
-	//int tamanio = recibir_int_del_buffer(un_buffer);
 	
 	leer_uint32_en_memoria (pid, direcciones_fisicas);
+}
+
+
+void cpu_pide_leer_string(t_buffer* un_buffer){
+	int pid = recibir_int_del_buffer(un_buffer);
+	void* direcciones_fisicas = recibir_estructura_del_buffer(un_buffer);
+	int tamanio = recibir_int_del_buffer(un_buffer);
+	
+	//leer_string_en_memoria (pid, direcciones_fisicas, tamanio);
+}
+
+
+void cpu_pide_guardar_string(t_buffer* un_buffer){    
+	int pid = recibir_int_del_buffer(un_buffer);
+	void* direcciones_fisicas = recibir_estructura_del_buffer(un_buffer);
+	char* valor = recibir_estructura_del_buffer(un_buffer);
+	int tamanio = recibir_int_del_buffer(un_buffer);
+
+	//guardar_string_en_memoria (pid, direcciones_fisicas, valor, tamanio);
+
 }

@@ -4,8 +4,10 @@
 void atender_cpu(){
     bool control = 1;
     t_buffer* buffer;
+    int cod_op_cpu;
+
     while(control){
-        int cod_op_cpu = recibir_operacion(socket_cliente_cpu);
+        cod_op_cpu = recibir_operacion(socket_cliente_cpu);
         switch (cod_op_cpu) {
             case MENSAJE:
                 recibir_mensaje(socket_cliente_cpu, log_memoria);
@@ -68,22 +70,22 @@ void atender_cpu(){
                 cpu_pide_resize(buffer); 
                 free(buffer);
                 break; 
-    
-            case CPU_PIDE_LECTURA_MEMORIA:
-                log_info(log_memoria, "CPU me pide la lectura de un espacio de memoria");
-                buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
-                usleep(config_memoria->retardo_respuesta *1000);
-                // cpu_pide_lectura(buffer); -> FALTA IMPLEMENTAR
-                free(buffer);
-                break;
 
-            case CPU_PIDE_ESCRITURA_MEMORIA:
-                log_info(log_memoria, "CPU me pide la escritura de un espacio de memoria");
+            case CPU_PIDE_LEER_STRING:
+                log_info(log_memoria, "CPU me pide leer un string");
                 buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
                 usleep(config_memoria->retardo_respuesta *1000);
-                // cpu_pide_escritura(buffer);  -> FALTA IMPLEMENTAR
+                cpu_pide_leer_string(buffer); 
                 free(buffer);
-                break;
+                break; 
+
+            case CPU_PIDE_GUARDAR_STRING:
+                log_info(log_memoria, "CPU me pide guardar un string");
+                buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
+                usleep(config_memoria->retardo_respuesta *1000);
+                cpu_pide_guardar_string(buffer); 
+                free(buffer);
+                break; 
 
             case -1:
                 log_error(log_memoria, "CPU se desconecto.");
@@ -101,8 +103,10 @@ void atender_cpu(){
 void atender_kernel(){
     bool control = 1;
     t_buffer* buffer;
+    int cod_op_kernel;
+
     while(control){
-        int cod_op_kernel = recibir_operacion(socket_cliente_kernel);
+        cod_op_kernel = recibir_operacion(socket_cliente_kernel);
         switch (cod_op_kernel) {
             case MENSAJE:
                 recibir_mensaje(socket_cliente_kernel, log_memoria);
@@ -140,8 +144,10 @@ void atender_kernel(){
 void atender_io(){
     bool control = 1;
     t_buffer* buffer;
+    int cod_op_io;
+
     while(control){
-        int cod_op_io = recibir_operacion(socket_cliente_io);
+        cod_op_io = recibir_operacion(socket_cliente_io);
         switch (cod_op_io) {
             case MENSAJE:
                 recibir_mensaje(socket_cliente_io, log_memoria);

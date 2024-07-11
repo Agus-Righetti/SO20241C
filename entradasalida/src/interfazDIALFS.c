@@ -1,120 +1,5 @@
 #include "interfazDIALFS.h"
 
-// void leer_configuracion_dialfs(Interfaz *configuracion)
-// {
-//     iniciar_config_dialfs(configuracion);
-
-//     // Loggeamos el valor de config
-//     log_info(log_io, "Lei el TIPO_INTERFAZ %s, el TIEMPO_UNIDAD_TRABAJO %d, el IP_KERNEL %s, el PUERTO_KERNEL %d, el IP_MEMORIA %s, el PUERTO_MEMORIA %d, el PATH_BASE_DIALFS %s, el BLOCK_SIZE %d, el BLOCK_COUNT %d y el RETRASO_COMPACTACION %d.", 
-//              configuracion->archivo->tipo_interfaz, 
-//              configuracion->archivo->tiempo_unidad_trabajo,
-//              configuracion->archivo->ip_kernel, 
-//              configuracion->archivo->puerto_kernel, 
-//              configuracion->archivo->ip_memoria,
-//              configuracion->archivo->puerto_memoria,
-//              configuracion->archivo->path_base_dialfs,
-//              configuracion->archivo->block_size,
-//              configuracion->archivo->block_count,
-//              configuracion->archivo->retraso_compactacion);
-// }
-
-// void iniciar_config_dialfs(Interfaz *configuracion)
-// {   
-//     if (configuracion == NULL) 
-//     {
-//         printf("El puntero de configuración es NULL\n");
-//         exit(2);
-//     }
-
-//     // Asignar memoria para configuracion->archivo
-//     configuracion->archivo = malloc(sizeof(io_config));
-//     if (configuracion->archivo == NULL) 
-//     {
-//         printf("No se puede crear la config archivo\n");
-//         exit(2);
-//     }
-
-//     // Inicializa la estructura del archivo de configuración desde el archivo de configuración
-//     t_config* config = config_create("./io.config");
-//     if (config == NULL) 
-//     {
-//         printf("No se puede leer el archivo de config\n");
-//         free(configuracion->archivo);
-//         exit(2);
-//     }
-    
-//     configuracion->archivo->tipo_interfaz = strdup(config_get_string_value(config, "TIPO_INTERFAZ"));
-//     configuracion->archivo->tiempo_unidad_trabajo = config_get_int_value(config, "TIEMPO_UNIDAD_TRABAJO");
-//     configuracion->archivo->ip_kernel = strdup(config_get_string_value(config, "IP_KERNEL"));
-//     configuracion->archivo->puerto_kernel = config_get_int_value(config, "PUERTO_KERNEL");
-//     configuracion->archivo->ip_memoria = strdup(config_get_string_value(config, "IP_MEMORIA"));
-//     configuracion->archivo->puerto_memoria = config_get_int_value(config, "PUERTO_MEMORIA");
-//     configuracion->archivo->path_base_dialfs = strdup(config_get_string_value(config, "PATH_BASE_DIALFS"));
-//     configuracion->archivo->block_size = config_get_int_value(config, "BLOCK_SIZE");
-//     configuracion->archivo->block_count = config_get_int_value(config, "BLOCK_COUNT");
-//     configuracion->archivo->retraso_compactacion = config_get_int_value(config, "RETRASO_COMPACTACION");
-
-//     // Liberar el t_config
-//     config_destroy(config);
-// }
-
-// void liberar_configuracion_dialfs(Interfaz* configuracion)
-// {
-//     if(configuracion) 
-//     {
-//         free(configuracion->archivo->tipo_interfaz);
-//         // free(configuracion->archivo->tiempo_unidad_trabajo);
-//         free(configuracion->archivo->ip_kernel);
-//         // free(configuracion->archivo->puerto_kernel);
-//         free(configuracion->archivo->ip_memoria);
-//         // free(configuracion->archivo->puerto_memoria);
-//         free(configuracion->archivo->path_base_dialfs);
-//         // free(configuracion->archivo->block_size);
-//         // free(configuracion->archivo->block_count);
-//         // free(configuracion->archivo->retraso_compactacion);
-//         free(configuracion->archivo);
-//     }
-// }
-
-// void recibir_operacion_dialfs_de_kernel(Interfaz* configuracion_fs, op_code codigo) 
-// {
-//     switch (codigo) 
-//     {
-//         t_buffer* buffer = recibiendo_paquete_personalizado(conexion_io_kernel);
-//         char* nombre_archivo = recibir_string_del_buffer(buffer);
-
-//         case IO_FS_CREATE:
-//             manejar_creacion_archivo(nombre_archivo, configuracion_fs);
-//             break;
-//         case IO_FS_DELETE:
-//             manejar_eliminacion_archivo(nombre_archivo, configuracion_fs);
-//             break;
-//         case IO_FS_TRUNCATE:
-//             int nuevo_tamanio = recibir_int_del_buffer(buffer);
-//             manejar_truncado_archivo(nombre_archivo, nuevo_tamanio, configuracion_fs);
-//             break;
-//         case IO_FS_WRITE:
-//             int direccion = recibir_int_del_buffer(buffer);
-//             int tamanio = recibir_int_del_buffer(buffer);
-//             int puntero_archivo = recibir_int_del_buffer(buffer);
-//             manejar_escritura_archivo(nombre_archivo, direccion, tamanio, puntero_archivo, configuracion_fs);
-//             break;
-//         case IO_FS_READ:
-//             direccion = recibir_int_del_buffer(buffer);
-//             tamanio = recibir_int_del_buffer(buffer);
-//             puntero_archivo = recibir_int_del_buffer(buffer);
-//             manejar_lectura_archivo(nombre_archivo, direccion, tamanio, puntero_archivo, configuracion_fs);
-//             break;
-//         default:
-//             log_warning(log_io, "Operacion desconocida recibida desde Kernel.\n");
-//             break;
-
-//         free(buffer);
-//         free(nombre_archivo);
-//     }
-// }
-
-
 // IO_FS_CREATE -> Para crear un archivo
 void manejar_creacion_archivo(char* nombre_archivo, int pid) 
 {
@@ -226,8 +111,6 @@ void manejar_truncado_archivo(char* nombre_archivo, int nuevo_tamanio, int pid)
 
     FILE* config_archivo = fopen(config_file_path, "r+");
 
-    
-
     t_config* config_aux = config_create(config_file_path);
 
     t_metadata* metadata = malloc(sizeof(t_metadata));
@@ -235,6 +118,8 @@ void manejar_truncado_archivo(char* nombre_archivo, int nuevo_tamanio, int pid)
     char* buffer_bitmap = obtener_bitmap();
 
     t_bitarray* bitmap = bitarray_create_with_mode(buffer_bitmap, bitarray_size, LSB_FIRST);
+
+    char* buffer;
 
     
     int bloque_inicial = config_get_int_value(config_aux, "BLOQUE_INICIAL");
@@ -254,11 +139,6 @@ void manejar_truncado_archivo(char* nombre_archivo, int nuevo_tamanio, int pid)
         }
         
         int bloques_necesarios = calcular_bloques_que_ocupa(bytes_a_agregar);
-
-        
-
-        
-
         
         //verificamos que haya la cantidad de bloques libres en total q necesitamos
 
@@ -272,10 +152,11 @@ void manejar_truncado_archivo(char* nombre_archivo, int nuevo_tamanio, int pid)
 
         int bloque_inicial_nuevo = buscar_bloques_contiguos_desde_cierto_bloque(bloque_inicial, bloques_necesarios, bitmap);
 
-        if(bloque_inicial_nuevo == -1)//devuelve -1, no hay libres desde ese bloque
+        if(bloque_inicial_nuevo == -1) // Devuelve -1, no hay libres desde ese bloque
         {
             bloques_necesarios = calcular_bloques_que_ocupa(nuevo_tamanio); 
             bloque_inicial_nuevo = buscar_bloques_contiguos(bloques_necesarios, bitmap);
+            
             if(bloque_inicial_nuevo == -1) //No hay bloques contiguos, necesito compactar si entra
             {
                 //Primero tenemos q sacar los bloques ocupados y ppner la info en un buffer
@@ -283,7 +164,7 @@ void manejar_truncado_archivo(char* nombre_archivo, int nuevo_tamanio, int pid)
                 
                 int bloques_que_ocupa_original = calcular_bloques_que_ocupa(tamanio_original);
                 
-                char* buffer = leer_bloques(bloque_inicial, bloques_que_ocupa_original); // Este buffer tiene lo que ya venía en el archivo
+                buffer = leer_bloques(bloque_inicial, bloques_que_ocupa_original); // Este buffer tiene lo que ya venía en el archivo
 
                 //ahora marco en el bitmap esos bloques como libres
                 
@@ -308,12 +189,57 @@ void manejar_truncado_archivo(char* nombre_archivo, int nuevo_tamanio, int pid)
                 actualizar_metadata(metadata);
                 
 
+            }else{//hay bloques contiguos, tengo q ponerlo en esos bloques
+
+                int bloques_del_tamanio_original = calcular_bloques_que_ocupa(tamanio_original);
+
+                buffer = leer_bloques(bloque_inicial, bloques_del_tamanio_original);
+
+                for(int i = bloque_inicial; i < bloques_del_tamanio_original; i++)
+                {
+                    bitarray_clean_bit(bitmap, i);
+                }
+                
+                agregar_info_en_cierto_bloque(bloque_inicial_nuevo, bloques_necesarios, buffer);
+
+                //marco los nuevos bits como ocupados
+                for(int i = bloque_inicial_nuevo; i < bloques_necesarios; i++)
+                {
+                    bitarray_set_bit(bitmap, i);
+                }
+                
+                //guardo la metadata actualidad
+                metadata->tamanio_archivo = nuevo_tamanio;
+                metadata->nombre_archivo = nombre_archivo;
+                metadata->bloque_inicial = bloque_inicial_nuevo;
+
+                //actualizo los dos archivos
+                escribir_archivo_con_bitmap(bitmap);
+                actualizar_metadata(metadata);
+
+
             }
+        }else{
+
+            //tenemos en bloque_inicial el bloque inicial
+            metadata->tamanio_archivo = nuevo_tamanio;
+            metadata->nombre_archivo = nombre_archivo;
+            metadata->bloque_inicial = bloque_inicial;
+
+            //falta actualizar el bitmap
+
+            bloques_necesarios = calcular_bloques_que_ocupa(nuevo_tamanio);
+
+            for(int i = bloque_inicial; i < bloques_necesarios; i++)
+            {
+                bitarray_set_bit(bitmap,i);
+            }
+
+            escribir_archivo_con_bitmap(bitmap);
+            actualizar_metadata(metadata);
         }
 
-
-    }
-    else if(tamanio_original > nuevo_tamanio) //solo tengo que truncar el archivo, marco el bitmap como libre
+    }else if(tamanio_original > nuevo_tamanio) //solo tengo que truncar el archivo, marco el bitmap como libre
     { 
         int bloques_a_liberar = calcular_bloques_que_ocupa(tamanio_original) - calcular_bloques_que_ocupa(nuevo_tamanio);
         
@@ -346,6 +272,7 @@ void manejar_truncado_archivo(char* nombre_archivo, int nuevo_tamanio, int pid)
     
   
 }   
+
 
 
 
@@ -618,7 +545,7 @@ char* obtener_bitmap(){
 
     FILE* bitmap_file = fopen("bitarray.dat", "rb"); 
 
-    bitarray_size = (config_io->block_count + 7) / 8;
+    //bitarray_size = (config_io->block_count + 7) / 8;
 
     char *bitmap_buffer = (char *)malloc(bitarray_size);
 
