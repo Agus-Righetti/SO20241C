@@ -20,6 +20,6 @@ int conexion_io_kernel;
 int conexion_io_memoria;
 Interfaz *configuracion;
 
-void terminar_programa(log_io, config_io);
+void terminar_programa(t_log* log_io, t_config* config_io);
 
 #endif

@@ -184,7 +184,6 @@ void manejar_eliminacion_archivo(char* nombre_archivo, int pid)
 
     char *config_file_path = nombre_archivo;
 
-    FILE* config_archivo = fopen(config_file_path, "r+");
 
     t_config* config_aux = config_create(config_file_path);
     
@@ -801,9 +800,7 @@ t_metadata* buscar_archivo_que_inicia_en_bloque(int nro_bloque)
     t_metadata* meta_aux = malloc(sizeof(t_metadata));
     meta_aux->nombre_archivo = queue_pop(cola_archivos_en_fs);
 
-    FILE* archivo_aux = fopen(meta_aux->nombre_archivo ,"r+");
-
-    t_config* config_aux = config_create(archivo_aux);
+    t_config* config_aux = config_create(meta_aux->nombre_archivo);
 
     meta_aux->bloque_inicial = config_get_int_value(config_aux, "BLOQUE_INICIAL");
 
@@ -813,14 +810,12 @@ t_metadata* buscar_archivo_que_inicia_en_bloque(int nro_bloque)
     {
         //borro todo lo anterior para poner lo nuevo
         queue_push(cola_archivos_en_fs, meta_aux->nombre_archivo);
-        fclose(meta_aux->nombre_archivo);
         config_destroy(config_aux);
         //vuelvo a buscar en el siguiente archivo
         meta_aux->nombre_archivo = queue_pop(cola_archivos_en_fs);
 
-        archivo_aux = fopen(meta_aux->nombre_archivo, "r+");
 
-        config_aux = config_create(archivo_aux);
+        config_aux = config_create(meta_aux->nombre_archivo);
 
         meta_aux->bloque_inicial = config_get_int_value(config_aux, "BLOQUE_INICIAL");
 
@@ -833,19 +828,26 @@ t_metadata* buscar_archivo_que_inicia_en_bloque(int nro_bloque)
 
     queue_push(cola_archivos_en_fs, meta_aux->nombre_archivo); //vuelvo a agregar el archivo a la cola
 
+
+
+
     return meta_aux;
 }
 
 void actualizar_metadata(t_metadata* metadata)
 {
-    FILE* archivo = fopen(metadata->nombre_archivo ,"r+");
-    t_config* config_archivo = config_create(archivo);
+    //FILE* archivo = fopen(metadata->nombre_archivo ,"r+");
+    t_config* config_archivo = config_create(metadata->nombre_archivo);
 
     char* bloque_inicial = pasar_a_string(metadata->bloque_inicial);
-    char* tamanio_bloque = pasar_a_string(metadata->tamanio_bloque);
+    char* tamanio_bloque = pasar_a_string(metadata->tamanio_archivo);
 
     config_set_value(config_archivo, "BLOQUE_INICIAL", bloque_inicial);
     config_set_value(config_archivo, "TAMANIO_BLOQUE", tamanio_bloque);
+
+    config_save(config_archivo);
+
+    //fclose(archivo);
 
     free(metadata);
 
