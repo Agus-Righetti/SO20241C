@@ -128,7 +128,7 @@ void enviar_instruccion_io(int socket, argumentos_para_io* args)
             break;
         case IO_STDIN_READ:
         case IO_STDOUT_WRITE:
-            agregar_int_al_paquete_personalizado(paquete_instruccion, args->registro_direccion);
+            agregar_estructura_al_paquete_personalizado(paquete_instruccion, args->registro_direccion);
             agregar_int_al_paquete_personalizado(paquete_instruccion, args->registro_tamano);
             break;
         case IO_FS_CREATE:
@@ -142,7 +142,7 @@ void enviar_instruccion_io(int socket, argumentos_para_io* args)
         case IO_FS_WRITE:
         case IO_FS_READ:
             agregar_string_al_paquete_personalizado(paquete_instruccion, args->nombre_archivo);
-            agregar_int_al_paquete_personalizado(paquete_instruccion, args->registro_direccion);
+            agregar_estructura_al_paquete_personalizado(paquete_instruccion, args->registro_direccion);
             agregar_int_al_paquete_personalizado(paquete_instruccion, args->registro_tamano);
             agregar_int_al_paquete_personalizado(paquete_instruccion, args->registro_puntero_archivo);
             break;
@@ -218,7 +218,7 @@ int io_gen_sleep(char* nombre_interfaz, int unidades_de_trabajo, pcb* proceso)
 
 }
 
-int io_stdin_read(char* nombre_interfaz, uint32_t registro_direccion, uint32_t registro_tamano, pcb* proceso)
+int io_stdin_read(char* nombre_interfaz, t_list* registro_direccion, uint32_t registro_tamano, pcb* proceso)
 {
     // Esta instrucción solicita al Kernel que mediante la interfaz ingresada se lea desde el STDIN (Teclado) un valor cuyo tamaño está delimitado por el valor del Registro Tamaño y el mismo se guarde a partir de la Dirección Lógica almacenada en el Registro Dirección.
 
@@ -241,7 +241,7 @@ int io_stdin_read(char* nombre_interfaz, uint32_t registro_direccion, uint32_t r
     }else return 1;//mando el proceso a exit
 }
 
-int io_stdout_write(char* nombre_interfaz, uint32_t registro_direccion, uint32_t registro_tamano, pcb* proceso)
+int io_stdout_write(char* nombre_interfaz, t_list* registro_direccion, uint32_t registro_tamano, pcb* proceso)
 {
     interfaz_kernel* interfaz = verificar_interfaz(nombre_interfaz, STDOUT);
     argumentos_para_io* args = malloc(sizeof(argumentos_para_io));
@@ -321,7 +321,7 @@ int io_fs_truncate(char* nombre_interfaz, char* nombre_archivo, int registro_tam
     }else return 1;//mando el proceso a exit
 }
 
-int io_fs_write(char* nombre_interfaz, char* nombre_archivo, int registro_direccion, int registro_tamano, int registro_puntero_archivo, pcb* proceso)
+int io_fs_write(char* nombre_interfaz, char* nombre_archivo, t_list*  registro_direccion, int registro_tamano, int registro_puntero_archivo, pcb* proceso)
 {
     interfaz_kernel* interfaz = verificar_interfaz(nombre_interfaz, DIALFS);
     argumentos_para_io* args = malloc(sizeof(argumentos_para_io));
@@ -343,7 +343,7 @@ int io_fs_write(char* nombre_interfaz, char* nombre_archivo, int registro_direcc
     }else return 1;//mando el proceso a exit
 }
 
-int io_fs_read(char* nombre_interfaz, char* nombre_archivo, int registro_direccion, int registro_tamano, int registro_puntero_archivo, pcb* proceso)
+int io_fs_read(char* nombre_interfaz, char* nombre_archivo, t_list* registro_direccion, int registro_tamano, int registro_puntero_archivo, pcb* proceso)
 {
     interfaz_kernel* interfaz = verificar_interfaz(nombre_interfaz, DIALFS);
     argumentos_para_io* args = malloc(sizeof(argumentos_para_io));

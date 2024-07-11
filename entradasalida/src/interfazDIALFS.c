@@ -16,7 +16,7 @@ void manejar_creacion_archivo(char* nombre_archivo, int pid)
 
     t_bitarray* bitmap = bitarray_create_with_mode(bitmap_buffer, bitarray_size, LSB_FIRST);
 
-    off_t index_primer_bloque_libre = bitarray_find_first_clear_bit(bitmap);
+    int index_primer_bloque_libre = bitarray_find_first_clear_bit(bitmap);
 
     if(index_primer_bloque_libre == -1)
     {
@@ -58,6 +58,8 @@ void manejar_creacion_archivo(char* nombre_archivo, int pid)
 
     // Liberar memoria utilizada por la configuración
     config_destroy(config);
+
+    avisar_fin_io_a_kernel();
     
     return;
 }
@@ -100,6 +102,11 @@ void manejar_eliminacion_archivo(char* nombre_archivo, int pid)
 
     // no borramos los bloques del bloques.dat porque al marcar como libres los bloques en el bitmap
     // se va a sobreescribir en esos bloques y listo
+
+    avisar_fin_io_a_kernel();
+
+    return;
+
 
 }
 
@@ -264,191 +271,26 @@ void manejar_truncado_archivo(char* nombre_archivo, int nuevo_tamanio, int pid)
     free(buffer_bitmap);
     bitarray_destroy(bitmap);
 
+    avisar_fin_io_a_kernel();
+
     return;
     
-    
-    
-    
-    
-  
 }   
 
 
 
 
-void manejar_escritura_archivo(Interfaz* configuracion_fs, char* nombre_archivo, int direccion_logica, int tamanio, int puntero_archivo) 
+void manejar_escritura_archivo(char* nombre_archivo, t_list* direccion_fisica, int tamanio, int puntero_archivo, int pid)
 {
-    // Leer el archivo de metadata para obtener el bloque inicial y el tamaño
-    char metadata_path[256];
-    sprintf(metadata_path, "%s/%s.metadata", configuracion_fs->archivo->path_base_dialfs, nombre_archivo);
     
-    FILE* metadata_file = fopen(metadata_path, "r+");
-    if (metadata_file == NULL) 
-    {
-        log_error(log_io, "No se puede abrir el archivo de metadata para %s.", nombre_archivo);
-        return;
-    }
-
-    int bloque_inicial;
-    int tamanio_actual;
     
-    if (fscanf(metadata_file, "BLOQUE_INICIAL=%d\nTAMANIO_ARCHIVO=%d\n", &bloque_inicial, &tamanio_actual) != 2) 
-    {
-        log_error(log_io, "Error al leer los metadatos del archivo %s.", nombre_archivo);
-        fclose(metadata_file);
-        return;
-    }
-
-    // Cerrar el archivo de metadata
-    fclose(metadata_file);
-
-    // Leer datos desde la memoria
-    int direccion_fisica = solicitar_traduccion_direccion(direccion_logica);
-    
-    t_paquete* paquete = crear_paquete_personalizado(IO_PIDE_ESCRITURA_MEMORIA);
-    agregar_int_al_paquete_personalizado(paquete, direccion_fisica);
-    agregar_int_al_paquete_personalizado(paquete, tamanio);
-    enviar_paquete(paquete, conexion_io_memoria);
-
-    char* datos_a_escribir = NULL;
-
-    // Recibo respuesta de memoria    
-    int cod_op_memoria = recibir_operacion(conexion_io_memoria);
-    while(1) 
-    {
-        switch (cod_op_memoria) 
-        {
-            case IO_RECIBE_RESPUESTA_DE_ESCRITURA_DE_MEMORIA:
-                t_buffer* buffer = recibiendo_paquete_personalizado(conexion_io_memoria);
-                datos_a_escribir = recibir_string_del_buffer(buffer);
-                free(buffer);
-                eliminar_paquete(paquete);
-                close(conexion_io_memoria);
-                break; 
-            case -1:
-                log_error(log_io, "Error al leer datos de memoria para escribir en %s.", nombre_archivo);
-                //free(conexion_io_memoria);
-                return;
-            default:
-                log_warning(log_io,"Operacion desconocida. No quieras meter la pata");
-                break;
-        }
-    }
-    eliminar_paquete(paquete);
-
-    // Escribir datos en el archivo
-    FILE* archivoFS = fopen(metadata_file, "rb+");
-    if (archivoFS == NULL) 
-    {
-        log_error(log_io, "Error al abrir el archivo %s para escritura.", nombre_archivo);
-        free(datos_a_escribir);
-        eliminar_paquete(paquete);
-        close(conexion_io_memoria);
-        return;
-    }
-
-    fseek(archivoFS, bloque_inicial* configuracion_fs->archivo->block_size + puntero_archivo, SEEK_SET);
-    if (fwrite(datos_a_escribir, 1, tamanio, archivoFS) != tamanio) 
-    {    
-        log_error(log_io, "Error al escribir en el archivo %s desde la dirección %d.", nombre_archivo, direccion_logica);
-        fclose(archivoFS);
-        free(datos_a_escribir);
-        eliminar_paquete(paquete);
-        close(conexion_io_memoria);
-        return;
-    }
-
-    // Actualizar el tamaño del archivo si es necesario
-    if (puntero_archivo + tamanio > tamanio_actual) 
-    {
-        fseek(metadata_file, 0, SEEK_SET);
-        fprintf(metadata_file, "BLOQUE_INICIAL=%d\n", bloque_inicial);
-        fprintf(metadata_file, "TAMANIO_ARCHIVO=%d\n", puntero_archivo + tamanio);
-    }
-
-    fclose(metadata_file);
-    fclose(archivoFS);
-    free(datos_a_escribir);
-    eliminar_paquete(paquete);
-    close(conexion_io_memoria);
-
-    log_info(log_io, "Datos escritos exitosamente en el archivo %s.", nombre_archivo);
+    return;
+   
 }
 
-void manejar_lectura_archivo(char* nombre_archivo, int direccion, int tamanio, int puntero_archivo, Interfaz* configuracion_fs)
+void manejar_lectura_archivo(char* nombre_archivo, t_list* direccion_fisica, int tamanio, int puntero_archivo, Interfaz* configuracion_fs)
 {
-    // Leer el archivo de metadata para obtener el bloque inicial y el tamaño
-    char metadata_path[256];
-    sprintf(metadata_path, "%s/%s", configuracion_fs->archivo->path_base_dialfs, nombre_archivo);
-    FILE* metadata_file = fopen(metadata_path, "r");
-    
-    if (metadata_file == NULL) 
-    {
-        log_error(log_io, "No se puede abrir el archivo de metadata.");
-        return;
-    }
-
-    int bloque_inicial;
-    int tamanio_actual;
-
-    fscanf(metadata_file, "BLOQUE_INICIAL=%d\n", &bloque_inicial);
-    fscanf(metadata_file, "TAMANIO_ARCHIVO=%d\n", &tamanio_actual);
-    fclose(metadata_file);
-
-    // Verificar que el puntero de archivo y el tamaño no excedan los límites del archivo
-    if (puntero_archivo + tamanio > tamanio_actual) 
-    {
-        log_error(log_io, "Intento de lectura fuera de los límites del archivo.");
-        return;
-    }
-
-    // Leer datos del archivo de bloques
-    FILE* bloques_file = fopen(configuracion_fs->archivo->path_base_dialfs, "r");
-    if (bloques_file == NULL) 
-    {
-        log_error(log_io, "No se puede abrir el archivo de bloques.");
-        return;
-    }
-
-    char* datos_leidos = malloc(tamanio);
-    fseek(bloques_file, bloque_inicial * configuracion_fs->archivo->block_size + puntero_archivo, SEEK_SET);
-    fread(datos_leidos, 1, tamanio, bloques_file);
-    fclose(bloques_file);
-
-    // Escribir los datos leídos en la memoria
-    int direccion_fisica = solicitar_traduccion_direccion(direccion);
-    t_paquete* paquete = crear_paquete_personalizado(IO_PIDE_LECTURA_MEMORIA);
-    agregar_int_al_paquete_personalizado(paquete, direccion_fisica);
-    agregar_string_al_paquete_personalizado(paquete, datos_leidos);
-    enviar_paquete(paquete, conexion_io_memoria);
-
-    int cod_op_memoria = recibir_operacion(conexion_io_memoria);
-    char* datos_a_leer = NULL;
-
-    while(1) 
-    {
-        switch (cod_op_memoria) 
-        {
-            case IO_RECIBE_RESPUESTA_DE_LECTURA_DE_MEMORIA:
-                t_buffer* buffer = recibiendo_paquete_personalizado(conexion_io_memoria);
-                datos_a_leer = recibir_string_del_buffer(buffer);
-                free(buffer);
-                eliminar_paquete(paquete);
-                close(conexion_io_memoria);
-                break; 
-            case -1:
-                log_error(log_io, "Error al leer datos de memoria para leer en %s.", nombre_archivo);
-                //free(conexion_io_memoria);
-                return;
-            default:
-                log_warning(log_io,"Operacion desconocida. No quieras meter la pata");
-                break;
-        }
-    }
-
-    eliminar_paquete(paquete);
-    close(conexion_io_memoria);
-    free(datos_leidos);
+    return;
 }
 
 
@@ -795,4 +637,17 @@ int agregar_info_en_cierto_bloque(int bloque_inicial_nuevo, int cant_bloques , c
     free(buffer);
 
     return 1;
+}
+
+int bitarray_find_first_clear_bit(t_bitarray* bitmap){
+
+    for (int i = 0; i < config_io->block_count; i++){
+
+        if (!bitarray_test_bit(bitmap, i)) // Si está vacío el bitmap, entonces devuelvo el índice en el que me encuentro
+        {
+            return i;
+        }
+    }
+    
+    return -1;
 }

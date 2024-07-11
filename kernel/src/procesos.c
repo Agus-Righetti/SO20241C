@@ -647,9 +647,9 @@ void recibir_pcb(pcb* proceso) {
     int indice_recurso;
     char* nombre_interfaz;
     int unidades_de_trabajo;
-    int registro_direccion;
+    t_direccion_fisica direcciones_fisicas;
     int registro_tamano;
-    int registro_puntero_archivo;
+    t_direccion_fisica registro_puntero_archivo;
     char* nombre_archivo;
     t_buffer* buffer; // Buffer para recibir el paquete
 
@@ -712,9 +712,9 @@ void recibir_pcb(pcb* proceso) {
                 fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
                 proceso_recibido = recibir_estructura_del_buffer(buffer);
                 nombre_interfaz = recibir_string_del_buffer(buffer);
-                registro_direccion = recibir_int_del_buffer(buffer);
+                direcciones_fisicas = recibir_estructura_del_buffer(buffer);
                 registro_tamano = recibir_int_del_buffer(buffer);
-                flag_estado = io_stdin_read(nombre_interfaz, registro_direccion, registro_tamano, proceso_recibido);
+                flag_estado = io_stdin_read(nombre_interfaz, direcciones_fisicas, registro_tamano, proceso_recibido);
 
                 break;
 
@@ -724,9 +724,9 @@ void recibir_pcb(pcb* proceso) {
                 fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
                 proceso_recibido = recibir_estructura_del_buffer(buffer);
                 nombre_interfaz = recibir_string_del_buffer(buffer);
-                registro_direccion = recibir_int_del_buffer(buffer);
+                direcciones_fisicas = recibir_estructura_del_buffer(buffer);
                 registro_tamano = recibir_int_del_buffer(buffer);
-                flag_estado = io_stdout_write(nombre_interfaz, registro_direccion, registro_tamano, proceso_recibido);
+                flag_estado = io_stdout_write(nombre_interfaz, direcciones_fisicas, registro_tamano, proceso_recibido);
 
                 break;
             
@@ -771,10 +771,10 @@ void recibir_pcb(pcb* proceso) {
                 proceso_recibido = recibir_estructura_del_buffer(buffer);
                 nombre_interfaz = recibir_string_del_buffer(buffer);
                 nombre_archivo = recibir_string_del_buffer(buffer);
-                registro_direccion = recibir_int_del_buffer(buffer);
+                direcciones_fisicas = recibir_estructura_del_buffer(buffer);
                 registro_tamano = recibir_int_del_buffer(buffer);
                 registro_puntero_archivo = recibir_int_del_buffer(buffer);
-                flag_estado = io_fs_write(nombre_interfaz, nombre_archivo, registro_direccion, registro_tamano, registro_puntero_archivo, proceso_recibido);
+                flag_estado = io_fs_write(nombre_interfaz, nombre_archivo, direcciones_fisicas, registro_tamano, registro_puntero_archivo, proceso_recibido);
 
                 break;
 
@@ -785,10 +785,10 @@ void recibir_pcb(pcb* proceso) {
                 proceso_recibido = recibir_estructura_del_buffer(buffer);
                 nombre_interfaz = recibir_string_del_buffer(buffer);
                 nombre_archivo = recibir_string_del_buffer(buffer);
-                registro_direccion = recibir_int_del_buffer(buffer);
+                direcciones_fisicas = recibir_estructura_del_buffer(buffer);
                 registro_tamano = recibir_int_del_buffer(buffer);
                 registro_puntero_archivo = recibir_int_del_buffer(buffer);
-                flag_estado = io_fs_read(nombre_interfaz, nombre_archivo, registro_direccion, registro_tamano, registro_puntero_archivo, proceso_recibido);
+                flag_estado = io_fs_read(nombre_interfaz, nombre_archivo, direcciones_fisicas, registro_tamano, registro_puntero_archivo, proceso_recibido);
                 break;
             case OUT_OF_MEMORY:
                 buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente

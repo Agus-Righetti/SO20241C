@@ -8,7 +8,6 @@
 // void iniciar_config_stdout(Interfaz *configuracion);
 // void liberar_configuracion_stdout(Interfaz* configuracion);
 // void recibir_operacion_stdout_de_kernel(Interfaz* configuracion_stdout, op_code codigo); 
-void ejecutar_instruccion_stdout(int direccion_fisica, int tamanio, int pid);
-
+void ejecutar_instruccion_stdout(t_list* direccion_fisica, int tamanio, int pid);
 
 #endif

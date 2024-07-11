@@ -3,6 +3,8 @@
 
 #include <utils/hello.h>
 #include <utils/utilsShare.h>
+
+
 //#include <cliente.h>
 
 // Estructuras globales ---------------------------------------------------------------------------------------------------------------
@@ -56,5 +58,6 @@ extern int conexion_io_kernel;
 extern int conexion_io_memoria;
 
 extern t_queue* cola_archivos_en_fs;
+extern size_t bitarray_size;
 
 #endif

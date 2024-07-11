@@ -189,7 +189,7 @@ typedef struct
 
 typedef struct{
     int unidades_de_trabajo;
-    int registro_direccion;
+    t_list* registro_direccion;
     int registro_tamano;
     char* nombre_archivo;
     int registro_puntero_archivo;

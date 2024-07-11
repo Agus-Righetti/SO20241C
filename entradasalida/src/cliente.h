@@ -2,6 +2,11 @@
 #define CLIENTE_H_
 
 #include "io_gestor.h"
+#include "conexion.h"
+#include "interfazGENERICA.h"
+#include "interfazSTDIN.h"
+#include "interfazSTDOUT.h"
+#include "interfazDIALFS.h"
 
 // Declaracion de funciones ----------------------------------------------------------------------------------------------------------
 

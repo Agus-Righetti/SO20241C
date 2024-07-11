@@ -18,7 +18,7 @@ void atender_kernel()
     t_buffer* buffer; 
     int pid;
     int unidades_de_trabajo;
-    int registro_direccion;
+    t_list* registro_direccion;
     int registro_tamano;
     int registro_puntero_archivo;
     char* nombre_archivo;
@@ -41,7 +41,7 @@ void atender_kernel()
 
             case IO_STDIN_READ: //(Interfaz, Registro Dirección, Registro Tamaño)
 
-                registro_direccion = recibir_int_del_buffer(buffer);
+                registro_direccion = recibir_estructura_del_buffer(buffer);
                 registro_tamano = recibir_int_del_buffer(buffer);
                 leer_consola(registro_direccion, registro_tamano, pid);
 
@@ -49,7 +49,7 @@ void atender_kernel()
 
             case IO_STDOUT_WRITE: //(Interfaz, Registro Dirección, Registro Tamaño)
 
-                registro_direccion = recibir_int_del_buffer(buffer);
+                registro_direccion = recibir_estructura_del_buffer(buffer);
                 registro_tamano = recibir_int_del_buffer(buffer);
                 ejecutar_instruccion_stdout(registro_direccion, registro_tamano, pid);
 
@@ -80,16 +80,17 @@ void atender_kernel()
             case IO_FS_WRITE: //(Interfaz, Nombre Archivo, Registro Dirección, Registro Tamaño, Registro Puntero Archivo)
 
                 nombre_archivo = recibir_string_del_buffer(buffer);
-                registro_direccion = recibir_int_del_buffer(buffer);
+                registro_direccion = recibir_estructura_del_buffer(buffer);
                 registro_tamano = recibir_int_del_buffer(buffer);
                 registro_puntero_archivo = recibir_int_del_buffer(buffer);
+                manejar_escritura_archivo(nombre_archivo,registro_direccion, registro_tamano, registro_puntero_archivo, pid);
 
                 break;
 
             case IO_FS_READ: //(Interfaz, Nombre Archivo, Registro Dirección, Registro Tamaño, Registro Puntero Archivo)
             
                 nombre_archivo = recibir_string_del_buffer(buffer);
-                registro_direccion = recibir_int_del_buffer(buffer);
+                registro_direccion = recibir_estructura_del_buffer(buffer);
                 registro_tamano = recibir_int_del_buffer(buffer);
                 registro_puntero_archivo = recibir_int_del_buffer(buffer);
 

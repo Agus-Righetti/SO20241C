@@ -104,16 +104,16 @@
 //     }
 // }
 
-void ejecutar_instruccion_stdout(int direccion_fisica, int tamanio, int pid) 
+void ejecutar_instruccion_stdout(t_list* direccion_fisica, int tamanio, int pid) 
 {
     //no pido traduccion, ya me mandan la fisica.
     //int direccion_fisica = solicitar_traduccion_direccion(direccion_logica);
 
     // Envio la solicitud de lectura a memoria
-    t_paquete* paquete = crear_paquete_personalizado(IO_PIDE_LECTURA_MEMORIA);
-    agregar_int_al_paquete_personalizado(paquete, direccion_fisica);
-    agregar_int_al_paquete_personalizado(paquete, tamanio);
-    enviar_paquete(paquete, conexion_io_memoria);
+    // t_paquete* paquete = crear_paquete_personalizado(IO_PIDE_LECTURA_MEMORIA);
+    // agregar_estructura_al_paquete_personalizado(paquete, direccion_fisica, sizeof(t_list));
+    // agregar_int_al_paquete_personalizado(paquete, tamanio);
+    // enviar_paquete(paquete, conexion_io_memoria);
  
    
 }

@@ -22,7 +22,7 @@
 //     free(leido);
 // }
 
-void leer_consola(int direccion_fisica, int tamanio, int pid) {
+void leer_consola(t_list* direccion_fisica, int tamanio, int pid) {
     
     log_info(log_io, "PID: %d - Operacion: STDIN", pid);
 
