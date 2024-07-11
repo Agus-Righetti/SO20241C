@@ -113,9 +113,10 @@ void atender_kernel()
 void atender_interrupcion() // ACA HAY QUE MANEJAR EL ENVIAR PCB DENTRO DEL SWITCH (ESTA COMENTADO)
 {
     t_list* lista;
-    bool flag_interrupcion;
+    int cod_op ;
+
     while(1) {
-        int cod_op = recibir_operacion(socket_interrupt_kernel);
+        cod_op = recibir_operacion(socket_interrupt_kernel);
         switch (cod_op) {
             case MENSAJE:
                 recibir_mensaje(socket_interrupt_kernel, log_cpu);
@@ -125,24 +126,16 @@ void atender_interrupcion() // ACA HAY QUE MANEJAR EL ENVIAR PCB DENTRO DEL SWIT
                 log_info(log_cpu, "Me llegaron los siguientes valores:\n");
                 list_iterate(lista, (void*) iterator);
                 break;
+                
             case INTERRUPCION_KERNEL:
-                log_info(log_cpu, "Me llego una interrupcion de KERNEL, ahora voy a enviar el pcb");
-                
-                argumentos_cpu* args = malloc(sizeof(argumentos_cpu));
-                //args->proceso = pcb_recibido;
-                args->operacion = PCB_CPU_A_KERNEL;
-
-                flag_interrupcion = true;
-                
-                
-
-                //enviar_pcb(socket_cliente_kernel, args);
-
+                log_info(log_cpu, "Me llego una interrupcion de KERNEL, ahora voy a enviar el pcb");  
+                flag_interrupcion = true; // Este flag me marca que HAY una interrupción, entonces desde el final de cada instrucción voy a devolver el pcb a kernel
                 break;
+                
             case -1:
                 log_error(log_cpu, "El cliente se desconecto. Terminando servidor");
-                return EXIT_FAILURE;
                 exit(1);
+                
             default:
                 log_warning(log_cpu, "Operacion desconocida. No quieras meter la pata");
                 break;

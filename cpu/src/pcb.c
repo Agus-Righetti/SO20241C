@@ -41,7 +41,7 @@ void enviar_pcb(int conexion, argumentos_cpu* args){
 
     log_info(log_cpu, "El PID del proceso que estoy por meter al paquete es: %d", pcb_recibido->pid);
 
-    agregar_estructura_al_paquete_personalizado(paquete, pcb_recibido, sizeof(pcb));
+    agregar_estructura_al_paquete_personalizado(paquete, args->proceso, sizeof(pcb));
    
     switch(args->operacion) // Según el código de operación voy a agregar cosas diferentes al paquete (siempre siendo el pcb + otras cosas)
     {
@@ -332,26 +332,36 @@ void instruccion_set(char **parte) {
 
     char *registro = parte[1];
     if(es_Registro_de_1B(registro)){
+        log_info(log_cpu,"estamos en registro de 8B");
         uint8_t* valor_registro = dictionary_get(registros, parte[1]);
-        log_info(log_cpu, "Registro: %s - Valor inicial: %u", registro, valor_registro);
+        log_info(log_cpu, "Registro: %s - Valor inicial: %d", registro, *valor_registro);
 
         *valor_registro = atoi(parte[2]);
-        log_info(log_cpu, "Registro: %s - Valor final: %u", registro, valor_registro);
+        log_info(log_cpu, "Registro: %s - Valor final: %d", registro, *valor_registro);
 
     } else {
         // El registro es de 4B
+        log_info(log_cpu,"estamos en registro de 4B");
         uint32_t* valor_registro = dictionary_get(registros, parte[1]);
-        log_info(log_cpu, "Registro: %s - Valor inicial: %u", registro, valor_registro);
+        log_info(log_cpu, "Registro: %s - Valor inicial: %d", registro, *valor_registro);
         
         *valor_registro = atoi(parte[2]);
-        log_info(log_cpu, "Registro: %s - Valor final: %u", registro, valor_registro);
+        log_info(log_cpu, "Registro: %s - Valor final: %d", registro, *valor_registro);
     }
 
 	// Aumento el PC
     pcb_recibido->program_counter++; 
     
+    check_interrupt();
+
     return;
 }
+
+// Al final de cada instruccion queremos verificar si hay alguna interrupcion
+// Si sí hay una interrupcion, entonces tiene que seguir y devolver el pcb
+// Si no hay interrupcion, entonces tiene que solicitar otra instrucción a memoria
+
+
 
 void instruccion_mov_in(char **parte) {
     // MOV_IN registro_datos registro_direccion
@@ -381,6 +391,8 @@ void instruccion_mov_in(char **parte) {
         uint8_t* valor_registro_dato = dictionary_get(registros, registro_dato);
         *valor_registro_dato = valor_leido_de_memoria;
 
+        log_info(log_cpu, "(1B)El valor despues de mov_in es: %d", *valor_registro_dato);
+
     } else {
         // la lectura sera de 4 bytes
         direcciones_fisicas = traducir_dl_a_df_completa(direccion_logica, 4);
@@ -393,21 +405,20 @@ void instruccion_mov_in(char **parte) {
         // REVISAR ESTO
         uint32_t* valor_registro_dato = dictionary_get(registros, registro_dato);
         *valor_registro_dato = valor_leido_de_memoria;
+
+        log_info(log_cpu, "(4B)El valor despues de mov_in es: %d", *valor_registro_dato);
+
     }
     
     // Aumento el PC para que lea la proxima instruccion
     pcb_recibido->program_counter++;
 
+
+    check_interrupt();
+    
     return;
 }
 
-void generar_instruccion(pcb* proceso, t_instruccion* instruccion_proceso, char* instruccion) 
-{
-	instruccion_proceso->pid = proceso->pid;
-	instruccion_proceso->instruccion = instruccion;
-
-    return;
-}
 
 void instruccion_mov_out(char **parte) {
     // MOV_OUT registro_direccion registro_datos
@@ -444,12 +455,14 @@ void instruccion_mov_out(char **parte) {
         peticion_escritura_4B_a_memoria(pcb_recibido->pid, direcciones_fisicas, valor_registro_dato);
 
         espero_rta_escritura_4B_de_memoria();
-
-        
     }
 
     // Aumento el PC para que lea la proxima instruccion
 	pcb_recibido->program_counter++;
+    
+    log_info(log_cpu, "A rezar que ande bien este");
+
+    check_interrupt();
 
     return;
 }
@@ -477,6 +490,10 @@ void instruccion_sum(char **parte)
     
     pcb_recibido->program_counter++;
 
+    log_info(log_cpu, "El valor despues de sum es: %d", *registro_destino);
+
+    check_interrupt();
+
     return;
 }
 
@@ -491,6 +508,10 @@ void instruccion_sub(char **parte)
     *registro_destino -= *registro_origen;
     
     pcb_recibido->program_counter++;
+
+    log_info(log_cpu, "El valor despues de sub es: %d", *registro_destino);
+
+    check_interrupt();
 
     return;
 }
@@ -512,6 +533,10 @@ void instruccion_jnz(char **parte)
         pcb_recibido->program_counter++;
     }
 
+    log_info(log_cpu, "Este es el valor del PC después del jnz: %d", pcb_recibido->program_counter);
+
+    check_interrupt();
+    
     return;
 }
 
@@ -569,6 +594,8 @@ void instruccion_resize(char **parte) // ACA HAY QUE MANEJAR UN ENVIO DE PCB QUE
     } 
     pcb_recibido->program_counter++; 
 
+    check_interrupt();
+
     return;
 }
     
@@ -609,6 +636,9 @@ void instruccion_copy_string(char **parte) {
 
 
     pcb_recibido->program_counter++;
+
+    check_interrupt();
+
 
     return;
 }
@@ -762,23 +792,6 @@ void instruccion_io_stdin_read(char** parte)
     enviar_pcb(socket_cliente_kernel, args);
 }
 
-// void enviar_solicitud_a_kernel(Interfaz* interfaz, int direccion_fisica, int tamanio, int conexion) 
-// {
-//     t_paquete* paquete = crear_paquete_personalizado(IO_STDIN_READ);
-
-//     // Agregar la estructura Interfaz al paquete
-//     agregar_estructura_al_paquete_personalizado(paquete, interfaz, sizeof(Interfaz));
-
-//     // Agregar la dirección fisica al paquete
-//     agregar_estructura_al_paquete_personalizado(paquete, &direccion_fisica, sizeof(int));
-
-//     // Agregar el tamaño al paquete
-//     agregar_estructura_al_paquete_personalizado(paquete, &tamanio, sizeof(int));
-
-//     // Enviar el paquete al socket cliente
-//     enviar_paquete(paquete, socket_cliente_kernel);
-//     eliminar_paquete(paquete);
-// }
 
 void instruccion_io_stdout_write(char **parte) // ESTE NO LO ENTIENDO PORQUE MANDA BANDA DE COSAS
 {
@@ -1105,4 +1118,28 @@ void error_exit(op_code codigo)
 	// enviar_pcb(socket_cliente_kernel, proceso, CODIGO, NULL);
 	// list_destroy_and_destroy_elements(proceso->instrucciones, free);
 	// free(proceso);
+}
+
+void generar_instruccion(pcb* proceso, t_instruccion* instruccion_proceso, char* instruccion) 
+{
+	instruccion_proceso->pid = proceso->pid;
+	instruccion_proceso->instruccion = instruccion;
+
+    return;
+}
+
+void check_interrupt(){
+    // Chequeo si hay interrupciones
+    
+    argumentos_cpu* args = malloc(sizeof(argumentos_cpu));
+    args->proceso = pcb_recibido;
+    if(flag_interrupcion){
+        
+        enviar_pcb(socket_cliente_kernel, args);
+        flag_interrupcion = false;
+        
+    } else {
+        solicitar_instrucciones_a_memoria(socket_cliente_cpu);
+    }
+
 }

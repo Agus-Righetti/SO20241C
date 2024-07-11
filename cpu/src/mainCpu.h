@@ -18,6 +18,8 @@ int socket_servidor_cpu;
 int socket_cliente_kernel;
 int socket_cliente_cpu;
 int socket_interrupt_kernel;
+bool flag_interrupcion;
+
 
 t_dictionary* instrucciones;
 t_dictionary* registros;

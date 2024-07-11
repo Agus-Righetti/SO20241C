@@ -12,6 +12,5 @@ void atender_kernel();
 void atender_memoria();
 void atender_interrupcion();
 
-bool flag_interrupcion;
 
 #endif

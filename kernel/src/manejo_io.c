@@ -17,8 +17,11 @@ void crear_interfaz(op_code interfaz_nueva, int socket, char* nombre_interfaz)
     nueva_interfaz->nombre_interfaz = nombre_interfaz;
     sem_init(&nueva_interfaz->sem_puedo_mandar_operacion, 0,1);
     sem_init(&nueva_interfaz->sem_hay_procesos_esperando,0,0);
-    //legue hasta aca
-    pthread_mutex_init(nueva_interfaz->mutex_cola, NULL);
+    //llega hasta aca, hace sgm fault
+
+    log_info(log_kernel, "estoy por intentar inicializar el mutex");
+    pthread_mutex_init(&(nueva_interfaz->mutex_cola), NULL);
+    log_info(log_kernel, "ya inicialice el mutex");
 
     //agrego la interfaz a la cola de las q estan conectadas
 	queue_push(cola_interfaces_conectadas, nueva_interfaz); 
@@ -32,6 +35,7 @@ void crear_interfaz(op_code interfaz_nueva, int socket, char* nombre_interfaz)
     pthread_create(&hilo_de_escucha_interfaz, NULL, (void*)escucha_interfaz,(void*)&args_hilo);
     pthread_create(&hilo_de_envio_a_interfaz, NULL, (void*)envio_interfaz,(void*)&args_hilo);
 
+    
     pthread_join(hilo_de_escucha_interfaz, NULL); 
     pthread_cancel(hilo_de_envio_a_interfaz); 
 
@@ -44,13 +48,15 @@ void envio_interfaz(thread_args_escucha_io* args)
 {
     interfaz_kernel* interfaz = args->interfaz;
     argumentos_para_io* args_mandar_a_io;
+
+    log_info(log_kernel, "Estoy en envio interfaz");
     while(1)
     {
         sem_wait(&interfaz->sem_hay_procesos_esperando);
         sem_wait(&interfaz->sem_puedo_mandar_operacion);
-        pthread_mutex_lock(interfaz->mutex_cola);
+        pthread_mutex_lock(&interfaz->mutex_cola);
         args_mandar_a_io = queue_pop(interfaz->cola_de_espera);
-        pthread_mutex_unlock(interfaz->mutex_cola);
+        pthread_mutex_unlock(&interfaz->mutex_cola);
         interfaz->proceso_en_interfaz = args_mandar_a_io->proceso;
         enviar_instruccion_io(interfaz->socket,args_mandar_a_io);
     }
@@ -61,6 +67,8 @@ void escucha_interfaz(thread_args_escucha_io* args)
     bool interfaz_conectada = true;
     op_code cod_op;
     interfaz_kernel* interfaz = args->interfaz;
+
+    log_info(log_kernel, "estoy en escucha interfaz");
 
     while(interfaz_conectada)
     {
@@ -108,7 +116,7 @@ void desconectar_interfaz(interfaz_kernel* interfaz)
 
     sem_destroy(&interfaz_aux->sem_puedo_mandar_operacion);
     sem_destroy(&interfaz_aux->sem_hay_procesos_esperando);
-    pthread_mutex_destroy(interfaz_aux->mutex_cola);
+    pthread_mutex_destroy(&interfaz_aux->mutex_cola);
 
     free(interfaz_aux);
     return;
@@ -207,9 +215,9 @@ int io_gen_sleep(char* nombre_interfaz, int unidades_de_trabajo, pcb* proceso)
     if(interfaz) // si no devuelve null es porq encontro la interfaz q queria y es del tipo q queria
     {
         //aca hago lo q tengo q hacer, es decir bloquear el proceso y madnarle la isntruccion a la interfaz
-        pthread_mutex_lock(interfaz->mutex_cola);
+        pthread_mutex_lock(&interfaz->mutex_cola);
         queue_push(interfaz->cola_de_espera, args);
-        pthread_mutex_unlock(interfaz->mutex_cola);
+        pthread_mutex_unlock(&interfaz->mutex_cola);
         sem_post(&interfaz->sem_hay_procesos_esperando);
         pasar_proceso_a_blocked(proceso);
 
@@ -232,9 +240,9 @@ int io_stdin_read(char* nombre_interfaz, t_list* registro_direccion, uint32_t re
 
     if(interfaz) // si no devuelve null es porq encontro la interfaz q queria y es del tipo q queria
     {
-        pthread_mutex_lock(interfaz->mutex_cola);
+        pthread_mutex_lock(&interfaz->mutex_cola);
         queue_push(interfaz->cola_de_espera, args);
-        pthread_mutex_unlock(interfaz->mutex_cola);
+        pthread_mutex_unlock(&interfaz->mutex_cola);
         pasar_proceso_a_blocked(proceso);
         sem_post(&interfaz->sem_hay_procesos_esperando);
         return -1; //que no haga nada porq ya lo bloquie yo
@@ -254,9 +262,9 @@ int io_stdout_write(char* nombre_interfaz, t_list* registro_direccion, uint32_t 
     if(interfaz) // si no devuelve null es porq encontro la interfaz q queria y es del tipo q queria
     {
         
-        pthread_mutex_lock(interfaz->mutex_cola);
+        pthread_mutex_lock(&interfaz->mutex_cola);
         queue_push(interfaz->cola_de_espera, args);
-        pthread_mutex_unlock(interfaz->mutex_cola);
+        pthread_mutex_unlock(&interfaz->mutex_cola);
         pasar_proceso_a_blocked(proceso);
         sem_post(&interfaz->sem_hay_procesos_esperando);
         return -1; //que no haga nada porq ya lo bloquie yo
@@ -273,9 +281,9 @@ int io_fs_create(char* nombre_interfaz, char* nombre_archivo, pcb* proceso)
 
     if(interfaz) // si no devuelve null es porq encontro la interfaz q queria y es del tipo q queria
     {
-        pthread_mutex_lock(interfaz->mutex_cola);
+        pthread_mutex_lock(&interfaz->mutex_cola);
         queue_push(interfaz->cola_de_espera, args);
-        pthread_mutex_unlock(interfaz->mutex_cola);
+        pthread_mutex_unlock(&interfaz->mutex_cola);
         pasar_proceso_a_blocked(proceso);
         sem_post(&interfaz->sem_hay_procesos_esperando);
         return -1; //que no haga nada porq ya lo bloquie yo
@@ -292,9 +300,9 @@ int io_fs_delete(char* nombre_interfaz, char* nombre_archivo, pcb* proceso)
     
     if(interfaz) // si no devuelve null es porq encontro la interfaz q queria y es del tipo q queria
     {
-        pthread_mutex_lock(interfaz->mutex_cola);
+        pthread_mutex_lock(&interfaz->mutex_cola);
         queue_push(interfaz->cola_de_espera, args);
-        pthread_mutex_unlock(interfaz->mutex_cola);
+        pthread_mutex_unlock(&interfaz->mutex_cola);
         pasar_proceso_a_blocked(proceso);
         sem_post(&interfaz->sem_hay_procesos_esperando);
         return -1; //que no haga nada porq ya lo bloquie yo
@@ -312,9 +320,9 @@ int io_fs_truncate(char* nombre_interfaz, char* nombre_archivo, int registro_tam
     
     if(interfaz) // si no devuelve null es porq encontro la interfaz q queria y es del tipo q queria
     {
-        pthread_mutex_lock(interfaz->mutex_cola);
+        pthread_mutex_lock(&interfaz->mutex_cola);
         queue_push(interfaz->cola_de_espera, args);
-        pthread_mutex_unlock(interfaz->mutex_cola);
+        pthread_mutex_unlock(&interfaz->mutex_cola);
         pasar_proceso_a_blocked(proceso);
         sem_post(&interfaz->sem_hay_procesos_esperando);
         return -1; //que no haga nada porq ya lo bloquie yo
@@ -334,9 +342,9 @@ int io_fs_write(char* nombre_interfaz, char* nombre_archivo, t_list*  registro_d
     
     if(interfaz) // si no devuelve null es porq encontro la interfaz q queria y es del tipo q queria
     {
-        pthread_mutex_lock(interfaz->mutex_cola);
+        pthread_mutex_lock(&interfaz->mutex_cola);
         queue_push(interfaz->cola_de_espera, args);
-        pthread_mutex_unlock(interfaz->mutex_cola);
+        pthread_mutex_unlock(&interfaz->mutex_cola);
         pasar_proceso_a_blocked(proceso);
         sem_post(&interfaz->sem_hay_procesos_esperando);
         return -1; //que no haga nada porq ya lo bloquie yo
@@ -356,9 +364,9 @@ int io_fs_read(char* nombre_interfaz, char* nombre_archivo, t_list* registro_dir
     
     if(interfaz) // si no devuelve null es porq encontro la interfaz q queria y es del tipo q queria
     {
-        pthread_mutex_lock(interfaz->mutex_cola);
+        pthread_mutex_lock(&interfaz->mutex_cola);
         queue_push(interfaz->cola_de_espera, args);
-        pthread_mutex_unlock(interfaz->mutex_cola);
+        pthread_mutex_unlock(&interfaz->mutex_cola);
         pasar_proceso_a_blocked(proceso);
         sem_post(&interfaz->sem_hay_procesos_esperando);
         return -1; //que no haga nada porq ya lo bloquie yo

@@ -10,6 +10,9 @@ int main(int argc, char* argv[])
 	config_cpu = armar_config(log_cpu);
 	inicializar_tlb();
 
+	flag_interrupcion = false;
+
+
     // Conexion CPU --> Memoria -------------------------------------------------------------------------------------------------------
 
 	socket_cliente_cpu = conexion_a_memoria();

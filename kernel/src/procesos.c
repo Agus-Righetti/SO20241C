@@ -945,7 +945,7 @@ void accionar_segun_estado(pcb* proceso, int flag){
                 log_info(log_kernel, "PID: %d - Estado Anterior: %s - Estado Actual: READY", proceso->pid, estado_anterior);
 
             }
-        }else{ // No estoy en vrr, siempre madno a cola de Ready normal
+        } else{ // No estoy en vrr, siempre madno a cola de Ready normal
             
             pthread_mutex_lock(&mutex_cola_de_ready);
             queue_push(cola_de_ready,proceso); // Meto a la cola de Ready
@@ -1174,7 +1174,7 @@ void sacar_de_blocked(int pid){
     while(encontrado == false)//No lo encontre en las colas por recursos tengo q buscarlo en las interfaces IO
     {
         interfaz_aux = queue_pop(cola_interfaces_conectadas);
-        pthread_mutex_lock(interfaz_aux->mutex_cola);
+        pthread_mutex_lock(&interfaz_aux->mutex_cola);
         args_aux = queue_pop(interfaz_aux->cola_de_espera);
         primer_pid = args_aux->proceso->pid;
 
@@ -1189,7 +1189,7 @@ void sacar_de_blocked(int pid){
             };
 
         };
-        pthread_mutex_unlock(interfaz_aux->mutex_cola);
+        pthread_mutex_unlock(&interfaz_aux->mutex_cola);
         queue_push(cola_interfaces_conectadas, interfaz_aux);
         if(args_aux->proceso->pid == pid)
         {
