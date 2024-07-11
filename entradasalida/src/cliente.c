@@ -2,8 +2,9 @@
 
 // Conexion a memoria -----------------------------------------------------------------------------------------------------------------
 
-int conexion_a_memoria(t_log* log_io, io_config* config_io)
+int conexion_a_memoria()
 {    
+    log_info(log_io, "entre a conexion memoria");
     conexion_io_memoria = crear_conexion(config_io->ip_memoria,config_io->puerto_memoria);
     if(conexion_io_memoria == -1)
     {
@@ -19,8 +20,9 @@ int conexion_a_memoria(t_log* log_io, io_config* config_io)
 
 // Conexion a Kernel ------------------------------------------------------------------------------------------------------------------
 
-int conexion_a_kernel(t_log* log_io, io_config* config_io)
+int conexion_a_kernel()
 {    
+    log_info(log_io, "Entre a conexion kenrel");
     conexion_io_kernel = crear_conexion(config_io->ip_kernel,config_io->puerto_kernel);
     if(conexion_io_kernel == -1)
     {

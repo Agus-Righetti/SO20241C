@@ -14,9 +14,9 @@ void atender_cpu(){
                 break;
 
             case CPU_PIDE_INSTRUCCION_A_MEMORIA:
+                usleep(config_memoria->retardo_respuesta *1000);
                 log_info(log_memoria, "CPU me pide una instruccion");
                 buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
-                usleep(config_memoria->retardo_respuesta *1000);
 				cpu_pide_instruccion(buffer);
                 log_info(log_memoria, "Mande instruccion");
                 free(buffer);
@@ -115,7 +115,7 @@ void atender_kernel(){
             case CREACION_PROCESO_KERNEL_A_MEMORIA:
                 log_info(log_memoria, "Kernel pide creacion de un nuevo proceso");
                 buffer = recibiendo_paquete_personalizado(socket_cliente_kernel);
-                usleep(config_memoria->retardo_respuesta *1000);
+                //usleep(config_memoria->retardo_respuesta *1000);
 				iniciar_estructura_para_un_proceso_nuevo(buffer);
                 free(buffer);
                 break;

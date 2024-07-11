@@ -25,10 +25,13 @@ int main(int argc, char* argv[])
 
     // Las conexiones de sockets acá
 
+    log_info(log_io, "Estoy antes de la conexion a kernel");
     conexion_io_kernel = conexion_a_kernel();
 
+    log_info(log_io, "Estoy antes de la conexión a memoria");
     conexion_io_memoria = conexion_a_memoria(); 
 
+    log_info(log_io, "Estoy después de la conexión a memoria");
 
     // Conexion IO --> Memoria --------------------------------------------------------------------------------------------------------
 

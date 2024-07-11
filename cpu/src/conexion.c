@@ -46,9 +46,7 @@ void atender_memoria()
                 break;
             case -1:
                 log_error(log_cpu, "MEMORIA se desconecto. Terminando servidor");
-                free(socket_cliente_cpu);
                 exit(1);
-                return;
             default:
                 log_warning(log_cpu,"Operacion desconocida. No quieras meter la pata");
                 break;

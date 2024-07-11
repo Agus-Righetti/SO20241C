@@ -4,8 +4,7 @@
 //******************* CREACIÓN DE PROCESO **************************
 //******************************************************************
 void iniciar_estructura_para_un_proceso_nuevo(t_buffer* buffer){
-
-    sem_wait(&sem_lista_procesos); //0
+ 
 	char* path = recibir_string_del_buffer(buffer);
 	int pid = recibir_int_del_buffer(buffer);
             
@@ -20,7 +19,6 @@ void iniciar_estructura_para_un_proceso_nuevo(t_buffer* buffer){
 
 	log_info(log_memoria, "PROCESO CREADO CON ÉXITO");
 
-    sem_post(&sem_lista_procesos);
 
 	// Podriamos mandar un mensaje para chequear que llegó
 }
@@ -75,6 +73,7 @@ t_list* leer_archivo_y_cargar_instrucciones(char* archivo_pseudocodigo) {
 				free(linea_instruccion);
 				linea_instruccion = malloc(256 * sizeof(int));
 				strcpy(linea_instruccion,linea_limpia);
+                sem_post(&sem_lista_procesos);
     		}
     	}
     	//-----------------------------------------------

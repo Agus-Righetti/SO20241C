@@ -647,9 +647,9 @@ void recibir_pcb(pcb* proceso) {
     int indice_recurso;
     char* nombre_interfaz;
     int unidades_de_trabajo;
-    t_direccion_fisica direcciones_fisicas;
+    t_list* direcciones_fisicas;
     int registro_tamano;
-    t_direccion_fisica registro_puntero_archivo;
+    int registro_puntero_archivo;
     char* nombre_archivo;
     t_buffer* buffer; // Buffer para recibir el paquete
 

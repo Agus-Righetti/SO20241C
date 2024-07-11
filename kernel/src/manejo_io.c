@@ -17,6 +17,7 @@ void crear_interfaz(op_code interfaz_nueva, int socket, char* nombre_interfaz)
     nueva_interfaz->nombre_interfaz = nombre_interfaz;
     sem_init(&nueva_interfaz->sem_puedo_mandar_operacion, 0,1);
     sem_init(&nueva_interfaz->sem_hay_procesos_esperando,0,0);
+    //legue hasta aca
     pthread_mutex_init(nueva_interfaz->mutex_cola, NULL);
 
     //agrego la interfaz a la cola de las q estan conectadas
@@ -128,7 +129,7 @@ void enviar_instruccion_io(int socket, argumentos_para_io* args)
             break;
         case IO_STDIN_READ:
         case IO_STDOUT_WRITE:
-            agregar_estructura_al_paquete_personalizado(paquete_instruccion, args->registro_direccion);
+            agregar_estructura_al_paquete_personalizado(paquete_instruccion, args->registro_direccion, sizeof(t_list));
             agregar_int_al_paquete_personalizado(paquete_instruccion, args->registro_tamano);
             break;
         case IO_FS_CREATE:
@@ -142,7 +143,7 @@ void enviar_instruccion_io(int socket, argumentos_para_io* args)
         case IO_FS_WRITE:
         case IO_FS_READ:
             agregar_string_al_paquete_personalizado(paquete_instruccion, args->nombre_archivo);
-            agregar_estructura_al_paquete_personalizado(paquete_instruccion, args->registro_direccion);
+            agregar_estructura_al_paquete_personalizado(paquete_instruccion, args->registro_direccion, sizeof(t_list));
             agregar_int_al_paquete_personalizado(paquete_instruccion, args->registro_tamano);
             agregar_int_al_paquete_personalizado(paquete_instruccion, args->registro_puntero_archivo);
             break;
