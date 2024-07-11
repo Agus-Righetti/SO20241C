@@ -325,22 +325,34 @@ void interpretar_instruccion_de_memoria(char* instruccion)
     return;
 }
 
-void instruccion_set(char **parte)
-{
+void instruccion_set(char **parte) {
     // SET AX 1
-    // El proceso->pid del log_info también está mal
-    //log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s", proceso->pid, parte[0], parte[1], parte[2]);
+    
     log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s", pcb_recibido->pid, parte[0], parte[1], parte[2]);
+
+    char *registro = parte[1];
+    if(es_Registro_de_1B(registro)){
+        uint8_t* valor_registro = dictionary_get(registros, parte[1]);
+        log_info(log_cpu, "Registro: %s - Valor inicial: %u", registro, valor_registro);
+
+        *valor_registro = atoi(parte[2]);
+        log_info(log_cpu, "Registro: %s - Valor final: %u", registro, valor_registro);
+
+    } else {
+        // El registro es de 4B
+        uint32_t* valor_registro = dictionary_get(registros, parte[1]);
+        log_info(log_cpu, "Registro: %s - Valor inicial: %u", registro, valor_registro);
+        
+        *valor_registro = atoi(parte[2]);
+        log_info(log_cpu, "Registro: %s - Valor final: %u", registro, valor_registro);
+    }
+
+	// Aumento el PC
+    pcb_recibido->program_counter++; 
     
-	// Obtiene el valor del registro desde el diccionario 'registros' usando 'parte[1]' como clave y copia el valor de 'parte[2]' en el registro encontrado.
-    memcpy(dictionary_get(registros, parte[1]), parte[2], strlen(parte[2])); // Acá, ahora, modifica dentro del diccionario el valor del registro correspondiente (como ahora está cambiado, entonces modifica el registro del pcb que tengo en este momento posta)
-    
-    
-	// proceso->program_counter++; // Esto está mal, tendría que sumar el program counter pero del pcb_recibido, no del global
-    pcb_recibido->program_counter++; // Ahora sí, si sí puedo tener el pcb como "global" de todo el pcb.c entonces god
-    log_info(log_cpu, "El valor nuevo es %d", pcb_recibido->registros->ax);
-    log_info(log_cpu, "El valor nuevo es %d", pcb_recibido->program_counter);
+    return;
 }
+
 void instruccion_mov_in(char **parte) {
     // MOV_IN registro_datos registro_direccion
 
@@ -385,12 +397,16 @@ void instruccion_mov_in(char **parte) {
     
     // Aumento el PC para que lea la proxima instruccion
     pcb_recibido->program_counter++;
+
+    return;
 }
 
 void generar_instruccion(pcb* proceso, t_instruccion* instruccion_proceso, char* instruccion) 
 {
 	instruccion_proceso->pid = proceso->pid;
 	instruccion_proceso->instruccion = instruccion;
+
+    return;
 }
 
 void instruccion_mov_out(char **parte) {
@@ -434,6 +450,8 @@ void instruccion_mov_out(char **parte) {
 
     // Aumento el PC para que lea la proxima instruccion
 	pcb_recibido->program_counter++;
+
+    return;
 }
 
 void enviar_instruccion(int conexion, t_instruccion* instruccion, op_code codigo)
@@ -443,6 +461,8 @@ void enviar_instruccion(int conexion, t_instruccion* instruccion, op_code codigo
     agregar_estructura_al_paquete_personalizado(paquete, instruccion, sizeof(t_instruccion));
     enviar_paquete(paquete, conexion);
 	eliminar_paquete(paquete);
+
+    return;
 }
 
 void instruccion_sum(char **parte)
@@ -456,6 +476,8 @@ void instruccion_sum(char **parte)
     *registro_destino += *registro_origen;
     
     pcb_recibido->program_counter++;
+
+    return;
 }
 
 void instruccion_sub(char **parte)
@@ -469,6 +491,8 @@ void instruccion_sub(char **parte)
     *registro_destino -= *registro_origen;
     
     pcb_recibido->program_counter++;
+
+    return;
 }
 
 void instruccion_jnz(char **parte)
@@ -487,6 +511,8 @@ void instruccion_jnz(char **parte)
     {
         pcb_recibido->program_counter++;
     }
+
+    return;
 }
 
 
@@ -542,6 +568,8 @@ void instruccion_resize(char **parte) // ACA HAY QUE MANEJAR UN ENVIO DE PCB QUE
             }
     } 
     pcb_recibido->program_counter++; 
+
+    return;
 }
     
 
@@ -581,6 +609,8 @@ void instruccion_copy_string(char **parte) {
 
 
     pcb_recibido->program_counter++;
+
+    return;
 }
 
 // Función para copiar bytes desde una dirección de memoria a otra
@@ -624,6 +654,7 @@ void instruccion_wait(char** parte)
 	
     list_destroy_and_destroy_elements(pcb_recibido->instrucciones, free);
 	//free(proceso);
+    return;
 }
 
 void instruccion_signal(char **parte)
@@ -650,6 +681,7 @@ void instruccion_signal(char **parte)
     list_destroy_and_destroy_elements(pcb_recibido->instrucciones, free); // No sabemos por qué se liberan las instrucciones
     
     //free(proceso);
+    return;
 }
 
 void instruccion_io_gen_sleep(char **parte)
@@ -666,15 +698,7 @@ void instruccion_io_gen_sleep(char **parte)
 
     enviar_pcb(socket_cliente_kernel, args);
 
-    // if(parte[1] != GENERICA) 
-    // {
-    //     log_error(log_cpu, "La interfaz indicada no es GENERICA.");
-    // }
-    
-    //Todas las instrucciones de Entrada Salida se las tienen q mandar a kernel q es el q las ejecuta
-    //le mandan a kernel el cod op de la operacion con los argumetnos y kernel hace todo
-    //printf("Solicitando a la interfaz %s que realice un sleep por %s unidades de trabajo...\n", interfaz, parte[2]);
-    //solicitar_sleep_io(parte[1], unidades_trabajo, proceso->pid); // Esta función enviará la solicitud de sleep al Kernel
+    return;
 }
 
 // void solicitar_sleep_io(const char *interfaz, int unidades_trabajo, int pid)

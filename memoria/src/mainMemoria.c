@@ -11,7 +11,7 @@ int main() {
     pthread_mutex_init(&mutex_espacio_usuario, NULL);
 
     // ************ LISTA PROCESOS ************
-    sem_init(&sem_lista_procesos, 0, 1);
+    sem_init(&sem_lista_procesos, 0, 0);
 
     // ********* INICIALIZO MEMORIA COMO SERVIDOR *********
     inicializar_servidor();

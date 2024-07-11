@@ -39,6 +39,8 @@ extern int socket_cliente_kernel;
 extern int socket_servidor_memoria;
 extern int socket_cliente_cpu;
 extern int socket_interrupt_kernel;
+extern bool flag_interrupcion;
+
 
 //extern pcb* proceso;
 extern t_dictionary* instrucciones;

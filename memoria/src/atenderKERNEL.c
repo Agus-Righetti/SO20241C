@@ -18,7 +18,7 @@ void iniciar_estructura_para_un_proceso_nuevo(t_buffer* buffer){
     log_info(log_memoria, "Agregue el proceso a lista");
 
 	log_info(log_memoria, "PROCESO CREADO CON ÉXITO");
-
+    sem_post(&sem_lista_procesos);
 
 	// Podriamos mandar un mensaje para chequear que llegó
 }
@@ -73,7 +73,7 @@ t_list* leer_archivo_y_cargar_instrucciones(char* archivo_pseudocodigo) {
 				free(linea_instruccion);
 				linea_instruccion = malloc(256 * sizeof(int));
 				strcpy(linea_instruccion,linea_limpia);
-                sem_post(&sem_lista_procesos);
+            
     		}
     	}
     	//-----------------------------------------------
@@ -112,7 +112,8 @@ t_list* leer_archivo_y_cargar_instrucciones(char* archivo_pseudocodigo) {
         }
 
         list_add(instrucciones, instruccion_formateada);
-        
+    
+
         for (int j = 0; j < i; j++) {
             free(l_instrucciones[j]);
         }

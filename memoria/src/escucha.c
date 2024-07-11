@@ -188,7 +188,7 @@ void recibir_escuchar_cpu(){
     server_para_cpu();
     pthread_t hilo_escucha_cpu;
     pthread_create(&hilo_escucha_cpu, NULL, (void*)atender_cpu, NULL);
-    pthread_join(hilo_escucha_cpu, NULL);
+    pthread_detach(hilo_escucha_cpu);
 }
 
 // *************************************** KERNEL ***************************************
@@ -197,7 +197,7 @@ void recibir_escuchar_kernel(){
     server_para_kernel();
     pthread_t hilo_escucha_kernel;
     pthread_create(&hilo_escucha_kernel, NULL, (void*)atender_kernel, NULL);
-    pthread_detach(hilo_escucha_kernel);
+    pthread_join(hilo_escucha_kernel, NULL);
 }
 
 // *************************************** IO ***************************************

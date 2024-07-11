@@ -113,6 +113,7 @@ void atender_kernel()
 void atender_interrupcion() // ACA HAY QUE MANEJAR EL ENVIAR PCB DENTRO DEL SWITCH (ESTA COMENTADO)
 {
     t_list* lista;
+    bool flag_interrupcion;
     while(1) {
         int cod_op = recibir_operacion(socket_interrupt_kernel);
         switch (cod_op) {
@@ -130,7 +131,12 @@ void atender_interrupcion() // ACA HAY QUE MANEJAR EL ENVIAR PCB DENTRO DEL SWIT
                 argumentos_cpu* args = malloc(sizeof(argumentos_cpu));
                 //args->proceso = pcb_recibido;
                 args->operacion = PCB_CPU_A_KERNEL;
-                enviar_pcb(socket_cliente_kernel, args);
+
+                flag_interrupcion = true;
+                
+                
+
+                //enviar_pcb(socket_cliente_kernel, args);
 
                 break;
             case -1:

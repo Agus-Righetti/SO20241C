@@ -17,7 +17,8 @@ void cpu_pide_instruccion(t_buffer* un_buffer){        //[PID, IP]
     
 	//Enviar_instruccion a CPU
 	enviar_una_instruccion_a_cpu(instruccion);
-
+	sem_post(&sem_lista_procesos);
+	
     log_info(log_memoria, "Instruccion enviada a CPU");
 }
 
