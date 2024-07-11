@@ -41,6 +41,12 @@ typedef struct
     int tiempo_unidad_trabajo;
 } InterfazGenerica;
 
+typedef struct{
+    char* nombre_archivo;
+    int bloque_inicial;
+    int tamanio_archivo;
+}t_metadata;
+
 extern t_log* log_io;
 extern io_config* config_io;
 extern metadatos_config* config_metadatos;
@@ -48,8 +54,7 @@ extern pcb* proceso;
 
 extern int conexion_io_kernel;
 extern int conexion_io_memoria;
-extern t_bitarray *bitmap;
-extern FILE* bloques_dat;
+extern size_t bitarray_size;
 extern t_queue* cola_archivos_en_fs;
 
 #endif

@@ -29,8 +29,8 @@ t_list* buscar_todas_las_paginas(int direccion_logica, int tamaño_a_operar){
     int desplazamiento = direccion_logica - numero_pagina * tamanio_pagina;
 
     // La traduzco y la agrego a la lista
-    t_direccion_fisica* direccion_fisica_traducida = traducir_direccion_logica_a_fisica(numero_pagina, desplazamiento);
-    list_add(direcciones_fisicas, direccion_fisica_traducida);
+    //t_direccion_fisica* direccion_fisica_traducida = traducir_direccion_logica_a_fisica(numero_pagina, desplazamiento);
+    //list_add(direcciones_fisicas, direccion_fisica_traducida);
 
     int tamaño_ya_evaluado = tamanio_pagina - desplazamiento;
     
@@ -38,8 +38,8 @@ t_list* buscar_todas_las_paginas(int direccion_logica, int tamaño_a_operar){
     while (tamaño_a_operar > tamaño_ya_evaluado){
         numero_pagina = numero_pagina + 1;
         desplazamiento = 0;
-        direccion_fisica_traducida = traducir_direccion_logica_a_fisica(numero_pagina, desplazamiento);
-        list_add(direcciones_fisicas, direccion_fisica_traducida);
+        //direccion_fisica_traducida = traducir_direccion_logica_a_fisica(numero_pagina, desplazamiento);
+        //list_add(direcciones_fisicas, direccion_fisica_traducida);
         tamaño_ya_evaluado = tamaño_ya_evaluado + tamanio_pagina;
     }
     

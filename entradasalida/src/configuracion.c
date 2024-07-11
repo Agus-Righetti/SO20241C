@@ -45,7 +45,7 @@ io_config* armar_config(t_log* log_io, char* nombre_config)
         aux_io_config->block_size = config_get_int_value(config_aux, "BLOCK_SIZE");
         aux_io_config->block_count = config_get_int_value(config_aux, "BLOCK_COUNT");
         aux_io_config->retraso_compactacion = config_get_int_value(config_aux, "RETRASO_COMPACTACION");
-
+        size_t bitarray_size = (config_io->block_count + 7) / 8;
         crear_archivos_gestion_fs();
 
         cola_archivos_en_fs = queue_create();

@@ -65,6 +65,7 @@ void atender_kernel()
             case IO_FS_DELETE: //(Interfaz, Nombre Archivo)
 
                 nombre_archivo = recibir_string_del_buffer(buffer);
+                manejar_eliminacion_archivo(nombre_archivo, pid);
 
                 break;
 
@@ -72,6 +73,7 @@ void atender_kernel()
 
                 nombre_archivo = recibir_string_del_buffer(buffer); 
                 registro_tamano = recibir_int_del_buffer(buffer);
+                manejar_truncado_archivo(nombre_archivo, registro_tamano, pid);
 
                 break;
 
