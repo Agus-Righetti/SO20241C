@@ -164,7 +164,7 @@ typedef struct {
     registros_cpu* registros; 
 	char* direccion_instrucciones; //es el path que me mandan por consola
 	pthread_mutex_t mutex_pcb;
-	t_list* instrucciones;
+	//t_list* instrucciones; no lo usamos 
 	t_queue* recursos_asignados;
 } pcb;
 
@@ -173,8 +173,8 @@ typedef struct {
 	int offset;
 	int bytes_a_operar; // Se que no es DF -> pero es muy util para hacer manejo de paginas
 } t_direccion_fisica;
-typedef struct
-{
+
+typedef struct {
 	op_code tipo_interfaz;
 	t_queue* cola_de_espera;
 	bool en_uso; // Sacar

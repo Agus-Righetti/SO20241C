@@ -8,10 +8,8 @@ void atender_cpu(){
 
     while(control){
         cod_op_cpu = recibir_operacion(socket_cliente_cpu);
+
         switch (cod_op_cpu) {
-            case MENSAJE:
-                recibir_mensaje(socket_cliente_cpu, log_memoria);
-                break;
 
             case CPU_PIDE_INSTRUCCION_A_MEMORIA:
                 usleep(config_memoria->retardo_respuesta *1000);
@@ -108,14 +106,10 @@ void atender_kernel(){
     while(control){
         cod_op_kernel = recibir_operacion(socket_cliente_kernel);
         switch (cod_op_kernel) {
-            case MENSAJE:
-                recibir_mensaje(socket_cliente_kernel, log_memoria);
-                break;
-
             case CREACION_PROCESO_KERNEL_A_MEMORIA:
                 log_info(log_memoria, "Kernel pide creacion de un nuevo proceso");
                 buffer = recibiendo_paquete_personalizado(socket_cliente_kernel);
-                //usleep(config_memoria->retardo_respuesta *1000);
+                usleep(config_memoria->retardo_respuesta *1000);
 				iniciar_estructura_para_un_proceso_nuevo(buffer);
                 free(buffer);
                 break;
@@ -149,10 +143,6 @@ void atender_io(){
     while(control){
         cod_op_io = recibir_operacion(socket_cliente_io);
         switch (cod_op_io) {
-            case MENSAJE:
-                recibir_mensaje(socket_cliente_io, log_memoria);
-                break;
-
             case IO_PIDE_LECTURA_MEMORIA:
                 log_info(log_memoria, "IO me pide la lectura de un espacio de memoria");
                 buffer = recibiendo_paquete_personalizado(socket_cliente_io);

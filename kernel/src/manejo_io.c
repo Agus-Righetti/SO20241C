@@ -9,7 +9,7 @@
 void crear_interfaz(op_code interfaz_nueva, int socket, char* nombre_interfaz)
 {
     //inicializo una nueva interfaz
-
+    log_info(log_kernel, "se conecto una interfaz nueva, hola! %s \n", nombre_interfaz);
 	interfaz_kernel* nueva_interfaz = malloc(sizeof(interfaz_kernel)); 
 	nueva_interfaz->tipo_interfaz= interfaz_nueva;
 	nueva_interfaz->cola_de_espera = queue_create();

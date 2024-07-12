@@ -26,6 +26,8 @@ io_config* armar_config(t_log* log_io, char* nombre_config)
     {
     case GENERICA:
 
+        log_info(log_io, "soy generica");
+
         aux_io_config->tiempo_unidad_trabajo = config_get_int_value(config_aux, "TIEMPO_UNIDAD_TRABAJO");
 
         break;
@@ -33,12 +35,13 @@ io_config* armar_config(t_log* log_io, char* nombre_config)
     case STDIN:
     case STDOUT:
         
+        log_info(log_io, "soy STDIN o STDOUT");
         aux_io_config->ip_memoria= strdup(config_get_string_value(config_aux, "IP_MEMORIA"));
         aux_io_config->puerto_memoria = strdup(config_get_string_value(config_aux, "PUERTO_MEMORIA"));
         break;
 
     case DIALFS:
-
+        log_info(log_io, "soy DIALFS");
         aux_io_config->ip_memoria= strdup(config_get_string_value(config_aux, "IP_MEMORIA"));
         aux_io_config->puerto_memoria = strdup(config_get_string_value(config_aux, "PUERTO_MEMORIA"));
         aux_io_config->tiempo_unidad_trabajo = config_get_int_value(config_aux, "TIEMPO_UNIDAD_TRABAJO");

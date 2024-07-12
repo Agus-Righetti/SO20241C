@@ -6,6 +6,7 @@ int conexion_a_memoria()
 {    
     log_info(log_io, "entre a conexion memoria");
     conexion_io_memoria = crear_conexion(config_io->ip_memoria,config_io->puerto_memoria);
+    log_info(log_io, "ya cree la conexion con memoria");
     if(conexion_io_memoria == -1)
     {
         log_info(log_io, "Error: No se pudo crear conexion IO --> MEMORIA");

@@ -257,7 +257,9 @@ void interpretar_instruccion_de_memoria(char* instruccion)
             instruccion_set(parte);
             break;
         case I_MOV_IN:
+            log_info(log_cpu, "Llegue al mov_in");
             instruccion_mov_in(parte);
+
             break;
         case I_MOV_OUT:
             instruccion_mov_out(parte);
@@ -325,6 +327,10 @@ void interpretar_instruccion_de_memoria(char* instruccion)
     return;
 }
 
+// Al final de cada instruccion queremos verificar si hay alguna interrupcion
+// Si sí hay una interrupcion, entonces tiene que seguir y devolver el pcb
+// Si no hay interrupcion, entonces tiene que solicitar otra instrucción a memoria
+
 void instruccion_set(char **parte) {
     // SET AX 1
     
@@ -332,39 +338,38 @@ void instruccion_set(char **parte) {
 
     char *registro = parte[1];
     if(es_Registro_de_1B(registro)){
-        log_info(log_cpu,"estamos en registro de 8B");
+        // El registro es de 1B
+        log_info(log_cpu,"estamos en registro de 1B");
         uint8_t* valor_registro = dictionary_get(registros, parte[1]);
-        log_info(log_cpu, "Registro: %s - Valor inicial: %d", registro, *valor_registro);
+        log_info(log_cpu, "Registro: %s - Valor inicial: %u", registro, *valor_registro);
 
         *valor_registro = atoi(parte[2]);
-        log_info(log_cpu, "Registro: %s - Valor final: %d", registro, *valor_registro);
+        log_info(log_cpu, "Registro: %s - Valor final: %u", registro, *valor_registro);
 
     } else {
         // El registro es de 4B
         log_info(log_cpu,"estamos en registro de 4B");
         uint32_t* valor_registro = dictionary_get(registros, parte[1]);
-        log_info(log_cpu, "Registro: %s - Valor inicial: %d", registro, *valor_registro);
+        log_info(log_cpu, "Registro: %s - Valor inicial: %u", registro, *valor_registro);
         
         *valor_registro = atoi(parte[2]);
-        log_info(log_cpu, "Registro: %s - Valor final: %d", registro, *valor_registro);
+        log_info(log_cpu, "Registro: %s - Valor final: %u", registro, *valor_registro);
     }
 
 	// Aumento el PC
     pcb_recibido->program_counter++; 
+    
+    liberar_array_strings(parte);
     
     check_interrupt();
 
     return;
 }
 
-// Al final de cada instruccion queremos verificar si hay alguna interrupcion
-// Si sí hay una interrupcion, entonces tiene que seguir y devolver el pcb
-// Si no hay interrupcion, entonces tiene que solicitar otra instrucción a memoria
-
-
 
 void instruccion_mov_in(char **parte) {
-    // MOV_IN registro_datos registro_direccion
+    // MOV_IN (Registro Datos, Registro Dirección)
+    // Lee el valor de memoria correspondiente a la Dirección Lógica que se encuentra en el Registro Dirección y lo almacena en el Registro Datos.
 
     // Todos los MOV_IN van a ser de 4 bytes, con la excepción de que el registro datos sea AX, BX, CX, DX donde pasan a ser de 1 byte
 
@@ -373,8 +378,6 @@ void instruccion_mov_in(char **parte) {
     // Traducimos la direccion del registro direccion
     char *registro_direccion = parte[2]; // Direccion logica
     int direccion_logica = *(int*)dictionary_get(registros, registro_direccion);
-
-    // revisar bien como funciona -> 
 
     char *registro_dato = parte[1];
 
@@ -478,62 +481,115 @@ void enviar_instruccion(int conexion, t_instruccion* instruccion, op_code codigo
     return;
 }
 
-void instruccion_sum(char **parte)
-{
+void instruccion_sum(char **parte) {
+    // SUM (Registro Destino, Registro Origen)
+    // Suma al Registro Destino el Registro Origen y deja el resultado en el Registro Destino.
+
     // SUM AX BX
     log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s", pcb_recibido->pid, parte[0], parte[1], parte[2]);
-    int *registro_destino = dictionary_get(registros, parte[1]);
-    int *registro_origen = dictionary_get(registros, parte[2]);
+
     
-    // Realizar la suma y almacenar el resultado en el registro destino
-    *registro_destino += *registro_origen;
+    char *registro_destino = parte[1];
+    char *registro_origen = parte[2];
+
+
+    if(es_Registro_de_1B(registro_destino) && es_Registro_de_1B(registro_origen)){
+        // Hago la suma de 1B
+        uint8_t* valor_registro_destino = dictionary_get(registros, registro_destino);
+        uint8_t* valor_registro_origen = dictionary_get(registros, registro_origen);
+
+        log_info(log_cpu, "Registro origen: %u", *valor_registro_origen);
+        log_info(log_cpu, "Registro destino: %u", *valor_registro_destino);
+
+        *valor_registro_destino += *valor_registro_origen;
+        log_info(log_cpu, "Registro destino luego de la suma: %u", *valor_registro_destino);
+
+    } else {
+        // Hago la suma de 4B
+        uint32_t* valor_registro_destino = dictionary_get(registros, registro_destino);
+        uint32_t* valor_registro_origen = dictionary_get(registros, registro_origen);
+
+        log_info(log_cpu, "Registro origen: %u", *valor_registro_origen);
+        log_info(log_cpu, "Registro destino: %u", *valor_registro_destino);
+
+        *valor_registro_destino += *valor_registro_origen;
+        log_info(log_cpu, "Registro destino luego de la suma: %u", *valor_registro_destino);
+    }
+
     
     pcb_recibido->program_counter++;
 
-    log_info(log_cpu, "El valor despues de sum es: %d", *registro_destino);
 
     check_interrupt();
 
     return;
 }
 
-void instruccion_sub(char **parte)
-{
+
+void instruccion_sub(char **parte) {
+    //SUB (Registro Destino, Registro Origen)
+    // Resta al Registro Destino el Registro Origen y deja el resultado en el Registro Destino.
+
     // SUB AX BX
+
     log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s", pcb_recibido->pid, parte[0], parte[1], parte[2]);
-    int *registro_destino = dictionary_get(registros, parte[1]);
-    int *registro_origen = dictionary_get(registros, parte[2]);
-    
-    // Realizar la resta y almacenar el resultado en el registro destino
-    *registro_destino -= *registro_origen;
+
+    char *registro_destino = parte[1];
+    char *registro_origen = parte[2];
+
+
+    if(es_Registro_de_1B(registro_destino) && es_Registro_de_1B(registro_origen)){
+        // Hago la resta de 1B
+        uint8_t* valor_registro_destino = dictionary_get(registros, registro_destino);
+        uint8_t* valor_registro_origen = dictionary_get(registros, registro_origen);
+
+        log_info(log_cpu, "Registro origen: %u", *valor_registro_origen);
+        log_info(log_cpu, "Registro destino: %u", *valor_registro_destino);
+
+        *valor_registro_destino -= *valor_registro_origen;
+        log_info(log_cpu, "Registro destino luego de la resta: %u", *valor_registro_destino);
+
+    } else {
+        // Hago la resta de 4B
+        uint32_t* valor_registro_destino = dictionary_get(registros, registro_destino);
+        uint32_t* valor_registro_origen = dictionary_get(registros, registro_origen);
+
+        log_info(log_cpu, "Registro origen: %u", *valor_registro_origen);
+        log_info(log_cpu, "Registro destino: %u", *valor_registro_destino);
+
+        *valor_registro_destino -= *valor_registro_origen;
+        log_info(log_cpu, "Registro destino luego de la resta: %u", *valor_registro_destino);
+    }
+
     
     pcb_recibido->program_counter++;
-
-    log_info(log_cpu, "El valor despues de sub es: %d", *registro_destino);
 
     check_interrupt();
 
     return;
 }
 
-void instruccion_jnz(char **parte)
-{
+void instruccion_jnz(char **parte) {
+    // JNZ (Registro, Instrucción)
+    // Si el valor del registro es distinto de cero, actualiza el program counter al número de instrucción pasada por parámetro.
+
     // JNZ AX 4
     log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s", pcb_recibido->pid, parte[0], parte[1], parte[2]);
     
     int registro = *(int*)dictionary_get(registros, parte[1]);
     int instruccion = atoi(parte[2]); // Convertir la instrucción a un entero
-    
-    if (registro != 0) 
-    {
+
+    log_info(log_cpu, "PC antes del jnz: %d", pcb_recibido->program_counter);
+
+    if (registro != 0) {
+        // Actualizo el PC al pasado por parametro
         pcb_recibido->program_counter = instruccion;
-    } 
-    else 
-    {
+
+    } else {
         pcb_recibido->program_counter++;
     }
 
-    log_info(log_cpu, "Este es el valor del PC después del jnz: %d", pcb_recibido->program_counter);
+    log_info(log_cpu, "PC después del jnz: %d", pcb_recibido->program_counter);
 
     check_interrupt();
     
@@ -541,8 +597,11 @@ void instruccion_jnz(char **parte)
 }
 
 
-void instruccion_resize(char **parte) // ACA HAY QUE MANEJAR UN ENVIO DE PCB QUE ESTA COMENTADO EN EL SWITCH
-{
+void instruccion_resize(char **parte) {
+    // ACA HAY QUE MANEJAR UN ENVIO DE PCB QUE ESTA COMENTADO EN EL SWITCH
+    // RESIZE (Tamaño)
+    // Solicitará a la Memoria ajustar el tamaño del proceso al tamaño pasado por parámetro. En caso de que la respuesta de la memoria sea Out of Memory, se deberá devolver el contexto de ejecución al Kernel informando de esta situación.
+
     // RESIZE 128
     log_info(log_cpu, "PID: %d - Ejecutando: %s - %s", pcb_recibido->pid, parte[0], parte[1]);
 
@@ -563,38 +622,7 @@ void instruccion_resize(char **parte) // ACA HAY QUE MANEJAR UN ENVIO DE PCB QUE
     enviar_paquete(paquete, socket_cliente_cpu);
 	eliminar_paquete(paquete);
 
-    // Escucha para recibir el ok o el out of memory
-    int control = 0;
 
-    int cod_op_memoria = recibir_operacion(socket_cliente_cpu);
-    while(control == 0) {
-        switch (cod_op_memoria){
-            case CPU_RECIBE_OUT_OF_MEMORY_DE_MEMORIA: // VACIO
-                printf("Error: No se pudo ajustar el tamaño del proceso. Out of Memory.\n");
-                
-                argumentos_cpu* args = malloc(sizeof(argumentos_cpu));
-                args->proceso = pcb_recibido; //Este proceso es global, no deberia ser global
-                args->operacion = OUT_OF_MEMORY;
-
-                enviar_pcb(socket_cliente_kernel, args);
-	                
-                
-                break;
-            case CPU_RECIBE_OK_DEL_RESIZE:
-                printf("El tamaño del proceso se ha ajustado correctamente a %d\n", nuevo_tamanio);
-                break;
-
-            case -1:
-                log_error(log_cpu, "MEMORIA se desconecto. Terminando servidor");
-                //exit(1);
-            default:
-                log_warning(log_cpu,"Operacion desconocida. No quieras meter la pata");
-                break;
-            }
-    } 
-    pcb_recibido->program_counter++; 
-
-    check_interrupt();
 
     return;
 }
@@ -682,7 +710,7 @@ void instruccion_wait(char** parte)
     // Enviar solicitud de SIGNAL al kernel
     enviar_pcb(socket_cliente_kernel, args);
 	
-    list_destroy_and_destroy_elements(pcb_recibido->instrucciones, free);
+
 	//free(proceso);
     return;
 }
@@ -708,7 +736,6 @@ void instruccion_signal(char **parte)
     // Enviar solicitud de SIGNAL al kernel
     enviar_pcb(socket_cliente_kernel, args);
 
-    list_destroy_and_destroy_elements(pcb_recibido->instrucciones, free); // No sabemos por qué se liberan las instrucciones
     
     //free(proceso);
     return;
@@ -1131,15 +1158,19 @@ void generar_instruccion(pcb* proceso, t_instruccion* instruccion_proceso, char*
 void check_interrupt(){
     // Chequeo si hay interrupciones
     
-    argumentos_cpu* args = malloc(sizeof(argumentos_cpu));
-    args->proceso = pcb_recibido;
+    
     if(flag_interrupcion){
-        
+        argumentos_cpu* args = malloc(sizeof(argumentos_cpu));
+        args->proceso = pcb_recibido;
         enviar_pcb(socket_cliente_kernel, args);
+        log_info(log_cpu, "llegue hasta aca");
         flag_interrupcion = false;
         
+        
     } else {
+        
         solicitar_instrucciones_a_memoria(socket_cliente_cpu);
+        log_info(log_cpu, "yale pedi instruccion a memoira recien");
     }
 
 }

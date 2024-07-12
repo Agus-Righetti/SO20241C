@@ -3,35 +3,37 @@
 // MEMORIA es server de CPU
 // CPU es cliente de MEMORIA
 
-void atender_memoria() 
-{
-    t_list* lista;
-    t_instruccion* instruccion;
+void atender_memoria() {
+
     t_buffer* buffer;
 
     int cod_op_memoria;
 
-    while(1)
-    {
+    while(1) {
         cod_op_memoria = recibir_operacion(socket_cliente_cpu);
-        log_info(log_cpu, "estoy en el while de atender memoria");
-        switch (cod_op_memoria) 
-        {
-            case MENSAJE:  
-                recibir_mensaje(socket_cliente_cpu, log_cpu);
-                break;
-            case PAQUETE:
-                lista = recibir_paquete(socket_cliente_cpu);
-                log_info(log_cpu, "Me llegaron los siguientes valores:\n");
-                list_iterate(lista, (void*) iterator);
-                list_destroy_and_destroy_elements(lista, free);
-                break;
+
+        log_info(log_cpu, "estoy en el while de atender memoria22222");
+
+        log_info(log_cpu, "me llego un codigo %d", cod_op_memoria);
+
+        switch (cod_op_memoria)  {
+            
+            
+            
+            // case MENSAJE:  
+            // log_info(log_cpu, "case 1 ");
+            //     recibir_mensaje(socket_cliente_cpu, log_cpu);
+            //     break;
+                
             case CPU_RECIBE_TAMAÑO_PAGINA_DE_MEMORIA:
+            log_info(log_cpu, "case 2 ");
                 buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
                 tamanio_pagina = recibir_int_del_buffer(buffer);
                 free(buffer);
                 break; 
+
             case CPU_RECIBE_INSTRUCCION_DE_MEMORIA:
+            log_info(log_cpu, "case 3 ");
                 log_info(log_cpu, "Recibi una instruccion de memoria");
                 buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
                 //log_info(log_cpu, "PID: %d - FETCH - Program Counter: %d", proceso->pid, proceso->program_counter);
@@ -40,14 +42,37 @@ void atender_memoria()
                 interpretar_instruccion_de_memoria(instruccion_recibida); // Mando la instrucción para hacer un decode
                 free(buffer); // Libero el buffer
                 break;
+
+            case CPU_RECIBE_OUT_OF_MEMORY_DE_MEMORIA: // VACIO
+            log_info(log_cpu, "case 4 ");
+                printf("Error: No se pudo ajustar el tamaño del proceso. Out of Memory.\n");
+                    
+                argumentos_cpu* args = malloc(sizeof(argumentos_cpu));
+                args->proceso = pcb_recibido; //Este proceso es global, no deberia ser global
+                args->operacion = OUT_OF_MEMORY;
+
+                enviar_pcb(socket_cliente_kernel, args);
+                log_info(log_cpu, "entre a out of  ");
+                break;
+
+            case CPU_RECIBE_OK_DEL_RESIZE:
+            log_info(log_cpu, "case 5 ");
+                printf("El tamaño del proceso se ha ajustado correctamente.\n");
+                pcb_recibido->program_counter++; 
+                check_interrupt();
+                log_info(log_cpu, "volvi de checkinterrupt  ");
+                break;
+
             case EXIT:
+            log_info(log_cpu, "case 6 ");
                 error_exit(EXIT);
-                list_destroy_and_destroy_elements(lista, free); 
                 break;
             case -1:
+            log_info(log_cpu, "case 7 ");
                 log_error(log_cpu, "MEMORIA se desconecto. Terminando servidor");
                 exit(1);
             default:
+            log_info(log_cpu, "case 8 ");
                 log_warning(log_cpu,"Operacion desconocida. No quieras meter la pata");
                 break;
         }

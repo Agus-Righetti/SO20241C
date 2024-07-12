@@ -1010,7 +1010,7 @@ void pasar_proceso_a_exit(pcb* proceso){
 
     free(proceso->registros);
     queue_destroy(proceso->recursos_asignados);
-    list_destroy(proceso->instrucciones);
+   //list_destroy(proceso->instrucciones);
     pthread_mutex_destroy(&proceso->mutex_pcb);
     free(proceso); 
 

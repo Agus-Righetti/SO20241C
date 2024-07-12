@@ -4,6 +4,7 @@
 #include "cpu_gestor.h"
 #include "direccion.h"
 #include "../../entradasalida/src/io_gestor.h"
+#include "extra.h"
 
 typedef enum
 {

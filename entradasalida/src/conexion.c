@@ -11,6 +11,7 @@ pthread_t escuchar_memoria()
 
 void atender_kernel()
 {
+    log_info(log_io, "estoy en atender kernel");
     // Si bien nosotros somos clientes de kernel, en este momento se podria decir que estamos actuando como servidores al recibir la operacion
     int cod_op_io;
     //recibimos de kernel una operacion de ES
