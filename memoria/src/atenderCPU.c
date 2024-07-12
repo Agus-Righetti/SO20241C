@@ -54,6 +54,7 @@ void enviar_una_instruccion_a_cpu(char* instruccion){
 	agregar_string_al_paquete_personalizado(paquete, instruccion);
 
 	enviar_paquete(paquete, socket_cliente_cpu);
+	log_info(log_memoria, "ya mande la isntruccion q me pidio CPU codOP%d", CPU_RECIBE_INSTRUCCION_DE_MEMORIA);
 	eliminar_paquete(paquete);
 }
 
@@ -228,10 +229,12 @@ void enviar_out_of_memory_a_cpu(){
 
 void enviar_ok_del_resize_a_cpu(){ 
 	//ACA ESTA EL PROBELMAAAAAAAAAAAAAAAAAAAAAAA
-	t_paquete* paquete_enviar_ok = crear_paquete_personalizado(CPU_RECIBE_OK_DEL_RESIZE);
+	log_info(log_memoria,"este es el nro del codop q mando %d", (int)CPU_RECIBE_OK_DEL_RESIZE);
+	t_paquete* paquete_enviar_ok = crear_paquete_personalizado((int)CPU_RECIBE_OK_DEL_RESIZE);
 	log_info(log_memoria, "CODIGO DE OPERACION: CPU RECIBE OK");
-	agregar_int_al_paquete_personalizado(paquete_enviar_ok, 13); //se manda el 13 como cod_op, porque?????????????????	
+	//agregar_int_al_paquete_personalizado(paquete_enviar_ok, 13); //se manda el 13 como cod_op, porque?????????????????	
 	enviar_paquete(paquete_enviar_ok, socket_cliente_cpu);
+	log_info(log_memoria, "ya mande el codigo de ok resize");
 	eliminar_paquete(paquete_enviar_ok);
 
 	return;

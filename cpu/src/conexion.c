@@ -31,7 +31,7 @@ void atender_memoria() {
                 break; 
 
             case CPU_RECIBE_INSTRUCCION_DE_MEMORIA:
-            log_info(log_cpu, "case 3 ");
+                log_info(log_cpu, "case 3 ");
                 log_info(log_cpu, "Recibi una instruccion de memoria");
                 buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
                 //log_info(log_cpu, "PID: %d - FETCH - Program Counter: %d", proceso->pid, proceso->program_counter);
@@ -48,17 +48,23 @@ void atender_memoria() {
                 argumentos_cpu* args = malloc(sizeof(argumentos_cpu));
                 args->proceso = pcb_recibido; //Este proceso es global, no deberia ser global
                 args->operacion = OUT_OF_MEMORY;
-
+                buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
+                free(buffer);
                 enviar_pcb(socket_cliente_kernel, args);
                 log_info(log_cpu, "entre a out of  ");
+                
                 break;
 
             case CPU_RECIBE_OK_DEL_RESIZE:
-            log_info(log_cpu, "case 5 ");
+                log_info(log_cpu, "case 5 ");
                 printf("El tamaño del proceso se ha ajustado correctamente.\n");
                 pcb_recibido->program_counter++; 
+                buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
+                free(buffer);
+                log_info(log_cpu, "recibi buffer");
                 check_interrupt();
                 log_info(log_cpu, "volvi de checkinterrupt  ");
+                
                 break;
 
             case EXIT:
