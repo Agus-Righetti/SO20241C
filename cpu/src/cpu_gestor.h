@@ -20,7 +20,7 @@ typedef struct {
     int pid;
     int numero_pagina;
     int numero_marco;
-} TLB_Entrada;
+}TLB_Entrada;
 
 // Para LRU, se necesita un campo adicional para mantener el orden de uso
 typedef struct {
@@ -33,6 +33,10 @@ typedef struct {
 extern t_log* log_cpu;
 extern cpu_config* config_cpu;
 extern int tamanio_pagina;
+
+extern char* instruccion_recibida;
+extern sem_t sem_hay_instruccion;
+extern sem_t sem_tengo_ok_resize;
 
 extern int socket_servidor_cpu;
 extern int socket_cliente_kernel;
@@ -51,6 +55,6 @@ extern pcb* pcb_recibido;
 
 extern TLB* tlb;
 extern int cantidad_entradas_tlb;
-extern int algoritmo_tlb;
+extern char* algoritmo_tlb;
 
 #endif

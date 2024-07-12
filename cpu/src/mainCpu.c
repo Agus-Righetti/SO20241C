@@ -12,6 +12,9 @@ int main(int argc, char* argv[])
 	
 	// Semaforo para traducir
 	sem_init(&sem_tengo_el_marco, 0, 0);
+	sem_init(&sem_tengo_ok_resize, 0, 0);
+	sem_init(&sem_hay_instruccion, 0, 0);
+
 
 	flag_interrupcion = false;
 
@@ -36,6 +39,8 @@ int main(int argc, char* argv[])
 	pthread_t hilo_escuchar_kernel = escuchar_kernel();
 	
 	pthread_t hilo_escuchar_kernel_interrupcion = escuchar_kernel_interrupcion();
+
+	pthread_t hilo_interpretar_instruccion = crear_hilo_interpretar_instruccion();
 	
 
 	pthread_detach(hilo_escuchar_kernel);
@@ -53,6 +58,8 @@ int main(int argc, char* argv[])
 void terminar_programa()
 {
 	sem_destroy(&sem_tengo_el_marco);
+	sem_destroy(&sem_tengo_ok_resize);
+	sem_destroy(&sem_hay_instruccion);
 	
 	if (log_cpu != NULL) 
     {

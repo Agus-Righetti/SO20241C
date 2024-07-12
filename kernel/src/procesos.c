@@ -659,6 +659,7 @@ void recibir_pcb(pcb* proceso) {
     int registro_puntero_archivo;
     char* nombre_archivo;
     t_buffer* buffer; // Buffer para recibir el paquete
+    int motivo = -1;
 
     if (!interrupcion_por_fin_de_proceso) // Verifico si la interrupción es por fin de proceso o por planificación
     {
@@ -681,6 +682,7 @@ void recibir_pcb(pcb* proceso) {
                 fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
                 flag_estado = 0; // El proceso todavia no termino
                 proceso_recibido = recibir_estructura_del_buffer(buffer);
+                motivo = INTERRUPTED_BY_USER;
 
                 break;
             
@@ -691,6 +693,7 @@ void recibir_pcb(pcb* proceso) {
                 fin = clock(); // Termino el tiempo desde que empecé a esperar la recepción
                 flag_estado = 1; // El proceso ya finalizo, no quedan rafagas por ejecutar
                 proceso_recibido = recibir_estructura_del_buffer(buffer);
+                motivo = SUCCESS;
                 break;
 
             case SIGNAL:
@@ -813,6 +816,7 @@ void recibir_pcb(pcb* proceso) {
                 fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
                 proceso_recibido = recibir_estructura_del_buffer(buffer);
                 flag_estado = 1; //paso el proceso a exit
+                motivo = OUT_OF_MEMORY;
             
             default:
                 log_error(log_kernel, "El codigo de operacion no es reconocido :(");
@@ -854,7 +858,7 @@ void recibir_pcb(pcb* proceso) {
     sem_post(&sem_puedo_mandar_a_cpu); // Aviso que ya volvio el proceso que estaba en CPU, puedo mandar otro
     sem_post(&sem_planificacion_activa); // Está activa, entonces aumento para que el próximo chequeo no lo bloquee
 
-    accionar_segun_estado(proceso_recibido, flag_estado); // Mando el proceso a Ready o Exit segun corresponda
+    accionar_segun_estado(proceso_recibido, flag_estado, motivo); // Mando el proceso a Ready o Exit segun corresponda
 
     return;
 }
@@ -916,7 +920,7 @@ void desalojar_proceso(pcb* proceso, int operacion){
 // --------------------------------------------------------------------
 
 // ************* SEGUN EL FLAG QUE TENGA EL PROCESO VOY A CAMBIARLE EL ESTADO *************
-void accionar_segun_estado(pcb* proceso, int flag){
+void accionar_segun_estado(pcb* proceso, int flag, int motivo){
 
     sem_wait(&sem_planificacion_activa); // Si la planificación está activa entonces sigo (paso de 1 a 0 el sem)
     sem_post(&sem_planificacion_activa); // Estoy acá si la planificación sigue activa, entonces aumento para que no se bloquee a la próxima
@@ -932,7 +936,7 @@ void accionar_segun_estado(pcb* proceso, int flag){
         pasar_proceso_a_blocked(proceso);
     }
     else if(flag == 1){
-        pasar_proceso_a_exit(proceso);
+        pasar_proceso_a_exit(proceso, motivo);
     }else if (flag == 0)
     { 
 
@@ -982,7 +986,7 @@ void accionar_segun_estado(pcb* proceso, int flag){
 }
 
 // ************* PASA EL PROCESO SELECCIONADO A EXIT *************
-void pasar_proceso_a_exit(pcb* proceso){
+void pasar_proceso_a_exit(pcb* proceso, int motivo){
 
     log_info(log_kernel, "entre a pasar proceso a exit por PID %d", proceso->pid);
     //En esta funcion faltan liberar los recursos q tenia el proceso
@@ -992,16 +996,32 @@ void pasar_proceso_a_exit(pcb* proceso){
     pthread_mutex_lock(&proceso->mutex_pcb);
     proceso->estado_del_proceso = EXIT; // Asigno el estado del proceso como Exit
     pthread_mutex_unlock(&proceso->mutex_pcb);
-    //log_info(log_kernel, "entre a pasar proceso a exit  dsp del mutex");
-
-    // if (proceso->recursos_asignados == NULL) {
-    //     log_info(log_kernel, "Error: 'proceso->recursos_asignados' no está inicializado.\n");
-    // }
-
+    
+    switch(motivo)
+    {
+        case SUCCESS:
+            log_info(log_kernel, "Finaliza el proceso <%d> - Motivo: <SUCCESS>", proceso->pid );
+            break;
+        case INVALID_INTERFACE:
+            log_info(log_kernel, "Finaliza el proceso <%d> - Motivo: <INVALID_INTERFACE>", proceso->pid );
+            break;
+        case INVALID_RESOURCE:
+            log_info(log_kernel, "Finaliza el proceso <%d> - Motivo: <INVALID_RESOURCE>", proceso->pid );
+            break;
+        case OUT_OF_MEMORY:
+            log_info(log_kernel, "Finaliza el proceso <%d> - Motivo: <OUT_OF_MEMORY>", proceso->pid );
+            break;
+        case INTERRUPTED_BY_USER:
+            log_info(log_kernel, "Finaliza el proceso <%d> - Motivo: <INTERRUPTED_BY_USER>", proceso->pid );
+            break;
+        default:
+            log_info(log_kernel, "Finaliza el proceso <%d> - Motivo: <NI IDEA MACHOOO>", proceso->pid );
+            break;
+    }
     while(queue_is_empty(proceso->recursos_asignados) != true) // Mientras la cola de recursos asignados no esta vacia
     {
         int recurso_a_liberar = (int)(intptr_t)queue_peek(proceso->recursos_asignados); // Entonces libero los recursos correspondientes 
-        hacer_signal(recurso_a_liberar, proceso);
+        hacer_signal(recurso_a_liberar, proceso); //tengo q pasarle a signal el nombre del recurso
     }
 
     
@@ -1114,7 +1134,7 @@ void sacar_de_cola_de_ready(int pid){
     
     pthread_mutex_unlock(&mutex_cola_de_ready);
     
-    pasar_proceso_a_exit(aux); // Ahora sí, una vez que saqué el proceso de la cola en la que se encontraba, entonces lo paso a exit
+    pasar_proceso_a_exit(aux, INTERRUPTED_BY_USER); // Ahora sí, una vez que saqué el proceso de la cola en la que se encontraba, entonces lo paso a exit
 }
 // ************* AUXILIAR DE FINALIZAR_PROCESO, SACA UN PROCESO DE LA COLA DE NEW Y LO FINALIZA ************* 
 void sacar_de_cola_de_new(int pid){
@@ -1131,7 +1151,7 @@ void sacar_de_cola_de_new(int pid){
     
     sem_wait(&sem_cola_de_new);
     pthread_mutex_unlock(&mutex_cola_de_new);
-    pasar_proceso_a_exit(aux);
+    pasar_proceso_a_exit(aux, INTERRUPTED_BY_USER);
 }
 // ************* AUXILIAR DE FINALIZAR_PROCESO, SACA UN PROCESO DE EXECUTE Y LO FINALIZA ************* 
 void sacar_de_execute(int pid){
@@ -1221,7 +1241,7 @@ void sacar_de_blocked(int pid){
 
     if(encontrado) //si no lo encontre es porq estaba en io
     {
-        pasar_proceso_a_exit(aux);
+        pasar_proceso_a_exit(aux, INTERRUPTED_BY_USER);
 
     }else pid_eliminar = pid;
 
@@ -1251,7 +1271,7 @@ int hacer_signal(char* recurso, pcb* proceso){
 
             queue_push(proceso_desbloqueado->recursos_asignados, (void*)(intptr_t)indice_recurso); // Agrego el recurso a la cola de recursos asignados del proceso
             
-            accionar_segun_estado(proceso_desbloqueado , 0); // Con esto es con lo que desbloqueo lo que estaba bloqueado
+            accionar_segun_estado(proceso_desbloqueado , 0, -1); // Con esto es con lo que desbloqueo lo que estaba bloqueado
             
         }else flag = 0; // Debo pasar este proceso de nuevo a ready, el signal no lo bloquea
 
@@ -1273,7 +1293,11 @@ int hacer_signal(char* recurso, pcb* proceso){
             }
         }
 
-    } else flag = 1; // No existe,  mando a exit el proceso
+    } else
+    {
+        flag = -1;
+        pasar_proceso_a_exit(proceso, INVALID_RESOURCE);
+    }  // No existe,  mando a exit el proceso
 
     return flag;
 }
@@ -1310,7 +1334,11 @@ int hacer_wait(char* recurso, pcb* proceso){
             queue_push(proceso->recursos_asignados, (void*)(intptr_t)indice_recurso); // Agrego el recurso a la cola de recursos asignados
         } 
          
-    }else flag = 1; // Entonces no existe el recurso solicitado, y mando a exit al proceso
+    }else
+    {
+        flag = -1;
+        pasar_proceso_a_exit(proceso, INVALID_RESOURCE);
+    }  // Entonces no existe el recurso solicitado, y mando a exit al proceso
     
     return flag;
 }

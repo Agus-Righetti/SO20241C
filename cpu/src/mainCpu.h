@@ -21,6 +21,8 @@ int socket_interrupt_kernel;
 bool flag_interrupcion;
 int motivo_interrupcion;
 sem_t sem_tengo_el_marco;
+sem_t sem_hay_instruccion;
+sem_t sem_tengo_ok_resize;
 
 t_dictionary* instrucciones;
 t_dictionary* registros;
@@ -28,10 +30,11 @@ int marco;
 
 //pcb* proceso = NULL;
 pcb* pcb_recibido ; // &proceso; // Asignación de la dirección de proceso a pcb_recibido
+char* instruccion_recibida;
 
 TLB* tlb; 
 int cantidad_entradas_tlb;
-int algoritmo_tlb;
+char* algoritmo_tlb;
 
 void terminar_programa();
 

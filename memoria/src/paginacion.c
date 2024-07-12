@@ -21,8 +21,6 @@ t_pagina* crear_pagina(t_frame* un_frame){
 
 	pagina->frame = un_frame->id;
 
-    log_info(log_memoria, "Acabo de crear una pagina, frame:" );
-
     return pagina;
 }
 
@@ -31,6 +29,7 @@ void agregar_pag_a_tabla (t_proceso* proceso, t_pagina* pagina){
     list_add(proceso->tabla_paginas, pagina);
     
     log_info(log_memoria, "Agregue una pagina a la tabla: %d", list_size(proceso->tabla_paginas));
+
 }
 
 bool hay_lugar_en_memoria(int paginasNecesarias){ 

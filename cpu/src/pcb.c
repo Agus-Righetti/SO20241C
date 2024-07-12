@@ -2,11 +2,6 @@
 
 // PCB -----------------------------------------------------------------------------------------------------------------------------
 
-// No se puede tener el pcb como global, pero capaz se puede tenerlo de forma que no sea local de cada función
-//pcb* pcb_recibido; 
-
-// Entonces cuando recibo un nuevo pcb, lo limpio al de acá y asigno el nuevo, creo que estaría bien 
-
 void recibir_pcb(){
     
     log_info(log_cpu, "entre a recibir pcb");
@@ -165,8 +160,6 @@ void iniciar_diccionario_instrucciones(void)
     dictionary_put(instrucciones, "EXIT", (void*)(intptr_t)I_EXIT);
 }
 
-//void iniciar_diccionario_registros(registros_cpu* registro)
-//void iniciar_diccionario_registros(pcb* pcb_recibido) // Cambio esto recibiendo el pcb que estoy utilizando en el momento
 void iniciar_diccionario_registros()
 {
     //aca deberia ser los registros del proceso q estamos ejecutando, no registros cualqiueras.
@@ -192,7 +185,7 @@ void destruir_diccionarios(void)
 
 // Instrucciones memoria -----------------------------------------------------------------------------------------------------------
 
-// void solicitar_instrucciones_a_memoria(int socket_cliente_cpu, pcb* pcb_recibido)
+// --------------- ESTO ES FETCH ---------------
 void solicitar_instrucciones_a_memoria(int socket_cliente_cpu)
 {   
     if (pcb_recibido == NULL) 
@@ -218,6 +211,12 @@ void solicitar_instrucciones_a_memoria(int socket_cliente_cpu)
     
     // Acordarse de sacarlo!!!!!!
     log_info(log_cpu, "Le pedi instruccion a Memoria");
+    
+
+    // LOG OBLIGATORIO - FETCH INSTRUCCIÓN
+    log_info(log_cpu, "PID: %d - FETCH - Program Counter: %d", pcb_recibido->pid, pcb_recibido->program_counter); 
+    
+
     // printf("Verificación fuera de la función:\n");
     // printf("El PID es: %d\n", pcb_recibido->pid);
     // printf("El PC es: %d\n", pcb_recibido->program_counter);
@@ -225,96 +224,103 @@ void solicitar_instrucciones_a_memoria(int socket_cliente_cpu)
 
 // Instrucciones -------------------------------------------------------------------------------------------------------------------
 
-void interpretar_instruccion_de_memoria(char* instruccion)
+
+
+void interpretar_instruccion_de_memoria()
 {   
-    iniciar_diccionario_instrucciones(); // Esto va a iniciar el diccionario por cada instrucción. Se lo podría llamar una sola vez desde otro lado
-
-    // iniciar_diccionario_registros(&proceso->registros); // Acá, los registros que se pasan tienen que ser del proceso con el que estoy trabajando, no de uno global entiendo
-    
-    // Ese diccionario de registros podría iniciarlo en la función de arriba de esta "solicitar_instrucciones_a_memoria", de modo que : recibo pcb -> creo registros en base a ese pcb -> pido instrucciones a memoria (son instrucciones que va a realizar sólo ese pcb entiendo)
-
-
-    // [MOV_IN EAX EBX] -> UNA instruccion la recibimos como una lista de string
-    //char** parte = string_split((char*)list_get(proceso->instrucciones, proceso->program_counter), " "); // Partes de la instruccion actual
-
-	char** parte = string_split(instruccion, " "); // Divido la instrucción (que es un string) en partes
-    
-    //MOV_IN AX BX
-    // parte[0] = "MOV_IN"
-    // parte[1] = "EAX"
-    // parte[2] = "EBX"
-
-    int instruccion_enum = (int)(intptr_t)dictionary_get(instrucciones, parte[0]); // Acá se obtiene la instrucción (el enum) a partir del diccionario
-
-    switch (instruccion_enum) // Según la instrucción que sea, entonces realizo como tal cada instrucción (execute)
+    while(1)
     {
-        case I_SET:
-            instruccion_set(parte);
-            break;
-        case I_MOV_IN:
-            log_info(log_cpu, "Llegue al mov_in");
-            instruccion_mov_in(parte);
 
-            break;
-        case I_MOV_OUT:
-            instruccion_mov_out(parte);
-            break;
-        case I_SUM:
-            instruccion_sum(parte);
-            break;
-        case I_SUB:
-            instruccion_sub(parte);
-            break;
-        case I_JNZ:
-            instruccion_jnz(parte);
-            break;
-        case I_RESIZE:
-            instruccion_resize(parte);
-            break;
-        case I_COPY_STRING:
-            instruccion_copy_string(parte);
-            break;
-        case I_WAIT:
-            instruccion_wait(parte);
-            break;
-        case I_SIGNAL:
-            instruccion_signal(parte);
-            break;
-        case I_IO_GEN_SLEEP:
-            instruccion_io_gen_sleep(parte);
-            break;
-        case I_IO_STDIN_READ:
-            instruccion_io_stdin_read(parte);
-            break;
-        case I_IO_STDOUT_WRITE:
-            instruccion_io_stdout_write(parte);
-            break;
-        case I_IO_FS_CREATE:
-            instruccion_io_fs_create(parte);
-            break;
-        case I_IO_FS_DELETE:
-            instruccion_io_fs_delete(parte);
-            break;
-        case I_IO_FS_TRUNCATE:
-            instruccion_io_fs_truncate(parte);
-            break;
-        case I_IO_FS_WRITE:
-            instruccion_io_fs_write(parte);
-            break;
-        case I_IO_FS_READ:
-            instruccion_io_fs_read(parte);
-            break;
-        case I_EXIT:
-            instruccion_exit(parte);
-            destruir_diccionarios();
-            break;
-        case -1:
-            log_warning(log_cpu, "PID: %d - Advertencia: No se pudo interpretar la instrucción - Ejecutando: EXIT", pcb_recibido->pid);
-            error_exit(EXIT);
-            destruir_diccionarios();
-            return;
+    
+        sem_wait(&sem_hay_instruccion);
+        iniciar_diccionario_instrucciones(); // Esto va a iniciar el diccionario por cada instrucción. Se lo podría llamar una sola vez desde otro lado
+
+        // iniciar_diccionario_registros(&proceso->registros); // Acá, los registros que se pasan tienen que ser del proceso con el que estoy trabajando, no de uno global entiendo
+        
+        // Ese diccionario de registros podría iniciarlo en la función de arriba de esta "solicitar_instrucciones_a_memoria", de modo que : recibo pcb -> creo registros en base a ese pcb -> pido instrucciones a memoria (son instrucciones que va a realizar sólo ese pcb entiendo)
+
+
+        // [MOV_IN EAX EBX] -> UNA instruccion la recibimos como una lista de string
+        //char** parte = string_split((char*)list_get(proceso->instrucciones, proceso->program_counter), " "); // Partes de la instruccion actual
+
+        char** parte = string_split(instruccion_recibida, " "); // Divido la instrucción (que es un string) en partes
+        
+        //MOV_IN AX BX
+        // parte[0] = "MOV_IN"
+        // parte[1] = "EAX"
+        // parte[2] = "EBX"
+
+        int instruccion_enum = (int)(intptr_t)dictionary_get(instrucciones, parte[0]); // Acá se obtiene la instrucción (el enum) a partir del diccionario
+
+        switch (instruccion_enum) // Según la instrucción que sea, entonces realizo como tal cada instrucción (execute)
+        {
+            case I_SET:
+                instruccion_set(parte);
+                break;
+            case I_MOV_IN:
+                log_info(log_cpu, "Llegue al mov_in");
+                instruccion_mov_in(parte);
+
+                break;
+            case I_MOV_OUT:
+                instruccion_mov_out(parte);
+                break;
+            case I_SUM:
+                instruccion_sum(parte);
+                break;
+            case I_SUB:
+                instruccion_sub(parte);
+                break;
+            case I_JNZ:
+                instruccion_jnz(parte);
+                break;
+            case I_RESIZE:
+                instruccion_resize(parte);
+                break;
+            case I_COPY_STRING:
+                instruccion_copy_string(parte);
+                break;
+            case I_WAIT:
+                instruccion_wait(parte);
+                break;
+            case I_SIGNAL:
+                instruccion_signal(parte);
+                break;
+            case I_IO_GEN_SLEEP:
+                instruccion_io_gen_sleep(parte);
+                break;
+            case I_IO_STDIN_READ:
+                instruccion_io_stdin_read(parte);
+                break;
+            case I_IO_STDOUT_WRITE:
+                instruccion_io_stdout_write(parte);
+                break;
+            case I_IO_FS_CREATE:
+                instruccion_io_fs_create(parte);
+                break;
+            case I_IO_FS_DELETE:
+                instruccion_io_fs_delete(parte);
+                break;
+            case I_IO_FS_TRUNCATE:
+                instruccion_io_fs_truncate(parte);
+                break;
+            case I_IO_FS_WRITE:
+                instruccion_io_fs_write(parte);
+                break;
+            case I_IO_FS_READ:
+                instruccion_io_fs_read(parte);
+                break;
+            case I_EXIT:
+                instruccion_exit(parte);
+                destruir_diccionarios();
+                break;
+            case -1:
+                log_warning(log_cpu, "PID: %d - Advertencia: No se pudo interpretar la instrucción - Ejecutando: EXIT", pcb_recibido->pid);
+                error_exit(EXIT);
+                destruir_diccionarios();
+                return;
+        }
     }
-
     // log_warning(log_cpu, "PID: %d - Advertencia: Sin instrucciones por ejecutar - Ejecutando: EXIT", pcb_recibido->pid);
 	// error_exit(EXIT);
     // destruir_diccionarios();
@@ -322,13 +328,11 @@ void interpretar_instruccion_de_memoria(char* instruccion)
     return;
 }
 
-// Al final de cada instruccion queremos verificar si hay alguna interrupcion
-// Si sí hay una interrupcion, entonces tiene que seguir y devolver el pcb
-// Si no hay interrupcion, entonces tiene que solicitar otra instrucción a memoria
-
 void instruccion_set(char **parte) {
-    // SET AX 1
     
+    // Ejemplo: SET AX 1
+    
+    // LOG OBLIGATORIO - INSTRUCCIÓN EJECUTADA
     log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s", pcb_recibido->pid, parte[0], parte[1], parte[2]);
 
     char *registro = parte[1];
@@ -385,28 +389,43 @@ void instruccion_set(char **parte) {
     return;
 }
 
-
 void instruccion_mov_in(char **parte) {
+    
     // MOV_IN (Registro Datos, Registro Dirección)
+
     // Lee el valor de memoria correspondiente a la Dirección Lógica que se encuentra en el Registro Dirección y lo almacena en el Registro Datos.
 
     // Todos los MOV_IN van a ser de 4 bytes, con la excepción de que el registro datos sea AX, BX, CX, DX donde pasan a ser de 1 byte
 
+    // LOG OBLIGATORIO - INSTRUCCIÓN EJECUTADA
 	log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s", pcb_recibido->pid, parte[0], parte[1], parte[2]);
 
     // Traducimos la direccion del registro direccion
     char *registro_direccion = parte[2]; // Direccion logica
     int direccion_logica = *(int*)dictionary_get(registros, registro_direccion);
-
+    
+    log_info(log_cpu, "la direccion logica es: %d", direccion_logica);
+    
     char *registro_dato = parte[1];
 
-    t_list* direcciones_fisicas;
+    log_info(log_cpu, "El registro_dato es %s", registro_dato);
+
+    t_list* direcciones_fisicas = malloc(sizeof(t_list));
 
     if(es_Registro_de_1B(registro_dato)){
+
+        log_info(log_cpu, "ESTOY JUSTO ANTES DE LA FUNCION TRADUCIR COMPLETO");
+
+        //segm fault
+        
         direcciones_fisicas = traducir_dl_a_df_completa(direccion_logica, 1);
+
+        log_info(log_cpu, "volvi de traducir las direcciones completo");
 
         // Ahora tengo todas las DF -> necesito leer en memoria el dato
         peticion_lectura_a_memoria(CPU_PIDE_LEER_REGISTRO_1B, pcb_recibido->pid, direcciones_fisicas);
+        log_info(log_cpu, "ya hice la peticion de lectura a memoria");
+
         uint8_t valor_leido_de_memoria = espero_rta_lectura_1B_de_memoria();
 
         // REVISAR ESTO
@@ -417,6 +436,7 @@ void instruccion_mov_in(char **parte) {
 
     } else {
         // la lectura sera de 4 bytes
+        //segm fault
         direcciones_fisicas = traducir_dl_a_df_completa(direccion_logica, 4);
 
         // Ahora tengo todas las DF -> necesito leer en memoria el dato
@@ -442,11 +462,11 @@ void instruccion_mov_in(char **parte) {
     return;
 }
 
-
 void instruccion_mov_out(char **parte) {
     // MOV_OUT registro_direccion registro_datos
     // Todos los MOV_OUT van a ser de 4 bytes, con la excepción de que el registro datos sea AX, BX, CX, DX donde pasan a ser de 1 byte  
 
+    // LOG OBLIGATORIO - INSTRUCCIÓN EJECUTADA
     log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s", pcb_recibido->pid, parte[0], parte[1], parte[2]);
 
     // Leo el registro de datos
@@ -459,7 +479,8 @@ void instruccion_mov_out(char **parte) {
     log_info(log_cpu, "La direccion logica es: %d", direccion_logica);
     
     t_list* direcciones_fisicas;
-    if(es_Registro_de_1B(registro_dato)){
+    if(es_Registro_de_1B(registro_dato))
+    {
         log_info(log_cpu, "Llegue a la traduccion");
 
         direcciones_fisicas = traducir_dl_a_df_completa(direccion_logica, 1);
@@ -471,7 +492,9 @@ void instruccion_mov_out(char **parte) {
         // [PID, DFs, VALOR] _> [Int, lista, uint8]
         espero_rta_escritura_1B_de_memoria();
 
-    } else {
+    } 
+    else 
+    {
         // la escritura sera de 4 bytes
         direcciones_fisicas = traducir_dl_a_df_completa(direccion_logica, 4);
 
@@ -511,6 +534,8 @@ void instruccion_sum(char **parte) {
     // Suma al Registro Destino el Registro Origen y deja el resultado en el Registro Destino.
 
     // SUM AX BX
+
+    // LOG OBLIGATORIO - INSTRUCCIÓN EJECUTADA
     log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s", pcb_recibido->pid, parte[0], parte[1], parte[2]);
 
     
@@ -558,6 +583,7 @@ void instruccion_sub(char **parte) {
 
     // SUB AX BX
 
+    // LOG OBLIGATORIO - INSTRUCCIÓN EJECUTADA
     log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s", pcb_recibido->pid, parte[0], parte[1], parte[2]);
 
     char *registro_destino = parte[1];
@@ -602,6 +628,8 @@ void instruccion_jnz(char **parte) {
     // Si el valor del registro es distinto de cero, actualiza el program counter al número de instrucción pasada por parámetro.
 
     // JNZ AX 4
+
+    // LOG OBLIGATORIO - INSTRUCCIÓN EJECUTADA
     log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s", pcb_recibido->pid, parte[0], parte[1], parte[2]);
     
     int registro = *(int*)dictionary_get(registros, parte[1]);
@@ -633,6 +661,8 @@ void instruccion_resize(char **parte) {
     // Solicitará a la Memoria ajustar el tamaño del proceso al tamaño pasado por parámetro. En caso de que la respuesta de la memoria sea Out of Memory, se deberá devolver el contexto de ejecución al Kernel informando de esta situación.
 
     // RESIZE 128
+
+    // LOG OBLIGATORIO - INSTRUCCIÓN EJECUTADA
     log_info(log_cpu, "PID: %d - Ejecutando: %s - %s", pcb_recibido->pid, parte[0], parte[1]);
 
     // Verificar si se proporcionó el tamaño como parámetro
@@ -654,6 +684,10 @@ void instruccion_resize(char **parte) {
     enviar_paquete(paquete, socket_cliente_cpu);
 	eliminar_paquete(paquete);
 
+    sem_wait(&sem_tengo_ok_resize);
+
+    check_interrupt();
+
 
     return;
 }
@@ -662,6 +696,8 @@ void instruccion_resize(char **parte) {
 void instruccion_copy_string(char **parte) {
     // COPY_STRING (TAMAÑO EN BYTES)
 
+
+    // LOG OBLIGATORIO - INSTRUCCIÓN EJECUTADA
     log_info(log_cpu, "PID: %d - Ejecutando: %s - %s", pcb_recibido->pid, parte[0], parte[1]);
 
     // Verificar si se proporcionó el tamaño como parámetro
@@ -732,7 +768,10 @@ void instruccion_wait(char** parte)
         return;
     }
 
+
+    // LOG OBLIGATORIO - INSTRUCCIÓN EJECUTADA
 	log_info(log_cpu, "PID: %d - Ejecutando: %s - %s", pcb_recibido->pid, parte[0], parte[1]);
+
 	pcb_recibido->program_counter++;
     argumentos_cpu* args = malloc(sizeof(argumentos_cpu));
     
@@ -759,8 +798,10 @@ void instruccion_signal(char **parte)
         return;
     }
     argumentos_cpu* args = malloc(sizeof(argumentos_cpu));
-    // Log de ejecucion de la instruccion
+
+    // LOG OBLIGATORIO - INSTRUCCIÓN EJECUTADA
 	log_info(log_cpu, "PID: %d - Ejecutando: %s - %s", pcb_recibido->pid, parte[0], parte[1]);
+
     pcb_recibido->program_counter++;
 
     args->proceso = pcb_recibido; 
@@ -780,6 +821,8 @@ void instruccion_signal(char **parte)
 void instruccion_io_gen_sleep(char **parte)
 {
     // IO_GEN_SLEEP Int1 10
+
+    // LOG OBLIGATORIO - INSTRUCCIÓN EJECUTADA
     log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s", pcb_recibido->pid, parte[0], parte[1], parte[2]);
 
     argumentos_cpu* args = malloc(sizeof(argumentos_cpu));
@@ -795,23 +838,6 @@ void instruccion_io_gen_sleep(char **parte)
 
     return;
 }
-
-// void solicitar_sleep_io(const char *interfaz, int unidades_trabajo, int pid)
-// {
-//     // Crear y enviar el paquete al Kernel
-//     t_paquete *paquete = crear_paquete_personalizado(IO_GEN_SLEEP);
-
-//     // Agregar la información necesaria al paquete
-//     agregar_estructura_al_paquete_personalizado(paquete, &proceso, sizeof(pcb)); 
-//     agregar_estructura_al_paquete_personalizado(paquete, &unidades_trabajo, sizeof(int));
-//     agregar_estructura_al_paquete_personalizado(paquete, interfaz, strlen(interfaz) + 1);
-
-//     // Enviar el paquete al Kernel
-//     enviar_paquete(paquete, socket_cliente_kernel);
-
-//     // Liberar el paquete
-//     eliminar_paquete(paquete);
-// }
 
 void instruccion_io_stdin_read(char** parte)
 {
@@ -829,6 +855,7 @@ void instruccion_io_stdin_read(char** parte)
     //     log_error(log_cpu, "La interfaz indicada no es STDIN.");
     // }
 
+    // LOG OBLIGATORIO - INSTRUCCIÓN EJECUTADA
     log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s %s", pcb_recibido->pid, parte[0], parte[1], parte[2], parte[3]);
 
     // Extraer los registros de la instrucción
@@ -859,7 +886,6 @@ void instruccion_io_stdin_read(char** parte)
     enviar_pcb(socket_cliente_kernel, args);
 }
 
-
 void instruccion_io_stdout_write(char **parte) // ESTE NO LO ENTIENDO PORQUE MANDA BANDA DE COSAS
 {
     // IO_STDOUT_WRITE Int3 BX EAX
@@ -880,6 +906,7 @@ void instruccion_io_stdout_write(char **parte) // ESTE NO LO ENTIENDO PORQUE MAN
     char *registro_direccion = parte[2]; // Direccion logica
     char *registro_tamano = parte[3];
 
+    // LOG OBLIGATORIO - INSTRUCCIÓN EJECUTADA
     log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s %s", pcb_recibido->pid, parte[0], parte[1], parte[2], parte[3]);
 
     int valor_registro = *(int*)dictionary_get(registros, registro_tamano);
@@ -930,6 +957,8 @@ void instruccion_io_fs_create(char **parte)
     //     log_error(log_cpu, "La interfaz indicada no es DIALFS.");
     // }
 
+
+    // LOG OBLIGATORIO - INSTRUCCIÓN EJECUTADA
     log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s", pcb_recibido->pid, parte[0], parte[1], parte[2]);
 
 
@@ -975,6 +1004,7 @@ void instruccion_io_fs_delete(char **parte)
     //     log_error(log_cpu, "La interfaz indicada no es DIALFS.");
     // }
 
+    // LOG OBLIGATORIO - INSTRUCCIÓN EJECUTADA
     log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s", pcb_recibido->pid, parte[0], parte[1], parte[2]);
     
     argumentos_cpu* args = malloc(sizeof(argumentos_cpu));
@@ -1020,7 +1050,10 @@ void instruccion_io_fs_truncate(char **parte)
     // }
     
     // Log de la ejecucion de la instruccion
+
+    // LOG OBLIGATORIO - INSTRUCCIÓN EJECUTADA
     log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s %s", pcb_recibido->pid, parte[0], parte[1], parte[2], parte[3]);
+    
     int nuevo_tamanio = *(int*)dictionary_get(registros, parte[3]);
     
     argumentos_cpu* args = malloc(sizeof(argumentos_cpu));
@@ -1066,12 +1099,7 @@ void instruccion_io_fs_write(char **parte)
         return;
     }
 
-    // if(strcmp(parte[1], "DIALFS") != 0) 
-    // {
-    //     log_error(log_cpu, "La interfaz indicada no es DIALFS.");
-    // }
-
-    // Log de la ejecución de la instrucción
+    // LOG OBLIGATORIO - INSTRUCCIÓN EJECUTADA
     log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s %s %s %s", pcb_recibido->pid, parte[0], parte[1], parte[2], parte[3], parte[4], parte[5]);
 
     // // Extrae los parámetros de la instrucción
@@ -1129,7 +1157,7 @@ void instruccion_io_fs_read(char **parte)
     //     log_error(log_cpu, "La interfaz indicada no es DIALFS.");
     // }
 
-    // Log de la ejecución de la instrucción
+    // LOG OBLIGATORIO - INSTRUCCIÓN EJECUTADA
     log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s %s %s %s", pcb_recibido->pid, parte[0], parte[1], parte[2], parte[3], parte[4], parte[5]);
 
     // // Extrae los parámetros de la instrucción
@@ -1173,6 +1201,7 @@ void instruccion_io_fs_read(char **parte)
 
 void instruccion_exit(char** parte) 
 {
+    // LOG OBLIGATORIO - INSTRUCCIÓN EJECUTADA
 	log_info(log_cpu, "PID: %d - Ejecutando: %s", pcb_recibido->pid, parte[0]);
 
     argumentos_cpu* args = malloc(sizeof(argumentos_cpu));
@@ -1210,20 +1239,25 @@ void check_interrupt(){
     
     
     if(flag_interrupcion){ //hay una interrupcion
-    
+
+        log_info(log_cpu, "tengo una interrupcion, voy a mdnar el pcb");
         argumentos_cpu* args = malloc(sizeof(argumentos_cpu));
         args->proceso = pcb_recibido;
         args->operacion = motivo_interrupcion;
         enviar_pcb(socket_cliente_kernel, args);
-        //log_info(log_cpu, "llegue hasta aca");
+
         flag_interrupcion = false;
         motivo_interrupcion = -1;
+        instruccion_recibida = NULL; 
+
+        return;
         
         
     } else {
-        
+        instruccion_recibida = NULL; 
         solicitar_instrucciones_a_memoria(socket_cliente_cpu);
-        log_info(log_cpu, "yale pedi instruccion a memoira recien");
+        return;
+
     }
 
 }

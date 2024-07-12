@@ -1,0 +1,29 @@
+Entrada Salida 
+
+Cliente --------------------------------------------------------------------------------------------------------------------------
+
+42 - agregar_int_al_paquete_personalizado(paquete, tipo_interfaz);
+tipo_interfaz es de tipo op_code, esta bien que se agregue un int al paquete?
+op_code es un enum, entonces se asocia el tipo con un numero
+
+Main -----------------------------------------------------------------------------------------------------------------------------
+
+3 - int main(int argc, char* argv[]) 
+Para arrancar la interfaz hacemos en la terminal make start CONFIG_FILE=nombreArchivo.config
+c -> cantidad
+v -> valor
+
+make start hola como estas
+
+    argv[0] = "hola";
+    argv[1] = "como";
+    argv[2] = "estas";
+    argc = 3;
+
+STDOUT ---------------------------------------------------------------------------------------------------------------------------
+
+17 - void ejecutar_instruccion_stdout(t_list* direccion_fisica, int tamanio, int pid) 
+
+Recibimos la direccion fisica desde kernel
+Tenemos que imprimir por pantalla desde la posicion de la direccion fisica el tamaño que se pasa por parametro
+

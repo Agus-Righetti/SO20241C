@@ -44,7 +44,7 @@ void enviar_pcb(int conexion, argumentos_cpu* args);
 void iniciar_diccionario_instrucciones(void);
 void iniciar_diccionario_registros();
 void destruir_diccionarios(void); 
-void interpretar_instruccion_de_memoria(char* instruccion);
+void interpretar_instruccion_de_memoria();
 
 void instruccion_set(char **parte);
 void instruccion_mov_in (char **parte);

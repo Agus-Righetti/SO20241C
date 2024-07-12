@@ -59,8 +59,6 @@ void atender_cpu(){
                 usleep(config_memoria->retardo_respuesta *1000);
 				cpu_pide_numero_de_marco(buffer);
                 free(buffer);
-                
-                //sem_post(ya tenog la traduccion);
                 break;
 
             case CPU_MANDA_RESIZE_A_MEMORIA: 

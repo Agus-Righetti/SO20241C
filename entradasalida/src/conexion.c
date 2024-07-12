@@ -18,7 +18,7 @@ void atender_kernel()
     int pid;
     int unidades_de_trabajo;
     t_list* registro_direccion;
-    int registro_tamano;
+    int registro_tamanio;
     int registro_puntero_archivo;
     char* nombre_archivo;
 
@@ -39,15 +39,15 @@ void atender_kernel()
             case IO_STDIN_READ: // (Interfaz, Registro Dirección, Registro Tamaño)
 
                 registro_direccion = recibir_estructura_del_buffer(buffer);
-                registro_tamano = recibir_int_del_buffer(buffer);
-                leer_consola(registro_direccion, registro_tamano, pid);
+                registro_tamanio = recibir_int_del_buffer(buffer);
+                leer_consola(registro_direccion, registro_tamanio, pid);
                 break;
 
             case IO_STDOUT_WRITE: // (Interfaz, Registro Dirección, Registro Tamaño)
 
                 registro_direccion = recibir_estructura_del_buffer(buffer);
-                registro_tamano = recibir_int_del_buffer(buffer);
-                ejecutar_instruccion_stdout(registro_direccion, registro_tamano, pid);
+                registro_tamanio = recibir_int_del_buffer(buffer);
+                ejecutar_instruccion_stdout(registro_direccion, registro_tamanio, pid);
                 break;
             
             case IO_FS_CREATE: // (Interfaz, Nombre Archivo)
@@ -65,24 +65,24 @@ void atender_kernel()
             case IO_FS_TRUNCATE: // (Interfaz, Nombre Archivo, Registro Tamaño)
 
                 nombre_archivo = recibir_string_del_buffer(buffer); 
-                registro_tamano = recibir_int_del_buffer(buffer);
-                manejar_truncado_archivo(nombre_archivo, registro_tamano, pid);
+                registro_tamanio = recibir_int_del_buffer(buffer);
+                manejar_truncado_archivo(nombre_archivo, registro_tamanio, pid);
                 break;
 
             case IO_FS_WRITE: // (Interfaz, Nombre Archivo, Registro Dirección, Registro Tamaño, Registro Puntero Archivo)
 
                 nombre_archivo = recibir_string_del_buffer(buffer);
                 registro_direccion = recibir_estructura_del_buffer(buffer);
-                registro_tamano = recibir_int_del_buffer(buffer);
+                registro_tamanio = recibir_int_del_buffer(buffer);
                 registro_puntero_archivo = recibir_int_del_buffer(buffer);
-                manejar_escritura_archivo(nombre_archivo,registro_direccion, registro_tamano, registro_puntero_archivo, pid);
+                manejar_escritura_archivo(nombre_archivo,registro_direccion, registro_tamanio, registro_puntero_archivo, pid);
                 break;
 
             case IO_FS_READ: // (Interfaz, Nombre Archivo, Registro Dirección, Registro Tamaño, Registro Puntero Archivo)
             
                 nombre_archivo = recibir_string_del_buffer(buffer);
                 registro_direccion = recibir_estructura_del_buffer(buffer);
-                registro_tamano = recibir_int_del_buffer(buffer);
+                registro_tamanio = recibir_int_del_buffer(buffer);
                 registro_puntero_archivo = recibir_int_del_buffer(buffer);
                 break;
             
@@ -132,20 +132,19 @@ pthread_t escuchar_kernel()
 //     return direccion_fisica;
 // }
 
-void atender_a_memoria(){
-
-    int cod_op_io;
-    t_buffer* buffer;
-
-    while(1){
-
-        cod_op_io = recibir_operacion(conexion_io_memoria);
-
-        buffer = recibiendo_paquete_personalizado(conexion_io_memoria); 
+void atender_a_memoria()
+{
+    while(1)
+    {
+        int cod_op_io = recibir_operacion(conexion_io_memoria);
+        t_buffer* buffer = recibiendo_paquete_personalizado(conexion_io_memoria); 
         
         switch(cod_op_io) // Segun el codigo de operación actúo 
-        { 
-            case IO_RECIBE_RESPUESTA_DE_LECTURA_DE_MEMORIA:
+        {   
+            case IO_RECIBE_RESPUESTA_DE_ESCRITURA_DE_MEMORIA: 
+
+                break;
+            case IO_RECIBE_RESPUESTA_DE_LECTURA_DE_MEMORIA: // [char*]
 
                 char* valor_a_mostrar = recibir_string_del_buffer(buffer);
             
@@ -154,7 +153,6 @@ void atender_a_memoria(){
                     printf("Valor leído en memoria: %s", valor_a_mostrar);
                     avisar_fin_io_a_kernel();
                 }
-                
                 break;
             default:
                 log_error(log_io, "El codigo de operacion no es reconocido :(");
@@ -164,5 +162,4 @@ void atender_a_memoria(){
 
     free(buffer->stream);
     free(buffer);
-
 }

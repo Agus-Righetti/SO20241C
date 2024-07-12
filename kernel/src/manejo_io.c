@@ -84,9 +84,9 @@ void escucha_interfaz(thread_args_escucha_io* args)
             case FIN_OP_IO: //ya se termino la operacion de entrada salida, devuelvo el proceso a ready
                 if(interfaz->proceso_en_interfaz->pid == pid_eliminar)
                 {
-                    accionar_segun_estado(interfaz->proceso_en_interfaz,1) ; //lo mando a exit
+                    accionar_segun_estado(interfaz->proceso_en_interfaz,1, INTERRUPTED_BY_USER) ; //lo mando a exit
 
-                }else accionar_segun_estado(interfaz->proceso_en_interfaz,0); // lo mando a ready 
+                }else accionar_segun_estado(interfaz->proceso_en_interfaz,0, -1); // lo mando a ready 
                 //flag 0 para q lo mande a la cola de ready
                 sem_post(&interfaz->sem_puedo_mandar_operacion);
 			default:

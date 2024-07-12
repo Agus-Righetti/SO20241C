@@ -6,12 +6,12 @@ int traducir_direccion_logica_a_fisica(int direccion_logica)
     int desplazamiento = direccion_logica - numero_pagina * tamanio_pagina;
     log_info(log_cpu, "Nro pagina: %d | desplazamiento: %d ", numero_pagina, desplazamiento);
 
-    TLB_Entrada respuesta = buscar(numero_pagina); 
+    TLB_Entrada* respuesta = buscar(numero_pagina); 
 
-    if(respuesta.pid != -1)
+    if(respuesta->pid != -1)
     {
         log_info(log_cpu, "PID: %d - TLB HIT - Pagina: %d", pcb_recibido->pid, numero_pagina);
-        return (respuesta.numero_marco * tamanio_pagina) + desplazamiento;
+        return (respuesta->numero_marco * tamanio_pagina) + desplazamiento;
     } 
     else 
     {
@@ -27,27 +27,38 @@ int traducir_direccion_logica_a_fisica(int direccion_logica)
 }   
 
 
-TLB_Entrada buscar(int numero_pagina) 
+TLB_Entrada* buscar(int numero_pagina) 
 {
+    log_info(log_cpu, "Entre a buscar");
     for(int i = 0; i < tlb->cantidad_entradas; i++) 
     {
-        if(tlb->entradas[i].numero_pagina == numero_pagina)
-        {
-            return tlb->entradas[i];
+        log_info(log_cpu, "FOR estoy en la entrada %d", tlb->entradas[i].numero_pagina);
+        
+        if(tlb->entradas[i].numero_pagina == numero_pagina && tlb->entradas[i].pid == pcb_recibido->pid){
+            return &tlb->entradas[i];
         }
     }
+    log_info(log_cpu, "No encontre, lo mando vacio");
 
-    TLB_Entrada entrada_vacia;
-    entrada_vacia.pid = -1;
-    entrada_vacia.numero_pagina = -1;
-    entrada_vacia.numero_marco = -1;
+//    TLB_Entrada *entrada_vacia; 
+//sugerencia de chat gtp para manejo de bug
+    TLB_Entrada *entrada_vacia = malloc(sizeof(TLB_Entrada));
+
+    
+    entrada_vacia->pid = -1;
+    entrada_vacia->numero_pagina = -1;
+    entrada_vacia->numero_marco = -1;
+
     return entrada_vacia;
 }
 
 void actualizar_tlb(TLB_Entrada* nueva_entrada) 
 {
-    cantidad_entradas_tlb = config_get_int_value(config_cpu, "CANTIDAD_ENTRADAS_TLB");
-    algoritmo_tlb = strdup(config_get_string_value(config_cpu, "ALGORITMO_TLB"));
+    cantidad_entradas_tlb = config_cpu->cantidad_entradas_tlb;
+    algoritmo_tlb = config_cpu->algoritmo_tlb;
+    //cantidad_entradas_tlb = config_get_int_value(config_cpu, "CANTIDAD_ENTRADAS_TLB");
+    // algoritmo_tlb = strdup(config_get_string_value(config_cpu, "ALGORITMO_TLB"));
+    log_info(log_cpu, "Estoy por actualizar");
 
     if(tlb->cantidad_entradas < cantidad_entradas_tlb) 
     {
@@ -94,21 +105,32 @@ void actualizar_tlb(TLB_Entrada* nueva_entrada)
             log_error(log_cpu, "Algoritmo de reemplazo de TLB no soportado: %d", algoritmo_tlb);
         }
     }
+    log_info(log_cpu, "Pude actualizar");
+    
+    
+
 }
 
 void inicializar_tlb() 
 {
-    // Inicializa la TLB y otros parámetros
     tlb = malloc(sizeof(TLB));
 
+    // Inicializa la TLB y otros parámetros
     if (tlb == NULL) 
     {
         fprintf(stderr, "No se pudo asignar memoria para la TLB\n");
         exit(EXIT_FAILURE);
     }
 
-    tlb->cantidad_entradas = 0;
-    tlb->entradas = malloc(cantidad_entradas_tlb * sizeof(TLB_Entrada));
+    tlb->cantidad_entradas = config_cpu->cantidad_entradas_tlb;
+    tlb->entradas = malloc(config_cpu->cantidad_entradas_tlb * sizeof(TLB_Entrada));
+
+    for(int i = 0 ; i < tlb->cantidad_entradas ; i++){
+        tlb->entradas[i].pid = -1;
+        tlb->entradas[i].numero_pagina = -1;
+        tlb->entradas[i].numero_marco = -1;
+    }
+
 
     if (tlb->entradas == NULL) 
     {

@@ -8,10 +8,14 @@
 
 // ARMO UNA LISTA POR SI TENGO QUE LEER/ESCRIBIR DE MAS DE UNA PAGINA
 
+// ESTA ES TRADUCIR DIRECCIÓN GRANDE
 t_list* traducir_dl_a_df_completa(int direccion_logica, int bytes_a_operar) {
 
     // Creo una lista en donde voy a guardar todas las direcciones fisicas que necesite para operar desde la direccion logica solicitada
+    log_info(log_cpu, "entre a traduccir dl a df antes del list create");
     t_list* direcciones_fisicas = list_create();
+    log_info(log_cpu, "entre a traduccir dl a df dsp del list create");
+
 
     // Calculo mi primera pagina y su desplazamiento
     int numero_pagina = floor(direccion_logica / tamanio_pagina);
@@ -24,7 +28,11 @@ t_list* traducir_dl_a_df_completa(int direccion_logica, int bytes_a_operar) {
     int bytes_operar_pag = minimo(bytes_a_operar, tamanio_pagina - desplazamiento);
 
     t_direccion_fisica* direccion_fisica_traducida = traducir_una_dl_a_df(numero_pagina, desplazamiento, bytes_operar_pag);
+    log_info(log_cpu, "volvi de traducir dl a df");
+    
     list_add(direcciones_fisicas, direccion_fisica_traducida);
+
+    log_info(log_cpu, "VICKY : )");
 
     int bytes_ya_evaluado = tamanio_pagina - desplazamiento;
 
@@ -39,7 +47,7 @@ t_list* traducir_dl_a_df_completa(int direccion_logica, int bytes_a_operar) {
         list_add(direcciones_fisicas, direccion_fisica_traducida);
         bytes_ya_evaluado = bytes_ya_evaluado + bytes_operar_pag;
     }
-
+    log_info(log_cpu, "lo  : )");
     return direcciones_fisicas;
 
 }
@@ -52,21 +60,29 @@ int minimo(int a, int b) {
     }
 }
 
+
+
 t_direccion_fisica* traducir_una_dl_a_df(int numero_pagina, int desplazamiento, int bytes_operar_pag){
-    t_direccion_fisica* dir_traducida = NULL;
-
+   
+    t_direccion_fisica* dir_traducida = malloc(sizeof(t_direccion_fisica));
+    log_info(log_cpu, "HOLA AMIGOS");
+    
     // 1ero busco en TLB
-    TLB_Entrada respuesta = buscar(numero_pagina); 
+    TLB_Entrada* respuesta = buscar(numero_pagina); 
 
-    if(respuesta.pid != -1) {
+    if(respuesta->pid != -1) {
         // Encontro la pagina en la TLB, no hace falta que busque en memoria
+        
+        // LOG OBLIGATORIO - TLB HIT
         log_info(log_cpu, "PID: %d - TLB HIT - Pagina: %d", pcb_recibido->pid, numero_pagina);
-        dir_traducida->nro_marco = respuesta.numero_marco;
+
+        dir_traducida->nro_marco = respuesta->numero_marco;
         dir_traducida->offset = desplazamiento;
         dir_traducida->bytes_a_operar = bytes_operar_pag;
 
     } else {
         // No esta en TLB -> tiene que buscar en memoria
+        // LOG OBLIGATORIO - TLB MISS
         log_info(log_cpu, "PID: %d - TLB MISS - Pagina: %d", pcb_recibido->pid, numero_pagina);
 
         // Tengo el numero de pag -> hago una consulta a memoria por el marco
@@ -77,24 +93,48 @@ t_direccion_fisica* traducir_una_dl_a_df(int numero_pagina, int desplazamiento, 
         agregar_int_al_paquete_personalizado(paquete, numero_pagina);
         enviar_paquete(paquete, socket_cliente_cpu);
         log_info(log_cpu, "Ya envie el paquete con el pid y el numero de pagina");
+        
+        // LOG OBLIGATORIO - OBTENER MARCO
         log_info(log_cpu, "PID: %d - OBTENER MARCO - Página: %d - Marco: %d", pcb_recibido->pid, numero_pagina, marco);
 
-
+        
         sem_wait(&sem_tengo_el_marco);
 
-        log_info(log_cpu, "Ya paso el semaforo"); 
-        // Agregarlo a la tlb
-        TLB_Entrada nueva_entrada;
-        nueva_entrada.pid = pcb_recibido->pid;
-        nueva_entrada.numero_pagina = numero_pagina;
-        nueva_entrada.numero_marco = marco;
+       
 
-        actualizar_tlb(&nueva_entrada); 
+        log_info(log_cpu, "Ya paso el semaforo"); 
+        log_info(log_cpu, "Me llego un marco de memoria: %d", marco);
+        // Agregarlo a la tlb
+        TLB_Entrada* nueva_entrada = malloc(sizeof(TLB_Entrada));
         
-        dir_traducida->nro_marco = nueva_entrada.numero_marco;
+        // ************ FALLA ACA ************
+
+        log_info("El pcb_recibido->pid es %d", pcb_recibido->pid);
+        
+       
+        
+        nueva_entrada->pid = pcb_recibido->pid;
+        nueva_entrada->numero_pagina = numero_pagina;
+        log_info(log_cpu, "marco global es %d", marco);
+        
+        nueva_entrada->numero_marco = marco;
+         log_info(log_cpu, "nueva_entrada->pid es %d", nueva_entrada->pid);
+
+        log_info(log_cpu, "estoy antes de entrar a actualizar tlb");
+        actualizar_tlb(nueva_entrada); 
+        
+        log_info(log_cpu, "Volvi de actualizar, estoy por poner valores en dir_traducida");
+
+        dir_traducida->nro_marco = nueva_entrada->numero_marco;
         dir_traducida->offset = desplazamiento;
         dir_traducida->bytes_a_operar = bytes_operar_pag;
+
+        log_info(log_cpu, "pude cargar la direccion traducida");
         
+        log_info(log_cpu, "dir_traducida->nro_marco: %d", dir_traducida->nro_marco );
+        log_info(log_cpu, "dir_traducida->offset: %d", dir_traducida->offset );
+        log_info(log_cpu, "dir_traducida->bytes_a_operar: %d", dir_traducida->bytes_a_operar );
+
         return dir_traducida;
     } 
 }
@@ -112,15 +152,23 @@ bool es_Registro_de_1B(const char* registro) {
 
 void peticion_lectura_a_memoria(op_code code_op, int pid, t_list* direcciones_fisicas){
 
+    log_info(log_cpu, "estoy dentro de peticion lectura a memoria");
     t_paquete* paquete = crear_paquete_personalizado(code_op);
 
+    log_info(log_cpu, "Direccion fisica = %d", direcciones_fisicas);
+
     agregar_int_al_paquete_personalizado(paquete, pid);
-    agregar_estructura_al_paquete_personalizado(paquete, &direcciones_fisicas, sizeof(t_list));
+    agregar_estructura_al_paquete_personalizado(paquete, direcciones_fisicas, sizeof(t_list));
+    log_info(log_cpu, "estoy por enviar la peticion de lectura");
 
 	enviar_paquete(paquete, socket_cliente_cpu);
+    log_info(log_cpu, "ya mande lapeticion a memoria");
 	eliminar_paquete(paquete);
+
+    return;
 }
 
+// ACÁ ESTÁ EL PROBLEMA DE LA ESCUCHA 
 uint8_t espero_rta_lectura_1B_de_memoria(){
     uint8_t valor_leido;
 

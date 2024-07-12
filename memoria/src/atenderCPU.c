@@ -113,22 +113,23 @@ int obtener_marco_segun_pagina (int pid, int nro_pag){
 	// Si sigue, es porque encontró el proceso
 	// Tengo que buscar en la tabla de páginas del proceso, si la página está
 
+	// 1ero controlo si esta vacia
 	if (list_is_empty(un_proceso->tabla_paginas)){
-		
 		log_info(log_memoria, "La tabla de paginas esta vacia");
 	}
 	
-	// int *nro_marco = (int*)list_get(un_proceso->tabla_paginas, nro_pag); //vemos si entra al cero
+	log_info(log_memoria, "La tabla de paginas tiene: %d paginas \n", list_size(un_proceso->tabla_paginas));
+	log_info(log_memoria, "La tabla de paginas tiene: %d paginas \n", nro_pag);
 	
-	t_pagina* una_pagina = list_get(un_proceso->tabla_paginas, nro_pag);
-	
-	log_info(log_memoria, "Aca -> %d ", una_pagina->frame);
-	
-	if(una_pagina->frame == 0){
+	// 2ndo controlo que el nro de pag sea valido
+	if(nro_pag > list_size(un_proceso->tabla_paginas)){
 		log_error(log_memoria, "NRO DE PÁGINA <%d> DEL PROCESO <%d> NO VALIDO", nro_pag, pid);
 		return -1;
 	}
 
+	t_pagina* una_pagina = list_get(un_proceso->tabla_paginas, nro_pag);
+	
+	log_info(log_memoria, "Aca -> %d ", una_pagina->frame);
 
 	// NO PUEDE HABER PAGE FAULT NO HAY MEMORIA VIRTUAL
 	
@@ -139,6 +140,7 @@ void enviar_marco_consultado_a_cpu(int marco_consultado){
 	t_paquete* paquete = crear_paquete_personalizado(CPU_RECIBE_NUMERO_DE_MARCO_DE_MEMORIA);
 
 	agregar_int_al_paquete_personalizado(paquete, marco_consultado);
+
 	enviar_paquete(paquete, socket_cliente_cpu);
 	eliminar_paquete(paquete);
 }

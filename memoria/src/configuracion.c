@@ -68,6 +68,5 @@ void paginar_memoria(){
         // bool a = bitarray_test_bit(bitmap_marcos, i);
         // log_info(log_memoria, "BIT %d: %d", i, a);
 
-    log_info(log_memoria, "Cantidad de marcos en memoria: %d", cant_marcos);
-    log_info(log_memoria, "Marcos en memoria creados con éxito");
+    log_info(log_memoria, "Marcos en memoria creados con éxito. Cantidad de marcos: %d", cant_marcos);
 }

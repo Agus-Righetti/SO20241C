@@ -12,9 +12,9 @@ void atender_memoria() {
     while(1) {
         cod_op_memoria = recibir_operacion(socket_cliente_cpu);
 
-        log_info(log_cpu, "estoy en el while de atender memoria22222");
+        //log_info(log_cpu, "estoy en el while de atender memoria22222");
 
-        log_info(log_cpu, "me llego un codigo %d", cod_op_memoria);
+        //log_info(log_cpu, "me llego un codigo %d", cod_op_memoria);
 
         switch (cod_op_memoria)  {
             
@@ -24,7 +24,6 @@ void atender_memoria() {
                 break;
                 
             case CPU_RECIBE_TAMAÑO_PAGINA_DE_MEMORIA:
-            //log_info(log_cpu, "case 2 ");
                 buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
                 tamanio_pagina = recibir_int_del_buffer(buffer);
                 free(buffer);
@@ -36,9 +35,10 @@ void atender_memoria() {
                 buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
                 //log_info(log_cpu, "PID: %d - FETCH - Program Counter: %d", proceso->pid, proceso->program_counter);
                 //proceso->program_counter++; // Esto hay que sacarlo porque usan la variable global, y aumentarlo en pcb.c
-                char* instruccion_recibida = recibir_string_del_buffer(buffer); // Obtengo la instrucción posta del buffer
-                interpretar_instruccion_de_memoria(instruccion_recibida); // Mando la instrucción para hacer un decode
+                instruccion_recibida = recibir_string_del_buffer(buffer); // Obtengo la instrucción posta del buffer
+                //interpretar_instruccion_de_memoria(instruccion_recibida); // Mando la instrucción para hacer un decode
                 free(buffer); // Libero el buffer
+                sem_post(&sem_hay_instruccion);
                 break;
 
             case CPU_RECIBE_OUT_OF_MEMORY_DE_MEMORIA: // VACIO
@@ -52,15 +52,16 @@ void atender_memoria() {
                 free(buffer);
                 enviar_pcb(socket_cliente_kernel, args);
                 log_info(log_cpu, "entre a out of  ");
+            
                 
                 break;
 
             case CPU_RECIBE_NUMERO_DE_MARCO_DE_MEMORIA:
                 log_info(log_cpu, "Me llego un marco de memoria");
                 buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
-                int numero_pag = recibir_int_del_buffer(buffer);
                 marco = recibir_int_del_buffer(buffer);
-
+                log_info(log_cpu, "me llego el marco: ,%d", marco);
+                
                 sem_post(&sem_tengo_el_marco);
             
                 break; 
@@ -71,9 +72,11 @@ void atender_memoria() {
                 pcb_recibido->program_counter++; 
                 buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
                 free(buffer);
-                log_info(log_cpu, "recibi buffer");
-                check_interrupt();
-                log_info(log_cpu, "volvi de checkinterrupt  ");
+                //log_info(log_cpu, "recibi buffer");
+
+                sem_post(&sem_tengo_ok_resize);
+                //check_interrupt();
+                //log_info(log_cpu, "volvi de checkinterrupt  ");
                 
                 break;
 
@@ -217,4 +220,13 @@ pthread_t escuchar_kernel_interrupcion(){
     pthread_create(&hilo_interrupt, NULL, (void*)atender_interrupcion, NULL);
     
     return hilo_interrupt;
+}
+
+pthread_t crear_hilo_interpretar_instruccion()
+{
+    pthread_t hilo_interp_instruccion;
+    
+    pthread_create(&hilo_interp_instruccion, NULL,(void*)interpretar_instruccion_de_memoria, NULL);
+
+    return hilo_interp_instruccion;
 }
