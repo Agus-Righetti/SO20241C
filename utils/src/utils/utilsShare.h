@@ -39,7 +39,8 @@ typedef enum {
 	INTERRUPCION,
 	CPU,
 	DESALOJO, // Devolvemos PCB por interrupcion
-
+	FIN_DE_QUANTUM,
+	INTERRUPTED_BY_USER,
 	INTERRUPCION_KERNEL,
 	DIRECCION_FISICA,
 	DEVOLVER_TRADUCCION,
@@ -198,7 +199,8 @@ typedef struct{
 }argumentos_para_io;
 
 typedef struct{
-	int recurso;
+
+	char* recurso;
 	int unidades_de_trabajo;
 	int registro_direccion;
     int registro_tamano;
@@ -207,6 +209,7 @@ typedef struct{
     int registro_puntero_archivo;
     pcb* proceso;
     op_code operacion;
+	
 }argumentos_cpu;
 
 // ************ DECLARACION DE FUNCIONES ************

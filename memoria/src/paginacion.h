@@ -25,6 +25,7 @@ void enviar_ok_4B_escritura_cpu(int pid, t_direccion_fisica* dir_actual, uint32_
 void enviar_ult_ok_4B_escritura_cpu(int pid, t_direccion_fisica* dir_actual, uint32_t valor, uint32_t valor_completo);
 void guardar_uint8_en_memoria (int pid, t_list* direcciones_fisicas, uint8_t valor);
 void enviar_ok_1B_escritura_cpu(int pid, t_direccion_fisica* dir_actual, uint8_t valor);
+
 // void leer_string_en_memoria (int pid, t_list* direcciones_fisicas, int tamanio);
 // void guardar_string_en_memoria (int pid, t_list* direcciones_fisicas, int tamanio);
 

@@ -20,6 +20,7 @@ t_queue* cola_prioridad_vrr;
 t_queue* cola_general_de_procesos; // Esta cola tendra a todos los procesos del sistema
 t_queue* cola_interfaces_conectadas; //tendra las interfaces conectadas actualmente a kernel
 // t_queue** colas_por_recurso = malloc(cantidad_recursos * sizeof(t_queue*)); -- Esto lo tuve que poner en .c porque sino rompía todo.
+t_queue* cola_de_ready_prioridad;
 int pid_contador = 0;
 int conexion_kernel_cpu;
 int interrupcion_kernel_cpu;

@@ -33,6 +33,7 @@ int main(int argc, char* argv[])
     cola_prioridad_vrr = queue_create();
     cola_general_de_procesos = queue_create();
     cola_interfaces_conectadas = queue_create();
+    cola_de_ready_prioridad = queue_create();
 
     sem_init(&sem_cola_de_new,0,0);
     sem_init(&sem_cola_de_ready,0,0);
@@ -97,6 +98,7 @@ int main(int argc, char* argv[])
     log_destroy(log_kernel);
     queue_destroy(cola_de_new);
     queue_destroy(cola_de_ready);
+    queue_destroy(cola_de_ready_prioridad);
 
     for (int i = 0; i < cantidad_recursos; i++) {
         queue_destroy(colas_por_recurso[i]);

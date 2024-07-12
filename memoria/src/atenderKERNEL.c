@@ -28,7 +28,7 @@ t_proceso* crear_proceso(int pid, char* path_instruc){
 
 	proceso_nuevo->pid = pid;
 	proceso_nuevo->path = path_instruc;
-    proceso_nuevo->tamaño = 0; 
+    proceso_nuevo->tamanio = 0; 
 	proceso_nuevo->instrucciones = NULL;
     proceso_nuevo->tabla_paginas = list_create();
     proceso_nuevo->tam_usado_ult_pag = 0;
@@ -40,7 +40,6 @@ t_proceso* crear_proceso(int pid, char* path_instruc){
 
 	return proceso_nuevo;
 }
-
 //********** LEE EL ARCHIVO Y CARGA LAS INSTRUCCIONES EN UNA LISTA (LAS INSTRUCCIONES LAS DEJA DEL TIPO "t_instruccion_codigo")
 t_list* leer_archivo_y_cargar_instrucciones(char* archivo_pseudocodigo) {
     //Abro el archivo en modo lectura
@@ -143,29 +142,30 @@ void liberar_memoria_proceso(t_buffer* buffer){
     // DEBO LIBERAR ESPACIO (MARCAR FRAMES LIBRES), Y SACAR EL PROCESO DE LA LISTA
 
     int pid_a_eliminar = recibir_int_del_buffer(buffer);
-    t_proceso* proceso_a_eliminar = obtener_proceso_por_id(pid_a_eliminar);
+    // t_proceso* proceso_a_eliminar = obtener_proceso_por_id(pid_a_eliminar);
     
-    if(list_remove_element(lista_procesos_recibidos, proceso_a_eliminar)){
-		// ELIMINO EL PROCESO DE LA LISTA 
-		log_info(log_memoria, "PROCESO <PID:%d> ELIMINADO DE MEMORIA", pid_a_eliminar);
-	} else {
-		log_info(log_memoria, "Proceso no encontrado en la lista de procesos para ser eliminados");
-		//exit(EXIT_FAILURE);
-	}
+    // if(list_remove_element(lista_procesos_recibidos, proceso_a_eliminar))
+    // {
+	// 	// ELIMINO EL PROCESO DE LA LISTA 
+	// 	log_info(log_memoria, "PROCESO <PID:%d> ELIMINADO DE MEMORIA", pid_a_eliminar);
+	// } else {
+	// 	log_info(log_memoria, "Proceso no encontrado en la lista de procesos para ser eliminados");
+	// 	//exit(EXIT_FAILURE);
+	// }
 
-    // LIBERO ESPACIO, MARCO FRAMES COMO LIBRES
-    // recorro posiciones de la tabla de página, marco frame LIBRE
-    t_list* tabla_paginas_a_eliminar = proceso_a_eliminar->tabla_paginas;
+    // // LIBERO ESPACIO, MARCO FRAMES COMO LIBRES
+    // // recorro posiciones de la tabla de página, marco frame LIBRE
+    // t_list* tabla_paginas_a_eliminar = proceso_a_eliminar->tabla_paginas;
 
-    for (int i = 0; i < list_size(tabla_paginas_a_eliminar); i++) {
-        t_pagina* pagina_a_eliminar = list_get(tabla_paginas_a_eliminar, i);
+    // for (int i = 0; i < list_size(tabla_paginas_a_eliminar); i++) {
+    //     t_pagina* pagina_a_eliminar = list_get(tabla_paginas_a_eliminar, i);
 
-            liberar_marco(pagina_a_eliminar->frame);
-    }
+    //         liberar_marco(pagina_a_eliminar->frame);
+    // }
     
-    log_info(log_memoria, "PID: <%d> - Tamaño: <%d>", pid_a_eliminar, list_size(proceso_a_eliminar->tabla_paginas));
+    // log_info(log_memoria, "PID: <%d> - Tamaño: <%d>", pid_a_eliminar, list_size(proceso_a_eliminar->tabla_paginas));
 
-    list_destroy(tabla_paginas_a_eliminar);
-    list_destroy(proceso_a_eliminar->tabla_paginas);
+    // list_destroy(tabla_paginas_a_eliminar);
+    // list_destroy(proceso_a_eliminar->tabla_paginas);
 
 }

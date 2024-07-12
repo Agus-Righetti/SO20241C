@@ -1,55 +1,5 @@
 #include "interfazSTDOUT.h"
 
-// void leer_configuracion_stdout(Interfaz *configuracion)
-// {
-//     iniciar_config_stdout(configuracion);
-
-//     // Loggeamos el valor de config
-//     log_info(log_io, "Lei el TIPO_INTERFAZ %s, el TIEMPO_UNIDAD_TRABAJO %d, el IP_KERNEL %s, el PUERTO_KERNEL %d, el IP_MEMORIA %s y el PUERTO_MEMORIA %d.", 
-//              configuracion->archivo->tipo_interfaz, 
-//              configuracion->archivo->tiempo_unidad_trabajo,
-//              configuracion->archivo->ip_kernel, 
-//              configuracion->archivo->puerto_kernel, 
-//              configuracion->archivo->ip_memoria,
-//              configuracion->archivo->puerto_memoria);
-// }
-
-// void iniciar_config_stdout(Interfaz *configuracion)
-// {   
-//     if (configuracion == NULL) 
-//     {
-//         printf("El puntero de configuración es NULL\n");
-//         exit(2);
-//     }
-
-//     // Asignar memoria para configuracion->archivo
-//     configuracion->archivo = malloc(sizeof(io_config));
-//     if (configuracion->archivo == NULL) 
-//     {
-//         printf("No se puede crear la config archivo\n");
-//         exit(2);
-//     }
-
-//     // Inicializa la estructura del archivo de configuración desde el archivo de configuración
-//     t_config* config = config_create("./io.config");
-//     if (config == NULL) 
-//     {
-//         printf("No se puede leer el archivo de config\n");
-//         free(configuracion->archivo);
-//         exit(2);
-//     }
-    
-//     configuracion->archivo->tipo_interfaz = strdup(config_get_string_value(config, "TIPO_INTERFAZ"));
-//     configuracion->archivo->tiempo_unidad_trabajo = config_get_int_value(config, "TIEMPO_UNIDAD_TRABAJO");
-//     configuracion->archivo->ip_kernel = strdup(config_get_string_value(config, "IP_KERNEL"));
-//     configuracion->archivo->puerto_kernel = config_get_int_value(config, "PUERTO_KERNEL");
-//     configuracion->archivo->ip_memoria = strdup(config_get_string_value(config, "IP_MEMORIA"));
-//     configuracion->archivo->puerto_memoria = config_get_int_value(config, "PUERTO_MEMORIA");
-
-//     // Liberar el t_config
-//     config_destroy(config);
-// }
-
 // void liberar_configuracion_stdout(Interfaz* configuracion)
 // {
 //     if(configuracion) 
@@ -113,7 +63,5 @@ void ejecutar_instruccion_stdout(t_list* direccion_fisica, int tamanio, int pid)
     // t_paquete* paquete = crear_paquete_personalizado(IO_PIDE_LECTURA_MEMORIA);
     // agregar_estructura_al_paquete_personalizado(paquete, direccion_fisica, sizeof(t_list));
     // agregar_int_al_paquete_personalizado(paquete, tamanio);
-    // enviar_paquete(paquete, conexion_io_memoria);
- 
-   
+    // enviar_paquete(paquete, conexion_io_memoria);   
 }

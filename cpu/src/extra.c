@@ -71,46 +71,33 @@ t_direccion_fisica* traducir_una_dl_a_df(int numero_pagina, int desplazamiento, 
 
         // Tengo el numero de pag -> hago una consulta a memoria por el marco
         t_paquete *paquete = crear_paquete_personalizado(CPU_PIDE_MARCO_A_MEMORIA); // [PID, NUMERO DE PAGINA]
+        log_info(log_cpu, "Le pedi un marco a memoria");
+        
         agregar_int_al_paquete_personalizado(paquete, pcb_recibido->pid);
         agregar_int_al_paquete_personalizado(paquete, numero_pagina);
         enviar_paquete(paquete, socket_cliente_cpu);
+        log_info(log_cpu, "Ya envie el paquete con el pid y el numero de pagina");
+        log_info(log_cpu, "PID: %d - OBTENER MARCO - Página: %d - Marco: %d", pcb_recibido->pid, numero_pagina, marco);
+
+
+        sem_wait(&sem_tengo_el_marco);
+
+        log_info(log_cpu, "Ya paso el semaforo"); 
+        // Agregarlo a la tlb
+        TLB_Entrada nueva_entrada;
+        nueva_entrada.pid = pcb_recibido->pid;
+        nueva_entrada.numero_pagina = numero_pagina;
+        nueva_entrada.numero_marco = marco;
+
+        actualizar_tlb(&nueva_entrada); 
         
-        // Me quedo esperando a que memoria me mande el marco
-        int cod_op_memoria_aux = recibir_operacion(socket_cliente_cpu);
-
-        switch (cod_op_memoria_aux) {
-            case CPU_RECIBE_NUMERO_DE_MARCO_DE_MEMORIA:
-                t_buffer* buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
-                int marco = recibir_int_del_buffer(buffer);
-                log_info(log_cpu, "PID: %d - OBTENER MARCO - Página: %d - Marco: %d", pcb_recibido->pid, numero_pagina, marco);
-                
-                // Agregarlo a la tlb
-                TLB_Entrada nueva_entrada;
-                nueva_entrada.pid = pcb_recibido->pid;
-                nueva_entrada.numero_pagina = numero_pagina;
-                nueva_entrada.numero_marco = marco;
-                actualizar_tlb(&nueva_entrada); 
-                free(buffer);
-                dir_traducida->nro_marco = nueva_entrada.numero_marco;
-                dir_traducida->offset = desplazamiento;
-                dir_traducida->bytes_a_operar = bytes_operar_pag;
-
-                break; 
-
-            case -1:
-                log_error(log_cpu, "MEMORIA se desconecto. Terminando servidor");
-                exit(1);
-
-            default:
-                log_warning(log_cpu,"Operacion desconocida. No quieras meter la pata");
-                break;
-            }
-
-        eliminar_paquete(paquete);
-    }
-
-    return dir_traducida;
-} 
+        dir_traducida->nro_marco = nueva_entrada.numero_marco;
+        dir_traducida->offset = desplazamiento;
+        dir_traducida->bytes_a_operar = bytes_operar_pag;
+        
+        return dir_traducida;
+    } 
+}
 
 
 bool es_Registro_de_1B(const char* registro) {
@@ -266,7 +253,7 @@ void espero_rta_escritura_1B_de_memoria(){
         default:
             log_warning(log_cpu,"Operacion desconocida. No quieras meter la pata");
             break;
-        }
+    }
 
 
 }
@@ -315,7 +302,7 @@ void espero_rta_escritura_4B_de_memoria(){
             default:
                 log_warning(log_cpu,"Operacion desconocida. No quieras meter la pata");
                 break;
-            }
+        }
 
     }
 

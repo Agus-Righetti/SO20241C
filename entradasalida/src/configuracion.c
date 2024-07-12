@@ -1,6 +1,5 @@
 #include "configuracion.h"
 
-
 // Configuracion ----------------------------------------------------------------------------------------------------------------------
 
 io_config* armar_config(t_log* log_io, char* nombre_config) 
@@ -9,6 +8,7 @@ io_config* armar_config(t_log* log_io, char* nombre_config)
     io_config* aux_io_config = malloc(sizeof(io_config));  
 
     config_aux = config_create(nombre_config);
+
     if (config_aux == NULL)
     {
         log_error(log_io, "Error: No se pudo crear el config de I/O");
@@ -24,47 +24,42 @@ io_config* armar_config(t_log* log_io, char* nombre_config)
     
     switch (obtener_tipo_interfaz(tipo_interfaz))
     {
-    case GENERICA:
+        case GENERICA:
 
-        log_info(log_io, "soy generica");
+            log_info(log_io, "soy generica");
+            aux_io_config->tiempo_unidad_trabajo = config_get_int_value(config_aux, "TIEMPO_UNIDAD_TRABAJO");
+            break;
+            
+        case STDIN:
+        case STDOUT:
+            
+            log_info(log_io, "soy STDIN o STDOUT");
+            aux_io_config->ip_memoria = strdup(config_get_string_value(config_aux, "IP_MEMORIA"));
+            aux_io_config->puerto_memoria = strdup(config_get_string_value(config_aux, "PUERTO_MEMORIA"));
+            break; // Con este break STDIN tambien recibe lo de STDOUT
 
-        aux_io_config->tiempo_unidad_trabajo = config_get_int_value(config_aux, "TIEMPO_UNIDAD_TRABAJO");
+        case DIALFS:
 
-        break;
-        
-    case STDIN:
-    case STDOUT:
-        
-        log_info(log_io, "soy STDIN o STDOUT");
-        aux_io_config->ip_memoria= strdup(config_get_string_value(config_aux, "IP_MEMORIA"));
-        aux_io_config->puerto_memoria = strdup(config_get_string_value(config_aux, "PUERTO_MEMORIA"));
-        break;
+            log_info(log_io, "soy DIALFS");
+            aux_io_config->ip_memoria = strdup(config_get_string_value(config_aux, "IP_MEMORIA"));
+            aux_io_config->puerto_memoria = strdup(config_get_string_value(config_aux, "PUERTO_MEMORIA"));
+            aux_io_config->tiempo_unidad_trabajo = config_get_int_value(config_aux, "TIEMPO_UNIDAD_TRABAJO");
+            aux_io_config->path_base_dialfs = strdup(config_get_string_value(config_aux, "PATH_BASE_DIALFS"));
+            aux_io_config->block_size = config_get_int_value(config_aux, "BLOCK_SIZE");
+            aux_io_config->block_count = config_get_int_value(config_aux, "BLOCK_COUNT");
+            aux_io_config->retraso_compactacion = config_get_int_value(config_aux, "RETRASO_COMPACTACION");
+            bitarray_size = (aux_io_config->block_count + 7) / 8;
+            
+            crear_archivos_gestion_fs();
+            cola_archivos_en_fs = queue_create();
+            break;
 
-    case DIALFS:
-        log_info(log_io, "soy DIALFS");
-        aux_io_config->ip_memoria= strdup(config_get_string_value(config_aux, "IP_MEMORIA"));
-        aux_io_config->puerto_memoria = strdup(config_get_string_value(config_aux, "PUERTO_MEMORIA"));
-        aux_io_config->tiempo_unidad_trabajo = config_get_int_value(config_aux, "TIEMPO_UNIDAD_TRABAJO");
-        aux_io_config->path_base_dialfs = strdup(config_get_string_value(config_aux, "PATH_BASE_DIALFS"));
-        aux_io_config->block_size = config_get_int_value(config_aux, "BLOCK_SIZE");
-        aux_io_config->block_count = config_get_int_value(config_aux, "BLOCK_COUNT");
-        aux_io_config->retraso_compactacion = config_get_int_value(config_aux, "RETRASO_COMPACTACION");
-        bitarray_size = (aux_io_config->block_count + 7) / 8;
-        crear_archivos_gestion_fs();
-
-        cola_archivos_en_fs = queue_create();
-
-        
-        break;
-
-    default:
-        break;
+        default:
+            break;
     }
 
     log_info(log_io, "Se creo el struct config_io con exito");
-
     config_destroy(config_aux);
-
     return aux_io_config;
 }
 

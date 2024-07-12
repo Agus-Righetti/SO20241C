@@ -1,14 +1,14 @@
 #include "interfazDIALFS.h"
 
 // IO_FS_CREATE -> Para crear un archivo
+
 void manejar_creacion_archivo(char* nombre_archivo, int pid) 
 {
-    //tenemos que armar el metadata del archivo y cambiar los bloques libres del bitarray y bloquesdat
+    // Tenemos que armar el metadata del archivo y cambiar los bloques libres del bitarray y bloquesdat
 
     FILE* bitmap_file = fopen("bitarray.dat", "rb"); // Abro el "bitarray.dat"
 
-
-    char *bitmap_buffer = (char *)malloc(bitarray_size);
+    char *bitmap_buffer = (char*)malloc(bitarray_size);
 
     fread(bitmap_buffer, 1, bitarray_size, bitmap_file);
     
@@ -81,7 +81,7 @@ void manejar_eliminacion_archivo(char* nombre_archivo, int pid)
 
     remove(nombre_archivo); // Elimino el archivo de metadata
     
-    //Creamos un bitmap a partir del archivo y lo editamos
+    // Creamos un bitmap a partir del archivo y lo editamos
 
     int bloques_ocupados = calcular_bloques_que_ocupa(tamanio_en_bytes);
 
@@ -106,8 +106,6 @@ void manejar_eliminacion_archivo(char* nombre_archivo, int pid)
     avisar_fin_io_a_kernel();
 
     return;
-
-
 }
 
 void manejar_truncado_archivo(char* nombre_archivo, int nuevo_tamanio, int pid)
@@ -128,7 +126,6 @@ void manejar_truncado_archivo(char* nombre_archivo, int nuevo_tamanio, int pid)
 
     char* buffer;
 
-    
     int bloque_inicial = config_get_int_value(config_aux, "BLOQUE_INICIAL");
     int tamanio_original = config_get_int_value(config_aux, "TAMANIO_ARCHIVO");
 
@@ -223,8 +220,6 @@ void manejar_truncado_archivo(char* nombre_archivo, int nuevo_tamanio, int pid)
                 //actualizo los dos archivos
                 escribir_archivo_con_bitmap(bitmap);
                 actualizar_metadata(metadata);
-
-
             }
         }else{
 
@@ -262,9 +257,6 @@ void manejar_truncado_archivo(char* nombre_archivo, int nuevo_tamanio, int pid)
 
         escribir_archivo_con_bitmap(bitmap);
         actualizar_metadata(metadata);
-
-
-        
     }
 
     config_destroy(config_aux);
@@ -274,11 +266,7 @@ void manejar_truncado_archivo(char* nombre_archivo, int nuevo_tamanio, int pid)
     avisar_fin_io_a_kernel();
 
     return;
-    
 }   
-
-
-
 
 void manejar_escritura_archivo(char* nombre_archivo, t_list* direccion_fisica, int tamanio, int puntero_archivo, int pid)
 {
@@ -293,10 +281,8 @@ void manejar_lectura_archivo(char* nombre_archivo, t_list* direccion_fisica, int
     return;
 }
 
-
-void crear_archivos_gestion_fs(){
-
-
+void crear_archivos_gestion_fs()
+{
     // CREO Y DEFINO EL TAMAÑO DEL ARCHIVO bloques.dat
 
     FILE* bloques_dat = fopen("bloques.dat", "wb");
@@ -324,7 +310,8 @@ void crear_archivos_gestion_fs(){
     // CREO EL ARCHIVO CON EL BITMAP--------------------------------------------------------
 
     FILE *bitmap_file = fopen("bitmap.dat", "wb");  // Abre el archivo en modo lectura y escritura binaria
-    if (bitmap_file == NULL) {
+    if (bitmap_file == NULL) 
+    {
         perror("Error al abrir bitmap.dat");
         return;
     }
@@ -333,7 +320,7 @@ void crear_archivos_gestion_fs(){
     size_t bitmap_size_bytes = (config_io->block_count + 7) / 8;  // 1 bit por bloque
 
     // 2. Reservar memoria para el bitmap en un buffer
-    char *bitmap_buffer = (char *)malloc(bitmap_size_bytes);
+    char *bitmap_buffer = (char*)malloc(bitmap_size_bytes);
     memset(bitmap_buffer, 0, bitmap_size_bytes);
     t_bitarray* bitmap = bitarray_create_with_mode(bitmap_buffer, bitmap_size_bytes, LSB_FIRST);
 
@@ -365,8 +352,6 @@ void crear_archivos_gestion_fs(){
     // bitarray_set_bit(bitmap, 1);  // Y el segundo bloque como ocupado
 
     // bitarray_clean_bit(bitmap, 0) // Pone el bit número 0 libre
-    
-
 }
 
 char* pasar_a_string(int valor)
@@ -396,7 +381,6 @@ char* obtener_bitmap(){
     fclose(bitmap_file);
 
     return bitmap_buffer;
-
 }
 
 void escribir_archivo_con_bitmap(t_bitarray* bitmap){
@@ -519,8 +503,10 @@ char *agregar_al_final(char *buffer, const char *informacion) {
     }
     return buffer;
 }
+
 // Función para compactar bloques
-void compactar(t_bitarray* bitmap) {
+void compactar(t_bitarray* bitmap) 
+{
     
     char* buffer;
     int contador_ocupados = 0;

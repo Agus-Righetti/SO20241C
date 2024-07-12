@@ -18,20 +18,20 @@ void atender_memoria() {
 
         switch (cod_op_memoria)  {
             
-            // case MENSAJE:  
-            // log_info(log_cpu, "case 1 ");
-            //     recibir_mensaje(socket_cliente_cpu, log_cpu);
-            //     break;
+            case MENSAJE:  
+            log_info(log_cpu, "case 1 ");
+                recibir_mensaje(socket_cliente_cpu, log_cpu);
+                break;
                 
             case CPU_RECIBE_TAMAÑO_PAGINA_DE_MEMORIA:
-            log_info(log_cpu, "case 2 ");
+            //log_info(log_cpu, "case 2 ");
                 buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
                 tamanio_pagina = recibir_int_del_buffer(buffer);
                 free(buffer);
                 break; 
 
             case CPU_RECIBE_INSTRUCCION_DE_MEMORIA:
-                log_info(log_cpu, "case 3 ");
+                //log_info(log_cpu, "case 3 ");
                 log_info(log_cpu, "Recibi una instruccion de memoria");
                 buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
                 //log_info(log_cpu, "PID: %d - FETCH - Program Counter: %d", proceso->pid, proceso->program_counter);
@@ -42,7 +42,7 @@ void atender_memoria() {
                 break;
 
             case CPU_RECIBE_OUT_OF_MEMORY_DE_MEMORIA: // VACIO
-            log_info(log_cpu, "case 4 ");
+            //log_info(log_cpu, "case 4 ");
                 printf("Error: No se pudo ajustar el tamaño del proceso. Out of Memory.\n");
                     
                 argumentos_cpu* args = malloc(sizeof(argumentos_cpu));
@@ -55,8 +55,18 @@ void atender_memoria() {
                 
                 break;
 
+            case CPU_RECIBE_NUMERO_DE_MARCO_DE_MEMORIA:
+                log_info(log_cpu, "Me llego un marco de memoria");
+                buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
+                int numero_pag = recibir_int_del_buffer(buffer);
+                marco = recibir_int_del_buffer(buffer);
+
+                sem_post(&sem_tengo_el_marco);
+            
+                break; 
+
             case CPU_RECIBE_OK_DEL_RESIZE:
-                log_info(log_cpu, "case 5 ");
+                //log_info(log_cpu, "case 5 ");
                 printf("El tamaño del proceso se ha ajustado correctamente.\n");
                 pcb_recibido->program_counter++; 
                 buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
@@ -68,15 +78,15 @@ void atender_memoria() {
                 break;
 
             case EXIT:
-            log_info(log_cpu, "case 6 ");
+            //log_info(log_cpu, "case 6 ");
                 error_exit(EXIT);
                 break;
             case -1:
-            log_info(log_cpu, "case 7 ");
+            //log_info(log_cpu, "case 7 ");
                 log_error(log_cpu, "MEMORIA se desconecto. Terminando servidor");
                 exit(1);
             default:
-            log_info(log_cpu, "case 8 ");
+                //log_info(log_cpu, "case 8 ");
                 log_warning(log_cpu,"Operacion desconocida. No quieras meter la pata");
                 break;
         }
@@ -156,9 +166,17 @@ void atender_interrupcion() // ACA HAY QUE MANEJAR EL ENVIAR PCB DENTRO DEL SWIT
             //     list_iterate(lista, (void*) iterator);
             //     break;
                 
-            case INTERRUPCION_KERNEL:
+            case FIN_DE_QUANTUM:
                 log_info(log_cpu, "Me llego una interrupcion de KERNEL, ahora voy a enviar el pcb");  
                 flag_interrupcion = true; // Este flag me marca que HAY una interrupción, entonces desde el final de cada instrucción voy a devolver el pcb a kernel
+                motivo_interrupcion = FIN_DE_QUANTUM;
+
+                break;
+            
+            case INTERRUPTED_BY_USER:
+                log_info(log_cpu, "Me llego una interrupcion de KERNEL, ahora voy a enviar el pcb");  
+                flag_interrupcion = true; // Este flag me marca que HAY una interrupción, entonces desde el final de cada instrucción voy a devolver el pcb a kernel
+                motivo_interrupcion = INTERRUPTED_BY_USER;
                 break;
                 
             case -1:

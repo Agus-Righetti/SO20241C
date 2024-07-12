@@ -40,7 +40,9 @@ extern int socket_servidor_memoria;
 extern int socket_cliente_cpu;
 extern int socket_interrupt_kernel;
 extern bool flag_interrupcion;          // flag para chequear interrupciones o pedir otra instruccion
-
+extern int motivo_interrupcion;
+extern sem_t sem_tengo_el_marco;
+extern int marco;
 
 extern t_dictionary* instrucciones;
 extern t_dictionary* registros;

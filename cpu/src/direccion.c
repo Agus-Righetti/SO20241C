@@ -23,44 +23,9 @@ int traducir_direccion_logica_a_fisica(int direccion_logica)
         agregar_int_al_paquete_personalizado(paquete, pcb_recibido->pid);
         agregar_int_al_paquete_personalizado(paquete, numero_pagina);
         enviar_paquete(paquete, socket_cliente_cpu);
-
-        // Recibo marco de memoria
-        int cod_op_memoria = recibir_operacion(socket_cliente_cpu);
-        while(1) {
-            switch (cod_op_memoria)
-            {
-                case CPU_RECIBE_NUMERO_DE_MARCO_DE_MEMORIA:
-                    t_buffer* buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
-                    int marco = recibir_int_del_buffer(buffer);
-                    log_info(log_cpu, "PID: %d - OBTENER MARCO - Página: %d - Marco: %d", pcb_recibido->pid, numero_pagina, marco);
-                    
-                    // Agregarlo a la tlb
-                    TLB_Entrada nueva_entrada;
-                    nueva_entrada.pid = pcb_recibido->pid;
-                    nueva_entrada.numero_pagina = numero_pagina;
-                    nueva_entrada.numero_marco = marco;
-                    actualizar_tlb(&nueva_entrada); 
-                    free(buffer);
-                    return (marco * tamanio_pagina) + desplazamiento;
-                    break; 
-                case EXIT:
-                    //error_exit(EXIT);
-                    break;
-                case -1:
-                    log_error(log_cpu, "MEMORIA se desconecto. Terminando servidor");
-                    exit(1);
-                default:
-                    log_warning(log_cpu,"Operacion desconocida. No quieras meter la pata");
-                    break;
-            }
-        }
-        eliminar_paquete(paquete);
     }
 }   
 
-// **************************************************************************************************
-
-// **************************************************************************************************
 
 TLB_Entrada buscar(int numero_pagina) 
 {

@@ -19,10 +19,12 @@ int socket_cliente_kernel;
 int socket_cliente_cpu;
 int socket_interrupt_kernel;
 bool flag_interrupcion;
-
+int motivo_interrupcion;
+sem_t sem_tengo_el_marco;
 
 t_dictionary* instrucciones;
 t_dictionary* registros;
+int marco;
 
 //pcb* proceso = NULL;
 pcb* pcb_recibido ; // &proceso; // Asignación de la dirección de proceso a pcb_recibido

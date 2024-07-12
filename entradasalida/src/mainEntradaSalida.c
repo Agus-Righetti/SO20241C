@@ -8,7 +8,7 @@ int main(int argc, char* argv[])
 
     log_io = log_create("io.log", "IO", 1, LOG_LEVEL_DEBUG);
     
-    config_io = armar_config(log_io, argv[1]); //En argv[1] esta el nombre de config pasado por parametro
+    config_io = armar_config(log_io, argv[1]); // En argv[1] esta el nombre de config pasado por parametro
 
     log_info(log_io, "El nombre de la config es: %s", config_io->nombre);
 
@@ -40,15 +40,10 @@ int main(int argc, char* argv[])
     // Conexion IO --> Kernel ---------------------------------------------------------------------------------------------------------
     
     pthread_t hilo_escuchar_kernel = escuchar_kernel();
-  
     pthread_detach(hilo_escuchar_memoria);
-
     pthread_join(hilo_escuchar_kernel, NULL);
 
     // terminar_programa(log_io, config_io);
-
-
-
 
     return 0;
 }

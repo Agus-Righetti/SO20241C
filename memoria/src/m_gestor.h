@@ -18,7 +18,7 @@ typedef struct{
 typedef struct{
 	int pid;
     char* path;
-    int tamaño; 
+    int tamanio; 
 	t_list* instrucciones;
     t_list* tabla_paginas;
     int tam_usado_ult_pag;

@@ -9,8 +9,13 @@ int main(int argc, char* argv[])
 	log_cpu = log_create("cpu.log", "CPU", 1, LOG_LEVEL_DEBUG);
 	config_cpu = armar_config(log_cpu);
 	inicializar_tlb();
+	
+	// Semaforo para traducir
+	sem_init(&sem_tengo_el_marco, 0, 0);
 
 	flag_interrupcion = false;
+
+	motivo_interrupcion = -1;
 
 
     // Conexion CPU --> Memoria -------------------------------------------------------------------------------------------------------
@@ -47,6 +52,8 @@ int main(int argc, char* argv[])
 
 void terminar_programa()
 {
+	sem_destroy(&sem_tengo_el_marco);
+	
 	if (log_cpu != NULL) 
     {
 		log_destroy(log_cpu);

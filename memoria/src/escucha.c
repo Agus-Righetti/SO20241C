@@ -52,13 +52,15 @@ void atender_cpu(){
                 free(buffer);
                 break;
 
-            case ACCESO_A_TABLA_DE_PAGINA:
+            case CPU_PIDE_MARCO_A_MEMORIA:
             // ME DAN UNA PAG RESPONDO NUMERO DE MARCO
                 log_info(log_memoria, "CPU consulta un marco segun una pagina");
                 buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
                 usleep(config_memoria->retardo_respuesta *1000);
 				cpu_pide_numero_de_marco(buffer);
                 free(buffer);
+                
+                //sem_post(ya tenog la traduccion);
                 break;
 
             case CPU_MANDA_RESIZE_A_MEMORIA: 

@@ -45,20 +45,15 @@ void enviar_pcb(int conexion, argumentos_cpu* args){
    
     switch(args->operacion) // Según el código de operación voy a agregar cosas diferentes al paquete (siempre siendo el pcb + otras cosas)
     {
-        case PCB_CPU_A_KERNEL: // Si es el caso más sencillo, entonces no agrego nada, sólo mando el pcb
+        case FIN_DE_QUANTUM: // Si es el caso más sencillo, entonces no agrego nada, sólo mando el pcb
+        case INTERRUPTED_BY_USER:
         case OUT_OF_MEMORY:  
             break;
 
         case WAIT:
         case SIGNAL:
 
-            if(args->recurso == 1) {
-                agregar_int_al_paquete_personalizado(paquete, 0);
-            } else if (args->recurso == 2) {
-                agregar_int_al_paquete_personalizado(paquete, 1); 
-            } else if (args->recurso == 3) {
-                agregar_int_al_paquete_personalizado(paquete, 2); 
-            }
+            agregar_string_al_paquete_personalizado(paquete, args->recurso);
 
             break;
 
@@ -223,9 +218,9 @@ void solicitar_instrucciones_a_memoria(int socket_cliente_cpu)
     
     // Acordarse de sacarlo!!!!!!
     log_info(log_cpu, "Le pedi instruccion a Memoria");
-    printf("Verificación fuera de la función:\n");
-    printf("El PID es: %d\n", pcb_recibido->pid);
-    printf("El PC es: %d\n", pcb_recibido->program_counter);
+    // printf("Verificación fuera de la función:\n");
+    // printf("El PID es: %d\n", pcb_recibido->pid);
+    // printf("El PC es: %d\n", pcb_recibido->program_counter);
 }
 
 // Instrucciones -------------------------------------------------------------------------------------------------------------------
@@ -341,17 +336,41 @@ void instruccion_set(char **parte) {
         // El registro es de 1B
         log_info(log_cpu,"estamos en registro de 1B");
         uint8_t* valor_registro = dictionary_get(registros, parte[1]);
+
+        if (valor_registro == NULL) {
+            log_info(log_cpu, "Error: El registro %s no se encontró en el diccionario.", registro);
+            return;
+        }
+        //SEGMENTATION FAULT RECURRENTE
         log_info(log_cpu, "Registro: %s - Valor inicial: %u", registro, *valor_registro);
 
+        if (parte[2] == NULL) {
+            log_info(log_cpu, "Error: parte[2] es NULL.");
+            return;
+        }
+
         *valor_registro = atoi(parte[2]);
+
+
         log_info(log_cpu, "Registro: %s - Valor final: %u", registro, *valor_registro);
 
     } else {
         // El registro es de 4B
         log_info(log_cpu,"estamos en registro de 4B");
         uint32_t* valor_registro = dictionary_get(registros, parte[1]);
-        log_info(log_cpu, "Registro: %s - Valor inicial: %u", registro, *valor_registro);
         
+        if (valor_registro == NULL) {
+            log_info(log_cpu, "Error: El registro %s no se encontró en el diccionario.", registro);
+            return;
+        }
+
+        log_info(log_cpu, "Registro: %s - Valor inicial: %u", registro, *valor_registro);
+
+        if (parte[2] == NULL) {
+            log_info(log_cpu, "Error: parte[2] es NULL.");
+            return;
+        }
+
         *valor_registro = atoi(parte[2]);
         log_info(log_cpu, "Registro: %s - Valor final: %u", registro, *valor_registro);
     }
@@ -437,9 +456,12 @@ void instruccion_mov_out(char **parte) {
     // ver por que lo tratan como un char
     char *registro_direccion = parte[1]; // Direccion logica
     int direccion_logica = *(int*)(dictionary_get(registros, registro_direccion));
+    log_info(log_cpu, "La direccion logica es: %d", direccion_logica);
     
     t_list* direcciones_fisicas;
     if(es_Registro_de_1B(registro_dato)){
+        log_info(log_cpu, "Llegue a la traduccion");
+
         direcciones_fisicas = traducir_dl_a_df_completa(direccion_logica, 1);
 
         uint8_t valor_registro_dato = dictionary_get(registros, registro_dato);
@@ -714,8 +736,8 @@ void instruccion_wait(char** parte)
 	pcb_recibido->program_counter++;
     argumentos_cpu* args = malloc(sizeof(argumentos_cpu));
     
-    args->proceso = pcb_recibido; //Este proceso es global, no deberia ser global
-    args->recurso = atoi(parte[1]);
+    args->proceso = pcb_recibido; 
+    args->recurso = parte[1];
     args->operacion = WAIT;
 
     liberar_array_strings(parte);
@@ -742,7 +764,7 @@ void instruccion_signal(char **parte)
     pcb_recibido->program_counter++;
 
     args->proceso = pcb_recibido; 
-    args->recurso = atoi(parte[1]);
+    args->recurso = parte[1];
     args->operacion = SIGNAL;
 
     liberar_array_strings(parte);
@@ -1187,12 +1209,15 @@ void check_interrupt(){
     // Chequeo si hay interrupciones
     
     
-    if(flag_interrupcion){
+    if(flag_interrupcion){ //hay una interrupcion
+    
         argumentos_cpu* args = malloc(sizeof(argumentos_cpu));
         args->proceso = pcb_recibido;
+        args->operacion = motivo_interrupcion;
         enviar_pcb(socket_cliente_kernel, args);
-        log_info(log_cpu, "llegue hasta aca");
+        //log_info(log_cpu, "llegue hasta aca");
         flag_interrupcion = false;
+        motivo_interrupcion = -1;
         
         
     } else {
