@@ -29,11 +29,11 @@ void server_para_io(){
 			case MENSAJE:
 				recibir_mensaje(client_io, log_kernel);
 				break;
-			case PAQUETE:
-				lista = recibir_paquete(client_io);
-				log_info(log_kernel, "Me llegaron los siguientes valores:\n");
-				list_iterate(lista, (void*) iterator);
-				break;
+			// case PAQUETE:
+			// 	lista = recibir_paquete(client_io);
+			// 	log_info(log_kernel, "Me llegaron los siguientes valores:\n");
+			// 	list_iterate(lista, (void*) iterator);
+			// 	break;
 			case NUEVA_INTERFAZ: //pedir que manden esto con el nombre de la interfaz
 
 				buffer = recibiendo_paquete_personalizado(client_io);

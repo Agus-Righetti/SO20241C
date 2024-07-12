@@ -416,6 +416,7 @@ void instruccion_mov_in(char **parte) {
     // Aumento el PC para que lea la proxima instruccion
     pcb_recibido->program_counter++;
 
+    liberar_array_strings(parte);
 
     check_interrupt();
     
@@ -464,6 +465,8 @@ void instruccion_mov_out(char **parte) {
 	pcb_recibido->program_counter++;
     
     log_info(log_cpu, "A rezar que ande bien este");
+
+    liberar_array_strings(parte);
 
     check_interrupt();
 
@@ -519,6 +522,7 @@ void instruccion_sum(char **parte) {
     
     pcb_recibido->program_counter++;
 
+    liberar_array_strings(parte);
 
     check_interrupt();
 
@@ -564,6 +568,8 @@ void instruccion_sub(char **parte) {
     
     pcb_recibido->program_counter++;
 
+    liberar_array_strings(parte);
+
     check_interrupt();
 
     return;
@@ -591,6 +597,8 @@ void instruccion_jnz(char **parte) {
 
     log_info(log_cpu, "PC después del jnz: %d", pcb_recibido->program_counter);
 
+    liberar_array_strings(parte);
+
     check_interrupt();
     
     return;
@@ -615,13 +623,14 @@ void instruccion_resize(char **parte) {
     // Convertir el tamaño de la instrucción a un entero
     int nuevo_tamanio = atoi(parte[1]);
 
+    liberar_array_strings(parte);
+
     // Solicitar a la memoria ajustar el tamaño del proceso
     t_paquete *paquete = crear_paquete_personalizado(CPU_MANDA_RESIZE_A_MEMORIA); // [PID, TAMAÑO] -> [Int, Int]
     agregar_int_al_paquete_personalizado(paquete, pcb_recibido->pid);
     agregar_int_al_paquete_personalizado(paquete, nuevo_tamanio);
     enviar_paquete(paquete, socket_cliente_cpu);
 	eliminar_paquete(paquete);
-
 
 
     return;
@@ -665,6 +674,8 @@ void instruccion_copy_string(char **parte) {
 
     pcb_recibido->program_counter++;
 
+    liberar_array_strings(parte);
+
     check_interrupt();
 
 
@@ -707,6 +718,8 @@ void instruccion_wait(char** parte)
     args->recurso = atoi(parte[1]);
     args->operacion = WAIT;
 
+    liberar_array_strings(parte);
+
     // Enviar solicitud de SIGNAL al kernel
     enviar_pcb(socket_cliente_kernel, args);
 	
@@ -732,6 +745,7 @@ void instruccion_signal(char **parte)
     args->recurso = atoi(parte[1]);
     args->operacion = SIGNAL;
 
+    liberar_array_strings(parte);
 
     // Enviar solicitud de SIGNAL al kernel
     enviar_pcb(socket_cliente_kernel, args);
@@ -752,6 +766,8 @@ void instruccion_io_gen_sleep(char **parte)
     pcb_recibido->program_counter++;
     args->proceso = pcb_recibido;
     args->operacion = IO_GEN_SLEEP;
+
+    liberar_array_strings(parte);
 
     enviar_pcb(socket_cliente_kernel, args);
 
@@ -816,6 +832,8 @@ void instruccion_io_stdin_read(char** parte)
     args->proceso = pcb_recibido;
     args->operacion = IO_STDIN_READ;
 
+    liberar_array_strings(parte);
+
     enviar_pcb(socket_cliente_kernel, args);
 }
 
@@ -853,6 +871,8 @@ void instruccion_io_stdout_write(char **parte) // ESTE NO LO ENTIENDO PORQUE MAN
     pcb_recibido->program_counter++; // Siempre primero sumo el PC y después recién asigno el proceso a args así está actualizado
     args->proceso = pcb_recibido;
     args->operacion = IO_STDOUT_WRITE;
+
+    liberar_array_strings(parte);
 
     enviar_pcb(socket_cliente_kernel, args);
 
@@ -898,7 +918,7 @@ void instruccion_io_fs_create(char **parte)
     args->proceso = pcb_recibido;
     args->operacion = IO_FS_CREATE;
 
-
+    liberar_array_strings(parte);
     enviar_pcb(socket_cliente_kernel, args);
 
     // char *interfaz = parte[1];
@@ -914,6 +934,7 @@ void instruccion_io_fs_create(char **parte)
     // eliminar_paquete(paquete);
 
     // proceso->program_counter++;
+    
 }
 
 void instruccion_io_fs_delete(char **parte)
@@ -941,6 +962,7 @@ void instruccion_io_fs_delete(char **parte)
     args->proceso = pcb_recibido;
     args->operacion = IO_FS_DELETE;
 
+    liberar_array_strings(parte);
     enviar_pcb(socket_cliente_kernel, args);
 
     // char *interfaz = parte[1];
@@ -956,6 +978,7 @@ void instruccion_io_fs_delete(char **parte)
     // eliminar_paquete(paquete);
 
     // proceso->program_counter++;
+    
 }
 
 void instruccion_io_fs_truncate(char **parte)
@@ -986,6 +1009,7 @@ void instruccion_io_fs_truncate(char **parte)
     args->proceso = pcb_recibido;
     args->operacion = IO_FS_TRUNCATE;
 
+    liberar_array_strings(parte);
     enviar_pcb(socket_cliente_kernel, args);
 
     // // Extrae los parametros de la instruccion
@@ -1006,6 +1030,7 @@ void instruccion_io_fs_truncate(char **parte)
 
     // // Incrementar el contador de programa del proceso, si es necesario
     // proceso->program_counter++;
+
 }
 
 void instruccion_io_fs_write(char **parte)
@@ -1061,9 +1086,9 @@ void instruccion_io_fs_write(char **parte)
     args->proceso = pcb_recibido;
     args->operacion = IO_FS_WRITE;
 
-
+    liberar_array_strings(parte);
     enviar_pcb(socket_cliente_kernel, args);
-
+    
 }
 
 void instruccion_io_fs_read(char **parte)
@@ -1119,8 +1144,9 @@ void instruccion_io_fs_read(char **parte)
     args->proceso = pcb_recibido;
     args->operacion = IO_FS_READ;
 
+    liberar_array_strings(parte);
     enviar_pcb(socket_cliente_kernel, args);
-
+    
 }
 
 void instruccion_exit(char** parte) 
@@ -1132,12 +1158,14 @@ void instruccion_exit(char** parte)
     args->proceso = pcb_recibido;
     args->operacion = CPU_TERMINA_EJECUCION_PCB;
 
+    liberar_array_strings(parte);
     enviar_pcb(socket_cliente_kernel, args);
 
 	// proceso->program_counter++;
 	// enviar_pcb(socket_cliente_kernel, proceso, CPU_TERMINA_EJECUCION_PCB, NULL);
 	// list_destroy_and_destroy_elements(proceso->instrucciones, free);
 	// free(proceso);
+    
 }
 
 void error_exit(op_code codigo) 
@@ -1173,4 +1201,14 @@ void check_interrupt(){
         log_info(log_cpu, "yale pedi instruccion a memoira recien");
     }
 
+}
+
+void liberar_array_strings(char **array) {
+    
+    if (array == NULL) return; // Si ya es null, entonces termino la función
+    
+    for (int i = 0; array[i] != NULL; i++) { // Sino voy recorriendo y liberando
+        free(array[i]);
+    }
+    free(array);
 }

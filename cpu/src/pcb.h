@@ -74,5 +74,6 @@ void solicitar_instrucciones_a_memoria(int socket_cliente_cpu);
 void enviar_instruccion(int conexion, t_instruccion* instruccion, op_code codigo);
 int copiar_bytes(uint32_t direccion_origen, uint32_t direccion_destino, int tamanio);
 void check_interrupt();
+void liberar_array_strings(char **array) ;
 
 #endif

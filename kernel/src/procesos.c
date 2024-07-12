@@ -704,6 +704,7 @@ void recibir_pcb(pcb* proceso) {
                 nombre_interfaz = recibir_string_del_buffer(buffer);
                 unidades_de_trabajo = recibir_int_del_buffer(buffer);
                 flag_estado = io_gen_sleep(nombre_interfaz, unidades_de_trabajo, proceso_recibido);
+                
                 break;
 
             //le tengo q decir a CPU q me los mande como ints a los valores del registro

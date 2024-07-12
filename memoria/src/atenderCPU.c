@@ -220,18 +220,19 @@ void cpu_pide_resize(t_buffer* un_buffer){          // [PID, TAMAÑO NUEVO] -> [
 void enviar_out_of_memory_a_cpu(){ 
 	t_paquete* paquete = crear_paquete_personalizado(CPU_RECIBE_OUT_OF_MEMORY_DE_MEMORIA);
 	log_info(log_memoria, "CODIGO DE OPERACION: CPU RECIBE OUT");
-	agregar_int_al_paquete_personalizado(paquete, 1);
+	agregar_int_al_paquete_personalizado(paquete, 13);
 	enviar_paquete(paquete, socket_cliente_cpu);
 	eliminar_paquete(paquete);
 	return;
 }
 
 void enviar_ok_del_resize_a_cpu(){ 
-	t_paquete* paquete = crear_paquete_personalizado(CPU_RECIBE_OK_DEL_RESIZE);
+	//ACA ESTA EL PROBELMAAAAAAAAAAAAAAAAAAAAAAA
+	t_paquete* paquete_enviar_ok = crear_paquete_personalizado(CPU_RECIBE_OK_DEL_RESIZE);
 	log_info(log_memoria, "CODIGO DE OPERACION: CPU RECIBE OK");
-	agregar_int_al_paquete_personalizado(paquete, 1);	
-	enviar_paquete(paquete, socket_cliente_cpu);
-	eliminar_paquete(paquete);
+	agregar_int_al_paquete_personalizado(paquete_enviar_ok, 13); //se manda el 13 como cod_op, porque?????????????????	
+	enviar_paquete(paquete_enviar_ok, socket_cliente_cpu);
+	eliminar_paquete(paquete_enviar_ok);
 
 	return;
 }

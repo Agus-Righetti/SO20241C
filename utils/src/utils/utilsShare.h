@@ -25,7 +25,7 @@
 // ************* CODIGOS DE OPERACION *************
 typedef enum {
 	MENSAJE,
-	PAQUETE,
+	//PAQUETE,
 	INSTRUCCION, 
 
 	// Instrucciones

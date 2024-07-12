@@ -18,8 +18,6 @@ void atender_memoria() {
 
         switch (cod_op_memoria)  {
             
-            
-            
             // case MENSAJE:  
             // log_info(log_cpu, "case 1 ");
             //     recibir_mensaje(socket_cliente_cpu, log_cpu);
@@ -97,12 +95,12 @@ void atender_kernel()
             case MENSAJE:
                 recibir_mensaje(socket_cliente_kernel, log_cpu);
                 break;
-            case PAQUETE:
-                lista = recibir_paquete(socket_cliente_kernel);
-                log_info(log_cpu, "Me llegaron los siguientes valores:\n");
-                list_iterate(lista, (void*) iterator);
-                list_destroy_and_destroy_elements(lista, free);
-                break;
+            // case PAQUETE:
+            //     lista = recibir_paquete(socket_cliente_kernel);
+            //     log_info(log_cpu, "Me llegaron los siguientes valores:\n");
+            //     list_iterate(lista, (void*) iterator);
+            //     list_destroy_and_destroy_elements(lista, free);
+            //     break;
             case PCB_KERNEL_A_CPU: // Execute
 
                 log_info(log_cpu, "Estoy antes de entrar a recibir_pcb()");
@@ -146,11 +144,11 @@ void atender_interrupcion() // ACA HAY QUE MANEJAR EL ENVIAR PCB DENTRO DEL SWIT
             case MENSAJE:
                 recibir_mensaje(socket_interrupt_kernel, log_cpu);
                 break;
-            case PAQUETE:
-                lista = recibir_paquete(socket_interrupt_kernel);
-                log_info(log_cpu, "Me llegaron los siguientes valores:\n");
-                list_iterate(lista, (void*) iterator);
-                break;
+            // case PAQUETE:
+            //     lista = recibir_paquete(socket_interrupt_kernel);
+            //     log_info(log_cpu, "Me llegaron los siguientes valores:\n");
+            //     list_iterate(lista, (void*) iterator);
+            //     break;
                 
             case INTERRUPCION_KERNEL:
                 log_info(log_cpu, "Me llego una interrupcion de KERNEL, ahora voy a enviar el pcb");  
