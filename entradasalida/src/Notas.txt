@@ -2,13 +2,13 @@ Entrada Salida
 
 Cliente --------------------------------------------------------------------------------------------------------------------------
 
-42 - agregar_int_al_paquete_personalizado(paquete, tipo_interfaz);
+42 - agregar_int_al_paquete_personalizado(paquete, tipo_interfaz); -> LISTO
 tipo_interfaz es de tipo op_code, esta bien que se agregue un int al paquete?
 op_code es un enum, entonces se asocia el tipo con un numero
 
 Main -----------------------------------------------------------------------------------------------------------------------------
 
-3 - int main(int argc, char* argv[]) 
+3 - int main(int argc, char* argv[]) -> LISTO
 Para arrancar la interfaz hacemos en la terminal make start CONFIG_FILE=nombreArchivo.config
 c -> cantidad
 v -> valor
@@ -27,3 +27,15 @@ STDOUT -------------------------------------------------------------------------
 Recibimos la direccion fisica desde kernel
 Tenemos que imprimir por pantalla desde la posicion de la direccion fisica el tamaño que se pasa por parametro
 
+DIALFS ---------------------------------------------------------------------------------------------------------------------------
+
+23 - fwrite(bitmap_buffer, 1, bitarray_size, bitmap_file);
+
+bitmap_size_bytes
+bitarray_size
+
+Cual de los dos va?
+
+43 - char* bloque_inicial = pasar_a_string(index_primer_bloque_libre);
+
+Es necesario pasarlo a string?
