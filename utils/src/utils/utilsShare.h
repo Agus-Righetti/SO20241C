@@ -239,6 +239,7 @@ void agregar_string_al_paquete_personalizado(t_paquete* paquete, char* string);
 void agregar_estructura_al_paquete_personalizado(t_paquete* paquete, void* estructura, int size);
 void agregar_uint32_al_paquete_personalizado(t_paquete* paquete, uint32_t valor);
 void agregar_uint8_al_paquete_personalizado(t_paquete* paquete, uint8_t valor);
+void agregar_lista_al_paquete_personalizado(t_paquete* paquete, t_list* lista, int size_data);
 
 t_buffer* recibiendo_paquete_personalizado(int socket_conexion);
 int recibir_int_del_buffer(t_buffer* buffer);
@@ -246,5 +247,6 @@ char* recibir_string_del_buffer(t_buffer* buffer);
 void* recibir_estructura_del_buffer(t_buffer* buffer);
 uint32_t recibir_uint32_del_buffer(t_buffer* buffer);
 uint8_t recibir_uint8_del_buffer(t_buffer* buffer);
+t_list* recibir_lista_del_buffer(t_buffer* buffer);
 
 #endif

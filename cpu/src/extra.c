@@ -48,6 +48,7 @@ t_list* traducir_dl_a_df_completa(int direccion_logica, int bytes_a_operar) {
         bytes_ya_evaluado = bytes_ya_evaluado + bytes_operar_pag;
     }
     log_info(log_cpu, "lo  : )");
+    
     return direcciones_fisicas;
 
 }
@@ -80,6 +81,8 @@ t_direccion_fisica* traducir_una_dl_a_df(int numero_pagina, int desplazamiento, 
         dir_traducida->offset = desplazamiento;
         dir_traducida->bytes_a_operar = bytes_operar_pag;
 
+        
+
     } else {
         // No esta en TLB -> tiene que buscar en memoria
         // LOG OBLIGATORIO - TLB MISS
@@ -111,7 +114,7 @@ t_direccion_fisica* traducir_una_dl_a_df(int numero_pagina, int desplazamiento, 
 
         log_info("El pcb_recibido->pid es %d", pcb_recibido->pid);
         
-       
+
         
         nueva_entrada->pid = pcb_recibido->pid;
         nueva_entrada->numero_pagina = numero_pagina;
@@ -135,8 +138,8 @@ t_direccion_fisica* traducir_una_dl_a_df(int numero_pagina, int desplazamiento, 
         log_info(log_cpu, "dir_traducida->offset: %d", dir_traducida->offset );
         log_info(log_cpu, "dir_traducida->bytes_a_operar: %d", dir_traducida->bytes_a_operar );
 
-        return dir_traducida;
     } 
+    return dir_traducida;
 }
 
 
@@ -155,101 +158,102 @@ void peticion_lectura_a_memoria(op_code code_op, int pid, t_list* direcciones_fi
     log_info(log_cpu, "estoy dentro de peticion lectura a memoria");
     t_paquete* paquete = crear_paquete_personalizado(code_op);
 
-    log_info(log_cpu, "Direccion fisica = %d", direcciones_fisicas);
+    //log_info(log_cpu, "Direccion fisica = %d", direcciones_fisicas);
 
     agregar_int_al_paquete_personalizado(paquete, pid);
-    agregar_estructura_al_paquete_personalizado(paquete, direcciones_fisicas, sizeof(t_list));
+    agregar_lista_al_paquete_personalizado(paquete, direcciones_fisicas, sizeof(t_direccion_fisica));
     log_info(log_cpu, "estoy por enviar la peticion de lectura");
 
 	enviar_paquete(paquete, socket_cliente_cpu);
-    log_info(log_cpu, "ya mande lapeticion a memoria");
+    log_info(log_cpu, "ya mande la peticion a memoria");
 	eliminar_paquete(paquete);
 
     return;
 }
 
 // ACÁ ESTÁ EL PROBLEMA DE LA ESCUCHA 
-uint8_t espero_rta_lectura_1B_de_memoria(){
-    uint8_t valor_leido;
+// uint8_t espero_rta_lectura_1B_de_memoria(){ //  NO SE DEBERIA USAR
 
-    int cod_op_memoria_aux = recibir_operacion(socket_cliente_cpu);
-    switch (cod_op_memoria_aux) {
-        case CPU_RECIBE_LECTURA_1B:   // [PID, DF, VALOR] -> [Int, Direccion_fisica, uint_8]
+//     uint8_t valor_leido;
 
-            // Esta va a ser una sola
-            t_buffer* buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
-            int pid = recibir_int_del_buffer(buffer);
-            t_direccion_fisica* dir_fisica = recibir_estructura_del_buffer(buffer);
-            valor_leido = recibir_uint8_del_buffer(buffer);
+//     int cod_op_memoria_aux = recibir_operacion(socket_cliente_cpu);
+//     switch (cod_op_memoria_aux) {
+//         case CPU_RECIBE_LECTURA_1B:   // [PID, DF, VALOR] -> [Int, Direccion_fisica, uint_8]
 
-            log_info(log_cpu, "PID: %d - Accion: LEER - Direccion fisica: [%d - %d] - Valor: %u ", pid, dir_fisica->nro_marco ,dir_fisica->offset, valor_leido);
-            log_info(log_cpu, "ACCIÓN COMPLETADA: LEER %u EN MEMORIA", valor_leido);
-            free(buffer);
-            break; 
+//             // Esta va a ser una sola
+//             t_buffer* buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
+//             int pid = recibir_int_del_buffer(buffer);
+//             t_direccion_fisica* dir_fisica = recibir_estructura_del_buffer(buffer);
+//             valor_leido = recibir_uint8_del_buffer(buffer);
 
-        case -1:
-            log_error(log_cpu, "MEMORIA se desconecto. Terminando servidor");
-            exit(1);
+//             log_info(log_cpu, "PID: %d - Accion: LEER - Direccion fisica: [%d - %d] - Valor: %u ", pid, dir_fisica->nro_marco ,dir_fisica->offset, valor_leido);
+//             log_info(log_cpu, "ACCIÓN COMPLETADA: LEER %u EN MEMORIA", valor_leido);
+//             free(buffer);
+//             break; 
 
-        default:
-            log_warning(log_cpu,"Operacion desconocida. No quieras meter la pata");
-            break;
-        }
+//         case -1:
+//             log_error(log_cpu, "MEMORIA se desconecto. Terminando servidor");
+//             exit(1);
 
-    return valor_leido;
-}
+//         default:
+//             log_warning(log_cpu,"Operacion desconocida. No quieras meter la pata");
+//             break;
+//         }
 
-uint32_t espero_rta_lectura_4B_de_memoria(){
-    uint32_t valor_reconstruido;
-    int control = 0;
-    t_buffer* buffer;
-    int pid;
-    t_direccion_fisica* dir_fisica;
-    uint32_t valor_leido;
+//     return valor_leido;
+// }
 
-    int cod_op_memoria_aux = recibir_operacion(socket_cliente_cpu);
+// uint32_t espero_rta_lectura_4B_de_memoria(){
+//     uint32_t valor_reconstruido;
+//     int control = 0;
+//     t_buffer* buffer;
+//     int pid;
+//     t_direccion_fisica* dir_fisica;
+//     uint32_t valor_leido;
 
-    while(control == 0){
-        switch (cod_op_memoria_aux) {
+//     int cod_op_memoria_aux = recibir_operacion(socket_cliente_cpu);
 
-            case CPU_RECIBE_LECTURA_4B:   // [PID, DF, VALOR] -> [Int, Direccion_fisica, uint_32]
-                // Pueden ser mas de una
-                buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
-                pid = recibir_int_del_buffer(buffer);
-                dir_fisica = recibir_estructura_del_buffer(buffer);
-                valor_leido = recibir_uint32_del_buffer(buffer);
-                log_info(log_cpu, "PID: %d - Accion: LEER - Direccion fisica: [%d - %d] - Valor: %u ", pid, dir_fisica->nro_marco ,dir_fisica->offset, valor_leido);
-                free(buffer);
-                break; 
+//     while(control == 0){
+//         switch (cod_op_memoria_aux) {
 
-            case CPU_RECIBE_LECTURA_U_4B:   // [PID, DF, VALOR, VALOR FINAL] -> [Int, Direccion_fisica, uint_32, uint_32]
+//             case CPU_RECIBE_LECTURA_4B:   // [PID, DF, VALOR] -> [Int, Direccion_fisica, uint_32]
+//                 // Pueden ser mas de una
+//                 buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
+//                 pid = recibir_int_del_buffer(buffer);
+//                 dir_fisica = recibir_estructura_del_buffer(buffer);
+//                 valor_leido = recibir_uint32_del_buffer(buffer);
+//                 log_info(log_cpu, "PID: %d - Accion: LEER - Direccion fisica: [%d - %d] - Valor: %u ", pid, dir_fisica->nro_marco ,dir_fisica->offset, valor_leido);
+//                 free(buffer);
+//                 break; 
 
-                // Esta es la ultima
-                buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
-                pid = recibir_int_del_buffer(buffer);
-                dir_fisica = recibir_estructura_del_buffer(buffer);
-                valor_leido = recibir_uint32_del_buffer(buffer);
-                valor_reconstruido = recibir_uint32_del_buffer(buffer);
-                log_info(log_cpu, "PID: %d - Accion: LEER - Direccion fisica: [%d - %d] - Valor: %u ", pid, dir_fisica->nro_marco ,dir_fisica->offset, valor_leido);
-                log_info(log_cpu, "ACCIÓN COMPLETADA: LEER %u EN MEMORIA", valor_reconstruido);
-                control = 1;
-                free(buffer);
-                break; 
+//             case CPU_RECIBE_LECTURA_U_4B:   // [PID, DF, VALOR, VALOR FINAL] -> [Int, Direccion_fisica, uint_32, uint_32]
 
-            case -1:
-                log_error(log_cpu, "MEMORIA se desconecto. Terminando servidor");
-                exit(1);
+//                 // Esta es la ultima
+//                 buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
+//                 pid = recibir_int_del_buffer(buffer);
+//                 dir_fisica = recibir_estructura_del_buffer(buffer);
+//                 valor_leido = recibir_uint32_del_buffer(buffer);
+//                 valor_reconstruido = recibir_uint32_del_buffer(buffer);
+//                 log_info(log_cpu, "PID: %d - Accion: LEER - Direccion fisica: [%d - %d] - Valor: %u ", pid, dir_fisica->nro_marco ,dir_fisica->offset, valor_leido);
+//                 log_info(log_cpu, "ACCIÓN COMPLETADA: LEER %u EN MEMORIA", valor_reconstruido);
+//                 control = 1;
+//                 free(buffer);
+//                 break; 
 
-            default:
-                log_warning(log_cpu,"Operacion desconocida. No quieras meter la pata");
-                break;
-            }
+//             case -1:
+//                 log_error(log_cpu, "MEMORIA se desconecto. Terminando servidor");
+//                 exit(1);
 
-    }
+//             default:
+//                 log_warning(log_cpu,"Operacion desconocida. No quieras meter la pata");
+//                 break;
+//             }
 
-    free(buffer);
-    return valor_reconstruido;
-}
+//     }
+
+//     free(buffer);
+//     return valor_reconstruido;
+// }
 
 
 void peticion_escritura_1B_a_memoria(int pid, t_list* direcciones_fisicas, uint8_t valor_por_escribir){
@@ -257,7 +261,7 @@ void peticion_escritura_1B_a_memoria(int pid, t_list* direcciones_fisicas, uint8
     t_paquete* paquete = crear_paquete_personalizado(CPU_PIDE_GUARDAR_REGISTRO_1B);
 
     agregar_int_al_paquete_personalizado(paquete, pid);
-    agregar_estructura_al_paquete_personalizado(paquete, &direcciones_fisicas, sizeof(t_list));
+    agregar_lista_al_paquete_personalizado(paquete, direcciones_fisicas, sizeof(t_direccion_fisica));
     agregar_uint8_al_paquete_personalizado(paquete, valor_por_escribir);
 
 	enviar_paquete(paquete, socket_cliente_cpu);
@@ -269,93 +273,93 @@ void peticion_escritura_4B_a_memoria(int pid, t_list* direcciones_fisicas, uint3
     t_paquete* paquete = crear_paquete_personalizado(CPU_PIDE_GUARDAR_REGISTRO_4B);
 
     agregar_int_al_paquete_personalizado(paquete, pid);
-    agregar_estructura_al_paquete_personalizado(paquete, &direcciones_fisicas, sizeof(t_list));
+    agregar_lista_al_paquete_personalizado(paquete, direcciones_fisicas, sizeof(t_direccion_fisica));
     agregar_uint32_al_paquete_personalizado(paquete, valor_por_escribir);
 
 	enviar_paquete(paquete, socket_cliente_cpu);
 	eliminar_paquete(paquete);
 }
 
-void espero_rta_escritura_1B_de_memoria(){
-    uint8_t valor_escrito;
+// void espero_rta_escritura_1B_de_memoria(){
+//     uint8_t valor_escrito;
 
-    int cod_op_memoria_aux = recibir_operacion(socket_cliente_cpu);
-    switch (cod_op_memoria_aux) {
-        case CPU_RECIBE_OK_1B_DE_ESCRITURA:   // [PID, DF, VALOR] -> [Int, Direccion_fisica, uint_8]
+//     int cod_op_memoria_aux = recibir_operacion(socket_cliente_cpu);
+//     switch (cod_op_memoria_aux) {
+//         case CPU_RECIBE_OK_1B_DE_ESCRITURA:   // [PID, DF, VALOR] -> [Int, Direccion_fisica, uint_8]
 
-            // Esta va a ser una sola
-            t_buffer* buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
-            int pid = recibir_int_del_buffer(buffer);
-            t_direccion_fisica* dir_fisica = recibir_estructura_del_buffer(buffer);
-            valor_escrito = recibir_uint8_del_buffer(buffer);
+//             // Esta va a ser una sola
+//             t_buffer* buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
+//             int pid = recibir_int_del_buffer(buffer);
+//             t_direccion_fisica* dir_fisica = recibir_estructura_del_buffer(buffer);
+//             valor_escrito = recibir_uint8_del_buffer(buffer);
 
-            log_info(log_cpu, "PID: %d - Accion: ESCRIBIR - Direccion fisica: [%d - %d] - Valor: %u ", pid, dir_fisica->nro_marco ,dir_fisica->offset, valor_escrito);
-            log_info(log_cpu, "ACCIÓN COMPLETADA: ESCRIBIR %u EN MEMORIA", valor_escrito);
-            free(buffer);
-            break; 
+//             log_info(log_cpu, "PID: %d - Accion: ESCRIBIR - Direccion fisica: [%d - %d] - Valor: %u ", pid, dir_fisica->nro_marco ,dir_fisica->offset, valor_escrito);
+//             log_info(log_cpu, "ACCIÓN COMPLETADA: ESCRIBIR %u EN MEMORIA", valor_escrito);
+//             free(buffer);
+//             break; 
 
-        case -1:
-            log_error(log_cpu, "MEMORIA se desconecto. Terminando servidor");
-            exit(1);
+//         case -1:
+//             log_error(log_cpu, "MEMORIA se desconecto. Terminando servidor");
+//             exit(1);
 
-        default:
-            log_warning(log_cpu,"Operacion desconocida. No quieras meter la pata");
-            break;
-    }
-
-
-}
+//         default:
+//             log_warning(log_cpu,"Operacion desconocida. No quieras meter la pata");
+//             break;
+//     }
 
 
-void espero_rta_escritura_4B_de_memoria(){
-    uint32_t valor_completo;
-    int control = 0;
-    t_buffer* buffer;
-    int pid;
-    t_direccion_fisica* dir_fisica;
-    uint32_t valor_escrito;
+// }
 
-    int cod_op_memoria_aux = recibir_operacion(socket_cliente_cpu);
-    while(control == 0){
-        switch (cod_op_memoria_aux) {
 
-            case CPU_RECIBE_OK_4B_DE_ESCRITURA:   // [PID, DF, VALOR] -> [Int, Direccion_fisica, uint_32]
-                // Pueden ser mas de una
-                buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
-                pid = recibir_int_del_buffer(buffer);
-                dir_fisica = recibir_estructura_del_buffer(buffer);
-                valor_escrito = recibir_uint32_del_buffer(buffer);
-                log_info(log_cpu, "PID: %d - Accion: ESCRIBIR - Direccion fisica: [%d - %d] - Valor: %u ", pid, dir_fisica->nro_marco ,dir_fisica->offset, valor_escrito);
-                free(buffer);
-                break; 
+// void espero_rta_escritura_4B_de_memoria(){
+//     uint32_t valor_completo;
+//     int control = 0;
+//     t_buffer* buffer;
+//     int pid;
+//     t_direccion_fisica* dir_fisica;
+//     uint32_t valor_escrito;
 
-            case CPU_RECIBE_ULT_OK_4B_DE_ESCRITURA:   // [PID, DF, VALOR, VALOR FINAL] -> [Int, Direccion_fisica, uint_32, uint_32]
+//     int cod_op_memoria_aux = recibir_operacion(socket_cliente_cpu);
+//     while(control == 0){
+//         switch (cod_op_memoria_aux) {
 
-                // Esta es la ultima
-                buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
-                pid = recibir_int_del_buffer(buffer);
-                dir_fisica = recibir_estructura_del_buffer(buffer);
-                valor_escrito = recibir_uint32_del_buffer(buffer);
-                valor_completo = recibir_uint32_del_buffer(buffer);
-                log_info(log_cpu, "PID: %d - Accion: ESCRIBIR - Direccion fisica: [%d - %d] - Valor: %u ", pid, dir_fisica->nro_marco ,dir_fisica->offset, valor_escrito);
-                log_info(log_cpu, "ACCIÓN COMPLETADA: ESCRIBIR %u EN MEMORIA", valor_completo);
-                control = 1;
-                free(buffer);
-                break; 
+//             case CPU_RECIBE_OK_4B_DE_ESCRITURA:   // [PID, DF, VALOR] -> [Int, Direccion_fisica, uint_32]
+//                 // Pueden ser mas de una
+//                 buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
+//                 pid = recibir_int_del_buffer(buffer);
+//                 dir_fisica = recibir_estructura_del_buffer(buffer);
+//                 valor_escrito = recibir_uint32_del_buffer(buffer);
+//                 log_info(log_cpu, "PID: %d - Accion: ESCRIBIR - Direccion fisica: [%d - %d] - Valor: %u ", pid, dir_fisica->nro_marco ,dir_fisica->offset, valor_escrito);
+//                 free(buffer);
+//                 break; 
 
-            case -1:
-                log_error(log_cpu, "MEMORIA se desconecto. Terminando servidor");
-                exit(1);
+//             case CPU_RECIBE_ULT_OK_4B_DE_ESCRITURA:   // [PID, DF, VALOR, VALOR FINAL] -> [Int, Direccion_fisica, uint_32, uint_32]
 
-            default:
-                log_warning(log_cpu,"Operacion desconocida. No quieras meter la pata");
-                break;
-        }
+//                 // Esta es la ultima
+//                 buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
+//                 pid = recibir_int_del_buffer(buffer);
+//                 dir_fisica = recibir_estructura_del_buffer(buffer);
+//                 valor_escrito = recibir_uint32_del_buffer(buffer);
+//                 valor_completo = recibir_uint32_del_buffer(buffer);
+//                 log_info(log_cpu, "PID: %d - Accion: ESCRIBIR - Direccion fisica: [%d - %d] - Valor: %u ", pid, dir_fisica->nro_marco ,dir_fisica->offset, valor_escrito);
+//                 log_info(log_cpu, "ACCIÓN COMPLETADA: ESCRIBIR %u EN MEMORIA", valor_completo);
+//                 control = 1;
+//                 free(buffer);
+//                 break; 
 
-    }
+//             case -1:
+//                 log_error(log_cpu, "MEMORIA se desconecto. Terminando servidor");
+//                 exit(1);
 
-    free(buffer);
-}
+//             default:
+//                 log_warning(log_cpu,"Operacion desconocida. No quieras meter la pata");
+//                 break;
+//         }
+
+//     }
+
+//     free(buffer);
+// }
 
 
 // void peticion_lectura_string_a_memoria(int pid, t_list* direcciones_fisicas, int tamanio){

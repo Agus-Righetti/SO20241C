@@ -168,6 +168,7 @@ void pasar_procesos_de_new_a_ready(){
     //Espera que haya procesos en la cola de New, si el grado de multiprogramacion lo permite, pasa los procesos a Ready para que se ejecuten
     
     pcb * proceso_a_mandar_a_ready;
+    char* estado_anterior;
 
     while(1)
     {
@@ -181,9 +182,18 @@ void pasar_procesos_de_new_a_ready(){
         proceso_a_mandar_a_ready = queue_pop(cola_de_new); // Saco un proceso de la cola de New para despues pasarlo a Ready
         pthread_mutex_unlock(&mutex_cola_de_new);
 
+        estado_anterior = obtener_char_de_estado(proceso_a_mandar_a_ready->estado_del_proceso);
+        
+        //log_obligatorio
+        log_info(log_kernel, "PID: <%d> - Estado Anterior: <%s> - Estado Actual: <READY>", proceso_a_mandar_a_ready->pid, estado_anterior);
+
+
+
         pthread_mutex_lock(&proceso_a_mandar_a_ready->mutex_pcb);
         proceso_a_mandar_a_ready->estado_del_proceso = READY; // Le asigno el nuevo estado "Ready"
         pthread_mutex_unlock(&proceso_a_mandar_a_ready->mutex_pcb);
+
+
 
         //armo el log_obligatorio
 
@@ -847,7 +857,7 @@ void recibir_pcb(pcb* proceso) {
         proceso_recibido = recibir_estructura_del_buffer(buffer);
     }
     
-    log_info(log_kernel, "Recibi PID: %d", proceso_recibido->pid); 
+    log_info(log_kernel, "Recibi PID: %d", proceso_recibido->pid); // Este siempre suele dar segmentation fault
     
     free(buffer->stream); // Libero directamente el buffer, no arme paquete asi que no hace falta
     free(buffer);
@@ -941,6 +951,8 @@ void accionar_segun_estado(pcb* proceso, int flag, int motivo){
     { 
 
         char* estado_anterior = obtener_char_de_estado(proceso->estado_del_proceso);
+
+        log_info(log_kernel, "PID: <%d> - Estado Anterior: <%s> - Estado Actual: <READY", proceso->pid, estado_anterior);
         pthread_mutex_lock(&proceso->mutex_pcb);
         proceso->estado_del_proceso = READY; 
         pthread_mutex_unlock(&proceso->mutex_pcb);
@@ -955,7 +967,7 @@ void accionar_segun_estado(pcb* proceso, int flag, int motivo){
                 hacer_el_log_obligatorio_de_ingreso_a_ready_prioridad(proceso);
                 sem_post(&sem_cola_prioridad_vrr);
 
-                log_info(log_kernel, "PID: %d - Estado Anterior: %s - Estado Actual: READY", proceso->pid, estado_anterior);
+                //log_info(log_kernel, "PID: %d - Estado Anterior: %s - Estado Actual: READY", proceso->pid, estado_anterior);
 
             }else{ // Si no le queda quantum
 
@@ -966,7 +978,7 @@ void accionar_segun_estado(pcb* proceso, int flag, int motivo){
                 pthread_mutex_unlock(&mutex_cola_de_ready);
                 sem_post(&sem_cola_de_ready);
 
-                log_info(log_kernel, "PID: %d - Estado Anterior: %s - Estado Actual: READY", proceso->pid, estado_anterior);
+                //log_info(log_kernel, "PID: %d - Estado Anterior: %s - Estado Actual: READY", proceso->pid, estado_anterior);
 
             }
         } else{ // No estoy en vrr, siempre madno a cola de Ready normal
@@ -978,7 +990,7 @@ void accionar_segun_estado(pcb* proceso, int flag, int motivo){
             hacer_el_log_obligatorio_de_ingreso_a_ready(proceso);
 
 
-            log_info(log_kernel, "PID: %d - Estado Anterior: %s - Estado Actual: READY", proceso->pid , estado_anterior);
+            //log_info(log_kernel, "PID: %d - Estado Anterior: %s - Estado Actual: READY", proceso->pid , estado_anterior);
 
         };
     }
@@ -1018,9 +1030,16 @@ void pasar_proceso_a_exit(pcb* proceso, int motivo){
             log_info(log_kernel, "Finaliza el proceso <%d> - Motivo: <NI IDEA MACHOOO>", proceso->pid );
             break;
     }
+
+    int indice_recurso_a_liberar;
+    char* recurso_a_liberar;
+
     while(queue_is_empty(proceso->recursos_asignados) != true) // Mientras la cola de recursos asignados no esta vacia
     {
-        int recurso_a_liberar = (int)(intptr_t)queue_peek(proceso->recursos_asignados); // Entonces libero los recursos correspondientes 
+        indice_recurso_a_liberar = (int)(intptr_t)queue_peek(proceso->recursos_asignados); // Entonces libero los recursos correspondientes 
+
+        recurso_a_liberar = config_kernel->recursos[indice_recurso_a_liberar]; //lo paso a char*
+
         hacer_signal(recurso_a_liberar, proceso); //tengo q pasarle a signal el nombre del recurso
     }
 
@@ -1031,7 +1050,7 @@ void pasar_proceso_a_exit(pcb* proceso, int motivo){
     pcb* primer_pcb_cola_gral = queue_pop(cola_general_de_procesos);
 
     pcb* aux = primer_pcb_cola_gral;
-    log_info (log_kernel, "aux = %d y el q busco es igual a = %d" , aux->pid, proceso->pid);
+    //log_info (log_kernel, "aux = %d y el q busco es igual a = %d" , aux->pid, proceso->pid);
 
     while(aux->pid != proceso->pid)
     {
@@ -1322,7 +1341,8 @@ int hacer_wait(char* recurso, pcb* proceso){
             pthread_mutex_unlock(&proceso->mutex_pcb);
 
             log_info(log_kernel, "PID: %d - Estado Anterior: %s - Estado Actual: BLOCKED", proceso->pid, estado_anterior);
-            
+            log_info(log_kernel, "PID: %d - Bloqueado por: <%s>", proceso->pid, recurso);
+
             
             pthread_mutex_lock(mutex_por_recurso[indice_recurso]);
             queue_push(colas_por_recurso[indice_recurso], proceso); // Mando a la cola de blocked de ese recurso
@@ -1438,6 +1458,8 @@ char* pasar_a_string(int valor)
     snprintf(buffer, sizeof(buffer), "%d", valor);
     return buffer;
 }
+
+
 
 void hacer_el_log_obligatorio_de_ingreso_a_ready(pcb* proceso_a_mandar_a_ready)
 {

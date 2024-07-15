@@ -7,6 +7,11 @@ void atender_memoria() {
 
     t_buffer* buffer;
 
+    t_direccion_fisica* dir_fisica;
+    int pid;
+    uint8_t valor_escrito;
+    uint8_t valor_completo;
+
     int cod_op_memoria;
 
     while(1) {
@@ -26,6 +31,7 @@ void atender_memoria() {
             case CPU_RECIBE_TAMAÑO_PAGINA_DE_MEMORIA:
                 buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
                 tamanio_pagina = recibir_int_del_buffer(buffer);
+                // free(buffer->stream);
                 free(buffer);
                 break; 
 
@@ -37,6 +43,7 @@ void atender_memoria() {
                 //proceso->program_counter++; // Esto hay que sacarlo porque usan la variable global, y aumentarlo en pcb.c
                 instruccion_recibida = recibir_string_del_buffer(buffer); // Obtengo la instrucción posta del buffer
                 //interpretar_instruccion_de_memoria(instruccion_recibida); // Mando la instrucción para hacer un decode
+                // free(buffer->stream);
                 free(buffer); // Libero el buffer
                 sem_post(&sem_hay_instruccion);
                 break;
@@ -49,6 +56,7 @@ void atender_memoria() {
                 args->proceso = pcb_recibido; //Este proceso es global, no deberia ser global
                 args->operacion = OUT_OF_MEMORY;
                 buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
+                // free(buffer->stream);
                 free(buffer);
                 enviar_pcb(socket_cliente_kernel, args);
                 log_info(log_cpu, "entre a out of  ");
@@ -64,6 +72,9 @@ void atender_memoria() {
                 
                 sem_post(&sem_tengo_el_marco);
             
+                // free(buffer->stream);
+                free(buffer);
+
                 break; 
 
             case CPU_RECIBE_OK_DEL_RESIZE:
@@ -71,6 +82,7 @@ void atender_memoria() {
                 printf("El tamaño del proceso se ha ajustado correctamente.\n");
                 pcb_recibido->program_counter++; 
                 buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
+                // free(buffer->stream);
                 free(buffer);
                 //log_info(log_cpu, "recibi buffer");
 
@@ -79,6 +91,105 @@ void atender_memoria() {
                 //log_info(log_cpu, "volvi de checkinterrupt  ");
                 
                 break;
+            case CPU_RECIBE_LECTURA_1B:
+
+                buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
+                pid = recibir_int_del_buffer(buffer); // Este pid creo que ya lo puedo tener directo del pcb recibido
+                dir_fisica = recibir_estructura_del_buffer(buffer);
+                valor_leido_de_memoria_8 = recibir_uint8_del_buffer(buffer);
+
+
+                log_info(log_cpu, "PID: %d - Accion: LEER - Direccion fisica: [%d - %d] - Valor: %u ", pid, dir_fisica->nro_marco ,dir_fisica->offset, valor_leido_de_memoria_8);
+                log_info(log_cpu, "ACCIÓN COMPLETADA: LEER %u EN MEMORIA", valor_leido_de_memoria_8);
+                // free(buffer->stream);
+                free(buffer);
+
+                sem_post(&sem_valor_leido_de_memoria);
+
+                break;
+
+            case CPU_RECIBE_LECTURA_4B:   // [PID, DF, VALOR] -> [Int, Direccion_fisica, uint_32]
+                // Pueden ser mas de una
+
+                buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
+                pid = recibir_int_del_buffer(buffer); // Lo mismo, creo que no hace falta 
+                dir_fisica = recibir_estructura_del_buffer(buffer);
+                valor_leido_de_memoria_32 = recibir_uint32_del_buffer(buffer);
+                log_info(log_cpu, "PID: %d - Accion: LEER - Direccion fisica: [%d - %d] - Valor: %u ", pid, dir_fisica->nro_marco ,dir_fisica->offset, valor_leido_de_memoria_32);
+                //free(buffer->stream);
+                free(buffer);
+
+                sem_post(&sem_valor_leido_de_memoria);
+
+                break; 
+
+            case CPU_RECIBE_LECTURA_U_4B:   // [PID, DF, VALOR, VALOR FINAL] -> [Int, Direccion_fisica, uint_32, uint_32]
+
+                // Esta es la ultima
+                buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
+                pid = recibir_int_del_buffer(buffer); // Lo mismo, creo que no hace falta
+                dir_fisica = recibir_estructura_del_buffer(buffer);
+                valor_leido_de_memoria_32 = recibir_uint32_del_buffer(buffer);
+                valor_reconstruido = recibir_uint32_del_buffer(buffer);
+                log_info(log_cpu, "PID: %d - Accion: LEER - Direccion fisica: [%d - %d] - Valor: %u ", pid, dir_fisica->nro_marco ,dir_fisica->offset, valor_leido_de_memoria_32);
+                log_info(log_cpu, "ACCIÓN COMPLETADA: LEER %u EN MEMORIA", valor_reconstruido);
+                // control = 1;
+                //free(buffer->stream);
+                
+                free(buffer);
+
+                sem_post(&sem_valor_leido_de_memoria);
+
+                break; 
+            
+            case CPU_RECIBE_OK_1B_DE_ESCRITURA:   // [PID, DF, VALOR] -> [Int, Direccion_fisica, uint_8]
+
+                // Esta va a ser una sola
+                buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
+                pid = recibir_int_del_buffer(buffer);
+                dir_fisica = recibir_estructura_del_buffer(buffer);
+                valor_escrito = recibir_uint8_del_buffer(buffer);
+
+                log_info(log_cpu, "PID: %d - Accion: ESCRIBIR - Direccion fisica: [%d - %d] - Valor: %u ", pid, dir_fisica->nro_marco ,dir_fisica->offset, valor_escrito);
+                log_info(log_cpu, "ACCIÓN COMPLETADA: ESCRIBIR %u EN MEMORIA", valor_escrito);
+                
+                free(buffer);
+
+                sem_post(&sem_ok_escritura);
+
+                break; 
+            
+            case CPU_RECIBE_OK_4B_DE_ESCRITURA:   // [PID, DF, VALOR] -> [Int, Direccion_fisica, uint_32]
+                // Pueden ser mas de una
+                buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
+                pid = recibir_int_del_buffer(buffer);
+                dir_fisica = recibir_estructura_del_buffer(buffer);
+                valor_escrito = recibir_uint32_del_buffer(buffer);
+                log_info(log_cpu, "PID: %d - Accion: ESCRIBIR - Direccion fisica: [%d - %d] - Valor: %u ", pid, dir_fisica->nro_marco ,dir_fisica->offset, valor_escrito);
+                
+                free(buffer);
+
+                sem_post(&sem_ok_escritura);
+
+                break; 
+
+            case CPU_RECIBE_ULT_OK_4B_DE_ESCRITURA:   // [PID, DF, VALOR, VALOR FINAL] -> [Int, Direccion_fisica, uint_32, uint_32]
+
+                // Esta es la ultima
+                buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
+                pid = recibir_int_del_buffer(buffer);
+                dir_fisica = recibir_estructura_del_buffer(buffer);
+                valor_escrito = recibir_uint32_del_buffer(buffer);
+                valor_completo = recibir_uint32_del_buffer(buffer);
+                log_info(log_cpu, "PID: %d - Accion: ESCRIBIR - Direccion fisica: [%d - %d] - Valor: %u ", pid, dir_fisica->nro_marco ,dir_fisica->offset, valor_escrito);
+                log_info(log_cpu, "ACCIÓN COMPLETADA: ESCRIBIR %u EN MEMORIA", valor_completo);
+                //control = 1;
+                free(buffer);
+
+                sem_post(&sem_ok_escritura);
+                
+                break; 
+
 
             case EXIT:
             //log_info(log_cpu, "case 6 ");
@@ -135,6 +246,7 @@ void atender_kernel()
                 int direccion_logica = recibir_int_del_buffer(buffer);
                 int direccion_fisica = traducir_direccion_logica_a_fisica(direccion_logica);
                 enviar_direccion_fisica_a_kernel(socket_cliente_kernel, direccion_fisica);
+               // free(buffer->stream);
                 free(buffer);
                 break;
             case EXIT:

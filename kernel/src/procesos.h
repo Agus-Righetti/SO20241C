@@ -42,7 +42,6 @@ char* pasar_a_string(int valor);
 char *agregar_al_final(char *buffer, const char *informacion);
 void hacer_el_log_obligatorio_de_ingreso_a_ready(pcb* proceso_a_mandar_a_ready);
 void hacer_el_log_obligatorio_de_ingreso_a_ready_prioridad(pcb* proceso_a_mandar_a_ready);
-
 void detener_planificacion();
 void iniciar_planificacion();
 

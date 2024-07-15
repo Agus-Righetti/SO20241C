@@ -420,17 +420,23 @@ void instruccion_mov_in(char **parte) {
         
         direcciones_fisicas = traducir_dl_a_df_completa(direccion_logica, 1);
 
+        
+
         log_info(log_cpu, "volvi de traducir las direcciones completo");
 
         // Ahora tengo todas las DF -> necesito leer en memoria el dato
         peticion_lectura_a_memoria(CPU_PIDE_LEER_REGISTRO_1B, pcb_recibido->pid, direcciones_fisicas);
+
         log_info(log_cpu, "ya hice la peticion de lectura a memoria");
 
-        uint8_t valor_leido_de_memoria = espero_rta_lectura_1B_de_memoria();
+        // uint8_t valor_leido_de_memoria = espero_rta_lectura_1B_de_memoria();
 
         // REVISAR ESTO
         uint8_t* valor_registro_dato = dictionary_get(registros, registro_dato);
-        *valor_registro_dato = valor_leido_de_memoria;
+
+        sem_wait(&sem_valor_leido_de_memoria);
+
+        *valor_registro_dato = valor_leido_de_memoria_8;
 
         log_info(log_cpu, "(1B)El valor despues de mov_in es: %d", *valor_registro_dato);
 
@@ -442,11 +448,16 @@ void instruccion_mov_in(char **parte) {
         // Ahora tengo todas las DF -> necesito leer en memoria el dato
         peticion_lectura_a_memoria(CPU_PIDE_LEER_REGISTRO_4B, pcb_recibido->pid, direcciones_fisicas);
 
-        uint32_t valor_leido_de_memoria = espero_rta_lectura_4B_de_memoria();
+        // Esto tendria que ser una variable global y obtenerlo en la escucha general
+
+        // uint32_t valor_leido_de_memoria = espero_rta_lectura_4B_de_memoria();
 
         // REVISAR ESTO
         uint32_t* valor_registro_dato = dictionary_get(registros, registro_dato);
-        *valor_registro_dato = valor_leido_de_memoria;
+
+        sem_wait(&sem_valor_leido_de_memoria);
+
+        *valor_registro_dato = valor_leido_de_memoria_32; // Este ultimo es el que ahora es global
 
         log_info(log_cpu, "(4B)El valor despues de mov_in es: %d", *valor_registro_dato);
 
@@ -479,6 +490,7 @@ void instruccion_mov_out(char **parte) {
     log_info(log_cpu, "La direccion logica es: %d", direccion_logica);
     
     t_list* direcciones_fisicas;
+
     if(es_Registro_de_1B(registro_dato))
     {
         log_info(log_cpu, "Llegue a la traduccion");
@@ -490,7 +502,6 @@ void instruccion_mov_out(char **parte) {
         // Ahora tengo todas las DF -> necesito escribir en memoria el dato
         peticion_escritura_1B_a_memoria(pcb_recibido->pid, direcciones_fisicas, valor_registro_dato); 
         // [PID, DFs, VALOR] _> [Int, lista, uint8]
-        espero_rta_escritura_1B_de_memoria();
 
     } 
     else 
@@ -503,8 +514,13 @@ void instruccion_mov_out(char **parte) {
         // Ahora tengo todas las DF -> necesito leer en memoria el dato
         peticion_escritura_4B_a_memoria(pcb_recibido->pid, direcciones_fisicas, valor_registro_dato);
 
-        espero_rta_escritura_4B_de_memoria();
     }
+
+    log_info(log_cpu, "Estoy antes de bloquearme por el semaforo");
+
+    sem_wait(&sem_ok_escritura);
+
+    log_info(log_cpu, "Ya me desbloquee despues del semaforo");
 
     // Aumento el PC para que lea la proxima instruccion
 	pcb_recibido->program_counter++;

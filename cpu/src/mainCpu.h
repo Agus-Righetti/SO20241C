@@ -23,6 +23,8 @@ int motivo_interrupcion;
 sem_t sem_tengo_el_marco;
 sem_t sem_hay_instruccion;
 sem_t sem_tengo_ok_resize;
+sem_t sem_valor_leido_de_memoria;
+sem_t sem_ok_escritura;
 
 t_dictionary* instrucciones;
 t_dictionary* registros;
@@ -31,6 +33,9 @@ int marco;
 //pcb* proceso = NULL;
 pcb* pcb_recibido ; // &proceso; // Asignación de la dirección de proceso a pcb_recibido
 char* instruccion_recibida;
+uint8_t valor_leido_de_memoria_8;
+uint32_t valor_leido_de_memoria_32;
+uint32_t valor_reconstruido;
 
 TLB* tlb; 
 int cantidad_entradas_tlb;

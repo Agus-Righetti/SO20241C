@@ -241,6 +241,71 @@ t_paquete* crear_paquete_personalizado(op_code code_op){
 	return  paquete_personalizado;
 }
 
+//AYUDITA DEL CHATI------------------------------------------------------------------
+
+void agregar_lista_al_paquete_personalizado(t_paquete* paquete, t_list* lista, int size_data) {
+    // Serializar el tamaño de la lista
+    if (paquete->buffer->size == 0) {
+        paquete->buffer->stream = malloc(sizeof(int));
+    } else {
+        paquete->buffer->stream = realloc(paquete->buffer->stream, 
+                                          paquete->buffer->size + sizeof(int));
+    }
+    memcpy(paquete->buffer->stream + paquete->buffer->size, &(lista->elements_count), sizeof(int));
+    paquete->buffer->size += sizeof(int);
+
+    // Serializar cada elemento de la lista
+    t_link_element* current = lista->head;
+    while (current != NULL) {
+        // Redimensionar el buffer para el nuevo elemento
+        paquete->buffer->stream = realloc(paquete->buffer->stream, 
+                                          paquete->buffer->size + sizeof(int) + size_data);
+        // Serializar el tamaño del elemento
+        memcpy(paquete->buffer->stream + paquete->buffer->size, &size_data, sizeof(int));
+        // Serializar el elemento
+        memcpy(paquete->buffer->stream + paquete->buffer->size + sizeof(int), current->data, size_data);
+        
+        paquete->buffer->size += sizeof(int) + size_data;
+
+        current = current->next;
+    }
+}
+
+
+// void agregar_lista_al_paquete_personalizado(t_paquete* paquete, t_list* lista) {
+    
+// 	// Serializar el tamaño de la lista
+//     if (paquete->buffer->size == 0) {
+//         paquete->buffer->stream = malloc(sizeof(int));
+//         memcpy(paquete->buffer->stream, &(lista->elements_count), sizeof(int));
+//     } else {
+//         paquete->buffer->stream = realloc(paquete->buffer->stream, 
+//                                           paquete->buffer->size + sizeof(int));
+//         memcpy(paquete->buffer->stream + paquete->buffer->size, &(lista->elements_count), sizeof(int));
+//     }
+//     paquete->buffer->size += sizeof(int);
+
+//     // Serializar cada elemento de la lista
+//     t_link_element* current = lista->head;
+//     while (current != NULL) {
+//         int size_data = sizeof(current->data); // Asumiendo que data es un int para simplificar
+//         if (paquete->buffer->size == 0) {
+//             paquete->buffer->stream = malloc(sizeof(int) + size_data);
+//             memcpy(paquete->buffer->stream, &size_data, sizeof(int));
+//             memcpy(paquete->buffer->stream + sizeof(int), current->data, size_data);
+//         } else {
+//             paquete->buffer->stream = realloc(paquete->buffer->stream, 
+//                                               paquete->buffer->size + sizeof(int) + size_data);
+//             memcpy(paquete->buffer->stream + paquete->buffer->size, &size_data, sizeof(int));
+//             memcpy(paquete->buffer->stream + paquete->buffer->size + sizeof(int), current->data, size_data);
+//         }
+//         paquete->buffer->size += sizeof(int) + size_data;
+
+//         current = current->next;
+//     }
+// }
+//FIN AYUDITA DEL CHATI------------------------------------------------------------------
+
 void agregar_int_al_paquete_personalizado(t_paquete* paquete, int valor){
 	if(paquete->buffer->size == 0){
 		paquete->buffer->stream = malloc(sizeof(int));
@@ -436,7 +501,142 @@ void* recibir_estructura_del_buffer(t_buffer* buffer){
 	return estructura;
 }
 
+//recibimos la lista del buffer vamos a probar a vet q onda----------------------------------
 
+
+t_list* recibir_lista_del_buffer(t_buffer* buffer) {
+    if (buffer->size == 0) {
+        printf("\n[ERROR] Al intentar extraer una lista de un t_buffer vacío\n\n");
+        exit(EXIT_FAILURE);
+    }
+
+    if (buffer->size < 0) {
+        printf("\n[ERROR] Esto es raro. El t_buffer contiene un size NEGATIVO \n\n");
+        exit(EXIT_FAILURE);
+    }
+
+    // Recibir el tamaño de la lista
+    int size_lista;
+    memcpy(&size_lista, buffer->stream, sizeof(int));
+
+    buffer->stream += sizeof(int);
+    buffer->size -= sizeof(int);
+
+    // Crear la lista
+    t_list* lista = malloc(sizeof(t_list));
+    lista->head = NULL;
+    lista->elements_count = size_lista;
+
+    t_link_element** current = &(lista->head);
+
+    for (int i = 0; i < size_lista; i++) {
+        // Recibir el tamaño del elemento
+        int size_elemento;
+        memcpy(&size_elemento, buffer->stream, sizeof(int));
+
+        buffer->stream += sizeof(int);
+        buffer->size -= sizeof(int);
+
+        if (buffer->size < size_elemento) {
+            printf("\n[ERROR_LISTA]: BUFFER CON TAMAÑO INSUFICIENTE\n\n");
+            exit(EXIT_FAILURE);
+        }
+
+        // Recibir el elemento
+        void* elemento = malloc(size_elemento);
+        memcpy(elemento, buffer->stream, size_elemento);
+
+        buffer->stream += size_elemento;
+        buffer->size -= size_elemento;
+
+        // Agregar el elemento a la lista
+        t_link_element* nuevo_elemento = malloc(sizeof(t_link_element));
+        nuevo_elemento->data = elemento;
+        nuevo_elemento->next = NULL;
+
+        *current = nuevo_elemento;
+        current = &(nuevo_elemento->next);
+    }
+
+    return lista;
+}
+
+// t_list* recibir_lista_del_buffer(t_buffer* buffer) {
+//     if(buffer->size == 0){
+//         printf("\n[ERROR] Al intentar extraer una lista de un t_buffer vacio\n\n");
+//         exit(EXIT_FAILURE);
+//     }
+
+//     if(buffer->size < 0){
+//         printf("\n[ERROR] Esto es raro. El t_buffer contiene un size NEGATIVO \n\n");
+//         exit(EXIT_FAILURE);
+//     }
+
+//     // Recibir el tamaño de la lista
+//     int size_lista;
+//     memcpy(&size_lista, buffer->stream, sizeof(int));
+
+//     int nuevo_size = buffer->size - sizeof(int);
+//     if(nuevo_size < 0){
+//         printf("\n[ERROR_LISTA]: BUFFER CON TAMAÑO NEGATIVO\n\n");
+//         exit(EXIT_FAILURE);
+//     }
+
+//     void* nuevo_buffer = malloc(nuevo_size);
+//     memcpy(nuevo_buffer, buffer->stream + sizeof(int), nuevo_size);
+//     free(buffer->stream);
+//     buffer->stream = nuevo_buffer;
+//     buffer->size = nuevo_size;
+
+//     // Crear la lista
+//     t_list* lista = malloc(sizeof(t_list));
+//     lista->head = NULL;
+//     lista->elements_count = 0;
+
+//     for(int i = 0; i < size_lista; i++){
+//         // Recibir el tamaño del elemento
+//         int size_elemento;
+//         memcpy(&size_elemento, buffer->stream, sizeof(int));
+
+//         nuevo_size = buffer->size - sizeof(int);
+//         if(nuevo_size < 0){
+//             printf("\n[ERROR_LISTA]: BUFFER CON TAMAÑO NEGATIVO\n\n");
+//             exit(EXIT_FAILURE);
+//         }
+
+//         nuevo_buffer = malloc(nuevo_size);
+//         memcpy(nuevo_buffer, buffer->stream + sizeof(int), nuevo_size);
+//         free(buffer->stream);
+//         buffer->stream = nuevo_buffer;
+//         buffer->size = nuevo_size;
+
+//         // Recibir el elemento
+//         void* elemento = malloc(size_elemento);
+//         memcpy(elemento, buffer->stream, size_elemento);
+
+//         nuevo_size = buffer->size - size_elemento;
+//         if(nuevo_size < 0){
+//             printf("\n[ERROR_LISTA]: BUFFER CON TAMAÑO NEGATIVO\n\n");
+//             free(elemento);
+//             exit(EXIT_FAILURE);
+//         }
+
+//         nuevo_buffer = malloc(nuevo_size);
+//         memcpy(nuevo_buffer, buffer->stream + size_elemento, nuevo_size);
+//         free(buffer->stream);
+//         buffer->stream = nuevo_buffer;
+//         buffer->size = nuevo_size;
+
+//         // Agregar el elemento a la lista
+//         t_link_element* nuevo_elemento = malloc(sizeof(t_link_element));
+//         nuevo_elemento->data = elemento;
+//         nuevo_elemento->next = lista->head;
+//         lista->head = nuevo_elemento;
+//         lista->elements_count++;
+//     }
+
+//     return lista;
+// }
 uint32_t recibir_uint32_del_buffer(t_buffer* buffer){
 	if(buffer->size == 0){
 		printf("\n[ERROR] Al intentar extraer un INT de un t_buffer vacio\n\n");
@@ -453,7 +653,7 @@ uint32_t recibir_uint32_del_buffer(t_buffer* buffer){
 
 	uint32_t nuevo_size = buffer->size - sizeof(uint32_t);
 	if(nuevo_size == 0){
-		free(buffer->stream);
+		// free(buffer->stream);
 		buffer->stream = NULL;
 		buffer->size = 0;
 		return valor_a_devolver;
@@ -489,7 +689,7 @@ uint8_t recibir_uint8_del_buffer(t_buffer* buffer){
 
 	uint8_t nuevo_size = buffer->size - sizeof(uint8_t);
 	if(nuevo_size == 0){
-		free(buffer->stream);
+		// free(buffer->stream);
 		buffer->stream = NULL;
 		buffer->size = 0;
 		return valor_a_devolver;

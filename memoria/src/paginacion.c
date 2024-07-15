@@ -137,7 +137,7 @@ void eliminar_algo(void* algo){
 void leer_uint32_en_memoria (int pid, t_list* direcciones_fisicas){
 
     uint32_t valor_leido = 0;
-    void* valor_leido_puntero = &valor_leido;
+    void* valor_leido_puntero = &valor_leido;//void* ? revisar
 
     int cantidad_marcos_por_leer = list_size(direcciones_fisicas);
 
@@ -228,17 +228,23 @@ void enviar_lectura_ult_4B_a_cpu(int pid, t_direccion_fisica* dir_actual, uint32
 
 void leer_uint8_en_memoria (int pid, t_list* direcciones_fisicas){
 
+    log_info(log_memoria, "Entre a leer_uint8_en_memoria");
+    
     uint8_t valor_leido = 0;
     void* valor_leido_puntero = &valor_leido;
 
     int cantidad_marcos_por_leer = list_size(direcciones_fisicas);
+
+    log_info(log_memoria, "Cantidad de marcos: %d", cantidad_marcos_por_leer);
 
     if (cantidad_marcos_por_leer == 0) {
         log_error(log_memoria, "ERROR: no hay direcciones físicas para escribir.");
         return;
     }
 
-    int indice_dir = 1;
+
+    int indice_dir = 0;
+    //se freno aca
     t_direccion_fisica* dir_actual = list_get(direcciones_fisicas, indice_dir);
 
     int despl_esp_usuario = dir_actual->nro_marco * config_memoria->tam_pagina + dir_actual->offset ;
@@ -281,6 +287,8 @@ void enviar_lectura_1B_a_cpu(int pid, t_direccion_fisica* dir_actual, uint8_t va
 void guardar_uint32_en_memoria (int pid, t_list* direcciones_fisicas, uint32_t valor){
     // podria revisar que este dentro de su espacio -> ver
 
+    log_info(log_memoria, "entre a guardar uint32 en memoria");
+
     // Creo un puntero al dato por guardar, para poder operar
     void* valor_puntero = &valor;
 
@@ -291,7 +299,7 @@ void guardar_uint32_en_memoria (int pid, t_list* direcciones_fisicas, uint32_t v
         return;
     }
 
-    int indice_dir = 1;
+    int indice_dir = 0; //lo cambie a cero
     t_direccion_fisica* dir_actual = list_get(direcciones_fisicas, indice_dir);
 
     int despl_esp_usuario = dir_actual->nro_marco * config_memoria->tam_pagina + dir_actual->offset ;
@@ -349,7 +357,7 @@ void enviar_ok_4B_escritura_cpu(int pid, t_direccion_fisica* dir_actual, uint32_
     t_paquete* paquete = crear_paquete_personalizado(CPU_RECIBE_OK_4B_DE_ESCRITURA);
 
     agregar_int_al_paquete_personalizado(paquete, pid);
-    agregar_estructura_al_paquete_personalizado(paquete, &dir_actual, sizeof(t_direccion_fisica));
+    agregar_estructura_al_paquete_personalizado(paquete, dir_actual, sizeof(t_direccion_fisica));
     agregar_uint32_al_paquete_personalizado(paquete, valor);
 
 	enviar_paquete(paquete, socket_cliente_cpu);
@@ -361,7 +369,7 @@ void enviar_ult_ok_4B_escritura_cpu(int pid, t_direccion_fisica* dir_actual, uin
     t_paquete* paquete = crear_paquete_personalizado(CPU_RECIBE_ULT_OK_4B_DE_ESCRITURA);
 
     agregar_int_al_paquete_personalizado(paquete, pid);
-    agregar_estructura_al_paquete_personalizado(paquete, &dir_actual, sizeof(t_direccion_fisica));
+    agregar_estructura_al_paquete_personalizado(paquete, dir_actual, sizeof(t_direccion_fisica));
     agregar_uint32_al_paquete_personalizado(paquete, valor);
     agregar_uint32_al_paquete_personalizado(paquete, valor_completo);
 
@@ -371,6 +379,8 @@ void enviar_ult_ok_4B_escritura_cpu(int pid, t_direccion_fisica* dir_actual, uin
 
 void guardar_uint8_en_memoria (int pid, t_list* direcciones_fisicas, uint8_t valor){
     // podria revisar que este dentro de su espacio -> ver
+
+    log_info(log_memoria, "Entre a guardar_uint8_en_memoria");
 
     // Creo un puntero al dato por guardar, para poder operar
     void* valor_puntero = &valor;
@@ -382,7 +392,7 @@ void guardar_uint8_en_memoria (int pid, t_list* direcciones_fisicas, uint8_t val
         return;
     }
 
-    int indice_dir = 1;
+    int indice_dir = 0;
     t_direccion_fisica* dir_actual = list_get(direcciones_fisicas, indice_dir);
 
     int despl_esp_usuario = dir_actual->nro_marco * config_memoria->tam_pagina + dir_actual->offset ;

@@ -219,6 +219,8 @@ int io_gen_sleep(char* nombre_interfaz, int unidades_de_trabajo, pcb* proceso)
         queue_push(interfaz->cola_de_espera, args);
         pthread_mutex_unlock(&interfaz->mutex_cola);
         sem_post(&interfaz->sem_hay_procesos_esperando);
+
+        log_info(log_kernel, "PID: <%d> - Bloqueado por: <%s>", proceso->pid, nombre_interfaz);
         pasar_proceso_a_blocked(proceso);
 
         return -1; //que no haga nada porq ya lo bloquie yo
@@ -243,6 +245,7 @@ int io_stdin_read(char* nombre_interfaz, t_list* registro_direccion, uint32_t re
         pthread_mutex_lock(&interfaz->mutex_cola);
         queue_push(interfaz->cola_de_espera, args);
         pthread_mutex_unlock(&interfaz->mutex_cola);
+        log_info(log_kernel, "PID: <%d> - Bloqueado por: <%s>", proceso->pid, nombre_interfaz);
         pasar_proceso_a_blocked(proceso);
         sem_post(&interfaz->sem_hay_procesos_esperando);
         return -1; //que no haga nada porq ya lo bloquie yo
@@ -265,6 +268,7 @@ int io_stdout_write(char* nombre_interfaz, t_list* registro_direccion, uint32_t 
         pthread_mutex_lock(&interfaz->mutex_cola);
         queue_push(interfaz->cola_de_espera, args);
         pthread_mutex_unlock(&interfaz->mutex_cola);
+        log_info(log_kernel, "PID: <%d> - Bloqueado por: <%s>", proceso->pid, nombre_interfaz);
         pasar_proceso_a_blocked(proceso);
         sem_post(&interfaz->sem_hay_procesos_esperando);
         return -1; //que no haga nada porq ya lo bloquie yo
@@ -284,6 +288,7 @@ int io_fs_create(char* nombre_interfaz, char* nombre_archivo, pcb* proceso)
         pthread_mutex_lock(&interfaz->mutex_cola);
         queue_push(interfaz->cola_de_espera, args);
         pthread_mutex_unlock(&interfaz->mutex_cola);
+        log_info(log_kernel, "PID: <%d> - Bloqueado por: <%s>", proceso->pid, nombre_interfaz);
         pasar_proceso_a_blocked(proceso);
         sem_post(&interfaz->sem_hay_procesos_esperando);
         return -1; //que no haga nada porq ya lo bloquie yo
@@ -303,6 +308,7 @@ int io_fs_delete(char* nombre_interfaz, char* nombre_archivo, pcb* proceso)
         pthread_mutex_lock(&interfaz->mutex_cola);
         queue_push(interfaz->cola_de_espera, args);
         pthread_mutex_unlock(&interfaz->mutex_cola);
+        log_info(log_kernel, "PID: <%d> - Bloqueado por: <%s>", proceso->pid, nombre_interfaz);
         pasar_proceso_a_blocked(proceso);
         sem_post(&interfaz->sem_hay_procesos_esperando);
         return -1; //que no haga nada porq ya lo bloquie yo
@@ -323,6 +329,7 @@ int io_fs_truncate(char* nombre_interfaz, char* nombre_archivo, int registro_tam
         pthread_mutex_lock(&interfaz->mutex_cola);
         queue_push(interfaz->cola_de_espera, args);
         pthread_mutex_unlock(&interfaz->mutex_cola);
+        log_info(log_kernel, "PID: <%d> - Bloqueado por: <%s>", proceso->pid, nombre_interfaz);
         pasar_proceso_a_blocked(proceso);
         sem_post(&interfaz->sem_hay_procesos_esperando);
         return -1; //que no haga nada porq ya lo bloquie yo
@@ -345,6 +352,7 @@ int io_fs_write(char* nombre_interfaz, char* nombre_archivo, t_list*  registro_d
         pthread_mutex_lock(&interfaz->mutex_cola);
         queue_push(interfaz->cola_de_espera, args);
         pthread_mutex_unlock(&interfaz->mutex_cola);
+        log_info(log_kernel, "PID: <%d> - Bloqueado por: <%s>", proceso->pid, nombre_interfaz);
         pasar_proceso_a_blocked(proceso);
         sem_post(&interfaz->sem_hay_procesos_esperando);
         return -1; //que no haga nada porq ya lo bloquie yo
@@ -367,6 +375,7 @@ int io_fs_read(char* nombre_interfaz, char* nombre_archivo, t_list* registro_dir
         pthread_mutex_lock(&interfaz->mutex_cola);
         queue_push(interfaz->cola_de_espera, args);
         pthread_mutex_unlock(&interfaz->mutex_cola);
+        log_info(log_kernel, "PID: <%d> - Bloqueado por: <%s>", proceso->pid, nombre_interfaz);
         pasar_proceso_a_blocked(proceso);
         sem_post(&interfaz->sem_hay_procesos_esperando);
         return -1; //que no haga nada porq ya lo bloquie yo

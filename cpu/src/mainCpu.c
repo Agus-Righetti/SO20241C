@@ -14,6 +14,8 @@ int main(int argc, char* argv[])
 	sem_init(&sem_tengo_el_marco, 0, 0);
 	sem_init(&sem_tengo_ok_resize, 0, 0);
 	sem_init(&sem_hay_instruccion, 0, 0);
+	sem_init(&sem_valor_leido_de_memoria, 0, 0);
+	sem_init(&sem_ok_escritura,0,0);
 
 
 	flag_interrupcion = false;
@@ -60,6 +62,8 @@ void terminar_programa()
 	sem_destroy(&sem_tengo_el_marco);
 	sem_destroy(&sem_tengo_ok_resize);
 	sem_destroy(&sem_hay_instruccion);
+	sem_destroy(&sem_valor_leido_de_memoria);
+	sem_destroy(&sem_ok_escritura);
 	
 	if (log_cpu != NULL) 
     {

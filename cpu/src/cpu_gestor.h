@@ -37,6 +37,8 @@ extern int tamanio_pagina;
 extern char* instruccion_recibida;
 extern sem_t sem_hay_instruccion;
 extern sem_t sem_tengo_ok_resize;
+extern sem_t sem_valor_leido_de_memoria;
+extern sem_t sem_ok_escritura;
 
 extern int socket_servidor_cpu;
 extern int socket_cliente_kernel;
@@ -47,6 +49,9 @@ extern bool flag_interrupcion;          // flag para chequear interrupciones o p
 extern int motivo_interrupcion;
 extern sem_t sem_tengo_el_marco;
 extern int marco;
+extern uint8_t valor_leido_de_memoria_8;  
+extern uint32_t valor_leido_de_memoria_32;  
+extern uint32_t valor_reconstruido;  
 
 extern t_dictionary* instrucciones;
 extern t_dictionary* registros;
