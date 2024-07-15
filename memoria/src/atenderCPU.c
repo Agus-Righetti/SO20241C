@@ -7,7 +7,7 @@ void cpu_pide_instruccion(t_buffer* un_buffer){        //[PID, IP]
 	int pid = recibir_int_del_buffer(un_buffer);
 	int ip = recibir_int_del_buffer(un_buffer);
 
-	log_info(log_memoria, "estoy antes del semaforo");
+	//log_info(log_memoria, "estoy antes del semaforo");
 	sem_wait(&sem_lista_procesos);
     //tengo que obtener proceso buscando con los PID
     t_proceso* un_proceso = obtener_proceso_por_id(pid);
@@ -74,7 +74,8 @@ void enviar_una_instruccion_a_cpu(char* instruccion){
 	agregar_string_al_paquete_personalizado(paquete, instruccion);
 
 	enviar_paquete(paquete, socket_cliente_cpu);
-	log_info(log_memoria, "ya mande la isntruccion q me pidio CPU codOP%d", CPU_RECIBE_INSTRUCCION_DE_MEMORIA);
+
+	log_info(log_memoria, "Instruccion: <<%s>> enviada a CPU con exito", instruccion);
 	eliminar_paquete(paquete);
 }
 
@@ -116,16 +117,19 @@ int obtener_marco_segun_pagina (int pid, int nro_pag){
 	// 1ero controlo si esta vacia
 	if (list_is_empty(un_proceso->tabla_paginas)){
 		log_info(log_memoria, "La tabla de paginas esta vacia");
+		log_error(log_memoria, "Se intento hacer un mov antes de un rezise");
 	}
 	
 	log_info(log_memoria, "La tabla de paginas tiene: %d paginas \n", list_size(un_proceso->tabla_paginas));
-	log_info(log_memoria, "La tabla de paginas tiene: %d paginas \n", nro_pag);
+	log_info(log_memoria, "Necesito la pagina nro: %d\n", nro_pag);
 	
 	// 2ndo controlo que el nro de pag sea valido
 	if(nro_pag > list_size(un_proceso->tabla_paginas)){
 		log_error(log_memoria, "NRO DE PÁGINA <%d> DEL PROCESO <%d> NO VALIDO", nro_pag, pid);
 		return -1;
 	}
+
+	// EXCEPTION RECURRENTE
 
 	t_pagina* una_pagina = list_get(un_proceso->tabla_paginas, nro_pag);
 	

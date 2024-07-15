@@ -722,6 +722,7 @@ void recibir_pcb(pcb* proceso) {
                 fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
                 proceso_recibido = recibir_estructura_del_buffer(buffer);
                 recurso = recibir_string_del_buffer(buffer); // Obtengo el indice del recurso que se usa para manejarlo
+                
                 flag_estado = hacer_wait(recurso, proceso_recibido);
 
                 break;
@@ -1323,11 +1324,14 @@ int hacer_signal(char* recurso, pcb* proceso){
 
 // ************* REALIZA EL WAIT DE UN RECURSO *************
 int hacer_wait(char* recurso, pcb* proceso){
+    
     int flag;
+
+    log_info(log_kernel, "El nombre del recurso 0 es: %s", config_kernel->recursos[0]);
 
     int indice_recurso = buscar_indice_recurso_segun_nombre(recurso); //devuelve -1 si no lo encuentra
 
-    if(indice_recurso > 0){ // Si existe el recurso solicitado
+    if(indice_recurso != -1){ // Si existe el recurso solicitado
         
         -- config_kernel->instancias_recursos[indice_recurso]; // Quito una instancia de ese recurso
 
@@ -1336,17 +1340,24 @@ int hacer_wait(char* recurso, pcb* proceso){
             flag = -1; // En accionar_segun_estado no hara nada porque ya lo bloqueo aca
 
             char* estado_anterior = obtener_char_de_estado(proceso->estado_del_proceso);
+            
             pthread_mutex_lock(&proceso->mutex_pcb);
             proceso->estado_del_proceso = BLOCKED; // Bloqueo el proceso
             pthread_mutex_unlock(&proceso->mutex_pcb);
+            
+            pthread_mutex_lock(&mutex_por_recurso[indice_recurso]);
+            queue_push(colas_por_recurso[indice_recurso], proceso); // Mando a la cola de blocked de ese recurso
+            pthread_mutex_unlock(&mutex_por_recurso[indice_recurso]);
 
-            log_info(log_kernel, "PID: %d - Estado Anterior: %s - Estado Actual: BLOCKED", proceso->pid, estado_anterior);
+            char* estado_actual = obtener_char_de_estado(proceso->estado_del_proceso);
+
+            log_info(log_kernel, "PID: %d - Estado Anterior: %s - Estado Actual: %s", proceso->pid, estado_anterior, estado_actual);
             log_info(log_kernel, "PID: %d - Bloqueado por: <%s>", proceso->pid, recurso);
 
-            
-            pthread_mutex_lock(mutex_por_recurso[indice_recurso]);
-            queue_push(colas_por_recurso[indice_recurso], proceso); // Mando a la cola de blocked de ese recurso
-            pthread_mutex_unlock(mutex_por_recurso[indice_recurso]);
+            pcb* proceso_en_la_cola = queue_peek(cola_general_de_procesos);
+            estado_actual = obtener_char_de_estado(proceso_en_la_cola->estado_del_proceso);
+            log_info(log_kernel, "PID: %d - Estado Actual: %s", proceso_en_la_cola->pid, estado_actual);
+
             
         }else{ // Si no lo tengo que bloquear, entonces lo mando a Ready
 
@@ -1358,6 +1369,7 @@ int hacer_wait(char* recurso, pcb* proceso){
     {
         flag = -1;
         pasar_proceso_a_exit(proceso, INVALID_RESOURCE);
+
     }  // Entonces no existe el recurso solicitado, y mando a exit al proceso
     
     return flag;
@@ -1421,8 +1433,12 @@ char* obtener_char_de_estado(estados estado_a_convertir){
 
 int buscar_indice_recurso_segun_nombre(char* recurso)
 {
+    log_info(log_kernel, "El nombre de recruso buscado es: %s", recurso);
+    
     for (int i = 0 ; i < cantidad_recursos; i++)
     {
+        log_info(log_kernel, "El nombre del recurso %d es: %s", i, config_kernel->recursos[i]);
+        
         if (strcmp(config_kernel->recursos[i], recurso) == 0) //encontre el recurso
         {
             return i;

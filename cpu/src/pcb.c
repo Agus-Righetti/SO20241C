@@ -28,17 +28,17 @@ void recibir_pcb(){
     free(buffer_pcb);
 }
 
-void enviar_pcb(int conexion, argumentos_cpu* args){
+void enviar_pcb(int conexion, argumentos_cpu* argumentos_a_mandar){
     
-    t_paquete *paquete = crear_paquete_personalizado(args->operacion);
+    t_paquete *paquete = crear_paquete_personalizado(argumentos_a_mandar->operacion);
 
     // en todos los casos vamos a mandar el pcb, por lo cual esto no lo pongo en el switch
 
     log_info(log_cpu, "El PID del proceso que estoy por meter al paquete es: %d", pcb_recibido->pid);
 
-    agregar_estructura_al_paquete_personalizado(paquete, args->proceso, sizeof(pcb));
+    agregar_estructura_al_paquete_personalizado(paquete, argumentos_a_mandar->proceso, sizeof(pcb));
    
-    switch(args->operacion) // Según el código de operación voy a agregar cosas diferentes al paquete (siempre siendo el pcb + otras cosas)
+    switch(argumentos_a_mandar->operacion) // Según el código de operación voy a agregar cosas diferentes al paquete (siempre siendo el pcb + otras cosas)
     {
         case FIN_DE_QUANTUM: // Si es el caso más sencillo, entonces no agrego nada, sólo mando el pcb
         case INTERRUPTED_BY_USER:
@@ -48,71 +48,71 @@ void enviar_pcb(int conexion, argumentos_cpu* args){
         case WAIT:
         case SIGNAL:
 
-            agregar_string_al_paquete_personalizado(paquete, args->recurso);
+            agregar_string_al_paquete_personalizado(paquete, argumentos_a_mandar->recurso);
 
             break;
 
         case IO_GEN_SLEEP:
 
-            agregar_string_al_paquete_personalizado(paquete, args->nombre_interfaz);
-            agregar_int_al_paquete_personalizado(paquete, args->unidades_de_trabajo);
+            agregar_string_al_paquete_personalizado(paquete, argumentos_a_mandar->nombre_interfaz);
+            agregar_int_al_paquete_personalizado(paquete, argumentos_a_mandar->unidades_de_trabajo);
 
             break;
 
         case IO_STDIN_READ:
 
-            agregar_string_al_paquete_personalizado(paquete, args->nombre_interfaz);
-            agregar_int_al_paquete_personalizado(paquete, args->registro_direccion);
-            agregar_int_al_paquete_personalizado(paquete, args->registro_tamano);
+            agregar_string_al_paquete_personalizado(paquete, argumentos_a_mandar->nombre_interfaz);
+            agregar_int_al_paquete_personalizado(paquete, argumentos_a_mandar->registro_direccion);
+            agregar_int_al_paquete_personalizado(paquete, argumentos_a_mandar->registro_tamano);
 
             break;
 
         case IO_STDOUT_WRITE:
-            agregar_string_al_paquete_personalizado(paquete, args->nombre_interfaz);
-            agregar_int_al_paquete_personalizado(paquete, args->registro_direccion);
-            agregar_int_al_paquete_personalizado(paquete, args->registro_tamano);
+            agregar_string_al_paquete_personalizado(paquete, argumentos_a_mandar->nombre_interfaz);
+            agregar_int_al_paquete_personalizado(paquete, argumentos_a_mandar->registro_direccion);
+            agregar_int_al_paquete_personalizado(paquete, argumentos_a_mandar->registro_tamano);
 
             break;
 
         case IO_FS_CREATE:
 
-            agregar_string_al_paquete_personalizado(paquete, args->nombre_interfaz);
-            agregar_string_al_paquete_personalizado(paquete, args->nombre_archivo);
+            agregar_string_al_paquete_personalizado(paquete, argumentos_a_mandar->nombre_interfaz);
+            agregar_string_al_paquete_personalizado(paquete, argumentos_a_mandar->nombre_archivo);
 
             break;
 
         case IO_FS_DELETE:
 
-            agregar_string_al_paquete_personalizado(paquete, args->nombre_interfaz);
-            agregar_string_al_paquete_personalizado(paquete, args->nombre_archivo);
+            agregar_string_al_paquete_personalizado(paquete, argumentos_a_mandar->nombre_interfaz);
+            agregar_string_al_paquete_personalizado(paquete, argumentos_a_mandar->nombre_archivo);
 
             break;
 
         case IO_FS_TRUNCATE:
 
-            agregar_string_al_paquete_personalizado(paquete, args->nombre_interfaz);
-            agregar_string_al_paquete_personalizado(paquete, args->nombre_archivo);
-            agregar_int_al_paquete_personalizado(paquete, args->registro_tamano);
+            agregar_string_al_paquete_personalizado(paquete, argumentos_a_mandar->nombre_interfaz);
+            agregar_string_al_paquete_personalizado(paquete, argumentos_a_mandar->nombre_archivo);
+            agregar_int_al_paquete_personalizado(paquete, argumentos_a_mandar->registro_tamano);
 
             break;
 
         case IO_FS_WRITE:
 
-            agregar_string_al_paquete_personalizado(paquete, args->nombre_interfaz);
-            agregar_string_al_paquete_personalizado(paquete, args->nombre_archivo);
-            agregar_int_al_paquete_personalizado(paquete, args->registro_direccion);
-            agregar_int_al_paquete_personalizado(paquete, args->registro_tamano);
-            agregar_int_al_paquete_personalizado(paquete, args->registro_puntero_archivo);
+            agregar_string_al_paquete_personalizado(paquete, argumentos_a_mandar->nombre_interfaz);
+            agregar_string_al_paquete_personalizado(paquete, argumentos_a_mandar->nombre_archivo);
+            agregar_int_al_paquete_personalizado(paquete, argumentos_a_mandar->registro_direccion);
+            agregar_int_al_paquete_personalizado(paquete, argumentos_a_mandar->registro_tamano);
+            agregar_int_al_paquete_personalizado(paquete, argumentos_a_mandar->registro_puntero_archivo);
 
             break;
         
         case IO_FS_READ:
 
-            agregar_string_al_paquete_personalizado(paquete, args->nombre_interfaz);    
-            agregar_string_al_paquete_personalizado(paquete, args->nombre_archivo);
-            agregar_int_al_paquete_personalizado(paquete, args->registro_direccion);
-            agregar_int_al_paquete_personalizado(paquete, args->registro_tamano);
-            agregar_int_al_paquete_personalizado(paquete, args->registro_puntero_archivo);
+            agregar_string_al_paquete_personalizado(paquete, argumentos_a_mandar->nombre_interfaz);    
+            agregar_string_al_paquete_personalizado(paquete, argumentos_a_mandar->nombre_archivo);
+            agregar_int_al_paquete_personalizado(paquete, argumentos_a_mandar->registro_direccion);
+            agregar_int_al_paquete_personalizado(paquete, argumentos_a_mandar->registro_tamano);
+            agregar_int_al_paquete_personalizado(paquete, argumentos_a_mandar->registro_puntero_archivo);
 
             break;	
         
@@ -126,7 +126,7 @@ void enviar_pcb(int conexion, argumentos_cpu* args){
 
     log_info(log_cpu, "Ya envie el pcb\n");
 
-    free(args); //libero los args
+    free(argumentos_a_mandar); //libero los args
 
 	eliminar_paquete(paquete);
     return;
@@ -338,45 +338,50 @@ void instruccion_set(char **parte) {
     char *registro = parte[1];
     if(es_Registro_de_1B(registro)){
         // El registro es de 1B
-        log_info(log_cpu,"estamos en registro de 1B");
+        //log_info(log_cpu,"estamos en registro de 1B");
         uint8_t* valor_registro = dictionary_get(registros, parte[1]);
+        // uint8_t valor_registro_imprimir = *valor_registro;
 
         if (valor_registro == NULL) {
             log_info(log_cpu, "Error: El registro %s no se encontró en el diccionario.", registro);
             return;
         }
         //SEGMENTATION FAULT RECURRENTE
-        log_info(log_cpu, "Registro: %s - Valor inicial: %u", registro, *valor_registro);
+        // REVISAR GRUPO, incorporamos otra variable, puede estar solucionado
+        //log_info(log_cpu, "Registro: %s - Valor inicial: %u", registro, valor_registro_imprimir);
 
         if (parte[2] == NULL) {
             log_info(log_cpu, "Error: parte[2] es NULL.");
             return;
         }
 
-        *valor_registro = atoi(parte[2]);
+        *valor_registro = (uint8_t)atoi(parte[2]);
 
 
-        log_info(log_cpu, "Registro: %s - Valor final: %u", registro, *valor_registro);
+        // log_info(log_cpu, "Registro: %s - Valor final: %u", registro, valor_registro_imprimir);
 
     } else {
         // El registro es de 4B
         log_info(log_cpu,"estamos en registro de 4B");
         uint32_t* valor_registro = dictionary_get(registros, parte[1]);
-        
+        // uint32_t valor_registro_imprimir = *valor_registro;
+
         if (valor_registro == NULL) {
             log_info(log_cpu, "Error: El registro %s no se encontró en el diccionario.", registro);
             return;
         }
 
-        log_info(log_cpu, "Registro: %s - Valor inicial: %u", registro, *valor_registro);
+        // log_info(log_cpu, "Registro: %s - Valor inicial: %u", registro, valor_registro_imprimir);
 
         if (parte[2] == NULL) {
             log_info(log_cpu, "Error: parte[2] es NULL.");
             return;
         }
 
-        *valor_registro = atoi(parte[2]);
-        log_info(log_cpu, "Registro: %s - Valor final: %u", registro, *valor_registro);
+        *valor_registro = (uint32_t) atoi(parte[2]);
+        uint32_t valor_k = valor_registro;
+        
+        log_info(log_cpu, "Registro: %s - Valor guardado: %u", registro, valor_k);
     }
 
 	// Aumento el PC
@@ -475,6 +480,7 @@ void instruccion_mov_in(char **parte) {
 
 void instruccion_mov_out(char **parte) {
     // MOV_OUT registro_direccion registro_datos
+    // Lee el valor del Registro Datos y lo escribe en la dirección física de memoria obtenida a partir de la Dirección Lógica almacenada en el Registro Dirección.
     // Todos los MOV_OUT van a ser de 4 bytes, con la excepción de que el registro datos sea AX, BX, CX, DX donde pasan a ser de 1 byte  
 
     // LOG OBLIGATORIO - INSTRUCCIÓN EJECUTADA
@@ -499,6 +505,8 @@ void instruccion_mov_out(char **parte) {
 
         uint8_t valor_registro_dato = dictionary_get(registros, registro_dato);
 
+        log_info(log_cpu, "El valor que quiero escribir es %u", valor_registro_dato);
+
         // Ahora tengo todas las DF -> necesito escribir en memoria el dato
         peticion_escritura_1B_a_memoria(pcb_recibido->pid, direcciones_fisicas, valor_registro_dato); 
         // [PID, DFs, VALOR] _> [Int, lista, uint8]
@@ -510,6 +518,7 @@ void instruccion_mov_out(char **parte) {
         direcciones_fisicas = traducir_dl_a_df_completa(direccion_logica, 4);
 
         uint32_t valor_registro_dato = dictionary_get(registros, registro_dato);
+        log_info(log_cpu, "El valor que quiero escribir es %u", valor_registro_dato);
 
         // Ahora tengo todas las DF -> necesito leer en memoria el dato
         peticion_escritura_4B_a_memoria(pcb_recibido->pid, direcciones_fisicas, valor_registro_dato);
@@ -784,22 +793,21 @@ void instruccion_wait(char** parte)
         return;
     }
 
-
     // LOG OBLIGATORIO - INSTRUCCIÓN EJECUTADA
 	log_info(log_cpu, "PID: %d - Ejecutando: %s - %s", pcb_recibido->pid, parte[0], parte[1]);
 
 	pcb_recibido->program_counter++;
-    argumentos_cpu* args = malloc(sizeof(argumentos_cpu));
+    argumentos_cpu* argumentos_a_mandar = malloc(sizeof(argumentos_cpu));
     
-    args->proceso = pcb_recibido; 
-    args->recurso = parte[1];
-    args->operacion = WAIT;
-
-    liberar_array_strings(parte);
+    log_info(log_cpu, "El nombre del recurso es: %s", parte[1]);
+    argumentos_a_mandar->proceso = pcb_recibido; 
+    argumentos_a_mandar->recurso = parte[1];
+    argumentos_a_mandar->operacion = WAIT;
 
     // Enviar solicitud de SIGNAL al kernel
-    enviar_pcb(socket_cliente_kernel, args);
+    enviar_pcb(socket_cliente_kernel, argumentos_a_mandar);
 	
+    liberar_array_strings(parte);
 
 	//free(proceso);
     return;
@@ -824,11 +832,10 @@ void instruccion_signal(char **parte)
     args->recurso = parte[1];
     args->operacion = SIGNAL;
 
-    liberar_array_strings(parte);
-
     // Enviar solicitud de SIGNAL al kernel
     enviar_pcb(socket_cliente_kernel, args);
 
+    liberar_array_strings(parte);
     
     //free(proceso);
     return;

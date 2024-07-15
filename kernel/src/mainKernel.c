@@ -48,7 +48,7 @@ int main(int argc, char* argv[])
 
     // ************* creo las colas por recursos con sus mutex *************
 
-    cantidad_recursos = sizeof(config_kernel->instancias_recursos) / sizeof(config_kernel->instancias_recursos[0]);
+    // cantidad_recursos = sizeof(config_kernel->instancias_recursos) / sizeof(config_kernel->instancias_recursos[0]);
 
     colas_por_recurso = malloc(cantidad_recursos * sizeof(t_queue*));
     mutex_por_recurso = malloc(cantidad_recursos * sizeof(pthread_mutex_t));

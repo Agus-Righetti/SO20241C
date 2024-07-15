@@ -16,8 +16,8 @@ typedef struct
     char *puerto_cpu_interrupt;
     char *algoritmo_planificacion;
     char *quantum;
-    char *recursos;
-    char *instancias_recursos;
+    char** recursos; 
+	int* instancias_recursos;
     int grado_multiprogramacion;
 
 } kernel_config;

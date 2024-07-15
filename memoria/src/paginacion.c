@@ -146,7 +146,7 @@ void leer_uint32_en_memoria (int pid, t_list* direcciones_fisicas){
         return;
     }
 
-    int indice_dir = 1;
+    int indice_dir = 0;
     t_direccion_fisica* dir_actual = list_get(direcciones_fisicas, indice_dir);
 
     int despl_esp_usuario = dir_actual->nro_marco * config_memoria->tam_pagina + dir_actual->offset ;
@@ -159,7 +159,7 @@ void leer_uint32_en_memoria (int pid, t_list* direcciones_fisicas){
         pthread_mutex_unlock(&mutex_espacio_usuario);
 
         log_info(log_memoria, "PID: %d - Accion: LEER - Direccion fisica: [%d - %d] - Tamaño %d ", pid, dir_actual->nro_marco ,dir_actual->offset, dir_actual->bytes_a_operar);
-
+        
         enviar_lectura_ult_4B_a_cpu(pid, dir_actual, valor_leido, valor_leido);
 
     } else {
@@ -209,6 +209,8 @@ void enviar_lectura_4B_a_cpu(int pid, t_direccion_fisica* dir_actual, uint32_t v
     agregar_estructura_al_paquete_personalizado(paquete, &dir_actual, sizeof(t_direccion_fisica));
     agregar_uint32_al_paquete_personalizado(paquete, valor);
 
+    log_info(log_memoria, "Valor leido: %u", valor);
+
 	enviar_paquete(paquete, socket_cliente_cpu);
 	eliminar_paquete(paquete);
 }
@@ -221,6 +223,9 @@ void enviar_lectura_ult_4B_a_cpu(int pid, t_direccion_fisica* dir_actual, uint32
     agregar_estructura_al_paquete_personalizado(paquete, &dir_actual, sizeof(t_direccion_fisica));
     agregar_uint32_al_paquete_personalizado(paquete, valor);
     agregar_uint32_al_paquete_personalizado(paquete, valor_leido_reconstruido);
+
+    log_info(log_memoria, "Valor leido: %u", valor);
+    log_info(log_memoria, "Valor leido reconstruido: %u", valor_leido_reconstruido);
 
 	enviar_paquete(paquete, socket_cliente_cpu);
 	eliminar_paquete(paquete);
@@ -244,7 +249,7 @@ void leer_uint8_en_memoria (int pid, t_list* direcciones_fisicas){
 
 
     int indice_dir = 0;
-    //se freno aca
+
     t_direccion_fisica* dir_actual = list_get(direcciones_fisicas, indice_dir);
 
     int despl_esp_usuario = dir_actual->nro_marco * config_memoria->tam_pagina + dir_actual->offset ;
@@ -254,6 +259,7 @@ void leer_uint8_en_memoria (int pid, t_list* direcciones_fisicas){
     pthread_mutex_unlock(&mutex_espacio_usuario);
 
     log_info(log_memoria, "PID: %d - Accion: LEER - Direccion fisica: [%d - %d] - Tamaño %d ", pid, dir_actual->nro_marco ,dir_actual->offset, dir_actual->bytes_a_operar);
+    log_info(log_memoria, "Valor leido: %d ", valor_leido);
 
     enviar_lectura_1B_a_cpu(pid, dir_actual, valor_leido);
 
@@ -267,6 +273,8 @@ void enviar_lectura_1B_a_cpu(int pid, t_direccion_fisica* dir_actual, uint8_t va
     agregar_int_al_paquete_personalizado(paquete, pid);
     agregar_estructura_al_paquete_personalizado(paquete, &dir_actual, sizeof(t_direccion_fisica));
     agregar_uint8_al_paquete_personalizado(paquete, valor);
+
+    log_info(log_memoria, "Valor leido: %u", valor);
 
 	enviar_paquete(paquete, socket_cliente_cpu);
 	eliminar_paquete(paquete);
@@ -359,6 +367,8 @@ void enviar_ok_4B_escritura_cpu(int pid, t_direccion_fisica* dir_actual, uint32_
     agregar_int_al_paquete_personalizado(paquete, pid);
     agregar_estructura_al_paquete_personalizado(paquete, dir_actual, sizeof(t_direccion_fisica));
     agregar_uint32_al_paquete_personalizado(paquete, valor);
+    
+    log_info(log_memoria, "Valor escrito: %u", valor);
 
 	enviar_paquete(paquete, socket_cliente_cpu);
 	eliminar_paquete(paquete);
@@ -372,6 +382,8 @@ void enviar_ult_ok_4B_escritura_cpu(int pid, t_direccion_fisica* dir_actual, uin
     agregar_estructura_al_paquete_personalizado(paquete, dir_actual, sizeof(t_direccion_fisica));
     agregar_uint32_al_paquete_personalizado(paquete, valor);
     agregar_uint32_al_paquete_personalizado(paquete, valor_completo);
+
+    log_info(log_memoria, "Valor escrito: %u", valor);
 
 	enviar_paquete(paquete, socket_cliente_cpu);
 	eliminar_paquete(paquete);
@@ -431,7 +443,7 @@ void enviar_ok_1B_escritura_cpu(int pid, t_direccion_fisica* dir_actual, uint8_t
 //     //     return;
 //     // }
 
-//     // int indice_dir = 1;
+//     // int indice_dir = 0;
 //     // t_direccion_fisica* dir_actual = list_get(direcciones_fisicas, indice_dir);
 
 //     // int despl_esp_usuario = dir_actual->nro_marco * config_memoria->tam_pagina + dir_actual->offset ;

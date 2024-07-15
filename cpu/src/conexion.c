@@ -308,7 +308,7 @@ void atender_interrupcion() // ACA HAY QUE MANEJAR EL ENVIAR PCB DENTRO DEL SWIT
 
 pthread_t escuchar_memoria()
 {
-    log_info(log_cpu, "Estoy escuchando memoria\n");
+    log_info(log_cpu, "Estoy escuchando memoria");
     pthread_t hilo_memoria;
 
     pthread_create(&hilo_memoria, NULL, (void*) atender_memoria, NULL);

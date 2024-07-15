@@ -20,7 +20,7 @@ void atender_cpu(){
                 log_info(log_memoria, "CPU me pide una instruccion");
                 buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
 				cpu_pide_instruccion(buffer);
-                log_info(log_memoria, "Mande instruccion");
+                //log_info(log_memoria, "Mande instruccion");
                 free(buffer);
                 break;
 
@@ -74,8 +74,6 @@ void atender_cpu(){
                 pid = recibir_int_del_buffer(buffer);
 	            direcciones_fisicas = recibir_lista_del_buffer(buffer);
 
-                
-
                 leer_uint8_en_memoria (pid, direcciones_fisicas); // Hago directamente este y listo
 
 				// cpu_pide_leer_1B(pid, direcciones_fisicas);
@@ -86,8 +84,7 @@ void atender_cpu(){
                 break;
 
             case CPU_PIDE_LEER_REGISTRO_4B:
-
-                log_info(log_memoria, "CPU me pide guardar cuatro bytes en memoria");
+                log_info(log_memoria, "CPU me pide leer cuatro bytes en memoria");
                 buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
 
                 usleep(config_memoria->retardo_respuesta *1000);
@@ -126,9 +123,17 @@ void atender_cpu(){
                 log_info(log_memoria, "CPU me pide leer un string");
                 buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
                 usleep(config_memoria->retardo_respuesta *1000);
+                pid = recibir_int_del_buffer(buffer);
+	            direcciones_fisicas = recibir_lista_del_buffer(buffer);
+                
+                if(direcciones_fisicas == NULL){
+                    log_error(log_memoria, "Direcciones_fisicas es null");
+                }
+
                 cpu_pide_leer_string(buffer); 
                 free(buffer);
                 break; 
+                
 
             case CPU_PIDE_GUARDAR_STRING:
                 log_info(log_memoria, "CPU me pide guardar un string");
