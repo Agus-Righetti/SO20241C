@@ -69,6 +69,7 @@ void escucha_interfaz(thread_args_escucha_io* args)
     bool interfaz_conectada = true;
     op_code cod_op;
     interfaz_kernel* interfaz = args->interfaz;
+    t_buffer* buffer;
 
     log_info(log_kernel, "estoy en escucha interfaz");
 
@@ -97,6 +98,9 @@ void escucha_interfaz(thread_args_escucha_io* args)
 
                 //flag 0 para q lo mande a la cola de ready
                 sem_post(&interfaz->sem_puedo_mandar_operacion);
+                
+                buffer = recibiendo_paquete_personalizado(interfaz->socket);
+                free(buffer);
                 
                 break;
             case -1://se desconecta la interfaz

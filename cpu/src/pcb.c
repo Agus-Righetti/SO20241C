@@ -329,11 +329,12 @@ void instruccion_set(char **parte) {
             log_info(log_cpu, "Error: parte[2] es NULL.");
             return;
         }
+        log_info(log_cpu, "Registro: %s - Valor final: %u (BIS, va antes para verlo)", registro, (uint8_t)atoi(parte[2]));
 
         *valor_registro = (uint8_t)atoi(parte[2]); //le asigno el nuevo valor al registro
 
-      
         log_info(log_cpu, "Registro: %s - Valor final: %u", registro, (uint8_t)atoi(parte[2]));
+      
                 
     } else {
         // El registro es de 4B
