@@ -32,12 +32,12 @@ int main(int argc, char* argv[])
 
     pthread_t hilo_escuchar_memoria;
 
-    if(strcmp(config_io->tipo_interfaz, "GENERICA")!=0) //si no es la generica se conecta con memoria
+    if(strcmp(config_io->tipo_interfaz, "GENERICA") !=0 ) // Si no es la generica se conecta con memoria
     {
-      log_info(log_io, "Estoy antes de la conexión a memoria");
-      conexion_io_memoria = conexion_a_memoria(); 
-      log_info(log_io, "Estoy después de la conexión a memoria");
-      hilo_escuchar_memoria = escuchar_memoria();
+        log_info(log_io, "Estoy antes de la conexión a memoria");
+        conexion_io_memoria = conexion_a_memoria(); 
+        log_info(log_io, "Estoy después de la conexión a memoria");
+        hilo_escuchar_memoria = escuchar_memoria();
     }
 
     // Conexion IO --> Kernel ---------------------------------------------------------------------------------------------------------
@@ -45,7 +45,7 @@ int main(int argc, char* argv[])
     pthread_t hilo_escuchar_kernel = escuchar_kernel();
     if(strcmp(config_io->tipo_interfaz, "GENERICA")!=0)
     {
-      pthread_detach(hilo_escuchar_memoria);
+        pthread_detach(hilo_escuchar_memoria);
     }
     
     pthread_join(hilo_escuchar_kernel, NULL);

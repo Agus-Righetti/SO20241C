@@ -9,7 +9,7 @@
 // void leer_configuracion_dialfs(Interfaz *configuracion);
 // void iniciar_config_dialfs(Interfaz *configuracion);
 // void liberar_configuracion_dialfs(Interfaz* configuracion);
-//void recibir_operacion_dialfs_de_kernel(Interfaz* configuracion_fs, op_code codigo);
+// void recibir_operacion_dialfs_de_kernel(Interfaz* configuracion_fs, op_code codigo);
 
 void manejar_creacion_archivo(char* nombre_archivo, int pid);
 void manejar_eliminacion_archivo(char* nombre_archivo, int pid);
@@ -30,7 +30,7 @@ char *agregar_al_final(char *buffer, const char *informacion);
 void escribir_archivo_con_bitmap(t_bitarray* bitmap);
 int agregar_info_en_cierto_bloque(int bloque_inicial_nuevo, int cant_bloques , char* buffer);
 char* obtener_bitmap();
-int calcular_bloques_que_ocupa(int tamanio_en_bytes);
+int cantidad_total_bloques_que_ocupa(int tamanio_en_bytes);
 int contar_bloques_libres(t_bitarray* bitmap);
 int bitarray_find_first_clear_bit(t_bitarray* bitmap);
 
