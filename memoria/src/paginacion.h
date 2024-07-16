@@ -26,8 +26,13 @@ void enviar_ult_ok_4B_escritura_cpu(int pid, t_direccion_fisica* dir_actual, uin
 void guardar_uint8_en_memoria (int pid, t_list* direcciones_fisicas, uint8_t valor);
 void enviar_ok_1B_escritura_cpu(int pid, t_direccion_fisica* dir_actual, uint8_t valor);
 
-// void leer_string_en_memoria (int pid, t_list* direcciones_fisicas, int tamanio);
-// void guardar_string_en_memoria (int pid, t_list* direcciones_fisicas, int tamanio);
+void guardar_string_en_memoria (int pid, t_list* direcciones_fisicas, char* valor, int tamanio);
+void enviar_ok_string_escritura_cpu(int pid, t_direccion_fisica* dir_actual, char* valor);
+void enviar_ult_ok_string_escritura_cpu(int pid, t_direccion_fisica* dir_actual, char* valor, char* valor_completo);
+
+void leer_string_en_memoria (int pid, t_list* direcciones_fisicas, int tamanio);
+void enviar_lectura_string_a_cpu(int pid, t_direccion_fisica* dir_actual, char* valor);
+void enviar_lectura_ult_string_a_cpu(int pid, t_direccion_fisica* dir_actual, char* valor, char* valor_leido_reconstruido);
 
 
 #endif

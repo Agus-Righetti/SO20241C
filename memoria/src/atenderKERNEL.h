@@ -2,7 +2,7 @@
 #define ATENDERKERNEL_H_
 
 #include "m_gestor.h"
-#include "atenderCPU.h"
+#include "atenderCPU-IO.h"
 
 // *************** DECLARACIÓN DE FUNCIONES **********
 //**************** INICIAR_PROCESO *******************

@@ -6,7 +6,7 @@
 #include "configuracion.h"
 #include "servidor.h"
 #include "escucha.h"
-#include "atenderCPU.h"
+#include "atenderCPU-IO.h"
 #include "atenderKERNEL.h"
 #include "paginacion.h"
 

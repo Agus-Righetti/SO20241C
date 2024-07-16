@@ -339,27 +339,30 @@ void instruccion_set(char **parte) {
     if(es_Registro_de_1B(registro)){
         // El registro es de 1B
         //log_info(log_cpu,"estamos en registro de 1B");
-        uint8_t* valor_registro = dictionary_get(registros, parte[1]);
+        uint8_t *valor_registro = dictionary_get(registros, parte[1]);
         // uint8_t valor_registro_imprimir = *valor_registro;
 
-        if (valor_registro == NULL) {
+        if (valor_registro == NULL)
+        {
             log_info(log_cpu, "Error: El registro %s no se encontró en el diccionario.", registro);
             return;
         }
-        //SEGMENTATION FAULT RECURRENTE
-        // REVISAR GRUPO, incorporamos otra variable, puede estar solucionado
-        //log_info(log_cpu, "Registro: %s - Valor inicial: %u", registro, valor_registro_imprimir);
+        // SEGMENTATION FAULT RECURRENTE
+        //  REVISAR GRUPO, incorporamos otra variable, puede estar solucionado
+        // log_info(log_cpu, "Registro: %s - Valor inicial: %u", registro, valor_registro_imprimir);
 
-        if (parte[2] == NULL) {
+        if (parte[2] == NULL)
+        {
             log_info(log_cpu, "Error: parte[2] es NULL.");
             return;
         }
 
         *valor_registro = (uint8_t)atoi(parte[2]);
 
+        uint8_t valor_imprimir = *valor_registro;
 
-        // log_info(log_cpu, "Registro: %s - Valor final: %u", registro, valor_registro_imprimir);
-
+        log_info(log_cpu, "Registro: %s - Valor final: %u", registro, valor_imprimir);
+        
     } else {
         // El registro es de 4B
         log_info(log_cpu,"estamos en registro de 4B");

@@ -1,5 +1,6 @@
-#include "atenderCPU.h"
+#include "atenderCPU-IO.h"
 
+// ********************************************* CPU **********************************************
 //******************************************************************
 //******************* PIDE UNA INSTRUCCIÓN *************************
 //******************************************************************
@@ -345,18 +346,62 @@ void enviar_ok_del_resize_a_cpu(){
 
 void cpu_pide_leer_string(t_buffer* un_buffer){
 	int pid = recibir_int_del_buffer(un_buffer);
-	void* direcciones_fisicas = recibir_estructura_del_buffer(un_buffer);
+	t_list* direcciones_fisicas = recibir_lista_del_buffer(un_buffer);
+
+	if(direcciones_fisicas == NULL){
+        log_error(log_memoria, "Direcciones_fisicas es null");
+    }
+
 	int tamanio = recibir_int_del_buffer(un_buffer);
-	
-	//leer_string_en_memoria (pid, direcciones_fisicas, tamanio);
+
+
+	leer_string_en_memoria(pid, direcciones_fisicas, tamanio);
 }
 
 void cpu_pide_guardar_string(t_buffer* un_buffer){    
 	int pid = recibir_int_del_buffer(un_buffer);
-	void* direcciones_fisicas = recibir_estructura_del_buffer(un_buffer);
+	t_list* direcciones_fisicas = recibir_lista_del_buffer(un_buffer);
+
+	if(direcciones_fisicas == NULL){
+        log_error(log_memoria, "Direcciones_fisicas es null");
+    }
+
 	char* valor = recibir_estructura_del_buffer(un_buffer);
 	int tamanio = recibir_int_del_buffer(un_buffer);
 
-	//guardar_string_en_memoria (pid, direcciones_fisicas, valor, tamanio);
+	guardar_string_en_memoria(pid, direcciones_fisicas, valor, tamanio);
 
 }
+
+// ********************************************* IO **********************************************
+// IO_STDIN_READ (Interfaz, Registro Dirección, Registro Tamaño)
+// Esta instrucción solicita al Kernel que mediante la interfaz ingresada se lea desde el STDIN (Teclado) un valor cuyo tamaño está delimitado por el valor del Registro Tamaño y el mismo se guarde a partir de la Dirección Lógica almacenada en el Registro Dirección.
+// necesita -> guardar string en memoria
+
+// IO_STDOUT_WRITE (Interfaz, Registro Dirección, Registro Tamaño)
+// Esta instrucción solicita al Kernel que mediante la interfaz seleccionada, se lea desde la posición de memoria indicada por la Dirección Lógica almacenada en el Registro Dirección, un tamaño indicado por el Registro Tamaño y se imprima por pantalla.
+// necesita -> leer string en memoria
+
+// IO_FS_WRITE (Interfaz, Nombre Archivo, Registro Dirección, Registro Tamaño, Registro Puntero Archivo)
+// Esta instrucción solicita al Kernel que mediante la interfaz seleccionada, se lea desde Memoria la cantidad de bytes indicadas por el Registro Tamaño a partir de la dirección lógica que se encuentra en el Registro Dirección y se escriban en el archivo a partir del valor del Registro Puntero Archivo.
+// necesita -> leer string en memoria
+
+// IO_FS_READ (Interfaz, Nombre Archivo, Registro Dirección, Registro Tamaño, Registro Puntero Archivo)
+// Esta instrucción solicita al Kernel que mediante la interfaz seleccionada, se lea desde el archivo a partir del valor del Registro Puntero Archivo la cantidad de bytes indicada por Registro Tamaño y se escriban en la Memoria a partir de la dirección lógica indicada en el Registro Dirección.
+// necesita -> guardar string en memoria
+
+void io_pide_lectura(t_buffer* un_buffer){    
+	int pid = recibir_int_del_buffer(un_buffer);
+	t_list* direcciones_fisicas = recibir_lista_del_buffer(un_buffer);
+
+	if(direcciones_fisicas == NULL){
+        log_error(log_memoria, "Direcciones_fisicas es null");
+    }
+
+	char* valor = recibir_estructura_del_buffer(un_buffer);
+	int tamanio = recibir_int_del_buffer(un_buffer);
+
+	//guardar_string_en_memoria(pid, direcciones_fisicas, valor, tamanio);
+
+}
+

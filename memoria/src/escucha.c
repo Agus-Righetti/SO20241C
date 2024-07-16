@@ -123,13 +123,7 @@ void atender_cpu(){
                 log_info(log_memoria, "CPU me pide leer un string");
                 buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
                 usleep(config_memoria->retardo_respuesta *1000);
-                pid = recibir_int_del_buffer(buffer);
-	            direcciones_fisicas = recibir_lista_del_buffer(buffer);
                 
-                if(direcciones_fisicas == NULL){
-                    log_error(log_memoria, "Direcciones_fisicas es null");
-                }
-
                 cpu_pide_leer_string(buffer); 
                 free(buffer);
                 break; 
@@ -205,7 +199,9 @@ void atender_io(){
                 log_info(log_memoria, "IO me pide la lectura de un espacio de memoria");
                 buffer = recibiendo_paquete_personalizado(socket_cliente_io);
                 usleep(config_memoria->retardo_respuesta *1000);
-                // io_pide_lectura(buffer); -> FALTA IMPLEMENTAR
+                
+                io_pide_lectura(buffer); 
+                
                 free(buffer);
                 break;
 
