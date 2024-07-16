@@ -9,7 +9,7 @@ pthread_t hilo_consola (){
 
     pthread_t thread_consola; 
             
-    log_info(log_kernel, "Entré a hilo consola");
+    //log_info(log_kernel, "Entré a hilo consola");
     pthread_create(&thread_consola, NULL, (void*)leer_consola, NULL);
 
 
@@ -62,7 +62,7 @@ pthread_t hilo_pasar_de_new_a_ready(){
 // ************* SIRVE PARA LEER LOS COMANDOS DESDE LA CONSOLA (DESDE HILO_CONSOLA) *************
 void leer_consola(void* arg){
 
-    log_info(log_kernel, "Entre a leer consola");
+    //log_info(log_kernel, "Entre a leer consola");
     
     while(1) { // Para mantener esperando comandos constantemente
         
@@ -131,7 +131,7 @@ void enviar_proceso_a_cpu(){
         }else{
                 
             sem_wait(&sem_cola_de_ready); // Si no hay nada en la cola de Ready no avanzo
-            log_info(log_kernel, "estoy dsp del semafoto de q hay algo en la cola de ready ");
+            //log_info(log_kernel, "estoy dsp del semafoto de q hay algo en la cola de ready ");
             pthread_mutex_lock(&mutex_cola_de_ready);
             proceso_seleccionado = queue_pop(cola_de_ready); // Saco el proceso siguiente de la cola de Ready
             pthread_mutex_unlock(&mutex_cola_de_ready);
@@ -231,10 +231,6 @@ void iniciar_proceso(char* path ){
     nuevo_pcb->pid = pid_contador;
     nuevo_pcb->quantum = config_kernel->quantum; // Al iniciar el proceso tiene todo su quantum disponible
     nuevo_pcb->recursos_asignados = queue_create();
-    if(queue_is_empty(nuevo_pcb->recursos_asignados))
-    {
-        log_info(log_kernel, "la cola esta bien inicializada, esta vacia");
-    }
     nuevo_pcb->registros = malloc(sizeof(registros_cpu)); 
     if (nuevo_pcb->registros == NULL) {
         log_error(log_kernel, "Error al asignar memoria para registros\n");
@@ -266,35 +262,12 @@ void iniciar_proceso(char* path ){
     enviar_paquete(paquete_path, conexion_kernel_memoria);
     eliminar_paquete(paquete_path);
 
-    // Si el grado de multiprogramacion me lo permite, modifico el estado a READY
-    // int multiprogramacion_actual;
-    // sem_getvalue(&sem_multiprogramacion, &multiprogramacion_actual); // Obtengo valor del grado de multiprogramacion
     
-    // if (multiprogramacion_actual > 0 )
-    // {   
-    //     //Chequeo si tengo lugar para aceptar otro proceso en base al grado de multiprogramacion actual q tengo
-        
-    //     // Modifico el estado del proceso - Uso semaforo porque es una variable que tocan muchos hilos
-    //     pthread_mutex_lock(&nuevo_pcb->mutex_pcb);
-    //     nuevo_pcb->estado_del_proceso = READY; 
-    //     pthread_mutex_unlock(&nuevo_pcb->mutex_pcb);
-
-    //     // Ingreso el proceso a la cola de READY - Tambien semaforo porque es seccion critica 
-    //     pthread_mutex_lock(&mutex_cola_de_ready);
-    //     queue_push(cola_de_ready,nuevo_pcb);
-    //     pthread_mutex_unlock(&mutex_cola_de_ready);
-    //     sem_post(&sem_cola_de_ready); //Agrego 1 al semaforo contador
-        
-    //     //Bajo el grado de programacion actual, ya que agregue un proceso mas a ready
-    //     sem_wait(&sem_multiprogramacion); //Resto 1 al grado de multiprogramacion
-
-    // }else {
-        // Si no hay espacio para un nuevo proceso en ready lo sumo a la cola de NEW - Semaforo SC
-        pthread_mutex_lock(&mutex_cola_de_new);
-        queue_push(cola_de_new,nuevo_pcb);
-        pthread_mutex_unlock(&mutex_cola_de_new);
-        sem_post(&sem_cola_de_new);
-    //}
+    pthread_mutex_lock(&mutex_cola_de_new);
+    queue_push(cola_de_new,nuevo_pcb);
+    pthread_mutex_unlock(&mutex_cola_de_new);
+    sem_post(&sem_cola_de_new);
+    
 }
 
 // ************* MUESTRA EN FORMA DE TABLA EN QUÉ ESTADO SE ENCUENTRA CADA PROCESO ACTUALMENTE ************* 
@@ -387,7 +360,7 @@ void listar_procesos_por_estado(){
             aux = queue_pop(cola_aux_execute);
             log_info(log_kernel, "PID: %d\n" , aux->pid );
         }
-    }else log_info(log_kernel, "Aun no hay ningun proceso en el sistema" );
+    }else log_info(log_kernel, "No hay ningun proceso en el sistema para mostrar" );
     // Libero las colas auxiliares
     queue_destroy(cola_aux_exit);
     queue_destroy(cola_aux_ready);
@@ -417,7 +390,7 @@ void cambiar_grado_multiprogramacion(char* nuevo_valor_formato_char){
 // Terminar
 void finalizar_proceso(char* pid_formato_char){
 
-    log_info(log_kernel, "Entre a finalizar_proceso \n");
+    //log_info(log_kernel, "Entre a finalizar_proceso \n");
 
     int pid = atoi(pid_formato_char); // Paso a int el pid mandado por consola
     bool no_esta_en_el_sistema = false; // Hago un flag para saber si el proceso se encuentra en el sistema o no
@@ -469,7 +442,14 @@ void ejecutar_script(char* script_path){
     FILE *archivo; // Declaro un archivo
     char linea[100]; // Declaro un tamaño de la línea de 100 caracteres
 
-    archivo = fopen(script_path, "r") ;// Abro el archivo en modo lectura
+    char filepath[256]; // Buffer para el path completo
+
+    // Concatenar ".." con el script_path
+    snprintf(filepath, sizeof(filepath), "../kernel%s", script_path);
+
+    log_info(log_kernel, "esto es filepath: %s" , filepath);
+
+    archivo = fopen(filepath, "r") ;// Abro el archivo en modo lectura
     
     if(archivo == NULL){ // Si no lo puedo abrir porque no existe o está mal el path
         error_show("Error al abrir archivo de comandos"); // Entonces muestro un error
@@ -569,7 +549,7 @@ void enviar_pcb(pcb* proceso) {
 
     t_paquete* paquete_pcb = crear_paquete_personalizado(PCB_KERNEL_A_CPU); // Creo un paquete personalizado con un codop para que CPU reconozca lo que le estoy mandando
 
-    log_info(log_kernel, "El proceso que estoy por mandar a CPU tiene un PID: %d", proceso->pid);
+    //log_info(log_kernel, "El proceso que estoy por mandar a CPU tiene un PID: %d", proceso->pid);
 
     agregar_estructura_al_paquete_personalizado(paquete_pcb, proceso, sizeof(pcb)); // Agrego el struct pcb al paquete
 
@@ -599,7 +579,7 @@ void enviar_pcb(pcb* proceso) {
 void crear_hilo_proceso(pcb* proceso){
 
     // Funcion llamada por enviar_proceso_a_cpu
-    log_info(log_kernel, "entre a crear proceso hilo :)");
+    //log_info(log_kernel, "entre a crear proceso hilo :)");
 
     pthread_t hilo_recibe_proceso, hilo_interrupcion; // Creo un hilo
     thread_args_procesos_kernel args_hilo = {proceso}; // En sus args le cargo el proceso
@@ -645,7 +625,7 @@ void recibir_pcb(pcb* proceso) {
 
     char* estado_anterior = obtener_char_de_estado(proceso->estado_del_proceso);
 
-    log_info(log_kernel, "Entre a recibir pcb por pid: %d, su estado es : %s" , proceso->pid, estado_anterior);
+    //log_info(log_kernel, "Entre a recibir pcb por pid: %d, su estado es : %s" , proceso->pid, estado_anterior);
 
     clock_t inicio, fin; // Inicio un reloj, cuenta el tiempo que estuvo esperando hasta que llegue el paquete (sirve para VRR)
     int tiempo_que_tardo_en_recibir;
@@ -741,7 +721,7 @@ void recibir_pcb(pcb* proceso) {
                 fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
                 pcb_recibido = recibir_estructura_del_buffer(buffer);
                 nombre_interfaz = recibir_string_del_buffer(buffer);
-                log_info(log_kernel, "El nombre de interfaz que me llego es: %s", nombre_interfaz);
+                //log_info(log_kernel, "El nombre de interfaz que me llego es: %s", nombre_interfaz);
                 unidades_de_trabajo = recibir_int_del_buffer(buffer);
 
                 actualizar_pcb(proceso, pcb_recibido);
@@ -888,7 +868,7 @@ void recibir_pcb(pcb* proceso) {
 
     }else // Si la interrupción es por fin de proceso, voy a recibir el pcb y lo mando a exit de una
     {
-        log_info(log_kernel,"Entre al if para recibir por finalizar proceso");
+        //log_info(log_kernel,"Entre al if para recibir por finalizar proceso");
 
         interrupcion_por_fin_de_proceso = false;
         flag_estado = 1;  
@@ -945,7 +925,7 @@ void desalojar_proceso(pcb* proceso, int operacion){
     //Esto capaz se puede poner desde donde se la llama a la funcion
     //log_info(log_kernel, "PID: %d - Desalojado por fin de Quantum", proceso->pid);
 
-    log_info(log_kernel, "Entre a desalojar_proceso");
+    //log_info(log_kernel, "Entre a desalojar_proceso");
 
     t_paquete* paquete_a_enviar = crear_paquete_personalizado(operacion); // Creo un paquete con el codop especifico
     enviar_paquete(paquete_a_enviar, interrupcion_kernel_cpu); // Lo mando vacio porque lo que interesa es el codop
@@ -1022,12 +1002,12 @@ void accionar_segun_estado(pcb* proceso, int flag, int motivo){
             }
         } else{ // No estoy en vrr, siempre madno a cola de Ready normal
             
-            log_info(log_kernel, "estoy por poner el proceso en la cola de ready");
+            //log_info(log_kernel, "estoy por poner el proceso en la cola de ready");
             hacer_el_log_obligatorio_de_ingreso_a_ready(proceso);
             pthread_mutex_lock(&mutex_cola_de_ready);
             queue_push(cola_de_ready,proceso); // Meto a la cola de Ready
             pthread_mutex_unlock(&mutex_cola_de_ready);
-            log_info(log_kernel, "ya agregue a la cola de ready");
+            //log_info(log_kernel, "ya agregue a la cola de ready");
             sem_post(&sem_cola_de_ready);
             
 
@@ -1041,7 +1021,7 @@ void accionar_segun_estado(pcb* proceso, int flag, int motivo){
 // ************* PASA EL PROCESO SELECCIONADO A EXIT *************
 void pasar_proceso_a_exit(pcb* proceso, int motivo){
 
-    log_info(log_kernel, "entre a pasar proceso a exit por PID %d", proceso->pid);
+    //log_info(log_kernel, "entre a pasar proceso a exit por PID %d", proceso->pid);
     //En esta funcion faltan liberar los recursos q tenia el proceso
     char* estado_anterior = obtener_char_de_estado(proceso->estado_del_proceso); // Devuelvo el estado como string
     //log_info(log_kernel, "entre a pasar proceso a exit  antes del mutex");

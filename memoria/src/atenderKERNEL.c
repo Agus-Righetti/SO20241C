@@ -4,7 +4,9 @@
 //******************* CREACIÓN DE PROCESO **************************
 //******************************************************************
 void iniciar_estructura_para_un_proceso_nuevo(t_buffer* buffer){
- 
+    
+    // pthread_mutex_lock(&mutex_lista_procesos_recibidos);
+    sem_wait(&sem_lista_procesos);
 	char* path = recibir_string_del_buffer(buffer);
 	int pid = recibir_int_del_buffer(buffer);
             
@@ -12,12 +14,21 @@ void iniciar_estructura_para_un_proceso_nuevo(t_buffer* buffer){
 
 	// Crear un proceso
 	t_proceso* proceso_nuevo = crear_proceso(pid, path);
-
+    log_info(log_memoria, "ya volvi de crear proceso");
 	//Agregar a la lista de procesos 
 	list_add(lista_procesos_recibidos, proceso_nuevo);
     log_info(log_memoria, "Agregue el proceso a lista");
 
+    pcb* proceso_aux = list_get(lista_procesos_recibidos, 0);
+    log_info(log_memoria, "Obtuve el primer proceso de la lista con pid: %d", proceso_aux->pid);
+
+
 	log_info(log_memoria, "PROCESO CREADO CON ÉXITO");
+
+   // pthread_mutex_unlock(&proceso_nuevo->semaforo);	
+    log_info(log_memoria, "Desbloqueo el semáforo");
+   // pthread_mutex_unlock(&mutex_lista_procesos_recibidos);
+
     sem_post(&sem_lista_procesos);
 
 	// Podriamos mandar un mensaje para chequear que llegó
@@ -25,6 +36,11 @@ void iniciar_estructura_para_un_proceso_nuevo(t_buffer* buffer){
 
 t_proceso* crear_proceso(int pid, char* path_instruc){
 	t_proceso* proceso_nuevo = malloc(sizeof(t_proceso));
+    
+    log_info(log_memoria, "Estoy por iniciar el semáforo");
+    // pthread_mutex_init(&proceso_nuevo->semaforo, NULL);
+    // pthread_mutex_lock(&proceso_nuevo->semaforo);
+    log_info(log_memoria, "Ya inicié el semáforo y ya lo bloquie");
 
 	proceso_nuevo->pid = pid;
 	proceso_nuevo->path = path_instruc;
@@ -51,7 +67,16 @@ t_list* leer_archivo_y_cargar_instrucciones(char* archivo_pseudocodigo) {
     // POR AHORA DEJO LA LINEA DE ABAJO
     // para no hacer que todos tengan que crear una carpeta "sripts-pruebas"
 
-    FILE* archivo = fopen(archivo_pseudocodigo, "r");
+    char linea[100]; // Declaro un tamaño de la línea de 100 caracteres
+
+    char filepath[256]; // Buffer para el path completo
+
+    // Concatenar ".." con el script_path
+    snprintf(filepath, sizeof(filepath), "../memoria%s", archivo_pseudocodigo);
+
+    log_info(log_memoria, "esto es filepath: %s" , filepath);
+
+    FILE* archivo = fopen(filepath, "r");
 
     t_list* instrucciones = list_create(); //Creo una lista para almacenar todas las instrucciones
     
@@ -167,5 +192,7 @@ void liberar_memoria_proceso(t_buffer* buffer){
 
     list_destroy(tabla_paginas_a_eliminar);
     list_destroy(proceso_a_eliminar->tabla_paginas);
+
+    pthread_mutex_destroy(&proceso_a_eliminar->semaforo);
 
 }

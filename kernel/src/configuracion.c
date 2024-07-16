@@ -1,12 +1,12 @@
 #include "configuracion.h"
 
 // ********* DESARROLLO DEL ARMADO DE LA CONFIGURACIÓN DEL KERNEL *****
-kernel_config* armar_config(t_log* log_kernel)
+kernel_config* armar_config(t_log* log_kernel, char* path_config)
  {
     t_config* config_aux;
     kernel_config* aux_kernel_config = malloc(sizeof(kernel_config)); // Se inicializa la estructura que armamos 
 
-    config_aux = config_create("kernel.config");
+    config_aux = config_create(path_config);
 
     aux_kernel_config->recursos = list_create();
     aux_kernel_config->instancias_recursos = list_create();
@@ -39,11 +39,11 @@ kernel_config* armar_config(t_log* log_kernel)
 		aux_kernel_config->instancias_recursos[i] = atoi(aux_instancias_recursos[i]);
 	}
 
-     log_info(log_kernel, "Se creo el struct config_kernel con exito");
+     //log_info(log_kernel, "Se creo el struct config_kernel con exito");
 
-     log_info(log_kernel, "La cantidad de instancias del primer recurso son: %d" , aux_kernel_config->instancias_recursos[0]);
-     log_info(log_kernel, "La cantidad de instancias del segundo recurso son: %d" , aux_kernel_config->instancias_recursos[1]);
-     log_info(log_kernel, "La cantidad de instancias del tercer recurso son: %d" , aux_kernel_config->instancias_recursos[2]);
+     //log_info(log_kernel, "La cantidad de instancias del primer recurso son: %d" , aux_kernel_config->instancias_recursos[0]);
+     //log_info(log_kernel, "La cantidad de instancias del segundo recurso son: %d" , aux_kernel_config->instancias_recursos[1]);
+     //log_info(log_kernel, "La cantidad de instancias del tercer recurso son: %d" , aux_kernel_config->instancias_recursos[2]);
 
      config_destroy(config_aux);
 

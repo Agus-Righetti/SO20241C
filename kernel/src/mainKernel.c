@@ -44,7 +44,8 @@ int main(int argc, char* argv[])
 
     // ************* Creo el log y el config del kernel para uso general *************
     log_kernel = log_create("kernel.log", "Kernel", 1, LOG_LEVEL_DEBUG);
-    config_kernel = armar_config(log_kernel);
+    config_kernel = armar_config(log_kernel, argv[1]);
+ 
 
     // ************* creo las colas por recursos con sus mutex *************
 
@@ -69,13 +70,13 @@ int main(int argc, char* argv[])
     conexion_kernel_memoria = conexion_a_memoria(log_kernel, config_kernel);
     // ************* Esto es para funcionar como servidor para el I/O *************
     
-    log_info(log_kernel, "Estoy justo antes de server_para_io");
+    //log_info(log_kernel, "Estoy justo antes de server_para_io");
     pthread_t thread_escucha_conexion_io = hilo_io();
     
     //server_para_io(config_kernel, log_kernel);
 
     //************* HILO CONSOLA *************
-    log_info(log_kernel, "Estoy por crear el hilo consola");
+    //log_info(log_kernel, "Estoy por crear el hilo consola");
     pthread_t thread_consola = hilo_consola ();
 
     //*************HILO GESTOR DE LOS PROCESOS A ENVIAR A CPU*************

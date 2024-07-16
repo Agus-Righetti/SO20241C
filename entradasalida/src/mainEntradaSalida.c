@@ -57,12 +57,7 @@ int main(int argc, char* argv[])
 
 void terminar_programa(t_log* log_io, t_config* config_io)
 {
-    if (log_io != NULL) 
-    {
-		log_destroy(log_io);
-    }
-    if (config_io != NULL) 
-    {
-		config_destroy(config_io);
-    }
+ 
+	log_destroy(log_io);
+	config_destroy(config_io);
 }

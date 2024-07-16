@@ -87,11 +87,12 @@ void atender_kernel()
                 break;
             
             case -1:
-                log_error(log_io, "Se desconecto kernel, me voy");
-                exit(1);
+                log_error(log_io, "Se desconecto kernel, finalizando interfaz");
+                terminar_programa(log_io, config_io);
+                exit(0);
             
             default:
-                log_error(log_io, "El codigo de operacion no es reconocido :(");
+                log_warning(log_io, "El codigo de operacion no es reconocido :(");
                 break;
         }
     }

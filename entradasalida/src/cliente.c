@@ -45,7 +45,6 @@ int conexion_a_kernel()
 
     eliminar_paquete(paquete);
     
-    // enviar_mensaje("Hola KERNEL soy IO",conexion_io_kernel);
 
     return conexion_io_kernel;
 }

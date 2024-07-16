@@ -308,11 +308,15 @@ void instruccion_set(char **parte) {
     log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s", pcb_recibido->pid, parte[0], parte[1], parte[2]);
 
     char *registro = parte[1];
+
+    log_info(log_cpu, "Estoy justo antes del if");
     if(es_Registro_de_1B(registro)){
         // El registro es de 1B
         //log_info(log_cpu,"estamos en registro de 1B");
+        log_info(log_cpu, "Estoy dentro del if es es_Registro_de_1B");
 
         uint8_t *valor_registro = dictionary_get(registros, parte[1]);
+        log_info(log_cpu, "volvi del dictionary get");
         // uint8_t valor_registro_imprimir = *valor_registro;
 
         if (valor_registro == NULL)
@@ -332,7 +336,7 @@ void instruccion_set(char **parte) {
 
         *valor_registro = (uint8_t)atoi(parte[2]); //le asigno el nuevo valor al registro
 
-      
+        log_info(log_cpu, "Valor registro: %u", *valor_registro);
         log_info(log_cpu, "Registro: %s - Valor final: %u", registro, (uint8_t)atoi(parte[2]));
                 
     } else {

@@ -5,8 +5,6 @@
 #include <utils/utilsShare.h>
 
 
-//#include <cliente.h>
-
 // Estructuras globales ---------------------------------------------------------------------------------------------------------------
 
 typedef struct 

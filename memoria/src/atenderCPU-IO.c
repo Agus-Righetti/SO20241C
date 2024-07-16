@@ -9,27 +9,30 @@ void cpu_pide_instruccion(t_buffer* un_buffer){        //[PID, IP]
 	int ip = recibir_int_del_buffer(un_buffer);
 
 	//log_info(log_memoria, "estoy antes del semaforo");
-	sem_wait(&sem_lista_procesos);
+	//sem_wait(&sem_lista_procesos); -> lo pase a escucha.c pero sigue estando
     //tengo que obtener proceso buscando con los PID
+
+	//esto no se tiene que ejecutar hasta no tener el proceso en la lista
+	
     t_proceso* un_proceso = obtener_proceso_por_id(pid);
+	pthread_mutex_lock(&un_proceso->semaforo);
 
 	//Obtener Instruccion especifica
 	char* instruccion = obtener_instruccion_por_indice(un_proceso->instrucciones, ip);
     
 	//Enviar_instruccion a CPU
 	enviar_una_instruccion_a_cpu(instruccion);
-	sem_post(&sem_lista_procesos);
+	pthread_mutex_unlock(&un_proceso->semaforo);
 	
     log_info(log_memoria, "Instruccion enviada a CPU");
 }
 
 t_proceso* obtener_proceso_por_id(int pid){
 	int i = 0;
-
+	pthread_mutex_lock(&mutex_lista_procesos_recibidos);
 	while(i < list_size(lista_procesos_recibidos)){
-		
+	
 		if(comparar_pid(pid, list_get(lista_procesos_recibidos, i)) == 1){
-
 
 			t_proceso* proceso = list_get(lista_procesos_recibidos, i);
 			log_info(log_memoria, "PID por buscar: %d. Proceso: %d", pid, proceso->pid);
@@ -39,7 +42,7 @@ t_proceso* obtener_proceso_por_id(int pid){
 
 		i ++;
 	}
-
+	pthread_mutex_unlock(&mutex_lista_procesos_recibidos);
 	log_error(log_memoria, "ERROR: Proceso %d no encontrado", pid);
 
 	return NULL;
