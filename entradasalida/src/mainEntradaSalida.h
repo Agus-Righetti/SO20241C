@@ -10,6 +10,7 @@
 #include "interfazSTDOUT.h"
 #include "interfazDIALFS.h"
 #include "conexion.h"
+// #include "DIALFS.h"
 
 t_log* log_io;
 io_config* config_io;

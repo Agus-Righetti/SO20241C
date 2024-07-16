@@ -78,7 +78,9 @@ void avisar_fin_io_a_kernel()
 {
     // Le aviso a kernel q ya ejecute lo q tenia q hacer
     t_paquete* paquete = crear_paquete_personalizado(FIN_OP_IO);
+    
     enviar_paquete(paquete, conexion_io_kernel);
+    log_info(log_io, "ya le mande el FIN_OP_IO a kernel");
     eliminar_paquete(paquete);
     return;
 }

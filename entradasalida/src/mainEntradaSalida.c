@@ -14,6 +14,8 @@ int main(int argc, char* argv[])
 
     // Interfaz* configuracion_fs;
 
+    //make start CONFIG_FILE=nombre_archivo.config (para arrancar) 
+
     // // Inicializar la configuración (ejemplo)
     // // configuracion_fs->archivo->block_size = 64;
     // // configuracion_fs->archivo->block_count = 1024;
@@ -28,19 +30,24 @@ int main(int argc, char* argv[])
     log_info(log_io, "Estoy antes de la conexion a kernel");
     conexion_io_kernel = conexion_a_kernel();
 
-    log_info(log_io, "Estoy antes de la conexión a memoria");
-    conexion_io_memoria = conexion_a_memoria(); 
+    pthread_t hilo_escuchar_memoria;
 
-    log_info(log_io, "Estoy después de la conexión a memoria");
-
-    // Conexion IO --> Memoria --------------------------------------------------------------------------------------------------------
-
-    pthread_t hilo_escuchar_memoria = escuchar_memoria();
+    if(strcmp(config_io->tipo_interfaz, "GENERICA")!=0) //si no es la generica se conecta con memoria
+    {
+      log_info(log_io, "Estoy antes de la conexión a memoria");
+      conexion_io_memoria = conexion_a_memoria(); 
+      log_info(log_io, "Estoy después de la conexión a memoria");
+      hilo_escuchar_memoria = escuchar_memoria();
+    }
 
     // Conexion IO --> Kernel ---------------------------------------------------------------------------------------------------------
     
     pthread_t hilo_escuchar_kernel = escuchar_kernel();
-    pthread_detach(hilo_escuchar_memoria);
+    if(strcmp(config_io->tipo_interfaz, "GENERICA")!=0)
+    {
+      pthread_detach(hilo_escuchar_memoria);
+    }
+    
     pthread_join(hilo_escuchar_kernel, NULL);
 
     // terminar_programa(log_io, config_io);

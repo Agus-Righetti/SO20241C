@@ -7,6 +7,7 @@
 #include "interfazSTDIN.h"
 #include "interfazSTDOUT.h"
 #include "interfazDIALFS.h"
+// #include "DIALFS.h"
 
 pthread_t escuchar_memoria();
 pthread_t escuchar_kernel();

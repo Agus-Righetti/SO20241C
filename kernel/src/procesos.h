@@ -44,6 +44,7 @@ void hacer_el_log_obligatorio_de_ingreso_a_ready(pcb* proceso_a_mandar_a_ready);
 void hacer_el_log_obligatorio_de_ingreso_a_ready_prioridad(pcb* proceso_a_mandar_a_ready);
 void detener_planificacion();
 void iniciar_planificacion();
+void machear_con_cola_gral(pcb* proceso);
 
 
 //  *************** DECLARACIÓN DE ESTRUCTURAS ***************

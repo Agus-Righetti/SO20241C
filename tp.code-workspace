@@ -4,7 +4,8 @@
 		"files.associations": {
 			"*.h": "c",
 			"cstdlib": "c",
-			"random": "c"
+			"random": "c",
+			"DIALFS.H": "cpp"
 		},
 		"C_Cpp.errorSquiggles": "disabled",
 		"github.copilot.advanced": {

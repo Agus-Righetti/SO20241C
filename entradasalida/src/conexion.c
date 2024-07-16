@@ -86,6 +86,10 @@ void atender_kernel()
                 registro_puntero_archivo = recibir_int_del_buffer(buffer);
                 break;
             
+            case -1:
+                log_error(log_io, "Se desconecto kernel, me voy");
+                exit(1);
+            
             default:
                 log_error(log_io, "El codigo de operacion no es reconocido :(");
                 break;
@@ -134,10 +138,12 @@ pthread_t escuchar_kernel()
 
 void atender_a_memoria()
 {
+    t_buffer* buffer;
+    int cod_op_io;
     while(1)
     {
-        int cod_op_io = recibir_operacion(conexion_io_memoria);
-        t_buffer* buffer = recibiendo_paquete_personalizado(conexion_io_memoria); 
+        cod_op_io = recibir_operacion(conexion_io_memoria);
+        buffer = recibiendo_paquete_personalizado(conexion_io_memoria); 
         
         switch(cod_op_io) // Segun el codigo de operación actúo 
         {   

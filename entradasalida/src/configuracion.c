@@ -17,7 +17,9 @@ io_config* armar_config(t_log* log_io, char* nombre_config)
 
     char* tipo_interfaz = strdup(config_get_string_value(config_aux, "TIPO_INTERFAZ"));
 
-    aux_io_config->nombre = nombre_config;
+    char** partes = string_split(nombre_config, ".");
+
+    aux_io_config->nombre = partes[0];
     aux_io_config->tipo_interfaz = tipo_interfaz;
     aux_io_config->ip_kernel = strdup(config_get_string_value(config_aux, "IP_KERNEL"));
     aux_io_config->puerto_kernel = strdup(config_get_string_value(config_aux, "PUERTO_KERNEL"));
