@@ -13,8 +13,6 @@ kernel_config* armar_config(t_log* log_kernel, char* path_config)
 
     string_append(&filepath, path_config);
 
-    log_info(log_kernel, "el filepath es: %s", filepath);
-    
     config_aux = config_create(filepath);
 
     free(filepath);
@@ -53,9 +51,7 @@ kernel_config* armar_config(t_log* log_kernel, char* path_config)
 
     log_info(log_kernel, "Se creo el struct config_kernel con exito");
 
-    log_info(log_kernel, "el algoritmo de planificaicon es: %s", aux_kernel_config->algoritmo_planificacion);    
-
     config_destroy(config_aux);
 
     return aux_kernel_config;
- }
+}

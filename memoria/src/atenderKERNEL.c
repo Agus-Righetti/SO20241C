@@ -51,7 +51,13 @@ t_list* leer_archivo_y_cargar_instrucciones(char* archivo_pseudocodigo) {
     // POR AHORA DEJO LA LINEA DE ABAJO
     // para no hacer que todos tengan que crear una carpeta "sripts-pruebas"
 
-    FILE* archivo = fopen(archivo_pseudocodigo, "r");
+    char* filepath = string_new();
+
+    string_append(&filepath, "../memoria");
+
+    string_append(&filepath, archivo_pseudocodigo);
+
+    FILE* archivo = fopen(filepath, "r");
 
     t_list* instrucciones = list_create(); //Creo una lista para almacenar todas las instrucciones
     
@@ -131,6 +137,7 @@ t_list* leer_archivo_y_cargar_instrucciones(char* archivo_pseudocodigo) {
 
     fclose(archivo);
     free(linea_instruccion);
+    free(filepath);
     return instrucciones;
 }
 

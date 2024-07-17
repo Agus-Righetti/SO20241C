@@ -450,7 +450,15 @@ void ejecutar_script(char* script_path){
     FILE *archivo; // Declaro un archivo
     char linea[100]; // Declaro un tamaño de la línea de 100 caracteres
 
-    archivo = fopen(script_path, "r") ;// Abro el archivo en modo lectura
+    char* filepath = string_new();
+
+    string_append(&filepath, "../kernel");
+
+    string_append(&filepath, script_path);
+
+    
+
+    archivo = fopen(filepath, "r") ;// Abro el archivo en modo lectura
     
     if(archivo == NULL){ // Si no lo puedo abrir porque no existe o está mal el path
         error_show("Error al abrir archivo de comandos"); // Entonces muestro un error
@@ -501,6 +509,10 @@ void ejecutar_script(char* script_path){
     }
 
     fclose(archivo); // Cierro el archivo
+
+    free(filepath);
+
+    return;
     
 }
 
@@ -897,10 +909,8 @@ void recibir_pcb(pcb* proceso) {
 
         if(strcmp(config_kernel->algoritmo_planificacion, "VRR") == 0) // Si estoy recibiendo a traves del algoritmo VRR
         {
-            if(tiempo_que_tardo_en_recibir < proceso->quantum) //para q no le quede quantum negativo
-            {
-                proceso->quantum = proceso->quantum - tiempo_que_tardo_en_recibir; // Le asigno el quantum que le queda disponible
-            }
+            proceso->quantum = proceso->quantum - tiempo_que_tardo_en_recibir; // Le asigno el quantum que le queda disponible
+            
             //log_info(log_kernel,"el quantum que le queda al proceso es de: %d", proceso->quantum);
         };  
     

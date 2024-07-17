@@ -237,8 +237,6 @@ int io_gen_sleep(char* nombre_interfaz, int unidades_de_trabajo, pcb* proceso)
     //ante una petición van a esperar una cantidad de unidades de trabajo, cuyo valor va a venir dado en la petición desde el Kernel.
     interfaz_kernel* interfaz = verificar_interfaz(nombre_interfaz, GENERICA);
 
-    log_info(log_kernel, "Nombre de la interfaz despues de verificar: %s", interfaz->nombre_interfaz);
-    
     argumentos_para_io* args = malloc(sizeof(argumentos_para_io));
     args->unidades_de_trabajo = unidades_de_trabajo;
     args->proceso = proceso;
