@@ -837,7 +837,7 @@ void instruccion_io_gen_sleep(char **parte)
     // IO_GEN_SLEEP Int1 10
 
     // LOG OBLIGATORIO - INSTRUCCIÓN EJECUTADA
-    log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s", pcb_recibido->pid, parte[0], parte[1], parte[2]);
+    log_info(log_cpu, "PID: <%d> - Ejecutando: %s - %s %s", pcb_recibido->pid, parte[0], parte[1], parte[2]);
 
     argumentos_cpu* args = malloc(sizeof(argumentos_cpu));
     args->nombre_interfaz = parte[1];

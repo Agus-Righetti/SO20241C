@@ -52,4 +52,6 @@ sem_t sem_planificacion_activa;
 t_queue** colas_por_recurso;
 pthread_mutex_t** mutex_por_recurso;
 
+t_temporal* tiempo_de_quantum;
+
 #endif

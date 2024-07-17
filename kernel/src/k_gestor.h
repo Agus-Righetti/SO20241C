@@ -67,4 +67,6 @@ extern sem_t sem_planificacion_activa;
 extern t_queue **colas_por_recurso;
 extern pthread_mutex_t **mutex_por_recurso;
 
+extern t_temporal* tiempo_de_quantum;
+
 #endif

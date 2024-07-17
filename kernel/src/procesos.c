@@ -555,6 +555,8 @@ void enviar_pcb(pcb* proceso) {
 
     enviar_paquete(paquete_pcb, conexion_kernel_cpu); // Envio el paquete a través del socket
     
+    tiempo_de_quantum = temporal_create(); //comienza a contar el quantum
+
     eliminar_paquete(paquete_pcb); // Libero el paquete
 
     return;
@@ -622,10 +624,10 @@ void recibir_pcb(pcb* proceso) {
 
     char* estado_anterior = obtener_char_de_estado(proceso->estado_del_proceso);
 
-    clock_t inicio, fin; // Inicio un reloj, cuenta el tiempo que estuvo esperando hasta que llegue el paquete (sirve para VRR)
+    //clock_t inicio, fin; //ahora uso temporal
     int tiempo_que_tardo_en_recibir;
 
-    inicio = clock(); // En este momento comienzo a esperar
+    //inicio = clock(); // En este momento comienzo a esperar
 
     int codigo_operacion = recibir_operacion(conexion_kernel_cpu); // Recibo el codigo de operacion para ver como actúo según eso
 
@@ -649,9 +651,9 @@ void recibir_pcb(pcb* proceso) {
                 log_info(log_kernel, "Se desconecto CPU");
                 break;
             case FIN_DE_QUANTUM: 
-
+                temporal_stop(tiempo_de_quantum);
                 buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
-                fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
+                //fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
                 flag_estado = 0; // El proceso todavia no termino
                 pcb_recibido  = recibir_estructura_del_buffer(buffer);
                 pcb_recibido->registros = recibir_estructura_del_buffer(buffer);
@@ -664,8 +666,9 @@ void recibir_pcb(pcb* proceso) {
                 break;
             case INTERRUPTED_BY_USER: 
 
+                temporal_stop(tiempo_de_quantum);
                 buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
-                fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
+                //fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
                 flag_estado = 1; // mando el proceso a exit
                 pcb_recibido = recibir_estructura_del_buffer(buffer);
                 pcb_recibido->registros = recibir_estructura_del_buffer(buffer);
@@ -678,8 +681,9 @@ void recibir_pcb(pcb* proceso) {
 
             case CPU_TERMINA_EJECUCION_PCB:
 
+                temporal_stop(tiempo_de_quantum);
                 buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
-                fin = clock(); // Termino el tiempo desde que empecé a esperar la recepción
+                //fin = clock(); // Termino el tiempo desde que empecé a esperar la recepción
                 flag_estado = 1; // El proceso ya finalizo, no quedan rafagas por ejecutar
                 pcb_recibido = recibir_estructura_del_buffer(buffer);
                 pcb_recibido->registros = recibir_estructura_del_buffer(buffer);
@@ -691,8 +695,9 @@ void recibir_pcb(pcb* proceso) {
 
             case SIGNAL:
 
+                temporal_stop(tiempo_de_quantum);
                 buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
-                fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
+                //fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
                 pcb_recibido = recibir_estructura_del_buffer(buffer);
                 pcb_recibido->registros = recibir_estructura_del_buffer(buffer);
                 recurso = recibir_string_del_buffer(buffer); // Obtengo el indice del recurso que se usa para manejarlo
@@ -704,9 +709,10 @@ void recibir_pcb(pcb* proceso) {
                 break;
 
             case WAIT:
-        
+
+                temporal_stop(tiempo_de_quantum);
                 buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
-                fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
+                //fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
                 pcb_recibido = recibir_estructura_del_buffer(buffer);
                 pcb_recibido->registros = recibir_estructura_del_buffer(buffer);
                 recurso = recibir_string_del_buffer(buffer); // Obtengo el nombre del recurso que se usa para manejarlo
@@ -719,8 +725,9 @@ void recibir_pcb(pcb* proceso) {
 
             case IO_GEN_SLEEP: //(Interfaz, Unidades de trabajo)
 
+                temporal_stop(tiempo_de_quantum);
                 buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
-                fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
+                //fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
                 pcb_recibido = recibir_estructura_del_buffer(buffer);
                 pcb_recibido->registros = recibir_estructura_del_buffer(buffer);
                 nombre_interfaz = recibir_string_del_buffer(buffer);
@@ -734,8 +741,10 @@ void recibir_pcb(pcb* proceso) {
 
             //le tengo q decir a CPU q me los mande como ints a los valores del registro
             case IO_STDIN_READ: //(Interfaz, Registro Dirección, Registro Tamaño)
+                
+                temporal_stop(tiempo_de_quantum);
                 buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
-                fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
+                //fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
                 pcb_recibido = recibir_estructura_del_buffer(buffer);
                 pcb_recibido->registros = recibir_estructura_del_buffer(buffer);
                 nombre_interfaz = recibir_string_del_buffer(buffer);
@@ -750,8 +759,9 @@ void recibir_pcb(pcb* proceso) {
 
             case IO_STDOUT_WRITE: //(Interfaz, Registro Dirección, Registro Tamaño)
 
+                temporal_stop(tiempo_de_quantum);
                 buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
-                fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
+                //fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
                 pcb_recibido = recibir_estructura_del_buffer(buffer);
                 pcb_recibido->registros = recibir_estructura_del_buffer(buffer);
                 nombre_interfaz = recibir_string_del_buffer(buffer);
@@ -766,8 +776,9 @@ void recibir_pcb(pcb* proceso) {
             
             case IO_FS_CREATE: // (Interfaz, Nombre Archivo)
 
+                temporal_stop(tiempo_de_quantum);
                 buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
-                fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
+                //fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
                 pcb_recibido = recibir_estructura_del_buffer(buffer);
                 pcb_recibido->registros = recibir_estructura_del_buffer(buffer);
                 nombre_interfaz = recibir_string_del_buffer(buffer);
@@ -781,8 +792,9 @@ void recibir_pcb(pcb* proceso) {
 
             case IO_FS_DELETE: //(Interfaz, Nombre Archivo)
 
+                temporal_stop(tiempo_de_quantum);
                 buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
-                fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
+                //fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
                 pcb_recibido = recibir_estructura_del_buffer(buffer);
                 pcb_recibido->registros = recibir_estructura_del_buffer(buffer);
                 nombre_interfaz = recibir_string_del_buffer(buffer);
@@ -796,8 +808,10 @@ void recibir_pcb(pcb* proceso) {
 
             case IO_FS_TRUNCATE: //(Interfaz, Nombre Archivo, Registro Tamaño)
 
+                temporal_stop(tiempo_de_quantum);
+                
                 buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
-                fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
+                //fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
                 pcb_recibido = recibir_estructura_del_buffer(buffer);
                 pcb_recibido->registros = recibir_estructura_del_buffer(buffer);
                 nombre_interfaz = recibir_string_del_buffer(buffer);
@@ -812,8 +826,10 @@ void recibir_pcb(pcb* proceso) {
 
             case IO_FS_WRITE: //(Interfaz, Nombre Archivo, Registro Dirección, Registro Tamaño, Registro Puntero Archivo)
 
+                temporal_stop(tiempo_de_quantum);
+                
                 buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
-                fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
+                //fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
                 pcb_recibido = recibir_estructura_del_buffer(buffer);
                 pcb_recibido->registros = recibir_estructura_del_buffer(buffer);
                 nombre_interfaz = recibir_string_del_buffer(buffer);
@@ -830,8 +846,10 @@ void recibir_pcb(pcb* proceso) {
 
             case IO_FS_READ: //(Interfaz, Nombre Archivo, Registro Dirección, Registro Tamaño, Registro Puntero Archivo)
             
+                temporal_stop(tiempo_de_quantum);
+                
                 buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
-                fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
+                //fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
                 pcb_recibido = recibir_estructura_del_buffer(buffer);
                 pcb_recibido->registros = recibir_estructura_del_buffer(buffer);
                 nombre_interfaz = recibir_string_del_buffer(buffer);
@@ -846,8 +864,11 @@ void recibir_pcb(pcb* proceso) {
 
                 break;
             case OUT_OF_MEMORY:
+                
+                temporal_stop(tiempo_de_quantum);
+
                 buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
-                fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
+                //fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
                 pcb_recibido = recibir_estructura_del_buffer(buffer);
                 pcb_recibido->registros = recibir_estructura_del_buffer(buffer);
 
@@ -861,7 +882,12 @@ void recibir_pcb(pcb* proceso) {
                 break;
         }
 
-        tiempo_que_tardo_en_recibir = (int)((double)((fin - inicio) * 1000.0 / CLOCKS_PER_SEC)); // Calculo el tiempo que me tarde en recibir el PCB
+        //tiempo_que_tardo_en_recibir = (int)((double)((fin - inicio) * 1000.0 / CLOCKS_PER_SEC)); // Calculo el tiempo que me tarde en recibir el PCB
+        tiempo_que_tardo_en_recibir = (int)temporal_gettime(tiempo_de_quantum);
+
+        temporal_destroy(tiempo_de_quantum);//lo destruyo porq lo creo cada vez q mando un proceso
+
+        //log_info(log_kernel, "el tiempo q tardo en recibir es: %d", tiempo_que_tardo_en_recibir);
 
         if(strcmp(config_kernel->algoritmo_planificacion, "RR") == 0 || strcmp(config_kernel->algoritmo_planificacion, "VRR") == 0)
         {
@@ -871,7 +897,11 @@ void recibir_pcb(pcb* proceso) {
 
         if(strcmp(config_kernel->algoritmo_planificacion, "VRR") == 0) // Si estoy recibiendo a traves del algoritmo VRR
         {
-            proceso->quantum = proceso->quantum - tiempo_que_tardo_en_recibir; // Le asigno el quantum que le queda disponible
+            if(tiempo_que_tardo_en_recibir < proceso->quantum) //para q no le quede quantum negativo
+            {
+                proceso->quantum = proceso->quantum - tiempo_que_tardo_en_recibir; // Le asigno el quantum que le queda disponible
+            }
+            //log_info(log_kernel,"el quantum que le queda al proceso es de: %d", proceso->quantum);
         };  
     
     free(buffer->stream); // Libero directamente el buffer, no arme paquete asi que no hace falta

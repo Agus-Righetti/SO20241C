@@ -42,6 +42,8 @@ int main(int argc, char* argv[])
     sem_init(&sem_puedo_mandar_a_cpu,0,1);
     sem_init(&sem_planificacion_activa,0,1);
 
+    
+
     // ************* Creo el log y el config del kernel para uso general *************
     log_kernel = log_create("kernel.log", "Kernel", 1, LOG_LEVEL_DEBUG);
     config_kernel = armar_config(log_kernel);
