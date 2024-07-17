@@ -15,7 +15,7 @@ typedef struct
     char *puerto_cpu_dispatch;
     char *puerto_cpu_interrupt;
     char *algoritmo_planificacion;
-    char *quantum;
+    int quantum;
     char** recursos; 
 	int* instancias_recursos;
     int grado_multiprogramacion;

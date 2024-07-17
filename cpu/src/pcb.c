@@ -1213,7 +1213,6 @@ void check_interrupt(){
     
     if(flag_interrupcion){ //hay una interrupcion
 
-        log_info(log_cpu, "tengo una interrupcion, voy a mdnar el pcb");
         argumentos_cpu* args = malloc(sizeof(argumentos_cpu));
         args->proceso = pcb_recibido;
         args->operacion = motivo_interrupcion;

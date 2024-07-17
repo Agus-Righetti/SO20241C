@@ -1,5 +1,4 @@
 #include "procesos.h"
-
 // -------------------------------------------------------------------------------
 // ------------- INICIO HILOS QUE SE QUEDAN CONSTANTEMENTE PRENDIDOS -------------
 // -------------------------------------------------------------------------------
@@ -186,13 +185,12 @@ void pasar_procesos_de_new_a_ready(){
 
         //armo el log_obligatorio
 
+        pthread_mutex_lock(&mutex_cola_de_ready); // Tmbn semaforo porque es seccion critica
+        queue_push(cola_de_ready,proceso_a_mandar_a_ready); // Ingreso el proceso a la cola de Ready. 
+        pthread_mutex_unlock(&mutex_cola_de_ready);
+        
         hacer_el_log_obligatorio_de_ingreso_a_ready(proceso_a_mandar_a_ready);
 
-        pthread_mutex_lock(&mutex_cola_de_ready); // Tmbn semaforo porque es seccion critica
-        
-        queue_push(cola_de_ready,proceso_a_mandar_a_ready); // Ingreso el proceso a la cola de Ready. 
-        
-        pthread_mutex_unlock(&mutex_cola_de_ready);
         sem_post(&sem_cola_de_ready); // Agrego 1 al semaforo contador de la cola
     }
 }
@@ -863,7 +861,7 @@ void recibir_pcb(pcb* proceso) {
                 break;
         }
 
-        tiempo_que_tardo_en_recibir = (int)((double)(fin - inicio) * 1000.0 / CLOCKS_PER_SEC); // Calculo el tiempo que me tarde en recibir el PCB
+        tiempo_que_tardo_en_recibir = (int)((double)((fin - inicio) * 1000.0 / CLOCKS_PER_SEC)); // Calculo el tiempo que me tarde en recibir el PCB
 
         if(strcmp(config_kernel->algoritmo_planificacion, "RR") == 0 || strcmp(config_kernel->algoritmo_planificacion, "VRR") == 0)
         {
@@ -972,25 +970,31 @@ void accionar_segun_estado(pcb* proceso, int flag, int motivo){
                 pthread_mutex_lock(&mutex_cola_prioridad_vrr); 
                 queue_push(cola_prioridad_vrr,proceso); // Entonces voy a la cola de prioridad
                 pthread_mutex_unlock(&mutex_cola_prioridad_vrr);
+
                 hacer_el_log_obligatorio_de_ingreso_a_ready_prioridad(proceso);
+                
                 sem_post(&sem_cola_prioridad_vrr);
 
             }else{ // Si no le queda quantum
 
                 proceso->quantum = config_kernel->quantum; // Le reinicio el quantum
-                hacer_el_log_obligatorio_de_ingreso_a_ready(proceso);
                 pthread_mutex_lock(&mutex_cola_de_ready);
                 queue_push(cola_de_ready,proceso); // Y la sumo a la cola de Ready normal
                 pthread_mutex_unlock(&mutex_cola_de_ready);
+                
+                hacer_el_log_obligatorio_de_ingreso_a_ready(proceso);
+                
                 sem_post(&sem_cola_de_ready);
 
             }
         } else{ // No estoy en vrr, siempre madno a cola de Ready normal
             
-            hacer_el_log_obligatorio_de_ingreso_a_ready(proceso);
             pthread_mutex_lock(&mutex_cola_de_ready);
             queue_push(cola_de_ready,proceso); // Meto a la cola de Ready
             pthread_mutex_unlock(&mutex_cola_de_ready);
+            
+            hacer_el_log_obligatorio_de_ingreso_a_ready(proceso);
+            
             sem_post(&sem_cola_de_ready);
         };
     }
