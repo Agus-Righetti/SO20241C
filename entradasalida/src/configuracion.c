@@ -7,7 +7,15 @@ io_config* armar_config(t_log* log_io, char* nombre_config)
     t_config* config_aux;
     io_config* aux_io_config = malloc(sizeof(io_config));  
 
-    config_aux = config_create(nombre_config);
+    char* filepath = string_new();
+
+    string_append(&filepath, "../entradasalida/interfaces/");
+
+    string_append(&filepath, nombre_config);
+
+    config_aux = config_create(filepath);
+
+    free(filepath);
 
     if (config_aux == NULL)
     {

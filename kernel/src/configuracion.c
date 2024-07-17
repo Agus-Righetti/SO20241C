@@ -9,7 +9,7 @@ kernel_config* armar_config(t_log* log_kernel, char* path_config)
 
     char* filepath = string_new();
 
-    string_append(&filepath, "../kernel/src/config_files/");
+    string_append(&filepath, "../kernel/config_files/");
 
     string_append(&filepath, path_config);
 
