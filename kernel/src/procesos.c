@@ -896,7 +896,7 @@ void algoritmo_round_robin (void* arg){
     thread_args_procesos_kernel*args = (thread_args_procesos_kernel*)arg;
     pcb* proceso_actual = args->proceso;
 
-    log_info(log_kernel, "el quantum que le voy a dar es de:", proceso_actual->quantum);
+    log_info(log_kernel, "El quantum que le voy a dar es de: %d", proceso_actual->quantum);
 
     usleep((proceso_actual->quantum)*1000); // Acá usamos el quantum del proceso, asi podemos reutilziar la funcion para VRR
     if(!interrupcion_por_fin_de_proceso){ // Si no tengo que finalizar el proceso por pedido de usuario
@@ -1478,7 +1478,7 @@ void hacer_el_log_obligatorio_de_ingreso_a_ready(pcb* proceso_a_mandar_a_ready)
         }
         
     }
-    char_a_mostrar = agregar_al_final(char_a_mostrar, " ]");
+    char_a_mostrar = agregar_al_final(char_a_mostrar, "]");
 
     pthread_mutex_unlock(&mutex_cola_de_ready);
 
@@ -1506,7 +1506,7 @@ void hacer_el_log_obligatorio_de_ingreso_a_ready_prioridad(pcb* proceso_a_mandar
         }
         
     }
-    char_a_mostrar = agregar_al_final(char_a_mostrar, " ]");
+    char_a_mostrar = agregar_al_final(char_a_mostrar, "]");
 
     pthread_mutex_unlock(&mutex_cola_prioridad_vrr);
 

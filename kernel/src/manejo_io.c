@@ -78,8 +78,6 @@ void escucha_interfaz(thread_args_escucha_io* args)
         //se queda esperando que la interfaz me mande algo
         cod_op = recibir_operacion(interfaz->socket); //me habla la interfaz
         
-        log_info(log_kernel, "El codop antes del switch (manejo_io) es: %d", cod_op);
-        
         switch (cod_op) { 
             //aca habria que agregar los posibles codigos de operacion q pueden llegar, dsp me fijo bien            //ya se termino la operacion de entrada salida, devuelvo el proceso a ready
             case MENSAJE:
