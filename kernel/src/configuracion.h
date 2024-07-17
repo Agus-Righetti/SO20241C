@@ -4,6 +4,6 @@
 #include "k_gestor.h"
 
 // *************** DECLARACIÓN DE FUNCIONES **********
-kernel_config* armar_config(t_log* log_kernel);
+kernel_config* armar_config(t_log* log_kernel, char* path_config);
 
 #endif

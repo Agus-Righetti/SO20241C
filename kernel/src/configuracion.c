@@ -1,12 +1,24 @@
 #include "configuracion.h"
 
 // ********* DESARROLLO DEL ARMADO DE LA CONFIGURACIÓN DEL KERNEL *****
-kernel_config* armar_config(t_log* log_kernel)
+kernel_config* armar_config(t_log* log_kernel, char* path_config)
  {
     t_config* config_aux;
     kernel_config* aux_kernel_config = malloc(sizeof(kernel_config)); // Se inicializa la estructura que armamos 
 
-    config_aux = config_create("kernel.config");
+
+    char* filepath = string_new();
+
+    string_append(&filepath, "../kernel/src/config_files/");
+
+    string_append(&filepath, path_config);
+
+    log_info(log_kernel, "el filepath es: %s", filepath);
+    
+    config_aux = config_create(filepath);
+
+    free(filepath);
+
 
     // aux_kernel_config->recursos = list_create();
     // aux_kernel_config->instancias_recursos = list_create();
@@ -39,13 +51,11 @@ kernel_config* armar_config(t_log* log_kernel)
 		aux_kernel_config->instancias_recursos[i] = atoi(aux_instancias_recursos[i]);
 	}
 
-     log_info(log_kernel, "Se creo el struct config_kernel con exito");
+    log_info(log_kernel, "Se creo el struct config_kernel con exito");
 
-     log_info(log_kernel, "La cantidad de instancias del primer recurso son: %d" , aux_kernel_config->instancias_recursos[0]);
-     log_info(log_kernel, "La cantidad de instancias del segundo recurso son: %d" , aux_kernel_config->instancias_recursos[1]);
-     log_info(log_kernel, "La cantidad de instancias del tercer recurso son: %d" , aux_kernel_config->instancias_recursos[2]);
+    log_info(log_kernel, "el algoritmo de planificaicon es: %s", aux_kernel_config->algoritmo_planificacion);    
 
-     config_destroy(config_aux);
+    config_destroy(config_aux);
 
-     return aux_kernel_config;
+    return aux_kernel_config;
  }
