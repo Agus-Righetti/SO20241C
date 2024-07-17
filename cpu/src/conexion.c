@@ -80,7 +80,7 @@ void atender_memoria() {
             case CPU_RECIBE_OK_DEL_RESIZE:
                 //log_info(log_cpu, "case 5 ");
                 printf("El tamaño del proceso se ha ajustado correctamente.\n");
-                pcb_recibido->program_counter++; 
+                pcb_recibido->registros->pc++; 
                 buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
                 // free(buffer->stream);
                 free(buffer);
@@ -267,6 +267,7 @@ void atender_kernel()
 void atender_interrupcion() // ACA HAY QUE MANEJAR EL ENVIAR PCB DENTRO DEL SWITCH (ESTA COMENTADO)
 {
     t_list* lista;
+    t_buffer* buffer;
     int cod_op ;
 
     while(1) {
@@ -285,6 +286,8 @@ void atender_interrupcion() // ACA HAY QUE MANEJAR EL ENVIAR PCB DENTRO DEL SWIT
                 log_info(log_cpu, "Me llego una interrupcion de KERNEL, ahora voy a enviar el pcb");  
                 flag_interrupcion = true; // Este flag me marca que HAY una interrupción, entonces desde el final de cada instrucción voy a devolver el pcb a kernel
                 motivo_interrupcion = FIN_DE_QUANTUM;
+                buffer=recibiendo_paquete_personalizado(socket_interrupt_kernel);
+                free(buffer);
 
                 break;
             
@@ -292,6 +295,8 @@ void atender_interrupcion() // ACA HAY QUE MANEJAR EL ENVIAR PCB DENTRO DEL SWIT
                 log_info(log_cpu, "Me llego una interrupcion de KERNEL, ahora voy a enviar el pcb");  
                 flag_interrupcion = true; // Este flag me marca que HAY una interrupción, entonces desde el final de cada instrucción voy a devolver el pcb a kernel
                 motivo_interrupcion = INTERRUPTED_BY_USER;
+                buffer=recibiendo_paquete_personalizado(socket_interrupt_kernel);
+                free(buffer);
                 break;
                 
             case -1:

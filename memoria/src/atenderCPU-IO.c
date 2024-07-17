@@ -6,7 +6,8 @@
 //******************************************************************
 void cpu_pide_instruccion(t_buffer* un_buffer){        //[PID, IP]
 	int pid = recibir_int_del_buffer(un_buffer);
-	int ip = recibir_int_del_buffer(un_buffer);
+	//cambie este, ya no es int es uint32
+	uint32_t ip = recibir_uint32_del_buffer(un_buffer);
 
 	//log_info(log_memoria, "estoy antes del semaforo");
 	sem_wait(&sem_lista_procesos);
@@ -55,7 +56,7 @@ bool comparar_pid(int pid, t_proceso* proceso){
 }
 
 
-char* obtener_instruccion_por_indice(t_list* instrucciones, int indice_instruccion){
+char* obtener_instruccion_por_indice(t_list* instrucciones, uint32_t indice_instruccion){
 	char* instruccion_actual;
 	if(indice_instruccion >= 0 && indice_instruccion < list_size(instrucciones)){
 		instruccion_actual = list_get(instrucciones, indice_instruccion);

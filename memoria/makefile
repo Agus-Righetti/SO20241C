@@ -48,9 +48,12 @@ $(DEPS): $$(shell find $$(patsubst %bin/,%src/,$$(dir $$@)) -iname "*.c" -or -in
 $(sort $(dir $(BIN) $(OBJS))):
 	mkdir -pv $@
 
+# .PHONY: start
+# start: debug
+# 	valgrind --tool=none ./$(BIN) $(ARGS)
 .PHONY: start
 start: debug
-	valgrind --tool=none ./$(BIN) $(ARGS)
+	valgrind --leak-check=full ./$(BIN) $(ARGS)
 
 .PHONY: memcheck
 memcheck: debug

@@ -19,7 +19,7 @@ void recibir_pcb(){
 
     // Acordarse de sacarlos!!!!!!
     log_info(log_cpu, "El PID es: %d", pcb_recibido->pid);
-    log_info(log_cpu, "El PC es: %d", pcb_recibido->program_counter);
+    log_info(log_cpu, "El PC es: %d", pcb_recibido->registros->pc);
 
     solicitar_instrucciones_a_memoria(socket_cliente_cpu); 
 
@@ -199,7 +199,8 @@ void solicitar_instrucciones_a_memoria(int socket_cliente_cpu)
 
     // Agregamos el pc y el pid al paquete
     agregar_int_al_paquete_personalizado(paquete, pcb_recibido->pid); 
-    agregar_int_al_paquete_personalizado(paquete, pcb_recibido->program_counter);
+    //cambie aca
+    agregar_uint32_al_paquete_personalizado(paquete, pcb_recibido->registros->pc);
 
     // Envio el paquete a memoria
     enviar_paquete(paquete, socket_cliente_cpu);
@@ -209,7 +210,7 @@ void solicitar_instrucciones_a_memoria(int socket_cliente_cpu)
     log_info(log_cpu, "Le pedi instruccion a Memoria");
 
     // LOG OBLIGATORIO - FETCH INSTRUCCIÓN
-    log_info(log_cpu, "PID: %d - FETCH - Program Counter: %d", pcb_recibido->pid, pcb_recibido->program_counter); 
+    log_info(log_cpu, "PID: %d - FETCH - Program Counter: %u", pcb_recibido->pid, pcb_recibido->registros->pc); 
 }
 
 // Instrucciones -------------------------------------------------------------------------------------------------------------------
@@ -306,7 +307,7 @@ void instruccion_set(char **parte) {
     
     // LOG OBLIGATORIO - INSTRUCCIÓN EJECUTADA
     log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s", pcb_recibido->pid, parte[0], parte[1], parte[2]);
-
+    log_info(log_cpu, "esto es pc antes de ejecutar: %u", pcb_recibido->registros->pc);
     char *registro = parte[1];
     if(es_Registro_de_1B(registro)){
         // El registro es de 1B
@@ -357,10 +358,14 @@ void instruccion_set(char **parte) {
     }
 
 	// Aumento el PC
-    pcb_recibido->program_counter++; 
+    //pcb_recibido->program_counter++; 
+    pcb_recibido->registros->pc++;
+
+    log_info(log_cpu, "esto es pc dsp de ejecutar, antes de check interrupt: %u", pcb_recibido->registros->pc);
     
     check_interrupt();
     
+    log_info(log_cpu, "esto es pc dsp de checkinterrupt: %u", pcb_recibido->registros->pc);
     liberar_array_strings(parte);
 
     return;
@@ -441,7 +446,8 @@ void instruccion_mov_in(char **parte) {
     }
     
     // Aumento el PC para que lea la proxima instruccion
-    pcb_recibido->program_counter++;
+    //pcb_recibido->program_counter++;
+    pcb_recibido->registros->pc++;
 
     liberar_array_strings(parte);
 
@@ -504,7 +510,8 @@ void instruccion_mov_out(char **parte) {
     log_info(log_cpu, "Ya me desbloquee despues del semaforo");
 
     // Aumento el PC para que lea la proxima instruccion
-	pcb_recibido->program_counter++;
+	//pcb_recibido->program_counter++;
+    pcb_recibido->registros->pc++;
     
     log_info(log_cpu, "A rezar que ande bien este");
 
@@ -564,7 +571,8 @@ void instruccion_sum(char **parte) {
     }
 
     
-    pcb_recibido->program_counter++;
+    //pcb_recibido->program_counter++;
+    pcb_recibido->registros->pc++;
 
     liberar_array_strings(parte);
 
@@ -611,7 +619,8 @@ void instruccion_sub(char **parte) {
     }
 
     
-    pcb_recibido->program_counter++;
+    //pcb_recibido->program_counter++;
+    pcb_recibido->registros->pc++;
 
     liberar_array_strings(parte);
 
@@ -632,17 +641,19 @@ void instruccion_jnz(char **parte) {
     int registro = *(int*)dictionary_get(registros, parte[1]);
     int instruccion = atoi(parte[2]); // Convertir la instrucción a un entero
 
-    log_info(log_cpu, "PC antes del jnz: %d", pcb_recibido->program_counter);
+    log_info(log_cpu, "PC antes del jnz: %d", pcb_recibido->registros->pc);
 
     if (registro != 0) {
         // Actualizo el PC al pasado por parametro
-        pcb_recibido->program_counter = instruccion;
+        //pcb_recibido->program_counter = instruccion;
+        pcb_recibido->registros->pc = instruccion;
 
     } else {
-        pcb_recibido->program_counter++;
+        // pcb_recibido->program_counter++;
+        pcb_recibido->registros->pc++;
     }
 
-    log_info(log_cpu, "PC después del jnz: %d", pcb_recibido->program_counter);
+    log_info(log_cpu, "PC después del jnz: %d", pcb_recibido->registros->pc);
 
     liberar_array_strings(parte);
 
@@ -681,6 +692,8 @@ void instruccion_resize(char **parte) {
     enviar_paquete(paquete, socket_cliente_cpu);
 	eliminar_paquete(paquete);
 
+    pcb_recibido->registros->pc++;
+    
     sem_wait(&sem_tengo_ok_resize);
 
     check_interrupt();
@@ -727,7 +740,9 @@ void instruccion_copy_string(char **parte) {
     // espero_rta_escritura_string_de_memoria();
 
 
-    pcb_recibido->program_counter++;
+    //// pcb_recibido->program_counter++;
+    pcb_recibido->registros->pc++;
+    
 
     liberar_array_strings(parte);
 
@@ -768,7 +783,8 @@ void instruccion_wait(char** parte)
     // LOG OBLIGATORIO - INSTRUCCIÓN EJECUTADA
 	log_info(log_cpu, "PID: %d - Ejecutando: %s - %s", pcb_recibido->pid, parte[0], parte[1]);
 
-	pcb_recibido->program_counter++;
+	//pcb_recibido->program_counter++;
+    pcb_recibido->registros->pc++;
     argumentos_cpu* argumentos_a_mandar = malloc(sizeof(argumentos_cpu));
     
     log_info(log_cpu, "El nombre del recurso es: %s", parte[1]);
@@ -798,7 +814,8 @@ void instruccion_signal(char **parte)
     // LOG OBLIGATORIO - INSTRUCCIÓN EJECUTADA
 	log_info(log_cpu, "PID: %d - Ejecutando: %s - %s", pcb_recibido->pid, parte[0], parte[1]);
 
-    pcb_recibido->program_counter++;
+    //pcb_recibido->program_counter++;
+    pcb_recibido->registros->pc++;
 
     args->proceso = pcb_recibido; 
     args->recurso = parte[1];
@@ -823,7 +840,9 @@ void instruccion_io_gen_sleep(char **parte)
     argumentos_cpu* args = malloc(sizeof(argumentos_cpu));
     args->nombre_interfaz = parte[1];
     args->unidades_de_trabajo = atoi(parte[2]);
-    pcb_recibido->program_counter++;
+    //pcb_recibido->program_counter++;
+    pcb_recibido->registros->pc++;
+    
     args->proceso = pcb_recibido;
     args->operacion = IO_GEN_SLEEP;
 
@@ -875,7 +894,9 @@ void instruccion_io_stdin_read(char** parte)
     args->nombre_interfaz = parte[1];
     args->registro_direccion = direccion_fisica;
     args->registro_tamano = registro_tamano;
-    pcb_recibido->program_counter++; // Siempre primero sumo el PC y después recién asigno el proceso a args así está actualizado
+    //pcb_recibido->program_counter++; // Siempre primero sumo el PC y después recién asigno el proceso a args así está actualizado
+    pcb_recibido->registros->pc++;
+
     args->proceso = pcb_recibido;
     args->operacion = IO_STDIN_READ;
 
@@ -920,7 +941,8 @@ void instruccion_io_stdout_write(char **parte) // ESTE NO LO ENTIENDO PORQUE MAN
     args->registro_direccion = direccion_fisica;
     args->registro_tamano = valor_registro;
 
-    pcb_recibido->program_counter++;
+    //pcb_recibido->program_counter++;
+    pcb_recibido->registros->pc++;
 
     args->proceso = pcb_recibido;
     args->operacion = IO_STDOUT_WRITE;
@@ -958,7 +980,9 @@ void instruccion_io_fs_create(char **parte)
     argumentos_cpu* args = malloc(sizeof(argumentos_cpu));
     args->nombre_interfaz = parte[1];
     args->nombre_archivo = parte[2];
-    pcb_recibido->program_counter++;
+    //pcb_recibido->program_counter++;
+    pcb_recibido->registros->pc++;
+
     args->proceso = pcb_recibido;
     args->operacion = IO_FS_CREATE;
 
@@ -992,7 +1016,9 @@ void instruccion_io_fs_delete(char **parte)
     argumentos_cpu* args = malloc(sizeof(argumentos_cpu));
     args->nombre_interfaz = parte[1];
     args->nombre_archivo = parte[2];
-    pcb_recibido->program_counter++;
+    //pcb_recibido->program_counter++;
+    pcb_recibido->registros->pc++;
+
     args->proceso = pcb_recibido;
     args->operacion = IO_FS_DELETE;
 
@@ -1031,7 +1057,9 @@ void instruccion_io_fs_truncate(char **parte)
     args->nombre_interfaz = parte[1];
     args->nombre_archivo = parte[2];
     args->registro_tamano = nuevo_tamanio;
-    pcb_recibido->program_counter++;
+    //pcb_recibido->program_counter++;
+    pcb_recibido->registros->pc++;
+
     args->proceso = pcb_recibido;
     args->operacion = IO_FS_TRUNCATE;
     
@@ -1073,7 +1101,9 @@ void instruccion_io_fs_write(char **parte)
     args->registro_direccion = direccion_fisica; 
     args->registro_tamano = registro_tamanio;
     args->registro_puntero_archivo = registro_puntero_archivo;
-    pcb_recibido->program_counter++;
+    //pcb_recibido->program_counter++;
+    pcb_recibido->registros->pc++;
+
     args->proceso = pcb_recibido;
     args->operacion = IO_FS_WRITE;
 
@@ -1122,7 +1152,9 @@ void instruccion_io_fs_read(char **parte)
     args->registro_direccion = direccion_fisica;
     args->registro_tamano = registro_tamanio;
     args->registro_puntero_archivo = registro_puntero_archivo;
-    pcb_recibido->program_counter++;
+    //pcb_recibido->program_counter++;
+    pcb_recibido->registros->pc++;
+
     args->proceso = pcb_recibido;
     args->operacion = IO_FS_READ;
     
@@ -1143,7 +1175,9 @@ void instruccion_exit(char** parte)
 	log_info(log_cpu, "PID: %d - Ejecutando: %s", pcb_recibido->pid, parte[0]);
 
     argumentos_cpu* args = malloc(sizeof(argumentos_cpu));
-    pcb_recibido->program_counter++;
+    //pcb_recibido->program_counter++;
+    pcb_recibido->registros->pc++;
+    
     args->proceso = pcb_recibido;
     args->operacion = CPU_TERMINA_EJECUCION_PCB;
 
