@@ -9,7 +9,7 @@
 void crear_interfaz(op_code interfaz_nueva, int socket, char* nombre_interfaz)
 {
     //inicializo una nueva interfaz
-    log_info(log_kernel, "se conecto una interfaz nueva, hola! %s \n", nombre_interfaz);
+    //log_info(log_kernel, "se conecto una interfaz nueva, hola! %s \n", nombre_interfaz);
 	interfaz_kernel* nueva_interfaz = malloc(sizeof(interfaz_kernel)); 
 	nueva_interfaz->tipo_interfaz= interfaz_nueva;
 	nueva_interfaz->cola_de_espera = queue_create();
@@ -19,15 +19,15 @@ void crear_interfaz(op_code interfaz_nueva, int socket, char* nombre_interfaz)
     sem_init(&nueva_interfaz->sem_hay_procesos_esperando,0,0);
     //llega hasta aca, hace sgm fault
 
-    log_info(log_kernel, "estoy por intentar inicializar el mutex");
+    //log_info(log_kernel, "estoy por intentar inicializar el mutex");
     pthread_mutex_init(&(nueva_interfaz->mutex_cola), NULL);
-    log_info(log_kernel, "ya inicialice el mutex");
+    //log_info(log_kernel, "ya inicialice el mutex");
 
     //agrego la interfaz a la cola de las q estan conectadas
     pthread_mutex_lock(&mutex_cola_de_interfaces);
 	queue_push(cola_interfaces_conectadas, nueva_interfaz); 
     pthread_mutex_unlock(&mutex_cola_de_interfaces);
-    log_info(log_kernel, "ya agregue la interfaz a la cola");
+   //log_info(log_kernel, "ya agregue la interfaz a la cola");
 
 	pthread_t hilo_de_escucha_interfaz, hilo_de_envio_a_interfaz; // Creo un hilo
     thread_args_escucha_io args_hilo = {nueva_interfaz}; // En sus args le cargo el la interfaz
@@ -51,7 +51,7 @@ void envio_interfaz(thread_args_escucha_io* args)
     interfaz_kernel* interfaz = args->interfaz;
     argumentos_para_io* args_mandar_a_io;
 
-    log_info(log_kernel, "Estoy en envio interfaz");
+    //log_info(log_kernel, "Estoy en envio interfaz");
     while(1)
     {
         sem_wait(&interfaz->sem_hay_procesos_esperando);
@@ -71,7 +71,7 @@ void escucha_interfaz(thread_args_escucha_io* args)
     interfaz_kernel* interfaz = args->interfaz;
     t_buffer* buffer;
 
-    log_info(log_kernel, "estoy en escucha interfaz");
+   // log_info(log_kernel, "estoy en escucha interfaz");
 
     while(interfaz_conectada)
     {
@@ -146,18 +146,18 @@ void enviar_instruccion_io(int socket, argumentos_para_io* args)
     
     agregar_int_al_paquete_personalizado(paquete_instruccion, args->proceso->pid); //le mando el pid del proceso
     
-    log_info(log_kernel, "el codop fuera del switch es %d", args->operacion);
-    log_info(log_kernel, "el numero que tiene IO_GEN_SLEEP es: %d", IO_GEN_SLEEP);
+    //log_info(log_kernel, "el codop fuera del switch es %d", args->operacion);
+    //log_info(log_kernel, "el numero que tiene IO_GEN_SLEEP es: %d", IO_GEN_SLEEP);
     
     switch (args->operacion)
     {
         case IO_GEN_SLEEP:
-            log_info(log_kernel,"entre al agregar int al paquete desde io_gen_sleep");
+            //log_info(log_kernel,"entre al agregar int al paquete desde io_gen_sleep");
             agregar_int_al_paquete_personalizado(paquete_instruccion, args->unidades_de_trabajo);
             break;
         case IO_STDIN_READ:
         case IO_STDOUT_WRITE:
-            log_info(log_kernel,"entre al agregar al paquete desde STDIN Y OUT");
+            //log_info(log_kernel,"entre al agregar al paquete desde STDIN Y OUT");
             agregar_lista_al_paquete_personalizado(paquete_instruccion, args->registro_direccion, sizeof(t_direccion_fisica));
             agregar_int_al_paquete_personalizado(paquete_instruccion, args->registro_tamano);   
             break;
@@ -196,7 +196,7 @@ interfaz_kernel* verificar_interfaz(char* nombre_interfaz_buscada, op_code tipo_
 
     if(queue_is_empty(cola_interfaces_conectadas) == false){ // Si la cola no está vacía
 
-        log_info(log_kernel, "entre al if de q hay interfaces en la cola");
+        //log_info(log_kernel, "entre al if de q hay interfaces en la cola");
         pthread_mutex_lock(&mutex_cola_de_interfaces);
         aux  = queue_pop(cola_interfaces_conectadas);
         char* primer_nombre = aux->nombre_interfaz;
@@ -218,7 +218,7 @@ interfaz_kernel* verificar_interfaz(char* nombre_interfaz_buscada, op_code tipo_
         //Si llegamos a este punto es porque se encontro la interfaz
         if(aux->tipo_interfaz == tipo_interfaz_buscada)
         {
-            log_info(log_kernel, "entre al if de q el tipo de interfaz es el q qiero");
+            //log_info(log_kernel, "entre al if de q el tipo de interfaz es el q qiero");
             return aux; //La interfaz es del tipo q quiero, la devuelvo
 
         }else{
@@ -234,8 +234,8 @@ interfaz_kernel* verificar_interfaz(char* nombre_interfaz_buscada, op_code tipo_
 int io_gen_sleep(char* nombre_interfaz, int unidades_de_trabajo, pcb* proceso)
 {
 
-    log_info(log_kernel, "las unidades de trabajo son: %d", unidades_de_trabajo);
-    log_info(log_kernel, "el nombre de la interfaz es: %s", nombre_interfaz);
+    //log_info(log_kernel, "las unidades de trabajo son: %d", unidades_de_trabajo);
+    //log_info(log_kernel, "el nombre de la interfaz es: %s", nombre_interfaz);
     //ante una petición van a esperar una cantidad de unidades de trabajo, cuyo valor va a venir dado en la petición desde el Kernel.
     interfaz_kernel* interfaz = verificar_interfaz(nombre_interfaz, GENERICA);
 
@@ -270,8 +270,8 @@ int io_gen_sleep(char* nombre_interfaz, int unidades_de_trabajo, pcb* proceso)
 int io_stdin_read(char* nombre_interfaz, t_list* registro_direccion, uint32_t registro_tamano, pcb* proceso)
 {
     // Esta instrucción solicita al Kernel que mediante la interfaz ingresada se lea desde el STDIN (Teclado) un valor cuyo tamaño está delimitado por el valor del Registro Tamaño y el mismo se guarde a partir de la Dirección Lógica almacenada en el Registro Dirección.
-    log_info(log_kernel, "el registro tamano es: %u", registro_tamano);
-    log_info(log_kernel, "el nombre de la interfaz es: %d", nombre_interfaz);
+    //log_info(log_kernel, "el registro tamano es: %u", registro_tamano);
+    //log_info(log_kernel, "el nombre de la interfaz es: %d", nombre_interfaz);
     interfaz_kernel* interfaz = verificar_interfaz(nombre_interfaz, STDIN);
     argumentos_para_io* args = malloc(sizeof(argumentos_para_io));
     args->registro_direccion = registro_direccion;

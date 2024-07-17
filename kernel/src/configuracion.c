@@ -8,8 +8,8 @@ kernel_config* armar_config(t_log* log_kernel)
 
     config_aux = config_create("kernel.config");
 
-    aux_kernel_config->recursos = list_create();
-    aux_kernel_config->instancias_recursos = list_create();
+    // aux_kernel_config->recursos = list_create();
+    // aux_kernel_config->instancias_recursos = list_create();
 
     if(config_aux == NULL){
         log_info(log_kernel, "ERROR: No se pudo crear el struct config_kernel");

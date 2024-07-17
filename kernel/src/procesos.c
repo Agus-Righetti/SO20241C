@@ -9,10 +9,8 @@ pthread_t hilo_consola (){
 
     pthread_t thread_consola; 
             
-    log_info(log_kernel, "Entré a hilo consola");
     pthread_create(&thread_consola, NULL, (void*)leer_consola, NULL);
-
-
+    
     return thread_consola;
 }
 
@@ -20,9 +18,7 @@ pthread_t hilo_io(){
 
     pthread_t thread_io; 
             
-    log_info(log_kernel, "Entré a hilo io");
     pthread_create(&thread_io, NULL, (void*)server_para_io, NULL);
-
 
     return thread_io;
 }
@@ -62,8 +58,6 @@ pthread_t hilo_pasar_de_new_a_ready(){
 // ************* SIRVE PARA LEER LOS COMANDOS DESDE LA CONSOLA (DESDE HILO_CONSOLA) *************
 void leer_consola(void* arg){
 
-    log_info(log_kernel, "Entre a leer consola");
-    
     while(1) { // Para mantener esperando comandos constantemente
         
         char* lectura = readline("Ingrese comando: \n"); // Pido que se ingrese un comando
@@ -131,7 +125,6 @@ void enviar_proceso_a_cpu(){
         }else{
                 
             sem_wait(&sem_cola_de_ready); // Si no hay nada en la cola de Ready no avanzo
-            log_info(log_kernel, "estoy dsp del semafoto de q hay algo en la cola de ready ");
             pthread_mutex_lock(&mutex_cola_de_ready);
             proceso_seleccionado = queue_pop(cola_de_ready); // Saco el proceso siguiente de la cola de Ready
             pthread_mutex_unlock(&mutex_cola_de_ready);
@@ -146,8 +139,8 @@ void enviar_proceso_a_cpu(){
             pthread_mutex_unlock(&proceso_seleccionado->mutex_pcb);
 
 
-            log_info(log_kernel, "PID: %d - Estado Anterior: READY - Estado Actual: EXECUTE", proceso_seleccionado->pid); // Hago un log obligatorio 
-                
+            log_info(log_kernel, "PID: <%d> - Estado Anterior: <READY> - Estado Actual: <EXECUTE>", proceso_seleccionado->pid); // Hago un log obligatorio 
+
             enviar_pcb(proceso_seleccionado); // Envio el pcb a CPU
 
             crear_hilo_proceso(proceso_seleccionado); // Inicio un hilo que maneje el algoritmo del proceso
@@ -196,14 +189,11 @@ void pasar_procesos_de_new_a_ready(){
         hacer_el_log_obligatorio_de_ingreso_a_ready(proceso_a_mandar_a_ready);
 
         pthread_mutex_lock(&mutex_cola_de_ready); // Tmbn semaforo porque es seccion critica
-
         
         queue_push(cola_de_ready,proceso_a_mandar_a_ready); // Ingreso el proceso a la cola de Ready. 
         
         pthread_mutex_unlock(&mutex_cola_de_ready);
         sem_post(&sem_cola_de_ready); // Agrego 1 al semaforo contador de la cola
-
-        
     }
 }
 
@@ -231,10 +221,6 @@ void iniciar_proceso(char* path ){
     nuevo_pcb->pid = pid_contador;
     nuevo_pcb->quantum = config_kernel->quantum; // Al iniciar el proceso tiene todo su quantum disponible
     nuevo_pcb->recursos_asignados = queue_create();
-    if(queue_is_empty(nuevo_pcb->recursos_asignados))
-    {
-        log_info(log_kernel, "la cola esta bien inicializada, esta vacia");
-    }
     nuevo_pcb->registros = malloc(sizeof(registros_cpu)); 
     if (nuevo_pcb->registros == NULL) {
         log_error(log_kernel, "Error al asignar memoria para registros\n");
@@ -257,7 +243,7 @@ void iniciar_proceso(char* path ){
     pthread_mutex_unlock(&mutex_cola_general_de_procesos);
 
     //log obligatorio
-    log_info(log_kernel, "Se crea el proceso <%d> en NEW", nuevo_pcb->pid); 
+    log_info(log_kernel, "Se crea el proceso <%d> en <NEW>", nuevo_pcb->pid); 
     
     //Le mandamos el path de las instrucciones a memoria
     t_paquete* paquete_path = crear_paquete_personalizado(CREACION_PROCESO_KERNEL_A_MEMORIA);
@@ -353,41 +339,41 @@ void listar_procesos_por_estado(){
 
         // Recorro cada cola y hago los logs de cada una
 
-        log_info(log_kernel, "Procesos en estado NEW: \n");
+        log_info(log_kernel, "Procesos en estado <NEW>: \n");
         while(queue_is_empty(cola_aux_new)!= true)
         {
             aux = queue_pop(cola_aux_new);
             log_info(log_kernel, "PID: %d\n" , aux->pid );
         }
 
-        log_info(log_kernel, "Procesos en estado READY: \n");
+        log_info(log_kernel, "Procesos en estado <READY>: \n");
         while(queue_is_empty(cola_aux_ready)!= true)
         {
             aux = queue_pop(cola_aux_ready);
             log_info(log_kernel, "PID: %d\n" , aux->pid );
         }
 
-        log_info(log_kernel, "Procesos en estado BLOCKED: \n");
+        log_info(log_kernel, "Procesos en estado <BLOCKED>: \n");
         while(queue_is_empty(cola_aux_blocked)!= true)
         {
             aux = queue_pop(cola_aux_blocked);
             log_info(log_kernel, "PID: %d\n" , aux->pid );
         }
 
-        log_info(log_kernel, "Procesos en estado EXIT: \n");
+        log_info(log_kernel, "Procesos en estado <EXIT>: \n");
         while(queue_is_empty(cola_aux_exit)!= true)
         {
             aux = queue_pop(cola_aux_exit);
             log_info(log_kernel, "PID: %d\n" , aux->pid );
         }
 
-        log_info(log_kernel, "Procesos en estado EXECUTE: \n");
+        log_info(log_kernel, "Procesos en estado <EXECUTE>: \n");
         while(queue_is_empty(cola_aux_execute)!= true)
         {
             aux = queue_pop(cola_aux_execute);
             log_info(log_kernel, "PID: %d\n" , aux->pid );
         }
-    }else log_info(log_kernel, "Aun no hay ningun proceso en el sistema" );
+    }else log_info(log_kernel, "No hay ningun proceso en el sistema" );
     // Libero las colas auxiliares
     queue_destroy(cola_aux_exit);
     queue_destroy(cola_aux_ready);
@@ -417,8 +403,6 @@ void cambiar_grado_multiprogramacion(char* nuevo_valor_formato_char){
 // Terminar
 void finalizar_proceso(char* pid_formato_char){
 
-    log_info(log_kernel, "Entre a finalizar_proceso \n");
-
     int pid = atoi(pid_formato_char); // Paso a int el pid mandado por consola
     bool no_esta_en_el_sistema = false; // Hago un flag para saber si el proceso se encuentra en el sistema o no
 
@@ -443,7 +427,6 @@ void finalizar_proceso(char* pid_formato_char){
     pthread_mutex_unlock(&mutex_cola_general_de_procesos); // Desbloqueo la cola general
  
     if (no_esta_en_el_sistema == false){ // Si sí está en el sistema, entonces lo voy a sacar de su respectiva cola, y posteriormente será enviado a exit
-        //log_info(log_kernel, "estoy en el if de que SI esta en el sistema");
         switch(aux->estado_del_proceso)
         {
             case READY:
@@ -569,14 +552,11 @@ void enviar_pcb(pcb* proceso) {
 
     t_paquete* paquete_pcb = crear_paquete_personalizado(PCB_KERNEL_A_CPU); // Creo un paquete personalizado con un codop para que CPU reconozca lo que le estoy mandando
 
-    log_info(log_kernel, "El proceso que estoy por mandar a CPU tiene un PID: %d", proceso->pid);
-
     agregar_estructura_al_paquete_personalizado(paquete_pcb, proceso, sizeof(pcb)); // Agrego el struct pcb al paquete
+    agregar_estructura_al_paquete_personalizado(paquete_pcb, proceso->registros, sizeof(registros_cpu));
 
     enviar_paquete(paquete_pcb, conexion_kernel_cpu); // Envio el paquete a través del socket
     
-    log_info(log_kernel, "El proceso que mandé a CPU tiene un PID: %d", proceso->pid);
-
     eliminar_paquete(paquete_pcb); // Libero el paquete
 
     return;
@@ -599,7 +579,6 @@ void enviar_pcb(pcb* proceso) {
 void crear_hilo_proceso(pcb* proceso){
 
     // Funcion llamada por enviar_proceso_a_cpu
-    log_info(log_kernel, "entre a crear proceso hilo :)");
 
     pthread_t hilo_recibe_proceso, hilo_interrupcion; // Creo un hilo
     thread_args_procesos_kernel args_hilo = {proceso}; // En sus args le cargo el proceso
@@ -645,8 +624,6 @@ void recibir_pcb(pcb* proceso) {
 
     char* estado_anterior = obtener_char_de_estado(proceso->estado_del_proceso);
 
-    log_info(log_kernel, "Entre a recibir pcb por pid: %d, su estado es : %s" , proceso->pid, estado_anterior);
-
     clock_t inicio, fin; // Inicio un reloj, cuenta el tiempo que estuvo esperando hasta que llegue el paquete (sirve para VRR)
     int tiempo_que_tardo_en_recibir;
 
@@ -666,17 +643,20 @@ void recibir_pcb(pcb* proceso) {
     int motivo = -1;
     pcb* pcb_recibido;
 
-    if (!interrupcion_por_fin_de_proceso) // Verifico si la interrupción es por fin de proceso o por planificación
-    {
-        //log_info(log_kernel, "Entre al if para recibir normal");
-        switch(codigo_operacion) // Segun el codigo de operacion actuo 
+    // if (!interrupcion_por_fin_de_proceso) // Verifico si la interrupción es por fin de proceso o por planificación
+    // {
+      switch(codigo_operacion) // Segun el codigo de operacion actuo 
         {
+            case -1:
+                log_info(log_kernel, "Se desconecto CPU");
+                break;
             case FIN_DE_QUANTUM: 
 
                 buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
                 fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
                 flag_estado = 0; // El proceso todavia no termino
                 pcb_recibido  = recibir_estructura_del_buffer(buffer);
+                pcb_recibido->registros = recibir_estructura_del_buffer(buffer);
                 
                 actualizar_pcb(proceso, pcb_recibido);
 
@@ -688,8 +668,9 @@ void recibir_pcb(pcb* proceso) {
 
                 buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
                 fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
-                flag_estado = 0; // El proceso todavia no termino
+                flag_estado = 1; // mando el proceso a exit
                 pcb_recibido = recibir_estructura_del_buffer(buffer);
+                pcb_recibido->registros = recibir_estructura_del_buffer(buffer);
                 motivo = INTERRUPTED_BY_USER;
 
                 actualizar_pcb(proceso, pcb_recibido);
@@ -703,6 +684,7 @@ void recibir_pcb(pcb* proceso) {
                 fin = clock(); // Termino el tiempo desde que empecé a esperar la recepción
                 flag_estado = 1; // El proceso ya finalizo, no quedan rafagas por ejecutar
                 pcb_recibido = recibir_estructura_del_buffer(buffer);
+                pcb_recibido->registros = recibir_estructura_del_buffer(buffer);
                 motivo = SUCCESS;
 
                 actualizar_pcb(proceso, pcb_recibido);
@@ -714,6 +696,7 @@ void recibir_pcb(pcb* proceso) {
                 buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
                 fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
                 pcb_recibido = recibir_estructura_del_buffer(buffer);
+                pcb_recibido->registros = recibir_estructura_del_buffer(buffer);
                 recurso = recibir_string_del_buffer(buffer); // Obtengo el indice del recurso que se usa para manejarlo
                 
                 actualizar_pcb(proceso, pcb_recibido);
@@ -727,6 +710,7 @@ void recibir_pcb(pcb* proceso) {
                 buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
                 fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
                 pcb_recibido = recibir_estructura_del_buffer(buffer);
+                pcb_recibido->registros = recibir_estructura_del_buffer(buffer);
                 recurso = recibir_string_del_buffer(buffer); // Obtengo el nombre del recurso que se usa para manejarlo
 
                 actualizar_pcb(proceso, pcb_recibido);
@@ -740,8 +724,8 @@ void recibir_pcb(pcb* proceso) {
                 buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
                 fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
                 pcb_recibido = recibir_estructura_del_buffer(buffer);
+                pcb_recibido->registros = recibir_estructura_del_buffer(buffer);
                 nombre_interfaz = recibir_string_del_buffer(buffer);
-                log_info(log_kernel, "El nombre de interfaz que me llego es: %s", nombre_interfaz);
                 unidades_de_trabajo = recibir_int_del_buffer(buffer);
 
                 actualizar_pcb(proceso, pcb_recibido);
@@ -755,6 +739,7 @@ void recibir_pcb(pcb* proceso) {
                 buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
                 fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
                 pcb_recibido = recibir_estructura_del_buffer(buffer);
+                pcb_recibido->registros = recibir_estructura_del_buffer(buffer);
                 nombre_interfaz = recibir_string_del_buffer(buffer);
                 direcciones_fisicas = recibir_lista_del_buffer(buffer);
                 registro_tamano = recibir_int_del_buffer(buffer);
@@ -770,6 +755,7 @@ void recibir_pcb(pcb* proceso) {
                 buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
                 fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
                 pcb_recibido = recibir_estructura_del_buffer(buffer);
+                pcb_recibido->registros = recibir_estructura_del_buffer(buffer);
                 nombre_interfaz = recibir_string_del_buffer(buffer);
                 direcciones_fisicas = recibir_lista_del_buffer(buffer);
                 registro_tamano = recibir_int_del_buffer(buffer);
@@ -785,6 +771,7 @@ void recibir_pcb(pcb* proceso) {
                 buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
                 fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
                 pcb_recibido = recibir_estructura_del_buffer(buffer);
+                pcb_recibido->registros = recibir_estructura_del_buffer(buffer);
                 nombre_interfaz = recibir_string_del_buffer(buffer);
                 nombre_archivo = recibir_string_del_buffer(buffer);
 
@@ -799,6 +786,7 @@ void recibir_pcb(pcb* proceso) {
                 buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
                 fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
                 pcb_recibido = recibir_estructura_del_buffer(buffer);
+                pcb_recibido->registros = recibir_estructura_del_buffer(buffer);
                 nombre_interfaz = recibir_string_del_buffer(buffer);
                 nombre_archivo = recibir_string_del_buffer(buffer);
 
@@ -813,6 +801,7 @@ void recibir_pcb(pcb* proceso) {
                 buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
                 fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
                 pcb_recibido = recibir_estructura_del_buffer(buffer);
+                pcb_recibido->registros = recibir_estructura_del_buffer(buffer);
                 nombre_interfaz = recibir_string_del_buffer(buffer);
                 nombre_archivo = recibir_string_del_buffer(buffer);
                 registro_tamano = recibir_int_del_buffer(buffer);
@@ -828,6 +817,7 @@ void recibir_pcb(pcb* proceso) {
                 buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
                 fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
                 pcb_recibido = recibir_estructura_del_buffer(buffer);
+                pcb_recibido->registros = recibir_estructura_del_buffer(buffer);
                 nombre_interfaz = recibir_string_del_buffer(buffer);
                 nombre_archivo = recibir_string_del_buffer(buffer);
                 direcciones_fisicas = recibir_lista_del_buffer(buffer);
@@ -845,6 +835,7 @@ void recibir_pcb(pcb* proceso) {
                 buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
                 fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
                 pcb_recibido = recibir_estructura_del_buffer(buffer);
+                pcb_recibido->registros = recibir_estructura_del_buffer(buffer);
                 nombre_interfaz = recibir_string_del_buffer(buffer);
                 nombre_archivo = recibir_string_del_buffer(buffer);
                 direcciones_fisicas = recibir_lista_del_buffer(buffer);
@@ -860,19 +851,18 @@ void recibir_pcb(pcb* proceso) {
                 buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
                 fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
                 pcb_recibido = recibir_estructura_del_buffer(buffer);
+                pcb_recibido->registros = recibir_estructura_del_buffer(buffer);
 
                 actualizar_pcb(proceso, pcb_recibido);
 
                 flag_estado = 1; //paso el proceso a exit
                 motivo = OUT_OF_MEMORY;
                 break;
-            
-            default:
+            default:            
                 log_error(log_kernel, "El codigo de operacion no es reconocido :(");
                 break;
         }
 
-        //log_info(log_kernel, "ya recibi el paquete pid: %d" , proceso->pid);
         tiempo_que_tardo_en_recibir = (int)((double)(fin - inicio) * 1000.0 / CLOCKS_PER_SEC); // Calculo el tiempo que me tarde en recibir el PCB
 
         if(strcmp(config_kernel->algoritmo_planificacion, "RR") == 0 || strcmp(config_kernel->algoritmo_planificacion, "VRR") == 0)
@@ -884,24 +874,10 @@ void recibir_pcb(pcb* proceso) {
         if(strcmp(config_kernel->algoritmo_planificacion, "VRR") == 0) // Si estoy recibiendo a traves del algoritmo VRR
         {
             proceso->quantum = proceso->quantum - tiempo_que_tardo_en_recibir; // Le asigno el quantum que le queda disponible
-        };
-
-    }else // Si la interrupción es por fin de proceso, voy a recibir el pcb y lo mando a exit de una
-    {
-        log_info(log_kernel,"Entre al if para recibir por finalizar proceso");
-
-        interrupcion_por_fin_de_proceso = false;
-        flag_estado = 1;  
-        buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu);
-        pcb_recibido = recibir_estructura_del_buffer(buffer);
-
-        actualizar_pcb(proceso, pcb_recibido);
-    }
+        };  
     
     free(buffer->stream); // Libero directamente el buffer, no arme paquete asi que no hace falta
     free(buffer);
-    //sem_wait(planificacion_activada)
-    //sem_post(planificacion_activada)
 
     sem_wait(&sem_planificacion_activa); // Si la planificación está activa, dejo que se manden procesos a execute
     sem_post(&sem_puedo_mandar_a_cpu); // Aviso que ya volvio el proceso que estaba en CPU, puedo mandar otro
@@ -919,6 +895,8 @@ void algoritmo_round_robin (void* arg){
     // La interrupcion y otro que siemp este esperando a q cpu le mande el pcb
     thread_args_procesos_kernel*args = (thread_args_procesos_kernel*)arg;
     pcb* proceso_actual = args->proceso;
+
+    log_info(log_kernel, "el quantum que le voy a dar es de:", proceso_actual->quantum);
 
     usleep((proceso_actual->quantum)*1000); // Acá usamos el quantum del proceso, asi podemos reutilziar la funcion para VRR
     if(!interrupcion_por_fin_de_proceso){ // Si no tengo que finalizar el proceso por pedido de usuario
@@ -942,15 +920,8 @@ void desalojar_proceso_hilo(void* arg, int operacion){
 // ************* NOTIFICA A CPU QUE HAY UNA INTERRUPCION Y DEBE MANDAR INMEDIATAMENTE EL PCB DE REGRESO *************
 void desalojar_proceso(pcb* proceso, int operacion){
    
-    //Esto capaz se puede poner desde donde se la llama a la funcion
-    //log_info(log_kernel, "PID: %d - Desalojado por fin de Quantum", proceso->pid);
-
-    log_info(log_kernel, "Entre a desalojar_proceso");
-
     t_paquete* paquete_a_enviar = crear_paquete_personalizado(operacion); // Creo un paquete con el codop especifico
     enviar_paquete(paquete_a_enviar, interrupcion_kernel_cpu); // Lo mando vacio porque lo que interesa es el codop
-
-    log_info(log_kernel, "Ya mande la interrupcion");
 
     eliminar_paquete(paquete_a_enviar); // Libero el paquete
 
@@ -974,8 +945,6 @@ void accionar_segun_estado(pcb* proceso, int flag, int motivo){
     sem_wait(&sem_planificacion_activa); // Si la planificación está activa entonces sigo (paso de 1 a 0 el sem)
     sem_post(&sem_planificacion_activa); // Estoy acá si la planificación sigue activa, entonces aumento para que no se bloquee a la próxima
 
-    //log_info(log_kernel, "entre a accionar segun estado por proceso pid: %d, flag: %d" , proceso->pid, flag);
-
     //flag =  1, ya ejecutó todo, tengo q pasarlo a exit
     //flag =  0, aun no ejecutó del todo, lo mando a la cola de ready
     //flag =  2, tengo que bloquear el proceso
@@ -991,7 +960,7 @@ void accionar_segun_estado(pcb* proceso, int flag, int motivo){
 
         char* estado_anterior = obtener_char_de_estado(proceso->estado_del_proceso);
 
-        log_info(log_kernel, "PID: <%d> - Estado Anterior: <%s> - Estado Actual: <READY", proceso->pid, estado_anterior);
+        log_info(log_kernel, "PID: <%d> - Estado Anterior: <%s> - Estado Actual: <READY>", proceso->pid, estado_anterior);
         pthread_mutex_lock(&proceso->mutex_pcb);
         proceso->estado_del_proceso = READY; 
         pthread_mutex_unlock(&proceso->mutex_pcb);
@@ -1006,8 +975,6 @@ void accionar_segun_estado(pcb* proceso, int flag, int motivo){
                 hacer_el_log_obligatorio_de_ingreso_a_ready_prioridad(proceso);
                 sem_post(&sem_cola_prioridad_vrr);
 
-                //log_info(log_kernel, "PID: %d - Estado Anterior: %s - Estado Actual: READY", proceso->pid, estado_anterior);
-
             }else{ // Si no le queda quantum
 
                 proceso->quantum = config_kernel->quantum; // Le reinicio el quantum
@@ -1017,22 +984,14 @@ void accionar_segun_estado(pcb* proceso, int flag, int motivo){
                 pthread_mutex_unlock(&mutex_cola_de_ready);
                 sem_post(&sem_cola_de_ready);
 
-                //log_info(log_kernel, "PID: %d - Estado Anterior: %s - Estado Actual: READY", proceso->pid, estado_anterior);
-
             }
         } else{ // No estoy en vrr, siempre madno a cola de Ready normal
             
-            log_info(log_kernel, "estoy por poner el proceso en la cola de ready");
             hacer_el_log_obligatorio_de_ingreso_a_ready(proceso);
             pthread_mutex_lock(&mutex_cola_de_ready);
             queue_push(cola_de_ready,proceso); // Meto a la cola de Ready
             pthread_mutex_unlock(&mutex_cola_de_ready);
-            log_info(log_kernel, "ya agregue a la cola de ready");
             sem_post(&sem_cola_de_ready);
-            
-
-            //log_info(log_kernel, "PID: %d - Estado Anterior: %s - Estado Actual: READY", proceso->pid , estado_anterior);
-
         };
     }
     return;
@@ -1041,14 +1000,13 @@ void accionar_segun_estado(pcb* proceso, int flag, int motivo){
 // ************* PASA EL PROCESO SELECCIONADO A EXIT *************
 void pasar_proceso_a_exit(pcb* proceso, int motivo){
 
-    log_info(log_kernel, "entre a pasar proceso a exit por PID %d", proceso->pid);
     //En esta funcion faltan liberar los recursos q tenia el proceso
     char* estado_anterior = obtener_char_de_estado(proceso->estado_del_proceso); // Devuelvo el estado como string
-    //log_info(log_kernel, "entre a pasar proceso a exit  antes del mutex");
 
     pthread_mutex_lock(&proceso->mutex_pcb);
     proceso->estado_del_proceso = EXIT; // Asigno el estado del proceso como Exit
     pthread_mutex_unlock(&proceso->mutex_pcb);
+
     
     switch(motivo)
     {
@@ -1086,33 +1044,22 @@ void pasar_proceso_a_exit(pcb* proceso, int motivo){
 
     
     pthread_mutex_lock(&mutex_cola_general_de_procesos); // Bloqueo la cola gral para sacar el proceso q paso a exit
-    //log_info(log_kernel, "entre a pasar proceso a exit  dsp del mutex de cola gral");
 
     pcb* primer_pcb_cola_gral = queue_pop(cola_general_de_procesos);
 
     pcb* aux = primer_pcb_cola_gral;
-    //log_info (log_kernel, "aux = %d y el q busco es igual a = %d" , aux->pid, proceso->pid);
 
     while(aux->pid != proceso->pid)
     {
-        //log_info(log_kernel, "en el while");
-
         queue_push(cola_general_de_procesos, aux); // Agrego el q saque de la cola gral
         aux = queue_pop(cola_general_de_procesos); // Saco el proximo de la cola
     }
     pthread_mutex_unlock(&mutex_cola_general_de_procesos); // Desbloqueo la cola gral
 
-    log_info(log_kernel, "PID: %d - Estado Anterior: %s - Estado Actual: EXIT", proceso->pid, estado_anterior);
-
-    // if(proceso->registros == NULL)
-    // {
-    //     log_info(log_kernel, "Hay un problema con los registros del PCB");
-
-    // } 
+    log_info(log_kernel, "PID: <%d> - Estado Anterior: <%s> - Estado Actual: <EXIT>", proceso->pid, estado_anterior);
 
     free(proceso->registros);
     queue_destroy(proceso->recursos_asignados);
-   //list_destroy(proceso->instrucciones);
     pthread_mutex_destroy(&proceso->mutex_pcb);
     free(proceso); 
 
@@ -1132,7 +1079,7 @@ void pasar_proceso_a_blocked(pcb* proceso){
     proceso->estado_del_proceso = BLOCKED; 
     pthread_mutex_unlock(&proceso->mutex_pcb);
 
-    log_info(log_kernel, "PID: %d - Estado Anterior: %s - Estado Actual: BLOCKED", proceso->pid, estado_anterior);
+    log_info(log_kernel, "PID: <%d> - Estado Anterior: <%s> - Estado Actual: <BLOCKED>", proceso->pid, estado_anterior);
 }
 
 // -----------------------------------------------------------------
@@ -1217,8 +1164,6 @@ void sacar_de_cola_de_new(int pid){
 void sacar_de_execute(int pid){
     //Si un proceso esta en execute hay que mandar la interrupcion para que cpu devuelva el proceso
     // Busco el proceso para mandarselo a desalojar proceso
-
-    //log_info(log_kernel, "Entre a sacar de execute");
 
     interrupcion_por_fin_de_proceso = true;
 
@@ -1369,8 +1314,6 @@ int hacer_wait(char* recurso, pcb* proceso){
     
     int flag;
 
-    log_info(log_kernel, "El nombre del recurso 0 es: %s", config_kernel->recursos[0]);
-
     int indice_recurso = buscar_indice_recurso_segun_nombre(recurso); //devuelve -1 si no lo encuentra
 
     if(indice_recurso != -1){ // Si existe el recurso solicitado
@@ -1393,12 +1336,10 @@ int hacer_wait(char* recurso, pcb* proceso){
 
             char* estado_actual = obtener_char_de_estado(proceso->estado_del_proceso);
 
-            log_info(log_kernel, "PID: %d - Estado Anterior: %s - Estado Actual: %s", proceso->pid, estado_anterior, estado_actual);
-            log_info(log_kernel, "PID: %d - Bloqueado por: <%s>", proceso->pid, recurso);
+            log_info(log_kernel, "PID: <%d> - Estado Anterior: <%s> - Estado Actual: <%s>", proceso->pid, estado_anterior, estado_actual);
+            log_info(log_kernel, "PID: <%d> - Bloqueado por: <%s>", proceso->pid, recurso);
 
-            pcb* proceso_en_la_cola = queue_peek(cola_general_de_procesos);
-            estado_actual = obtener_char_de_estado(proceso_en_la_cola->estado_del_proceso);
-            log_info(log_kernel, "PID: %d - Estado Actual: %s de la cola general", proceso_en_la_cola->pid, estado_actual);
+        
 
             
         }else{ // Si no lo tengo que bloquear, entonces lo mando a Ready
@@ -1475,11 +1416,11 @@ char* obtener_char_de_estado(estados estado_a_convertir){
 
 int buscar_indice_recurso_segun_nombre(char* recurso)
 {
-    log_info(log_kernel, "El nombre de recruso buscado es: %s", recurso);
+    //og_info(log_kernel, "El nombre de recruso buscado es: %s", recurso);
     
     for (int i = 0 ; i < cantidad_recursos; i++)
     {
-        log_info(log_kernel, "El nombre del recurso %d es: %s", i, config_kernel->recursos[i]);
+        //log_info(log_kernel, "El nombre del recurso %d es: %s", i, config_kernel->recursos[i]);
         
         if (strcmp(config_kernel->recursos[i], recurso) == 0) //encontre el recurso
         {
@@ -1517,99 +1458,61 @@ char* pasar_a_string(int valor)
     return buffer;
 }
 
-
-
 void hacer_el_log_obligatorio_de_ingreso_a_ready(pcb* proceso_a_mandar_a_ready)
 {
-    char* char_a_mostrar = NULL;
-        pthread_mutex_lock(&mutex_cola_de_ready);
-        if (queue_is_empty(cola_de_ready)== false)
-        {
-            pcb* primer_pcb_cola_ready = queue_pop(cola_de_ready); // Saco el 1er PCB de la cola gral
-
-            pcb* aux = primer_pcb_cola_ready; // Esta variable tendrá los procesos de la cola
-            agregar_al_final(char_a_mostrar, "[ ");
-            while(1)
-            {
-               
-                
-                agregar_al_final(char_a_mostrar, pasar_a_string(aux->pid));
-                agregar_al_final(char_a_mostrar, " , ");
-                   
-                queue_push(cola_de_ready, aux);
-                    
-                aux = queue_pop(cola_de_ready);
-                 
-
-                if(aux->pid == primer_pcb_cola_ready->pid)
-                {
-                    queue_push(cola_de_ready, aux);
-                    break;
-                }
-                   
-            }
-
-            agregar_al_final(char_a_mostrar, pasar_a_string(proceso_a_mandar_a_ready->pid));
-            agregar_al_final(char_a_mostrar, " ]");
-
-            log_info(log_kernel, "Cola Ready: %s", char_a_mostrar);
-
-            free(char_a_mostrar);
-        }else
-        {
-            log_info(log_kernel, "Cola Ready: %d", proceso_a_mandar_a_ready->pid);
-
-        }
-
-        pthread_mutex_unlock(&mutex_cola_de_ready);
-
+    //Cola Ready: [1,2,3,7,4]
     
+    char* char_a_mostrar = NULL;
+    pthread_mutex_lock(&mutex_cola_de_ready);
+
+    int tam = queue_size(cola_de_ready);
+    pcb* aux; 
+    char_a_mostrar = agregar_al_final(char_a_mostrar, "[");
+    for(int i=0; i<tam; i++)
+    {
+        aux = queue_pop(cola_de_ready);
+        queue_push(cola_de_ready, aux);
+        char_a_mostrar = agregar_al_final(char_a_mostrar, pasar_a_string(aux->pid));
+        if (i < tam - 1) {
+            char_a_mostrar = agregar_al_final(char_a_mostrar, ", ");
+        }
+        
+    }
+    char_a_mostrar = agregar_al_final(char_a_mostrar, " ]");
+
+    pthread_mutex_unlock(&mutex_cola_de_ready);
+
+    log_info(log_kernel, "Cola Ready: %s", char_a_mostrar);
+
+    free(char_a_mostrar);
 }
 
 void hacer_el_log_obligatorio_de_ingreso_a_ready_prioridad(pcb* proceso_a_mandar_a_ready)
 {
+
     char* char_a_mostrar = NULL;
+    pthread_mutex_lock(&mutex_cola_prioridad_vrr);
 
-        pthread_mutex_lock(&mutex_cola_prioridad_vrr);
-        if (queue_is_empty(cola_prioridad_vrr)== false)
-        {
-            pcb* primer_pcb_cola_ready = queue_pop(cola_prioridad_vrr); // Saco el 1er PCB de la cola gral
-
-            pcb* aux = primer_pcb_cola_ready; // Esta variable tendrá los procesos de la cola
-            agregar_al_final(char_a_mostrar, "[ ");
-            while(1)
-            {
-               
-                
-                agregar_al_final(char_a_mostrar, pasar_a_string(aux->pid));
-                agregar_al_final(char_a_mostrar, " , ");
-                   
-                queue_push(cola_prioridad_vrr, aux);
-                    
-                aux = queue_pop(cola_prioridad_vrr);
-                 
-
-                if(aux->pid == primer_pcb_cola_ready->pid)
-                {
-                    queue_push(cola_prioridad_vrr, aux);
-                    break;
-                }
-                   
-            }
-
-            agregar_al_final(char_a_mostrar, pasar_a_string(proceso_a_mandar_a_ready->pid));
-            agregar_al_final(char_a_mostrar, " ]");
-
-            log_info(log_kernel, "Cola Prioridad: %s", char_a_mostrar);
-
-            free(char_a_mostrar);
-        } else {
-            
-            log_info(log_kernel, "Cola Prioridad: %d", proceso_a_mandar_a_ready->pid);
+    int tam = queue_size(cola_prioridad_vrr);
+    pcb* aux; 
+    char_a_mostrar = agregar_al_final(char_a_mostrar, "[");
+    for(int i=0; i<tam; i++)
+    {
+        aux = queue_pop(cola_prioridad_vrr);
+        queue_push(cola_prioridad_vrr, aux);
+        char_a_mostrar = agregar_al_final(char_a_mostrar, pasar_a_string(aux->pid));
+        if (i < tam - 1) {
+            char_a_mostrar = agregar_al_final(char_a_mostrar, ", ");
         }
-        pthread_mutex_unlock(&mutex_cola_prioridad_vrr);
-
         
+    }
+    char_a_mostrar = agregar_al_final(char_a_mostrar, " ]");
+
+    pthread_mutex_unlock(&mutex_cola_prioridad_vrr);
+
+    log_info(log_kernel, "Cola Prioridad: %s", char_a_mostrar);
+
+    free(char_a_mostrar);        
 }
 
 void machear_con_cola_gral(pcb* proceso)
@@ -1633,9 +1536,9 @@ void machear_con_cola_gral(pcb* proceso)
     pthread_mutex_unlock(&mutex_cola_general_de_procesos);
 }
 
-actualizar_pcb(pcb* proceso_original, pcb* nuevo)
+void actualizar_pcb(pcb* proceso_original, pcb* nuevo)
 {
-    proceso_original->program_counter = nuevo->program_counter;
+    proceso_original->registros->pc = nuevo->registros->pc;
     //proceso_original->estado_del_proceso = nuevo->estado_del_proceso;
     proceso_original->registros->ax = nuevo->registros->ax;
     proceso_original->registros->bx = nuevo->registros->bx;
@@ -1647,7 +1550,6 @@ actualizar_pcb(pcb* proceso_original, pcb* nuevo)
     proceso_original->registros->edx = nuevo->registros->edx;
     proceso_original->registros->si = nuevo->registros->si;
     proceso_original->registros->di = nuevo->registros->di;
-    
     
 }
 // ------------------------------------------------

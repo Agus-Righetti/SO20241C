@@ -45,6 +45,7 @@ void hacer_el_log_obligatorio_de_ingreso_a_ready_prioridad(pcb* proceso_a_mandar
 void detener_planificacion();
 void iniciar_planificacion();
 void machear_con_cola_gral(pcb* proceso);
+void actualizar_pcb(pcb* proceso_original, pcb* nuevo);
 
 
 //  *************** DECLARACIÓN DE ESTRUCTURAS ***************

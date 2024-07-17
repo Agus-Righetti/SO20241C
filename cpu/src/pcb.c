@@ -4,22 +4,24 @@
 
 void recibir_pcb(){
     
-    log_info(log_cpu, "entre a recibir pcb");
+    //log_info(log_cpu, "entre a recibir pcb");
     
     t_buffer* buffer_pcb = recibiendo_paquete_personalizado(socket_cliente_kernel);
     pcb_recibido = NULL;
     pcb_recibido = recibir_estructura_del_buffer(buffer_pcb);
-
+    pcb_recibido->registros = recibir_estructura_del_buffer(buffer_pcb);
     
     if (pcb_recibido == NULL) 
     {
         log_error(log_cpu, "No se pudo recibir el PCB. La estructura recibida es NULL.");
         return;
     }
-
+    if(pcb_recibido->registros == NULL){
+        log_error(log_cpu, "No están inicializados los registros del pcb_recibido");
+    }
     // Acordarse de sacarlos!!!!!!
-    log_info(log_cpu, "El PID es: %d", pcb_recibido->pid);
-    log_info(log_cpu, "El PC es: %d", pcb_recibido->registros->pc);
+    //log_info(log_cpu, "El PID es: %d", pcb_recibido->pid);
+    //og_info(log_cpu, "El PC es: %u", pcb_recibido->registros->pc);
 
     solicitar_instrucciones_a_memoria(socket_cliente_cpu); 
 
@@ -30,11 +32,9 @@ void enviar_pcb(int conexion, argumentos_cpu* argumentos_a_mandar){
     
     t_paquete *paquete = crear_paquete_personalizado(argumentos_a_mandar->operacion);
 
-    // En todos los casos vamos a mandar el pcb, por lo cual esto no lo pongo en el switch
-    log_info(log_cpu, "El PID del proceso que estoy por meter al paquete es: %d", pcb_recibido->pid);
-
     agregar_estructura_al_paquete_personalizado(paquete, argumentos_a_mandar->proceso, sizeof(pcb));
-   
+    agregar_estructura_al_paquete_personalizado(paquete, argumentos_a_mandar->proceso->registros, sizeof(registros_cpu));
+
     switch(argumentos_a_mandar->operacion) // Según el código de operación voy a agregar cosas diferentes al paquete (siempre siendo el pcb + otras cosas)
     {
         case FIN_DE_QUANTUM: // Si es el caso más sencillo, entonces no agrego nada, sólo mando el pcb
@@ -51,7 +51,7 @@ void enviar_pcb(int conexion, argumentos_cpu* argumentos_a_mandar){
 
         case IO_GEN_SLEEP:
 
-            log_info(log_cpu, "El nombre de la interfaz justo antes de meterlo al paquete es: %s",argumentos_a_mandar->nombre_interfaz);
+            //log_info(log_cpu, "El nombre de la interfaz justo antes de meterlo al paquete es: %s",argumentos_a_mandar->nombre_interfaz);
             agregar_string_al_paquete_personalizado(paquete, argumentos_a_mandar->nombre_interfaz);
             agregar_int_al_paquete_personalizado(paquete, argumentos_a_mandar->unidades_de_trabajo);
 
@@ -119,13 +119,16 @@ void enviar_pcb(int conexion, argumentos_cpu* argumentos_a_mandar){
             break;
     }
     
-    log_info(log_cpu, "Voy a enviar el pcb\n");
+   // log_info(log_cpu, "Voy a enviar el pcb\n");
 
     enviar_paquete(paquete, conexion);
 
-    log_info(log_cpu, "Ya envie el pcb\n");
+    //log_info(log_cpu, "Ya envie el pcb\n");
 
     free(argumentos_a_mandar); //libero los args
+
+    // free(pcb_recibido->registros);
+    // free(pcb_recibido);
 
 	eliminar_paquete(paquete);
     return;
@@ -207,10 +210,10 @@ void solicitar_instrucciones_a_memoria(int socket_cliente_cpu)
     eliminar_paquete(paquete);
     
     // Acordarse de sacarlo!!!!!!
-    log_info(log_cpu, "Le pedi instruccion a Memoria");
+    //log_info(log_cpu, "Le pedi instruccion a Memoria");
 
     // LOG OBLIGATORIO - FETCH INSTRUCCIÓN
-    log_info(log_cpu, "PID: %d - FETCH - Program Counter: %u", pcb_recibido->pid, pcb_recibido->registros->pc); 
+    log_info(log_cpu, "PID: <%d> - FETCH - Program Counter: <%u>", pcb_recibido->pid, pcb_recibido->registros->pc); 
 }
 
 // Instrucciones -------------------------------------------------------------------------------------------------------------------
@@ -306,8 +309,8 @@ void instruccion_set(char **parte) {
     // Ejemplo: SET AX 1
     
     // LOG OBLIGATORIO - INSTRUCCIÓN EJECUTADA
-    log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s", pcb_recibido->pid, parte[0], parte[1], parte[2]);
-    log_info(log_cpu, "esto es pc antes de ejecutar: %u", pcb_recibido->registros->pc);
+    log_info(log_cpu, "PID: <%d> - Ejecutando: %s - %s %s", pcb_recibido->pid, parte[0], parte[1], parte[2]);
+    //log_info(log_cpu, "esto es pc antes de ejecutar: %u", pcb_recibido->registros->pc);
     char *registro = parte[1];
     if(es_Registro_de_1B(registro)){
         // El registro es de 1B
@@ -330,16 +333,14 @@ void instruccion_set(char **parte) {
             log_info(log_cpu, "Error: parte[2] es NULL.");
             return;
         }
-        log_info(log_cpu, "Registro: %s - Valor final: %u (BIS, va antes para verlo)", registro, (uint8_t)atoi(parte[2]));
 
         *valor_registro = (uint8_t)atoi(parte[2]); //le asigno el nuevo valor al registro
 
-        log_info(log_cpu, "Registro: %s - Valor final: %u", registro, (uint8_t)atoi(parte[2]));
+        log_info(log_cpu, "Registro: <%s> - Valor final: <%u>", registro, (uint8_t)atoi(parte[2]));
       
                 
     } else {
         // El registro es de 4B
-        log_info(log_cpu,"estamos en registro de 4B");
         uint32_t* valor_registro = dictionary_get(registros, parte[1]);
 
         if (valor_registro == NULL) {
@@ -354,18 +355,19 @@ void instruccion_set(char **parte) {
 
         *valor_registro = (uint32_t) atoi(parte[2]); // Asigno el nuevo valor al registro
 
-        log_info(log_cpu, "Registro: %s - Valor final bis: %u", registro, (uint32_t)atoi(parte[2]));
+        log_info(log_cpu, "Registro: <%s> - Valor final: <%u>", registro, (uint32_t)atoi(parte[2]));
     }
 
 	// Aumento el PC
     //pcb_recibido->program_counter++; 
     pcb_recibido->registros->pc++;
 
-    log_info(log_cpu, "esto es pc dsp de ejecutar, antes de check interrupt: %u", pcb_recibido->registros->pc);
+    //log_info(log_cpu, "esto es pc dsp de ejecutar, antes de check interrupt: %u", pcb_recibido->registros->pc);
     
     check_interrupt();
     
-    log_info(log_cpu, "esto es pc dsp de checkinterrupt: %u", pcb_recibido->registros->pc);
+    //log_info(log_cpu, "esto es pc dsp de checkinterrupt: %u", pcb_recibido->registros->pc);
+    
     liberar_array_strings(parte);
 
     return;
@@ -380,23 +382,23 @@ void instruccion_mov_in(char **parte) {
     // Todos los MOV_IN van a ser de 4 bytes, con la excepción de que el registro datos sea AX, BX, CX, DX donde pasan a ser de 1 byte
 
     // LOG OBLIGATORIO - INSTRUCCIÓN EJECUTADA
-	log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s", pcb_recibido->pid, parte[0], parte[1], parte[2]);
+	log_info(log_cpu, "PID: <%d> - Ejecutando: %s - %s %s", pcb_recibido->pid, parte[0], parte[1], parte[2]);
 
     // Traducimos la direccion del registro direccion
     char *registro_direccion = parte[2]; // Direccion logica
     int direccion_logica = *(int*)dictionary_get(registros, registro_direccion);
     
-    log_info(log_cpu, "la direccion logica es: %d", direccion_logica);
+    //log_info(log_cpu, "la direccion logica es: %d", direccion_logica);
     
     char *registro_dato = parte[1];
 
-    log_info(log_cpu, "El registro_dato es %s", registro_dato);
+    //log_info(log_cpu, "El registro_dato es %s", registro_dato);
 
     t_list* direcciones_fisicas = malloc(sizeof(t_list));
 
     if(es_Registro_de_1B(registro_dato)){
 
-        log_info(log_cpu, "ESTOY JUSTO ANTES DE LA FUNCION TRADUCIR COMPLETO");
+        //log_info(log_cpu, "ESTOY JUSTO ANTES DE LA FUNCION TRADUCIR COMPLETO");
 
         //segm fault
         
@@ -404,12 +406,12 @@ void instruccion_mov_in(char **parte) {
 
         
 
-        log_info(log_cpu, "volvi de traducir las direcciones completo");
+        //log_info(log_cpu, "volvi de traducir las direcciones completo");
 
         // Ahora tengo todas las DF -> necesito leer en memoria el dato
         peticion_lectura_a_memoria(CPU_PIDE_LEER_REGISTRO_1B, pcb_recibido->pid, direcciones_fisicas);
 
-        log_info(log_cpu, "ya hice la peticion de lectura a memoria");
+        //log_info(log_cpu, "ya hice la peticion de lectura a memoria");
 
         // uint8_t valor_leido_de_memoria = espero_rta_lectura_1B_de_memoria();
 
@@ -420,7 +422,7 @@ void instruccion_mov_in(char **parte) {
 
         *valor_registro_dato = valor_leido_de_memoria_8;
 
-        log_info(log_cpu, "(1B)El valor despues de mov_in es: %d", *valor_registro_dato);
+        //log_info(log_cpu, "(1B)El valor despues de mov_in es: %d", *valor_registro_dato);
 
     } else {
         // la lectura sera de 4 bytes
@@ -441,7 +443,7 @@ void instruccion_mov_in(char **parte) {
 
         *valor_registro_dato = valor_leido_de_memoria_32; // Este ultimo es el que ahora es global
 
-        log_info(log_cpu, "(4B)El valor despues de mov_in es: %d", *valor_registro_dato);
+        //log_info(log_cpu, "(4B)El valor despues de mov_in es: %d", *valor_registro_dato);
 
     }
     
@@ -1209,13 +1211,13 @@ void generar_instruccion(pcb* proceso, t_instruccion* instruccion_proceso, char*
 void check_interrupt(){
     // Chequeo si hay interrupciones
     
-    
     if(flag_interrupcion){ //hay una interrupcion
 
         log_info(log_cpu, "tengo una interrupcion, voy a mdnar el pcb");
         argumentos_cpu* args = malloc(sizeof(argumentos_cpu));
         args->proceso = pcb_recibido;
         args->operacion = motivo_interrupcion;
+
         enviar_pcb(socket_cliente_kernel, args);
 
         flag_interrupcion = false;
