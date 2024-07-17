@@ -1,9 +1,9 @@
 #include "conexion.h"
 
-pthread_t escuchar_memoria()
+pthread_t escuchar_kernel()
 {
     pthread_t thread;
-    pthread_create(&thread, NULL, (void*)atender_a_memoria, NULL);
+    pthread_create(&thread, NULL, (void*)atender_kernel, NULL);
     return thread;
 }
 
@@ -97,44 +97,12 @@ void atender_kernel()
     }
 }
 
-pthread_t escuchar_kernel()
+pthread_t escuchar_memoria()
 {
     pthread_t thread;
-    pthread_create(&thread, NULL, (void*)atender_kernel, NULL);
+    pthread_create(&thread, NULL, (void*)atender_a_memoria, NULL);
     return thread;
 }
-
-// Envia la solicitud de traduccion a Kernel y recibe la direccion fisica
-// int solicitar_traduccion_direccion(int direccion_logica) 
-// {
-//     int direccion_fisica = -1; // Inicializamos la dirección física como -1 por defecto
-
-//     t_paquete* paquete = crear_paquete_personalizado(SOLICITAR_TRADUCCION);
-//     agregar_int_al_paquete_personalizado(paquete, direccion_logica);
-//     enviar_paquete(paquete, conexion_io_kernel);
-
-//     while(1)
-//     { 
-//         int cod_op_kernel = recibir_operacion(conexion_io_kernel);
-//         switch (cod_op_kernel) 
-//         {
-//             case IO_RECIBE_TRADUCCION_DE_KERNEL:
-//                 t_buffer* buffer = recibiendo_paquete_personalizado(conexion_io_kernel);
-//                 direccion_fisica = recibir_int_del_buffer(buffer);
-//                 free(buffer);
-//                 break;
-//             case -1:
-//                 log_error(log_io, "KERNEL se desconecto. Terminando servidor");
-//                 return EXIT_FAILURE;
-//             default:
-//                 log_warning(log_io, "Operacion desconocida. No quieras meter la pata");
-//                 break;
-//         }
-//     }
-    
-//     eliminar_paquete(paquete);
-//     return direccion_fisica;
-// }
 
 void atender_a_memoria()
 {
@@ -147,25 +115,37 @@ void atender_a_memoria()
         
         switch(cod_op_io) // Segun el codigo de operación actúo 
         {   
-            case IO_RECIBE_RESPUESTA_DE_ESCRITURA_DE_MEMORIA: 
-
-                break;
             case IO_RECIBE_RESPUESTA_DE_LECTURA_DE_MEMORIA: // [char*]
 
                 char* valor_a_mostrar = recibir_string_del_buffer(buffer);
             
-                if(strcmp(config_io->tipo_interfaz, "STDOUT"))
+                if(strcmp(config_io->tipo_interfaz, "STDOUT") == 0)
                 {
                     printf("Valor leído en memoria: %s", valor_a_mostrar);
-                    avisar_fin_io_a_kernel();
                 }
+
+                avisar_fin_io_a_kernel();
                 break;
+            case IO_RECIBE_RESPUESTA_DE_ESCRITURA_DE_MEMORIA: 
+                
+                char* valor_recibido = recibir_string_del_buffer(buffer); 
+
+                if(strcmp(config_io->tipo_interfaz, "DIALFS") == 0)
+                {
+
+                }
+
+                avisar_fin_io_a_kernel();
+                break;
+            case -1:
+                log_error(log_io, "MEMORIA se desconecto. Terminando servidor.");
+                exit(1);
             default:
-                log_error(log_io, "El codigo de operacion no es reconocido :(");
+                log_error(log_io, "El codigo de operacion no es reconocido.");
                 break;
         }
     }
-
+    
     free(buffer->stream);
     free(buffer);
 }

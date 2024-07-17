@@ -5,8 +5,7 @@ char* bitmap_buffer;
 
 void crear_archivos_gestion_fs() 
 {
-    // CREO Y DEFINO EL TAMAÑO DEL ARCHIVO bloques.dat
-    
+    // CREO Y DEFINO EL TAMAÑO DEL ARCHIVO bloques.dat    
     FILE* bloques_dat = fopen("bloques.dat", "rb+");
     
     if (bloques_dat == NULL) 
@@ -244,7 +243,7 @@ void manejar_truncado_archivo(char* nombre_archivo, int nuevo_tamanio, int pid)
     t_config* config_aux = config_create(config_file_path);
     t_metadata* metadata = malloc(sizeof(t_metadata));
 
-    buffer_bitmap = obtener_bitmap();
+    bitmap_buffer = obtener_bitmap();
     bitmap = bitarray_create_with_mode(buffer_bitmap, bitarray_size, LSB_FIRST);
 
     char* buffer;
@@ -512,7 +511,6 @@ void compactar(t_bitarray* bitmap)
             i = i + bloques_ocupados - 1; // Actualizamos el contador de bloques ocupados y ajustamos el índice i para saltar los bloques que acabamos de procesar.
         } 
     }
-
     actualizar_archivo_bloques(buffer);
     free(buffer);
     free(metadata);
@@ -565,4 +563,92 @@ int agregar_info_en_cierto_bloque(int bloque_inicial_nuevo, int cant_bloques , c
     fclose(archivo_bloques);
     free(buffer);
     return 1;
+}
+
+void manejar_escritura_archivo(char* nombre_archivo, int registro_direccion, int registro_tamanio, int registro_puntero_archivo, int pid) 
+{
+    // Obtener datos desde memoria
+    void* datos = obtener_datos_desde_memoria(registro_direccion, registro_tamanio, pid);
+    
+    // Crear el nombre del archivo de configuración
+    strcat(nombre_archivo, ".config");
+    char* config_file_path = nombre_archivo;
+
+    // Cargar la configuración del archivo
+    FILE* config_archivo = fopen(config_file_path, "r+");
+    t_config* config_aux = config_create(config_file_path);
+    if (config_archivo == NULL || config_aux == NULL) 
+    {
+        fprintf(stderr, "Error: No se pudo cargar el archivo de configuración %s\n", nombre_archivo);
+        free(nombre_archivo);
+        return;
+    }
+
+    int bloque_inicial = config_get_int_value(config_aux, "BLOQUE_INICIAL");
+    int tamanio_original = config_get_int_value(config_aux, "TAMANIO_ARCHIVO");
+    fclose(config_archivo);
+
+    // Calcular el tamaño total del archivo después de la escritura
+    int nuevo_tamanio = registro_puntero_archivo + registro_tamanio;
+
+    // Calcular cuántos bloques adicionales se necesitan
+    int bloques_originales = cantidad_total_bloques_que_ocupa(tamanio_original);
+    int bloques_nuevos = cantidad_total_bloques_que_ocupa(nuevo_tamanio);
+
+    // Truncar el archivo si es necesario
+    manejar_truncado_archivo(nombre_archivo, nuevo_tamanio, pid);
+
+    // Escribir los datos en los bloques
+    bitmap_buffer = obtener_bitmap();
+    bitmap = bitarray_create_with_mode(bitmap_buffer, bitarray_size, LSB_FIRST);
+
+    int offset_datos = 0;
+    for (int i = 0; i < bloques_nuevos; i++) 
+    {
+        int bloque_actual = bloque_inicial + i;
+        
+        int offset;
+        if (i == 0) 
+        {
+            offset = registro_puntero_archivo % config_io->block_size; // Calcular el offset si es el primer bloque
+        } 
+        else 
+        {
+            offset = 0; // Si no es el primer bloque, el offset
+        } 
+        
+        int bytes_a_escribir = config_io->block_size - offset;
+
+        if (bytes_a_escribir > (registro_tamanio - offset_datos)) 
+        {
+            bytes_a_escribir = registro_tamanio - offset_datos;
+        }
+
+        //agregar_info_en_cierto_bloque(int bloque_inicial_nuevo, int cant_bloques , char* datos)
+
+        escribir_bloque(bloque_actual, offset, bytes_a_escribir, datos + offset_datos);
+        offset_datos += bytes_a_escribir;
+    }
+
+    // Limpiar
+    config_destroy(config_aux);
+    free(bitmap_buffer);
+    bitarray_destroy(bitmap);
+    free(datos);
+
+    avisar_fin_io_a_kernel();
+}
+
+void* obtener_datos_desde_memoria(int direccion, int tamanio, int pid) 
+{
+    t_paquete* paquete = crear_paquete_personalizado(IO_PIDE_ESCRITURA_MEMORIA);
+    agregar_int_al_paquete_personalizado(paquete, pid);
+    agregar_int_al_paquete_personalizado(paquete, direccion);
+    agregar_int_al_paquete_personalizado(paquete, tamanio);
+    enviar_paquete(paquete, conexion_io_memoria);
+}
+
+void manejar_lectura_archivo(char* nombre_archivo, t_list* direccion_fisica, int tamanio, int puntero_archivo, Interfaz* configuracion_fs)
+{
+    return;
 }
