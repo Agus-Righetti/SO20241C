@@ -10,6 +10,8 @@ void recibir_pcb(){
     pcb_recibido = NULL;
     pcb_recibido = recibir_estructura_del_buffer(buffer_pcb);
     pcb_recibido->registros = recibir_estructura_del_buffer(buffer_pcb);
+
+    log_info(log_cpu , "el valor del registro ax del pid %d es:%u", pcb_recibido->pid, pcb_recibido->registros->ax);
     
     if (pcb_recibido == NULL) 
     {
@@ -60,7 +62,7 @@ void enviar_pcb(int conexion, argumentos_cpu* argumentos_a_mandar){
         case IO_STDIN_READ:
 
             agregar_string_al_paquete_personalizado(paquete, argumentos_a_mandar->nombre_interfaz);
-            agregar_int_al_paquete_personalizado(paquete, argumentos_a_mandar->registro_direccion);
+            agregar_lista_al_paquete_personalizado(paquete, argumentos_a_mandar->direcciones_fisicas);
             agregar_int_al_paquete_personalizado(paquete, argumentos_a_mandar->registro_tamano);
 
             break;
@@ -472,7 +474,8 @@ void instruccion_mov_out(char **parte) {
 	// Traducimos la direccion del registro direccion
     // ver por que lo tratan como un char
     char *registro_direccion = parte[1]; // Direccion logica
-    int direccion_logica = *(int*)(dictionary_get(registros, registro_direccion));
+    int direccion_logica = obtener_valor_registro_segun_nombre(registro_direccion);
+    
     log_info(log_cpu, "La direccion logica es: %d", direccion_logica);
     
     t_list* direcciones_fisicas;
@@ -482,10 +485,15 @@ void instruccion_mov_out(char **parte) {
         //log_info(log_cpu, "Llegue a la traduccion");
 
         direcciones_fisicas = traducir_dl_a_df_completa(direccion_logica, 1);
+        
+        log_info(log_cpu, "el registro dato es: %s", parte[2]);
+        
+        uint8_t valor_registro_dato = (uint8_t) obtener_valor_registro_segun_nombre(registro_dato);
+        
+        log_info(log_cpu, "El valor de AX es -> %u", pcb_recibido->registros->ax);
+        log_info(log_cpu, "El valor de EAX es -> %u", pcb_recibido->registros->eax);
 
-        uint8_t valor_registro_dato = dictionary_get(registros, registro_dato);
-
-        //log_info(log_cpu, "El valor que quiero escribir es %u", valor_registro_dato);
+        log_info(log_cpu, "El valor que quiero escribir es %u", valor_registro_dato);
 
         // Ahora tengo todas las DF -> necesito escribir en memoria el dato
         peticion_escritura_1B_a_memoria(pcb_recibido->pid, direcciones_fisicas, valor_registro_dato); 
@@ -496,8 +504,17 @@ void instruccion_mov_out(char **parte) {
     {
         // la escritura sera de 4 bytes
         direcciones_fisicas = traducir_dl_a_df_completa(direccion_logica, 4);
+        int vicky = list_size(direcciones_fisicas);
+        log_info(log_cpu, "Escrituras por hacer -> %d", vicky);
 
-        uint32_t valor_registro_dato = dictionary_get(registros, registro_dato);
+        t_direccion_fisica* dir1 = list_get(direcciones_fisicas, 0);
+        log_info(log_cpu, "1era escritura -> %d", dir1->bytes_a_operar);
+
+        t_direccion_fisica* dir2 = list_get(direcciones_fisicas, 1);
+        log_info(log_cpu, "2nda escritura -> %d", dir2->bytes_a_operar);
+        
+        uint32_t valor_registro_dato = (uint32_t) obtener_valor_registro_segun_nombre(registro_dato);
+        
         log_info(log_cpu, "El valor que quiero escribir es %u", valor_registro_dato);
 
         // Ahora tengo todas las DF -> necesito leer en memoria el dato
@@ -706,8 +723,12 @@ void instruccion_resize(char **parte) {
     
 
 void instruccion_copy_string(char **parte) {
-    // COPY_STRING (TAMAÑO EN BYTES)
 
+    // COPY_STRING (Tamaño): Toma del string apuntado por el registro SI y copia la cantidad 
+    //de bytes indicadas en el parámetro tamaño a la posición de memoria apuntada por 
+    //el registro DI. 
+
+    // COPY_STRING (TAMAÑO EN BYTES)
 
     // LOG OBLIGATORIO - INSTRUCCIÓN EJECUTADA
     log_info(log_cpu, "PID: %d - Ejecutando: %s - %s", pcb_recibido->pid, parte[0], parte[1]);
@@ -722,30 +743,33 @@ void instruccion_copy_string(char **parte) {
     // Obtener el tamaño de la copia
     int tamanio = atoi(parte[1]);
 
-    // // 1ero necesito obtener el STRING
-    // // registro "SI" tiene DL de donde esta almacenado en memoria 
-    // uint32_t dl_origen = (uint32_t)dictionary_get(registros, "SI");
-    // // Busco dirección física origen
-    // t_list* df_origen = traducir_dl_a_df_completa(dl_origen, tamanio);
+    // 1ero necesito obtener el STRING
+    // registro "SI" tiene DL de donde esta almacenado en memoria 
+    uint32_t dl_origen = pcb_recibido->registros->si;
 
-    // // Tengo que ir a leer el dato -> el string
-    // peticion_lectura_string_a_memoria(pcb_recibido->pid, dl_origen, tamanio);
-    // char* puntero_al_string =  espero_rta_lectura_string_de_memoria();
+    // Busco dirección física origen
+    t_list* df_origen = traducir_dl_a_df_completa(dl_origen, tamanio);
 
-    // // registro "DI" tiene DL en donde tengo que guardar el dato
-    // uint32_t dl_destino = (uint32_t)dictionary_get(registros, "DI");
-    // // Busco dirección física destino
-    // t_list* df_destino = traducir_dl_a_df_completa(dl_destino, tamanio);
-
-    // peticion_escritura_string_a_memoria(pcb_recibido->pid, df_destino, string_leido); 
-
-    // espero_rta_escritura_string_de_memoria();
+    // Tengo que ir a leer el dato -> el string
+    peticion_lectura_string_a_memoria(pcb_recibido->pid, df_origen, tamanio);
 
 
-    //// pcb_recibido->program_counter++;
+    sem_wait(&sem_string_memoria);
+
+
+    // registro "DI" tiene DL en donde tengo que guardar el dato
+    uint32_t dl_destino = pcb_recibido->registros->di;
+    
+    // Busco dirección física destino
+    t_list* df_destino = traducir_dl_a_df_completa(dl_destino, tamanio);
+
+    peticion_escritura_string_a_memoria(pcb_recibido->pid, df_destino, string_leido); 
+
+    sem_wait(&sem_ok_escritura_string);
+
+
     pcb_recibido->registros->pc++;
     
-
     liberar_array_strings(parte);
 
     check_interrupt();
@@ -881,21 +905,17 @@ void instruccion_io_stdin_read(char** parte)
     // char* interfaz = parte[1];
     char* direccion = parte[2];
 
-    // // Obtener la dirección lógica y el tamaño desde los registros
-    int direccion_logica = *(int*)dictionary_get(registros, direccion);
-    int direccion_fisica = traducir_direccion_logica_a_fisica(direccion_logica); 
-    int registro_tamano = *(int*)dictionary_get(registros, parte[3]);
+    // Obtener la dirección lógica y el tamaño desde los registros
+    int direccion_logica = obtener_valor_registro_segun_nombre(registros, direccion);
+    int registro_tamano = obtener_valor_registro_segun_nombre(registros, parte[3]);
 
-
-    // // Enviar la solicitud al kernel
-    // enviar_solicitud_a_kernel(interfaz, direccion_fisica, tamanio, socket_cliente_kernel);
-    // proceso->program_counter++;
-
+    t_list* direcciones_fisicas = traducir_dl_a_df_completa(direccion_logica, registro_tamano);
+    
     argumentos_cpu* args = malloc(sizeof(argumentos_cpu));
     args->nombre_interfaz = parte[1];
-    args->registro_direccion = direccion_fisica;
+    args->direcciones_fisicas = direcciones_fisicas;
     args->registro_tamano = registro_tamano;
-    //pcb_recibido->program_counter++; // Siempre primero sumo el PC y después recién asigno el proceso a args así está actualizado
+
     pcb_recibido->registros->pc++;
 
     args->proceso = pcb_recibido;
@@ -1242,4 +1262,49 @@ void liberar_array_strings(char **array) {
         free(array[i]);
     }
     free(array);
+}
+
+
+
+
+
+
+
+int obtener_valor_registro_segun_nombre(char* nombre_registro)
+{
+    if(strcmp(nombre_registro,"AX")==0)
+    {
+        return pcb_recibido->registros->ax;
+    } else if(strcmp(nombre_registro,"BX")==0)
+    {
+        return pcb_recibido->registros->bx;
+    } else if(strcmp(nombre_registro,"CX")==0)
+    {
+        return pcb_recibido->registros->cx;
+        
+    } else if(strcmp(nombre_registro,"DX")==0)
+    {
+        return pcb_recibido->registros->dx;
+    } else if(strcmp(nombre_registro,"EAX")==0)
+    {
+        return pcb_recibido->registros->eax;
+    } else if(strcmp(nombre_registro,"EBX")==0){
+        return pcb_recibido->registros->ebx;
+    }
+     else if(strcmp(nombre_registro,"ECX")==0)
+    {
+        return pcb_recibido->registros->ecx;
+    } else if(strcmp(nombre_registro,"EDX")==0)
+    {
+        return pcb_recibido->registros->edx;
+    } else if(strcmp(nombre_registro,"PC")==0)
+    {
+        return pcb_recibido->registros->pc;
+    } else if(strcmp(nombre_registro,"DI")==0)
+    {
+        return pcb_recibido->registros->di;
+    }else if(strcmp(nombre_registro,"SI")==0)
+    {
+        return pcb_recibido->registros->si;
+    } 
 }

@@ -104,8 +104,12 @@ typedef enum {
 	SUCCESS,
 	INVALID_INTERFACE,
 	IO_RECIBE_TRADUCCION_DE_KERNEL,
-	IO_RECIBE_RESPUESTA_DE_LECTURA_DE_MEMORIA,
-	IO_RECIBE_RESPUESTA_DE_ESCRITURA_DE_MEMORIA,
+
+	// MEMORIA A IO
+	IO_RECIBE_ULT_OK_STRING_DE_LECTURA,
+	IO_RECIBE_ULT_OK_STRING_DE_ESCRITURA,
+
+
 
 	PCB_KERNEL_A_CPU,
 	PCB_CPU_A_KERNEL,
@@ -193,7 +197,7 @@ typedef struct {
 
 typedef struct{
     int unidades_de_trabajo;
-    t_list* registro_direccion;
+    t_list* direcciones_fisicas;
     int registro_tamano;
     char* nombre_archivo;
     int registro_puntero_archivo;
@@ -205,6 +209,7 @@ typedef struct{
 
 	char* recurso;
 	int unidades_de_trabajo;
+	t_list* direcciones_fisicas;
 	int registro_direccion;
     int registro_tamano;
     char* nombre_archivo;

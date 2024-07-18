@@ -29,7 +29,6 @@ typedef struct {
     int* uso_lru; // Para LRU se puede usar un array para rastrear el uso
 } TLB;
 
-
 extern t_log* log_cpu;
 extern cpu_config* config_cpu;
 extern int tamanio_pagina;
@@ -39,6 +38,8 @@ extern sem_t sem_hay_instruccion;
 extern sem_t sem_tengo_ok_resize;
 extern sem_t sem_valor_leido_de_memoria;
 extern sem_t sem_ok_escritura;
+extern sem_t sem_string_memoria;
+extern sem_t sem_ok_escritura_string;
 
 extern int socket_servidor_cpu;
 extern int socket_cliente_kernel;
@@ -52,6 +53,8 @@ extern int marco;
 extern uint8_t valor_leido_de_memoria_8;  
 extern uint32_t valor_leido_de_memoria_32;  
 extern uint32_t valor_reconstruido;  
+extern char* string_leido;
+extern char* string_leido_reconstruido;
 
 extern t_dictionary* instrucciones;
 extern t_dictionary* registros;

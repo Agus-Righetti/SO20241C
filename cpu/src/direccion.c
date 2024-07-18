@@ -1,32 +1,5 @@
 #include <direccion.h>
 
-int traducir_direccion_logica_a_fisica(int direccion_logica)
-{
-    int numero_pagina = floor(direccion_logica / tamanio_pagina);
-    int desplazamiento = direccion_logica - numero_pagina * tamanio_pagina;
-    log_info(log_cpu, "Nro pagina: %d | desplazamiento: %d ", numero_pagina, desplazamiento);
-
-    TLB_Entrada* respuesta = buscar(numero_pagina); 
-
-    if(respuesta->pid != -1)
-    {
-        log_info(log_cpu, "PID: %d - TLB HIT - Pagina: %d", pcb_recibido->pid, numero_pagina);
-        return (respuesta->numero_marco * tamanio_pagina) + desplazamiento;
-    } 
-    else 
-    {
-        // No esta en TLB -> tiene que buscar en memoria
-        log_info(log_cpu, "PID: %d - TLB MISS - Pagina: %d", pcb_recibido->pid, numero_pagina);
-
-        // Tengo el numero de pag -> hago una consulta a memoria por el marco
-        t_paquete *paquete = crear_paquete_personalizado(CPU_PIDE_MARCO_A_MEMORIA); // [PID, NUMERO DE PAGINA]
-        agregar_int_al_paquete_personalizado(paquete, pcb_recibido->pid);
-        agregar_int_al_paquete_personalizado(paquete, numero_pagina);
-        enviar_paquete(paquete, socket_cliente_cpu);
-    }
-}   
-
-
 TLB_Entrada* buscar(int numero_pagina) 
 {
     //log_info(log_cpu, "Entre a buscar");
@@ -61,10 +34,11 @@ void actualizar_tlb(TLB_Entrada* nueva_entrada)
         // Si hay espacio en la TLB, simplemente agregamos la entrada al final
    
         tlb->entradas[cantidad_entradas_tlb-tlb->cantidad_entradas_libres] = *nueva_entrada;
-        tlb->uso_lru[cantidad_entradas_tlb-tlb->cantidad_entradas_libres] = cantidad_entradas_tlb - tlb->cantidad_entradas_libres; // Actualiza el uso LRU
         
+        actualizar_tlb_libre(nueva_entrada->pid, nueva_entrada->numero_pagina);
+
         log_info(log_cpu, "No tuve que hacer reemplazos en TLB -> habia lugar");
-        log_info(log_cpu, "TLB -> [Proceso: %d - Pag: %d - Marco: %d] agregada", tlb->entradas[cantidad_entradas_tlb-tlb->cantidad_entradas_libres].pid, tlb->entradas[cantidad_entradas_tlb-tlb->cantidad_entradas_libres].numero_pagina, tlb->entradas[cantidad_entradas_tlb-tlb->cantidad_entradas_libres].numero_marco);
+        log_info(log_cpu, "TLB -> [Proceso: %d - Pag: %d - Marco: %d] agregada \n \n \n", tlb->entradas[cantidad_entradas_tlb-tlb->cantidad_entradas_libres].pid, tlb->entradas[cantidad_entradas_tlb-tlb->cantidad_entradas_libres].numero_pagina, tlb->entradas[cantidad_entradas_tlb-tlb->cantidad_entradas_libres].numero_marco);
         
         tlb->cantidad_entradas_libres--;
     } 
@@ -80,30 +54,43 @@ void actualizar_tlb(TLB_Entrada* nueva_entrada)
                 tlb->entradas[i] = tlb->entradas[i + 1];
             }
             tlb->entradas[cantidad_entradas_tlb - 1] = *nueva_entrada;     
-            log_info(log_cpu, "TLB -> [Proceso: %d - Pag: %d - Marco: %d] agregada", tlb->entradas[cantidad_entradas_tlb - 1].pid, tlb->entradas[cantidad_entradas_tlb - 1].numero_pagina, tlb->entradas[cantidad_entradas_tlb - 1].numero_marco);
+            log_info(log_cpu, "TLB -> [Proceso: %d - Pag: %d - Marco: %d] agregada \n \n \n", tlb->entradas[cantidad_entradas_tlb - 1].pid, tlb->entradas[cantidad_entradas_tlb - 1].numero_pagina, tlb->entradas[cantidad_entradas_tlb - 1].numero_marco);
    
         } 
         else if (strcmp(algoritmo_tlb, "LRU") == 0) 
         {
             // Implementación del algoritmo LRU
-            int lru_index = 0;
+            int lru_index = 0; // Indice menos usado
+
             for (int i = 1; i < cantidad_entradas_tlb; i++) 
             {
-                if (tlb->uso_lru[i] < tlb->uso_lru[lru_index]) 
+                if (tlb->uso_lru[i] > tlb->uso_lru[lru_index]) 
                 {
                     lru_index = i;
                 }
-            }
+            } 
+            
+            // Registrar la entrada que se va a reemplazar
+            log_info(log_cpu, "TLB -> [Proceso: %d - Pag: %d - Marco: %d] borrada", 
+            tlb->entradas[lru_index].pid, 
+            tlb->entradas[lru_index].numero_pagina, 
+            tlb->entradas[lru_index].numero_marco);
+    
             tlb->entradas[lru_index] = *nueva_entrada;
-            // Actualiza los usos para reflejar el nuevo uso más reciente
+
+            log_info(log_cpu, "TLB -> [Proceso: %d - Pag: %d - Marco: %d] agregada", 
+            tlb->entradas[lru_index].pid, 
+            tlb->entradas[lru_index].numero_pagina, 
+            tlb->entradas[lru_index].numero_marco);
+
             for (int i = 0; i < cantidad_entradas_tlb; i++) 
             {
-                if (tlb->uso_lru[i] >= 0) 
+                if (i != lru_index) 
                 {
                     tlb->uso_lru[i]++;
                 }
             }
-            tlb->uso_lru[lru_index] = 0;
+            tlb->uso_lru[lru_index] = 0; // La nueva entrada es la más reciente
         } 
         else 
         {
@@ -114,6 +101,51 @@ void actualizar_tlb(TLB_Entrada* nueva_entrada)
     
     
 
+}
+
+void actualizar_tlb_HIT(int pid, int numero_pagina){
+
+    if (strcmp(algoritmo_tlb, "LRU") == 0) {
+        // TENGO QUE ACTUALIZAR EL USO LRU
+
+        log_info(log_cpu, "Actualizando usos de TLB...");
+    
+        for (int i = 0; i < cantidad_entradas_tlb; i++) {
+            
+            if (pid == tlb->entradas[i].pid && numero_pagina == tlb->entradas[i].numero_pagina) {
+                tlb->uso_lru[i] = 0; // La nueva entrada es la más reciente
+            }
+
+            else {
+                tlb->uso_lru[i]++;
+            }
+        }
+    } 
+}
+
+
+void actualizar_tlb_libre(int pid, int numero_pagina){
+
+    if (strcmp(algoritmo_tlb, "LRU") == 0) {
+        // TENGO QUE ACTUALIZAR EL USO LRU
+
+        log_info(log_cpu, "Actualizando usos de TLB...");
+    
+        for (int i = 0; i < cantidad_entradas_tlb; i++) {
+            
+            if (pid == tlb->entradas[i].pid && numero_pagina == tlb->entradas[i].numero_pagina) {
+                
+                tlb->uso_lru[i] = 0; // La nueva entrada es la más reciente
+            }
+
+            else {
+                if(tlb->entradas[i].pid != -1){
+                    // significa que existe esa entrada, la actualizo
+                    tlb->uso_lru[i]++;
+                }
+            }
+        }
+    } 
 }
 
 void inicializar_tlb() 
@@ -137,6 +169,7 @@ void inicializar_tlb()
         tlb->entradas[i].pid = -1;
         tlb->entradas[i].numero_pagina = -1;
         tlb->entradas[i].numero_marco = -1;
+        
     }
 
 
@@ -147,7 +180,7 @@ void inicializar_tlb()
     }
 
     tlb->uso_lru = malloc(cantidad_entradas_tlb * sizeof(int)); // Solo necesario para LRU
-
+    
     if (tlb->uso_lru == NULL) 
     {
         fprintf(stderr, "No se pudo asignar memoria para el seguimiento de uso LRU\n");

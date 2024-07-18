@@ -4,6 +4,8 @@
 //******************* CREACIÓN DE PROCESO **************************
 //******************************************************************
 void iniciar_estructura_para_un_proceso_nuevo(t_buffer* buffer){
+    
+    sem_wait(&sem_lista_procesos);
  
 	char* path = recibir_string_del_buffer(buffer);
 	int pid = recibir_int_del_buffer(buffer);

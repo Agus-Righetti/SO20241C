@@ -655,8 +655,6 @@ void recibir_pcb(pcb* proceso) {
     int motivo = -1;
     pcb* pcb_recibido;
 
-    // if (!interrupcion_por_fin_de_proceso) // Verifico si la interrupción es por fin de proceso o por planificación
-    // {
       switch(codigo_operacion) // Segun el codigo de operacion actuo 
         {
             case -1:
@@ -1634,6 +1632,8 @@ void actualizar_pcb(pcb* proceso_original, pcb* nuevo)
     proceso_original->registros->edx = nuevo->registros->edx;
     proceso_original->registros->si = nuevo->registros->si;
     proceso_original->registros->di = nuevo->registros->di;
+
+    return;
     
 }
 // ------------------------------------------------

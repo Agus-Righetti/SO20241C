@@ -12,6 +12,9 @@ int main(int argc, char* argv[])
 
     log_info(log_io, "El nombre de la config es: %s", config_io->nombre);
 
+    sem_init(&sem_ok_escritura_memoria);
+    sem_init(&sem_ok_lectura_memoria);
+
     // Interfaz* configuracion_fs;
 
     //make start CONFIG_FILE=nombre_archivo.config (para arrancar) 
@@ -57,6 +60,8 @@ int main(int argc, char* argv[])
 
 void terminar_programa(t_log* log_io, t_config* config_io)
 {
+  sem_destroy(&sem_ok_escritura_memoria);
+  sem_destroy(&sem_ok_lectura_memoria);
     if (log_io != NULL) 
     {
 		log_destroy(log_io);

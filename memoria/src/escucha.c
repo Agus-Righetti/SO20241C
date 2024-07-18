@@ -16,6 +16,7 @@ void atender_cpu(){
         switch (cod_op_cpu) {
 
             case CPU_PIDE_INSTRUCCION_A_MEMORIA:
+
                 usleep(config_memoria->retardo_respuesta *1000);
                 log_info(log_memoria, "CPU me pide una instruccion");
                 buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
@@ -26,6 +27,7 @@ void atender_cpu(){
 
             case CPU_PIDE_GUARDAR_REGISTRO_1B:
 
+
                 log_info(log_memoria, "CPU me pide guardar un byte en memoria");
                 buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
                 
@@ -33,11 +35,8 @@ void atender_cpu(){
             
                 pid = recibir_int_del_buffer(buffer);
 	            direcciones_fisicas = recibir_lista_del_buffer(buffer);
-                log_info(log_memoria, "ya recibi la lista del buffer");
 
-	            //int tamanio = recibir_int_del_buffer(buffer);
 	            valor_uint_8 = recibir_uint8_del_buffer(buffer);
-                log_info(log_memoria, "ya el uint8 del buffer");
 
             	guardar_uint8_en_memoria (pid, direcciones_fisicas, valor_uint_8);
 				// cpu_pide_guardar_1B(buffer);
@@ -193,8 +192,11 @@ void atender_io(){
     int cod_op_io;
 
     while(control){
+        
         cod_op_io = recibir_operacion(socket_cliente_io);
+
         switch (cod_op_io) {
+            
             case IO_PIDE_LECTURA_MEMORIA:
                 log_info(log_memoria, "IO me pide la lectura de un espacio de memoria");
                 buffer = recibiendo_paquete_personalizado(socket_cliente_io);
@@ -209,7 +211,7 @@ void atender_io(){
                 log_info(log_memoria, "IO me pide la escritura de un espacio de memoria");
                 buffer = recibiendo_paquete_personalizado(socket_cliente_io);
                 usleep(config_memoria->retardo_respuesta *1000);
-                // io_pide_escritura(buffer);  -> FALTA IMPLEMENTAR
+                io_pide_escritura(buffer);  
                 free(buffer);
                 break;
 

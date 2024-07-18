@@ -17,6 +17,9 @@ io_config* config_io;
 metadatos_config* config_metadatos;
 pcb* proceso;
 
+sem_t sem_ok_escritura_memoria;
+sem_t sem_ok_lectura_memoria;
+
 // int socket_servidor_kernel;
 int conexion_io_kernel;
 int conexion_io_memoria;

@@ -25,6 +25,8 @@ sem_t sem_hay_instruccion;
 sem_t sem_tengo_ok_resize;
 sem_t sem_valor_leido_de_memoria;
 sem_t sem_ok_escritura;
+sem_t sem_string_memoria;
+sem_t sem_ok_escritura_string;
 
 t_dictionary* instrucciones;
 t_dictionary* registros;
@@ -36,6 +38,8 @@ char* instruccion_recibida;
 uint8_t valor_leido_de_memoria_8;
 uint32_t valor_leido_de_memoria_32;
 uint32_t valor_reconstruido;
+char* string_leido;
+char* string_leido_reconstruido;
 
 TLB* tlb; 
 int cantidad_entradas_tlb;

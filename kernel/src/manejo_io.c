@@ -79,11 +79,6 @@ void escucha_interfaz(thread_args_escucha_io* args)
         cod_op = recibir_operacion(interfaz->socket); //me habla la interfaz
         
         switch (cod_op) { 
-            //aca habria que agregar los posibles codigos de operacion q pueden llegar, dsp me fijo bien            //ya se termino la operacion de entrada salida, devuelvo el proceso a ready
-            case MENSAJE:
-                log_warning(log_kernel, "Me llegó un mensaje (yo quería FIN_OP_IO)");  
-                //recibir_mensaje(interfaz->socket, log_kernel);
-                break;
             case FIN_OP_IO:
 
                 if(interfaz->proceso_en_interfaz->pid == pid_eliminar)
@@ -98,14 +93,18 @@ void escucha_interfaz(thread_args_escucha_io* args)
                 sem_post(&interfaz->sem_puedo_mandar_operacion);
                 
                 buffer = recibiendo_paquete_personalizado(interfaz->socket);
+
                 free(buffer);
                 
                 break;
             case -1://se desconecta la interfaz
+
                 interfaz_conectada = false;
                 desconectar_interfaz(interfaz);
+
 				break;
 			default:
+            
 				log_warning(log_kernel,"Estamos en manejo io escucha interfaz: Operacion desconocida. No quieras meter la pata");
 
 			    break;
@@ -113,7 +112,6 @@ void escucha_interfaz(thread_args_escucha_io* args)
 	}
     return;
 }
-
 
 void desconectar_interfaz(interfaz_kernel* interfaz)
 {
@@ -263,14 +261,14 @@ int io_gen_sleep(char* nombre_interfaz, int unidades_de_trabajo, pcb* proceso)
 
 }
 
-int io_stdin_read(char* nombre_interfaz, t_list* registro_direccion, uint32_t registro_tamano, pcb* proceso)
+int io_stdin_read(char* nombre_interfaz, t_list* direcciones_fisicas, uint32_t registro_tamano, pcb* proceso)
 {
     // Esta instrucción solicita al Kernel que mediante la interfaz ingresada se lea desde el STDIN (Teclado) un valor cuyo tamaño está delimitado por el valor del Registro Tamaño y el mismo se guarde a partir de la Dirección Lógica almacenada en el Registro Dirección.
     //log_info(log_kernel, "el registro tamano es: %u", registro_tamano);
     //log_info(log_kernel, "el nombre de la interfaz es: %d", nombre_interfaz);
     interfaz_kernel* interfaz = verificar_interfaz(nombre_interfaz, STDIN);
     argumentos_para_io* args = malloc(sizeof(argumentos_para_io));
-    args->registro_direccion = registro_direccion;
+    args->direcciones_fisicas = direcciones_fisicas;
     args->registro_tamano = registro_tamano;
     args->proceso = proceso;
     args->operacion = IO_STDIN_READ;

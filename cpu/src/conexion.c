@@ -153,8 +153,6 @@ void atender_memoria() {
                 
                 free(buffer);
 
-                sem_post(&sem_ok_escritura);
-
                 break; 
 
             case CPU_RECIBE_ULT_OK_4B_DE_ESCRITURA:   // [PID, DF, VALOR, VALOR FINAL] -> [Int, Direccion_fisica, uint_32, uint_32]
@@ -173,18 +171,67 @@ void atender_memoria() {
                 sem_post(&sem_ok_escritura);
                 
                 break; 
+                
+            case CPU_RECIBE_LECTURA_STRING:   
+                // Pueden ser mas de una
+                buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
+                pid = recibir_int_del_buffer(buffer); // Lo mismo, creo que no hace falta 
+                dir_fisica = recibir_estructura_del_buffer(buffer);
+                string_leido = recibir_string_del_buffer(buffer);
 
+                log_info(log_cpu, "PID: %d - Accion: LEER - Direccion fisica: [%d - %d] - Valor: %s ", pid, dir_fisica->nro_marco ,dir_fisica->offset, string_leido);
+    
+                free(buffer);
+
+                break; 
+
+            case CPU_RECIBE_LECTURA_U_STRING:   
+                // Esta es la ultima
+                buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
+                pid = recibir_int_del_buffer(buffer); // Lo mismo, creo que no hace falta
+                dir_fisica = recibir_estructura_del_buffer(buffer);
+                string_leido = recibir_string_del_buffer(buffer);
+                string_leido_reconstruido = recibir_string_del_buffer(buffer);
+                log_info(log_cpu, "PID: %d - Accion: LEER - Direccion fisica: [%d - %d] - Valor: %s ", pid, dir_fisica->nro_marco ,dir_fisica->offset, string_leido);
+                log_info(log_cpu, "ACCIÓN COMPLETADA: LEER %s EN MEMORIA", string_leido_reconstruido);
+                    
+                free(buffer);
+
+                sem_post(&sem_string_memoria);
+
+                break; 
+            
+            case CPU_RECIBE_OK_STRING_DE_ESCRITURA:
+                buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
+                pid = recibir_int_del_buffer(buffer);
+                dir_fisica = recibir_estructura_del_buffer(buffer);
+                string_leido = recibir_string_del_buffer(buffer);
+
+                log_info(log_cpu, "PID: %d - Accion: ESCRIBIR - Direccion fisica: [%d - %d] - Valor: %u ", pid, dir_fisica->nro_marco ,dir_fisica->offset, string_leido);
+                free(buffer);
+                break;
+
+            case CPU_RECIBE_ULT_OK_STRING_DE_ESCRITURA:
+                buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
+                pid = recibir_int_del_buffer(buffer);
+                dir_fisica = recibir_estructura_del_buffer(buffer);
+                string_leido = recibir_string_del_buffer(buffer);
+                string_leido_reconstruido = recibir_string_del_buffer(buffer);
+                log_info(log_cpu, "PID: %d - Accion: ESCRIBIR - Direccion fisica: [%d - %d] - Valor: %u ", pid, dir_fisica->nro_marco ,dir_fisica->offset, string_leido);
+                log_info(log_cpu, "ACCIÓN COMPLETADA: ESCRIBIR %s EN MEMORIA", string_leido_reconstruido);
+
+                sem_post(&sem_ok_escritura_string);
+                free(buffer);
+
+                break; 
 
             case EXIT:
-            //log_info(log_cpu, "case 6 ");
                 error_exit(EXIT);
                 break;
             case -1:
-            //log_info(log_cpu, "case 7 ");
                 log_error(log_cpu, "MEMORIA se desconecto. Terminando servidor");
                 exit(1);
             default:
-                //log_info(log_cpu, "case 8 ");
                 log_warning(log_cpu,"Operacion desconocida. No quieras meter la pata");
                 break;
         }

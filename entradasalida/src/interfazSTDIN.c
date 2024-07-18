@@ -20,41 +20,18 @@ void leer_consola(t_list* direccion_fisica, int tamanio, int pid)
 
     free(leido);
 
-    //PEDIR A MEMORIA - VICKY ACÁ SOS VOS
-    
-    //ahora le tenemos q decir a memoria q lo guarde en la direccion del registro direccion
-    //tiene q guardar lo q esta en la variable texto en la pos "direccion_fisica", va a tener el tamano "tamanio"
+    t_paquete* paquete = crear_paquete_personalizado(IO_PIDE_ESCRITURA_MEMORIA); // Queremos que memoria lo guarde
 
+    agregar_int_al_paquete_personalizado(paquete, pid);
+    agregar_lista_al_paquete_personalizado(paquete, direccion_fisica, sizeof(t_direccion_fisica));
+    agregar_int_al_paquete_personalizado(paquete, tamanio);
+    agregar_string_al_paquete_personalizado(paquete, texto);
+
+    enviar_paquete(paquete, conexion_io_memoria);
+
+    eliminar_paquete(paquete);
+
+    sem_wait(&sem_ok_escritura_memoria);
+
+    avisar_fin_io_a_kernel(); //mando FIN_OP_IO a kernel :P
 }
-
-// void recibir_operacion_stdin_de_kernel(Interfaz* interfaz, op_code codigo)
-// {
-//     // Verificar si la operación es para una interfaz stdin
-//     if (codigo == IO_STDIN_READ) 
-//     {
-//         log_info(log_io, "Operacion recibida: IO_STDIN_READ.");
-//         leer_consola(); // Esta función se encuentra en el módulo de I/O y debe estar definida allí
-//     } 
-//     else if (codigo == -1) 
-//     {
-//         log_error(log_io, "KERNEL se desconecto. Terminando servidor");
-//         exit(1);
-//     } 
-//     else 
-//     {
-//         log_warning(log_io, "Operacion recibida no es para una interfaz STDIN.\n");
-//     }
-// }
-
-// void liberar_configuracion_stdin(Interfaz* configuracion)
-// {
-//     if(configuracion) 
-//     {
-//         free(configuracion->archivo->tipo_interfaz);
-//         free(configuracion->archivo->ip_kernel);
-//         // free(configuracion->archivo->puerto_kernel);
-//         free(configuracion->archivo->ip_memoria);
-//         // free(configuracion->archivo->puerto_memoria);
-//         free(configuracion->archivo);
-//     }
-// }

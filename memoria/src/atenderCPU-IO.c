@@ -15,7 +15,9 @@ void cpu_pide_instruccion(t_buffer* un_buffer){        //[PID, IP]
     t_proceso* un_proceso = obtener_proceso_por_id(pid);
 
 	//Obtener Instruccion especifica
-	char* instruccion = obtener_instruccion_por_indice(un_proceso->instrucciones, ip);
+	
+	// VER SEGMENTATION FAULT
+ 	char* instruccion = obtener_instruccion_por_indice(un_proceso->instrucciones, ip);
     
 	//Enviar_instruccion a CPU
 	enviar_una_instruccion_a_cpu(instruccion);
@@ -33,7 +35,7 @@ t_proceso* obtener_proceso_por_id(int pid){
 
 
 			t_proceso* proceso = list_get(lista_procesos_recibidos, i);
-			log_info(log_memoria, "PID por buscar: %d. Proceso: %d", pid, proceso->pid);
+			//log_info(log_memoria, "PID por buscar: %d. Proceso: %d", pid, proceso->pid);
 			// return lista_procesos_recibidos[i];
 			return proceso;
 		}
@@ -112,7 +114,7 @@ int obtener_marco_segun_pagina (int pid, int nro_pag){
 	// Busco el proceso en mi lista de procesos
 	t_proceso* un_proceso = obtener_proceso_por_id(pid);
 
-	log_info(log_memoria, "Encontre el proceso! es el pid %d", un_proceso->pid);
+	// log_info(log_memoria, "Encontre el proceso! es el pid %d", un_proceso->pid);
 	// Si sigue, es porque encontró el proceso
 	// Tengo que buscar en la tabla de páginas del proceso, si la página está
 
@@ -122,8 +124,8 @@ int obtener_marco_segun_pagina (int pid, int nro_pag){
 		log_error(log_memoria, "Se intento hacer un mov antes de un rezise");
 	}
 	
-	log_info(log_memoria, "La tabla de paginas tiene: %d paginas \n", list_size(un_proceso->tabla_paginas));
-	log_info(log_memoria, "Necesito la pagina nro: %d\n", nro_pag);
+	log_info(log_memoria, "La tabla de paginas tiene: %d paginas ", list_size(un_proceso->tabla_paginas));
+	log_info(log_memoria, "Necesito la pagina nro: %d", nro_pag);
 	
 	// 2ndo controlo que el nro de pag sea valido
 	if(nro_pag > list_size(un_proceso->tabla_paginas)){
@@ -131,11 +133,10 @@ int obtener_marco_segun_pagina (int pid, int nro_pag){
 		return -1;
 	}
 
-	// EXCEPTION RECURRENTE
 
 	t_pagina* una_pagina = list_get(un_proceso->tabla_paginas, nro_pag);
 	
-	log_info(log_memoria, "Aca -> %d ", una_pagina->frame);
+	//log_info(log_memoria, "Aca -> %d ", una_pagina->frame);
 
 	// NO PUEDE HABER PAGE FAULT NO HAY MEMORIA VIRTUAL
 	
@@ -348,7 +349,6 @@ void cpu_pide_leer_string(t_buffer* un_buffer){
 
 	int tamanio = recibir_int_del_buffer(un_buffer);
 
-
 	leer_string_en_memoria(pid, direcciones_fisicas, tamanio);
 }
 
@@ -384,7 +384,8 @@ void cpu_pide_guardar_string(t_buffer* un_buffer){
 // Esta instrucción solicita al Kernel que mediante la interfaz seleccionada, se lea desde el archivo a partir del valor del Registro Puntero Archivo la cantidad de bytes indicada por Registro Tamaño y se escriban en la Memoria a partir de la dirección lógica indicada en el Registro Dirección.
 // necesita -> guardar string en memoria
 
-void io_pide_lectura(t_buffer* un_buffer){    
+void io_pide_lectura(t_buffer* un_buffer){
+
 	int pid = recibir_int_del_buffer(un_buffer);
 	t_list* direcciones_fisicas = recibir_lista_del_buffer(un_buffer);
 
@@ -395,7 +396,23 @@ void io_pide_lectura(t_buffer* un_buffer){
 	char* valor = recibir_estructura_del_buffer(un_buffer);
 	int tamanio = recibir_int_del_buffer(un_buffer);
 
-	//guardar_string_en_memoria(pid, direcciones_fisicas, valor, tamanio);
+	guardar_string_io_en_memoria(pid, direcciones_fisicas, valor, tamanio);
+
+}
+
+void io_pide_escritura(t_buffer* un_buffer){
+
+	int pid = recibir_int_del_buffer(un_buffer);
+	t_list* direcciones_fisicas = recibir_lista_del_buffer(un_buffer);
+
+	if(direcciones_fisicas == NULL){
+        log_error(log_memoria, "Direcciones_fisicas es null");
+    }
+
+	char* valor = recibir_estructura_del_buffer(un_buffer);
+	int tamanio = recibir_int_del_buffer(un_buffer);
+
+	guardar_string_io_en_memoria(pid, direcciones_fisicas, valor, tamanio);
 
 }
 

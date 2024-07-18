@@ -34,5 +34,12 @@ void leer_string_en_memoria (int pid, t_list* direcciones_fisicas, int tamanio);
 void enviar_lectura_string_a_cpu(int pid, t_direccion_fisica* dir_actual, char* valor);
 void enviar_lectura_ult_string_a_cpu(int pid, t_direccion_fisica* dir_actual, char* valor, char* valor_leido_reconstruido);
 
+void guardar_string_io_en_memoria (int pid, t_list* direcciones_fisicas, char* valor, int tamanio);
+void enviar_ok_string_escritura_io(int pid, t_direccion_fisica* dir_actual, char* valor);
+void enviar_ult_ok_string_escritura_io(int pid, t_direccion_fisica* dir_actual, char* valor, char* valor_completo);
+
+void leer_string_io_en_memoria(int pid, t_list* direcciones_fisicas, int tamanio);
+void enviar_lectura_string_a_io(int pid, t_direccion_fisica* dir_actual, char* valor);
+void enviar_lectura_ult_string_a_io(int pid, t_direccion_fisica* dir_actual, char* valor, char* valor_leido_reconstruido);
 
 #endif

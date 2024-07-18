@@ -75,5 +75,6 @@ void enviar_instruccion(int conexion, t_instruccion* instruccion, op_code codigo
 int copiar_bytes(uint32_t direccion_origen, uint32_t direccion_destino, int tamanio);
 void check_interrupt();
 void liberar_array_strings(char **array) ;
+int obtener_valor_registro_segun_nombre(char* nombre_registro);
 
 #endif
