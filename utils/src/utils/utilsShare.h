@@ -188,6 +188,7 @@ typedef struct {
 	bool en_uso; // Sacar
 	int socket;
 	char* nombre_interfaz;
+	bool conectada;
 	pcb* proceso_en_interfaz; //es el proceso que actualmente esta en la interfaz
 	sem_t sem_puedo_mandar_operacion;
     sem_t sem_hay_procesos_esperando;
