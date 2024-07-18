@@ -24,7 +24,7 @@ typedef struct {
 
 // Para LRU, se necesita un campo adicional para mantener el orden de uso
 typedef struct {
-    int cantidad_entradas;
+    int cantidad_entradas_libres;
     TLB_Entrada* entradas;
     int* uso_lru; // Para LRU se puede usar un array para rastrear el uso
 } TLB;
@@ -59,7 +59,7 @@ extern t_dictionary* registros;
 extern pcb* pcb_recibido;
 
 extern TLB* tlb;
-extern int cantidad_entradas_tlb;
+extern int cantidad_entradas_tlb; // es el dato de config
 extern char* algoritmo_tlb;
 
 #endif

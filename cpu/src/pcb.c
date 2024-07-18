@@ -479,13 +479,13 @@ void instruccion_mov_out(char **parte) {
 
     if(es_Registro_de_1B(registro_dato))
     {
-        log_info(log_cpu, "Llegue a la traduccion");
+        //log_info(log_cpu, "Llegue a la traduccion");
 
         direcciones_fisicas = traducir_dl_a_df_completa(direccion_logica, 1);
 
         uint8_t valor_registro_dato = dictionary_get(registros, registro_dato);
 
-        log_info(log_cpu, "El valor que quiero escribir es %u", valor_registro_dato);
+        //log_info(log_cpu, "El valor que quiero escribir es %u", valor_registro_dato);
 
         // Ahora tengo todas las DF -> necesito escribir en memoria el dato
         peticion_escritura_1B_a_memoria(pcb_recibido->pid, direcciones_fisicas, valor_registro_dato); 
@@ -505,17 +505,17 @@ void instruccion_mov_out(char **parte) {
 
     }
 
-    log_info(log_cpu, "Estoy antes de bloquearme por el semaforo");
+    log_info(log_cpu, "Esperando que el valor se escriba en memoria...");
 
     sem_wait(&sem_ok_escritura);
 
-    log_info(log_cpu, "Ya me desbloquee despues del semaforo");
+    //log_info(log_cpu, "Valor escrito con exito");
 
     // Aumento el PC para que lea la proxima instruccion
 	//pcb_recibido->program_counter++;
     pcb_recibido->registros->pc++;
     
-    log_info(log_cpu, "A rezar que ande bien este");
+    //log_info(log_cpu, "A rezar que ande bien este");
 
     liberar_array_strings(parte);
 
@@ -860,6 +860,11 @@ void instruccion_io_gen_sleep(char **parte)
 
 void instruccion_io_stdin_read(char** parte)
 {
+    // IO_STDIN_READ (Interfaz, Registro Dirección, Registro Tamaño)
+    // Esta instrucción solicita al Kernel que mediante la interfaz ingresada se lea desde el STDIN (Teclado) 
+    // un valor cuyo tamaño está delimitado por el valor del Registro Tamaño y el mismo se guarde a partir de la 
+    // Dirección Lógica almacenada en el Registro Dirección.
+
     // IO_STDIN_READ Int2 EAX AX
 
     // Verificar que la cantidad de argumentos sea la correcta
@@ -868,11 +873,6 @@ void instruccion_io_stdin_read(char** parte)
         log_error(log_cpu, "Argumentos incorrectos para la instrucción IO_STDIN_READ.");
         return;
     }
-
-    // if(strcmp(parte[1], "STDIN") != 0) 
-    // {
-    //     log_error(log_cpu, "La interfaz indicada no es STDIN.");
-    // }
 
     // LOG OBLIGATORIO - INSTRUCCIÓN EJECUTADA
     log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s %s", pcb_recibido->pid, parte[0], parte[1], parte[2], parte[3]);
@@ -886,7 +886,6 @@ void instruccion_io_stdin_read(char** parte)
     int direccion_fisica = traducir_direccion_logica_a_fisica(direccion_logica); 
     int registro_tamano = *(int*)dictionary_get(registros, parte[3]);
 
-    // int tamanio = atoi(parte[3]);
 
     // // Enviar la solicitud al kernel
     // enviar_solicitud_a_kernel(interfaz, direccion_fisica, tamanio, socket_cliente_kernel);

@@ -29,19 +29,17 @@ int traducir_direccion_logica_a_fisica(int direccion_logica)
 
 TLB_Entrada* buscar(int numero_pagina) 
 {
-    log_info(log_cpu, "Entre a buscar");
-    for(int i = 0; i < tlb->cantidad_entradas; i++) 
+    //log_info(log_cpu, "Entre a buscar");
+    for(int i = 0; i < cantidad_entradas_tlb ; i++) 
     {
-        log_info(log_cpu, "FOR estoy en la entrada %d", tlb->entradas[i].numero_pagina);
+        //log_info(log_cpu, "FOR estoy en la entrada %d", tlb->entradas[i].numero_pagina);
         
         if(tlb->entradas[i].numero_pagina == numero_pagina && tlb->entradas[i].pid == pcb_recibido->pid){
             return &tlb->entradas[i];
         }
     }
-    log_info(log_cpu, "No encontre, lo mando vacio");
+    //log_info(log_cpu, "No encontre, lo mando vacio");
 
-//    TLB_Entrada *entrada_vacia; 
-//sugerencia de chat gtp para manejo de bug
     TLB_Entrada *entrada_vacia = malloc(sizeof(TLB_Entrada));
 
     
@@ -54,29 +52,36 @@ TLB_Entrada* buscar(int numero_pagina)
 
 void actualizar_tlb(TLB_Entrada* nueva_entrada) 
 {
-    cantidad_entradas_tlb = config_cpu->cantidad_entradas_tlb;
-    algoritmo_tlb = config_cpu->algoritmo_tlb;
-    //cantidad_entradas_tlb = config_get_int_value(config_cpu, "CANTIDAD_ENTRADAS_TLB");
-    // algoritmo_tlb = strdup(config_get_string_value(config_cpu, "ALGORITMO_TLB"));
-    log_info(log_cpu, "Estoy por actualizar");
+    // cantidad_entradas_tlb = config_cpu->cantidad_entradas_tlb;
+    // algoritmo_tlb = config_cpu->algoritmo_tlb;
 
-    if(tlb->cantidad_entradas < cantidad_entradas_tlb) 
-    {
+    log_info(log_cpu, "Actualizando TLB...");
+
+    if(tlb->cantidad_entradas_libres > 0)  {
         // Si hay espacio en la TLB, simplemente agregamos la entrada al final
-        tlb->entradas[tlb->cantidad_entradas] = *nueva_entrada;
-        tlb->uso_lru[tlb->cantidad_entradas] = tlb->cantidad_entradas; // Actualiza el uso LRU
-        tlb->cantidad_entradas++;
+   
+        tlb->entradas[cantidad_entradas_tlb-tlb->cantidad_entradas_libres] = *nueva_entrada;
+        tlb->uso_lru[cantidad_entradas_tlb-tlb->cantidad_entradas_libres] = cantidad_entradas_tlb - tlb->cantidad_entradas_libres; // Actualiza el uso LRU
+        
+        log_info(log_cpu, "No tuve que hacer reemplazos en TLB -> habia lugar");
+        log_info(log_cpu, "TLB -> [Proceso: %d - Pag: %d - Marco: %d] agregada", tlb->entradas[cantidad_entradas_tlb-tlb->cantidad_entradas_libres].pid, tlb->entradas[cantidad_entradas_tlb-tlb->cantidad_entradas_libres].numero_pagina, tlb->entradas[cantidad_entradas_tlb-tlb->cantidad_entradas_libres].numero_marco);
+        
+        tlb->cantidad_entradas_libres--;
     } 
     else 
     {
         if (strcmp(algoritmo_tlb, "FIFO") == 0) 
         {
             // Implementación del algoritmo FIFO
+            log_info(log_cpu, "TLB -> [Proceso: %d - Pag: %d - Marco: %d] borrada", tlb->entradas[0].pid, tlb->entradas[0].numero_pagina, tlb->entradas[0].numero_marco);
+
             for (int i = 0; i < cantidad_entradas_tlb - 1; i++) 
             {
                 tlb->entradas[i] = tlb->entradas[i + 1];
             }
-            tlb->entradas[cantidad_entradas_tlb - 1] = *nueva_entrada;        
+            tlb->entradas[cantidad_entradas_tlb - 1] = *nueva_entrada;     
+            log_info(log_cpu, "TLB -> [Proceso: %d - Pag: %d - Marco: %d] agregada", tlb->entradas[cantidad_entradas_tlb - 1].pid, tlb->entradas[cantidad_entradas_tlb - 1].numero_pagina, tlb->entradas[cantidad_entradas_tlb - 1].numero_marco);
+   
         } 
         else if (strcmp(algoritmo_tlb, "LRU") == 0) 
         {
@@ -105,7 +110,7 @@ void actualizar_tlb(TLB_Entrada* nueva_entrada)
             log_error(log_cpu, "Algoritmo de reemplazo de TLB no soportado: %d", algoritmo_tlb);
         }
     }
-    log_info(log_cpu, "Pude actualizar");
+    //log_info(log_cpu, "Pude actualizar");
     
     
 
@@ -113,6 +118,9 @@ void actualizar_tlb(TLB_Entrada* nueva_entrada)
 
 void inicializar_tlb() 
 {
+    cantidad_entradas_tlb = config_cpu->cantidad_entradas_tlb;
+    algoritmo_tlb = config_cpu->algoritmo_tlb;
+
     tlb = malloc(sizeof(TLB));
 
     // Inicializa la TLB y otros parámetros
@@ -122,10 +130,10 @@ void inicializar_tlb()
         exit(EXIT_FAILURE);
     }
 
-    tlb->cantidad_entradas = config_cpu->cantidad_entradas_tlb;
+    tlb->cantidad_entradas_libres = config_cpu->cantidad_entradas_tlb;
     tlb->entradas = malloc(config_cpu->cantidad_entradas_tlb * sizeof(TLB_Entrada));
 
-    for(int i = 0 ; i < tlb->cantidad_entradas ; i++){
+    for(int i = 0 ; i < tlb->cantidad_entradas_libres ; i++){
         tlb->entradas[i].pid = -1;
         tlb->entradas[i].numero_pagina = -1;
         tlb->entradas[i].numero_marco = -1;

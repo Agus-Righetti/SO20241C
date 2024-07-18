@@ -17,27 +17,20 @@ void atender_memoria() {
     while(1) {
         cod_op_memoria = recibir_operacion(socket_cliente_cpu);
 
-        //log_info(log_cpu, "estoy en el while de atender memoria22222");
-
-        //log_info(log_cpu, "me llego un codigo %d", cod_op_memoria);
-
         switch (cod_op_memoria)  {
             
             case MENSAJE:  
-            log_info(log_cpu, "case 1 ");
                 recibir_mensaje(socket_cliente_cpu, log_cpu);
                 break;
                 
             case CPU_RECIBE_TAMAÑO_PAGINA_DE_MEMORIA:
                 buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
                 tamanio_pagina = recibir_int_del_buffer(buffer);
-                // free(buffer->stream);
                 free(buffer);
                 break; 
 
             case CPU_RECIBE_INSTRUCCION_DE_MEMORIA:
-                //log_info(log_cpu, "case 3 ");
-                log_info(log_cpu, "Recibi una instruccion de memoria");
+
                 buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
                 //log_info(log_cpu, "PID: %d - FETCH - Program Counter: %d", proceso->pid, proceso->program_counter);
                 //proceso->program_counter++; // Esto hay que sacarlo porque usan la variable global, y aumentarlo en pcb.c
@@ -49,9 +42,7 @@ void atender_memoria() {
                 break;
 
             case CPU_RECIBE_OUT_OF_MEMORY_DE_MEMORIA: // VACIO
-            //log_info(log_cpu, "case 4 ");
-                printf("Error: No se pudo ajustar el tamaño del proceso. Out of Memory.\n");
-                    
+                log_info(log_cpu, "No se pudo ajustar el tamaño del proceso. Out of Memory.");    
                 argumentos_cpu* args = malloc(sizeof(argumentos_cpu));
                 args->proceso = pcb_recibido; //Este proceso es global, no deberia ser global
                 args->operacion = OUT_OF_MEMORY;
@@ -65,10 +56,9 @@ void atender_memoria() {
                 break;
 
             case CPU_RECIBE_NUMERO_DE_MARCO_DE_MEMORIA:
-                log_info(log_cpu, "Me llego un marco de memoria");
                 buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
                 marco = recibir_int_del_buffer(buffer);
-                log_info(log_cpu, "me llego el marco: ,%d", marco);
+                //log_info(log_cpu, "me llego el marco: ,%d", marco);
                 
                 sem_post(&sem_tengo_el_marco);
             
@@ -78,19 +68,13 @@ void atender_memoria() {
                 break; 
 
             case CPU_RECIBE_OK_DEL_RESIZE:
-                //log_info(log_cpu, "case 5 ");
-                printf("El tamaño del proceso se ha ajustado correctamente.\n");
-                pcb_recibido->registros->pc++; 
+                log_info(log_cpu, "El tamaño del proceso se ajusto correctamente");
                 buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
                 // free(buffer->stream);
                 free(buffer);
-                //log_info(log_cpu, "recibi buffer");
-
                 sem_post(&sem_tengo_ok_resize);
-                //check_interrupt();
-                //log_info(log_cpu, "volvi de checkinterrupt  ");
-                
                 break;
+
             case CPU_RECIBE_LECTURA_1B:
 
                 buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
@@ -313,7 +297,7 @@ void atender_interrupcion() // ACA HAY QUE MANEJAR EL ENVIAR PCB DENTRO DEL SWIT
 
 pthread_t escuchar_memoria()
 {
-    log_info(log_cpu, "Estoy escuchando memoria");
+    //log_info(log_cpu, "Estoy escuchando memoria");
     pthread_t hilo_memoria;
 
     pthread_create(&hilo_memoria, NULL, (void*) atender_memoria, NULL);

@@ -15,7 +15,6 @@ void iniciar_estructura_para_un_proceso_nuevo(t_buffer* buffer){
 
 	//Agregar a la lista de procesos 
 	list_add(lista_procesos_recibidos, proceso_nuevo);
-    log_info(log_memoria, "Agregue el proceso a lista");
 
 	log_info(log_memoria, "PROCESO CREADO CON ÉXITO");
     sem_post(&sem_lista_procesos);

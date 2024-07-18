@@ -21,7 +21,7 @@ void cpu_pide_instruccion(t_buffer* un_buffer){        //[PID, IP]
 	enviar_una_instruccion_a_cpu(instruccion);
 	sem_post(&sem_lista_procesos);
 	
-    log_info(log_memoria, "Instruccion enviada a CPU");
+    //log_info(log_memoria, "Instruccion enviada a CPU");
 }
 
 t_proceso* obtener_proceso_por_id(int pid){
@@ -203,7 +203,7 @@ void cpu_pide_resize(t_buffer* un_buffer){          // [PID, TAMAÑO NUEVO] -> [
 		int tamanio_a_aumentar = tamanio_nuevo - mi_proceso->tamanio;
 
 		// LOG OBLIGATORIO PARA AMPLIACION
-		log_info(log_memoria, "hola");
+		log_info(log_memoria, "PID: <%d> - Tamaño Actual: <%d> - Tamaño a aumentar: <%d>\n", pid, mi_proceso->tamanio, tamanio_a_aumentar);
 
 		// Hay dos casos:
 		// CASO 1 -> quiero ampliar pero no llego a agregar una pagina
@@ -218,15 +218,12 @@ void cpu_pide_resize(t_buffer* un_buffer){          // [PID, TAMAÑO NUEVO] -> [
 			//                 espacio libre de ult pag                 <= lo que quiero agregar
 			// NO TENGO QUE AGREGAR UNA PAGINA -> HAY LUGAR EN LA ULTIMA
 
-			//32 -0 < 128
-			log_info(log_memoria, "CAS0 1");
 			mi_proceso->tamanio = tamanio_nuevo;
 			// Actualizo el tamaño usado de la ultima pagina 
 			mi_proceso->tam_usado_ult_pag = mi_proceso->tam_usado_ult_pag + tamanio_a_aumentar;
 			enviar_ok_del_resize_a_cpu();
 
 		} else {
-			log_info(log_memoria, "CAS0 2");
 			// CASO 2 -> tengo que agregar paginas
 			int cantidad_pag_a_aumentar = ceil ((double)tamanio_a_aumentar / (double)config_memoria->tam_pagina);
 			log_info(log_memoria, "Tengo que agregar paginas");
@@ -244,20 +241,18 @@ void cpu_pide_resize(t_buffer* un_buffer){          // [PID, TAMAÑO NUEVO] -> [
 				// busco los marcos libres
 				t_list* marcos_libres = buscar_marcos_libres();
 
-				log_info(log_memoria, "HABIA LUGAR!!!!!!!!!!11111");
+				log_info(log_memoria, "Hay lugar disponible");
 				int posicion = 0;
 				while (cantidad_pag_a_aumentar > 0){
 					// Elijo el marco en el que voy a guardar
 					t_frame* marco_por_usar = list_get(marcos_libres, posicion); // AGARRO EL PRIMERO QUE ENCUENTRO EN LA LISTA DE LIBRES
 					ocupar_marco(marco_por_usar->id);
-					log_info(log_memoria, "ENTRE AL WHILE!!!!!!!!!!11111");
+					//log_info(log_memoria, "ENTRE AL WHILE!!!!!!!!!!11111");
 					t_pagina* pagina = crear_pagina(marco_por_usar);
 
-					log_info(log_memoria, "PUDE crear PAGINA");
 
 					// Creo la pagina
 				   	agregar_pag_a_tabla(mi_proceso, pagina);
-					log_info(log_memoria, "PUDE AGREGAR PAGINA");
 
 					cantidad_pag_a_aumentar --;
 					posicion ++;
@@ -271,14 +266,14 @@ void cpu_pide_resize(t_buffer* un_buffer){          // [PID, TAMAÑO NUEVO] -> [
 		}
 	}
 
-	log_info(log_memoria, "TERMINE EL FINAL");
+	log_info(log_memoria, "Resize terminado");
 
 	return;
 }
 
 void enviar_out_of_memory_a_cpu(){ 
 	t_paquete* paquete = crear_paquete_personalizado(CPU_RECIBE_OUT_OF_MEMORY_DE_MEMORIA);
-	log_info(log_memoria, "CODIGO DE OPERACION: CPU RECIBE OUT");
+	log_info(log_memoria, "Enviando OUT OF MEMORY a CPU");
 
 	enviar_paquete(paquete, socket_cliente_cpu);
 	eliminar_paquete(paquete);
@@ -286,13 +281,11 @@ void enviar_out_of_memory_a_cpu(){
 }
 
 void enviar_ok_del_resize_a_cpu(){ 
-	//ACA ESTA EL PROBELMAAAAAAAAAAAAAAAAAAAAAAA
-	log_info(log_memoria,"este es el nro del codop q mando %d", (int)CPU_RECIBE_OK_DEL_RESIZE);
+
 	t_paquete* paquete_enviar_ok = crear_paquete_personalizado((int)CPU_RECIBE_OK_DEL_RESIZE);
-	log_info(log_memoria, "CODIGO DE OPERACION: CPU RECIBE OK");
+	log_info(log_memoria, "Enviando OK del resize a CPU");
 
 	enviar_paquete(paquete_enviar_ok, socket_cliente_cpu);
-	log_info(log_memoria, "ya mande el codigo de ok resize");
 	eliminar_paquete(paquete_enviar_ok);
 
 	return;

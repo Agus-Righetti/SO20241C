@@ -207,7 +207,7 @@ void enviar_lectura_4B_a_cpu(int pid, t_direccion_fisica* dir_actual, uint32_t v
     t_paquete* paquete = crear_paquete_personalizado(CPU_RECIBE_LECTURA_4B);
 
     agregar_int_al_paquete_personalizado(paquete, pid);
-    agregar_estructura_al_paquete_personalizado(paquete, &dir_actual, sizeof(t_direccion_fisica));
+    agregar_estructura_al_paquete_personalizado(paquete, dir_actual, sizeof(t_direccion_fisica));
     agregar_uint32_al_paquete_personalizado(paquete, valor);
 
     log_info(log_memoria, "Valor leido: %u", valor);
@@ -221,7 +221,7 @@ void enviar_lectura_ult_4B_a_cpu(int pid, t_direccion_fisica* dir_actual, uint32
     t_paquete* paquete = crear_paquete_personalizado(CPU_RECIBE_LECTURA_U_4B);
 
     agregar_int_al_paquete_personalizado(paquete, pid);
-    agregar_estructura_al_paquete_personalizado(paquete, &dir_actual, sizeof(t_direccion_fisica));
+    agregar_estructura_al_paquete_personalizado(paquete, dir_actual, sizeof(t_direccion_fisica));
     agregar_uint32_al_paquete_personalizado(paquete, valor);
     agregar_uint32_al_paquete_personalizado(paquete, valor_leido_reconstruido);
 
@@ -272,7 +272,7 @@ void enviar_lectura_1B_a_cpu(int pid, t_direccion_fisica* dir_actual, uint8_t va
     t_paquete* paquete = crear_paquete_personalizado(CPU_RECIBE_LECTURA_1B);
 
     agregar_int_al_paquete_personalizado(paquete, pid);
-    agregar_estructura_al_paquete_personalizado(paquete, &dir_actual, sizeof(t_direccion_fisica));
+    agregar_estructura_al_paquete_personalizado(paquete, dir_actual, sizeof(t_direccion_fisica));
     agregar_uint8_al_paquete_personalizado(paquete, valor);
 
     log_info(log_memoria, "Valor leido: %u", valor);
@@ -428,7 +428,7 @@ void enviar_ok_1B_escritura_cpu(int pid, t_direccion_fisica* dir_actual, uint8_t
     t_paquete* paquete = crear_paquete_personalizado(CPU_RECIBE_OK_1B_DE_ESCRITURA);
 
     agregar_int_al_paquete_personalizado(paquete, pid);
-    agregar_estructura_al_paquete_personalizado(paquete, &dir_actual, sizeof(t_direccion_fisica));
+    agregar_estructura_al_paquete_personalizado(paquete, dir_actual, sizeof(t_direccion_fisica));
     agregar_uint8_al_paquete_personalizado(paquete, valor);
 
 	enviar_paquete(paquete, socket_cliente_cpu);
@@ -604,7 +604,7 @@ void enviar_lectura_string_a_cpu(int pid, t_direccion_fisica* dir_actual, char* 
     t_paquete* paquete = crear_paquete_personalizado(CPU_RECIBE_LECTURA_4B);
 
     agregar_int_al_paquete_personalizado(paquete, pid);
-    agregar_estructura_al_paquete_personalizado(paquete, &dir_actual, sizeof(t_direccion_fisica));
+    agregar_estructura_al_paquete_personalizado(paquete, dir_actual, sizeof(t_direccion_fisica));
     agregar_string_al_paquete_personalizado(paquete, valor);
 
     log_info(log_memoria, "Valor leido: %s", valor);
@@ -619,7 +619,7 @@ void enviar_lectura_ult_string_a_cpu(int pid, t_direccion_fisica* dir_actual, ch
 
     agregar_int_al_paquete_personalizado(paquete, pid);
     // revisar lista
-    agregar_estructura_al_paquete_personalizado(paquete, &dir_actual, sizeof(t_direccion_fisica));
+    agregar_estructura_al_paquete_personalizado(paquete, dir_actual, sizeof(t_direccion_fisica));
     agregar_string_al_paquete_personalizado(paquete, valor);
     agregar_string_al_paquete_personalizado(paquete, valor_leido_reconstruido);
 

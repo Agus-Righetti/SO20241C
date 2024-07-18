@@ -12,9 +12,9 @@
 t_list* traducir_dl_a_df_completa(int direccion_logica, int bytes_a_operar) {
 
     // Creo una lista en donde voy a guardar todas las direcciones fisicas que necesite para operar desde la direccion logica solicitada
-    log_info(log_cpu, "entre a traduccir dl a df antes del list create");
+    
     t_list* direcciones_fisicas = list_create();
-    log_info(log_cpu, "entre a traduccir dl a df dsp del list create");
+    
 
 
     // Calculo mi primera pagina y su desplazamiento
@@ -28,11 +28,11 @@ t_list* traducir_dl_a_df_completa(int direccion_logica, int bytes_a_operar) {
     int bytes_operar_pag = minimo(bytes_a_operar, tamanio_pagina - desplazamiento);
 
     t_direccion_fisica* direccion_fisica_traducida = traducir_una_dl_a_df(numero_pagina, desplazamiento, bytes_operar_pag);
-    log_info(log_cpu, "volvi de traducir dl a df");
+    //log_info(log_cpu, "volvi de traducir dl a df");
     
     list_add(direcciones_fisicas, direccion_fisica_traducida);
 
-    log_info(log_cpu, "VICKY : )");
+    //log_info(log_cpu, "VICKY : )");
 
     int bytes_ya_evaluado = tamanio_pagina - desplazamiento;
 
@@ -47,7 +47,7 @@ t_list* traducir_dl_a_df_completa(int direccion_logica, int bytes_a_operar) {
         list_add(direcciones_fisicas, direccion_fisica_traducida);
         bytes_ya_evaluado = bytes_ya_evaluado + bytes_operar_pag;
     }
-    log_info(log_cpu, "lo  : )");
+    //log_info(log_cpu, "lo  : )");
     
     return direcciones_fisicas;
 
@@ -66,7 +66,6 @@ int minimo(int a, int b) {
 t_direccion_fisica* traducir_una_dl_a_df(int numero_pagina, int desplazamiento, int bytes_operar_pag){
    
     t_direccion_fisica* dir_traducida = malloc(sizeof(t_direccion_fisica));
-    log_info(log_cpu, "HOLA AMIGOS");
     
     // 1ero busco en TLB
     TLB_Entrada* respuesta = buscar(numero_pagina); 
@@ -90,23 +89,20 @@ t_direccion_fisica* traducir_una_dl_a_df(int numero_pagina, int desplazamiento, 
 
         // Tengo el numero de pag -> hago una consulta a memoria por el marco
         t_paquete *paquete = crear_paquete_personalizado(CPU_PIDE_MARCO_A_MEMORIA); // [PID, NUMERO DE PAGINA]
-        log_info(log_cpu, "Le pedi un marco a memoria");
         
         agregar_int_al_paquete_personalizado(paquete, pcb_recibido->pid);
         agregar_int_al_paquete_personalizado(paquete, numero_pagina);
         enviar_paquete(paquete, socket_cliente_cpu);
-        log_info(log_cpu, "Ya envie el paquete con el pid y el numero de pagina");
-        
-        // LOG OBLIGATORIO - OBTENER MARCO
-        log_info(log_cpu, "PID: %d - OBTENER MARCO - Página: %d - Marco: %d", pcb_recibido->pid, numero_pagina, marco);
 
-        
+        log_info(log_cpu, "Esperando marco de memoria...");
         sem_wait(&sem_tengo_el_marco);
 
+        // LOG OBLIGATORIO - OBTENER MARCO
+        log_info(log_cpu, "PID: %d - OBTENER MARCO - Página: %d - Marco: %d", pcb_recibido->pid, numero_pagina, marco);
        
 
-        log_info(log_cpu, "Ya paso el semaforo"); 
-        log_info(log_cpu, "Me llego un marco de memoria: %d", marco);
+        // log_info(log_cpu, "Ya paso el semaforo"); 
+        // log_info(log_cpu, "Me llego un marco de memoria: %d", marco);
         // Agregarlo a la tlb
         TLB_Entrada* nueva_entrada = malloc(sizeof(TLB_Entrada));
         
@@ -118,25 +114,25 @@ t_direccion_fisica* traducir_una_dl_a_df(int numero_pagina, int desplazamiento, 
         
         nueva_entrada->pid = pcb_recibido->pid;
         nueva_entrada->numero_pagina = numero_pagina;
-        log_info(log_cpu, "marco global es %d", marco);
+        //log_info(log_cpu, "marco global es %d", marco);
         
         nueva_entrada->numero_marco = marco;
-         log_info(log_cpu, "nueva_entrada->pid es %d", nueva_entrada->pid);
+        //log_info(log_cpu, "nueva_entrada->pid es %d", nueva_entrada->pid);
 
-        log_info(log_cpu, "estoy antes de entrar a actualizar tlb");
+
         actualizar_tlb(nueva_entrada); 
         
-        log_info(log_cpu, "Volvi de actualizar, estoy por poner valores en dir_traducida");
+        //log_info(log_cpu, "Volvi de actualizar, estoy por poner valores en dir_traducida");
 
         dir_traducida->nro_marco = nueva_entrada->numero_marco;
         dir_traducida->offset = desplazamiento;
         dir_traducida->bytes_a_operar = bytes_operar_pag;
 
-        log_info(log_cpu, "pude cargar la direccion traducida");
+        log_info(log_cpu, "\n Direccion traducida:");
         
         log_info(log_cpu, "dir_traducida->nro_marco: %d", dir_traducida->nro_marco );
         log_info(log_cpu, "dir_traducida->offset: %d", dir_traducida->offset );
-        log_info(log_cpu, "dir_traducida->bytes_a_operar: %d", dir_traducida->bytes_a_operar );
+        log_info(log_cpu, "dir_traducida->bytes_a_operar: %d \n", dir_traducida->bytes_a_operar );
 
     } 
     return dir_traducida;

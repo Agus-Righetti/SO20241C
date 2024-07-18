@@ -1,6 +1,7 @@
 #include "interfazSTDIN.h"
 
 // Trunca el texto al tamaño deseado, y luego lo envía a memoria para ser guardado en las direcciones físicas especificadas.
+
 void leer_consola(t_list* direccion_fisica, int tamanio, int pid) 
 {
     log_info(log_io, "PID: %d - Operacion: STDIN", pid);

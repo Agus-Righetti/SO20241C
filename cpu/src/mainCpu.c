@@ -8,6 +8,7 @@ int main(int argc, char* argv[])
 
 	log_cpu = log_create("cpu.log", "CPU", 1, LOG_LEVEL_DEBUG);
 	config_cpu = armar_config(log_cpu);
+
 	inicializar_tlb();
 	
 	// Semaforo para traducir
