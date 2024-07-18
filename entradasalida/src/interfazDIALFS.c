@@ -3,8 +3,8 @@
 // IO_FS_CREATE -> Para crear un archivo
 void manejar_creacion_archivo(char* nombre_archivo, int pid) 
 {
-    // Tenemos que armar el metadata del archivo y cambiar los bloques libres del bitarray y bloquesdat
-
+    //hago un usleep para lo q tarda
+    usleep(config_io->tiempo_unidad_trabajo * 1000);
     FILE* bitmap_file = fopen("bitmap.dat", "rb"); // Abro el "bitmap.dat"
     char *bitmap_buffer = (char*)malloc(bitarray_size);
     fread(bitmap_buffer, 1, bitarray_size, bitmap_file);
@@ -61,6 +61,9 @@ void manejar_creacion_archivo(char* nombre_archivo, int pid)
 // IO_FS_DELETE -> Para eliminar archivo
 void manejar_eliminacion_archivo(char* nombre_archivo, int pid) 
 {
+    
+    usleep(config_io->tiempo_unidad_trabajo * 1000);
+
     strcat(nombre_archivo, ".config");
 
     char *config_file_path = nombre_archivo;
@@ -101,8 +104,11 @@ void manejar_eliminacion_archivo(char* nombre_archivo, int pid)
     return;
 }
 
+// IO_TRUNCATE
 void manejar_truncado_archivo(char* nombre_archivo, int nuevo_tamanio, int pid)
 {
+    usleep(config_io->tiempo_unidad_trabajo * 1000);
+    
     strcat(nombre_archivo, ".config");
 
     char *config_file_path = nombre_archivo;
@@ -262,13 +268,18 @@ void manejar_truncado_archivo(char* nombre_archivo, int nuevo_tamanio, int pid)
     return;
 }   
 
+// IO_WRITE
 void manejar_escritura_archivo(char* nombre_archivo, t_list* direccion_fisica, int tamanio, int puntero_archivo, int pid)
 {
+    usleep(config_io->tiempo_unidad_trabajo * 1000);
+ 
     return;
 }
 
+// IO_READ 
 void manejar_lectura_archivo(char* nombre_archivo, t_list* direccion_fisica, int tamanio, int puntero_archivo, Interfaz* configuracion_fs)
 {
+    usleep(config_io->tiempo_unidad_trabajo * 1000);
     return;
 }
 
@@ -502,6 +513,8 @@ char *agregar_al_final(char *buffer, const char *informacion)
 // Función para compactar bloques
 void compactar(t_bitarray* bitmap) 
 { 
+    //hago un usleep por el tiempo q me dice la config
+    usleep(config_io->retraso_compactacion * 1000); //multiplico por mil porque esta dado en miliseg y necesito microseg
     char* buffer;
     int contador_ocupados = 0;
     t_metadata* metadata = malloc(sizeof(t_metadata)); //metadata->nombre_archivo, ->BLOQUE_INICIAL, ->TAMANIO_ARCHIVO

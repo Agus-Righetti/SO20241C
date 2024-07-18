@@ -6,14 +6,23 @@ int main(int argc, char* argv[])
    
     // Log y config de uso general ----------------------------------------------------------------------------------------------------
 
-    log_io = log_create("io.log", "IO", 1, LOG_LEVEL_DEBUG);
+    char* nombre_log = string_new();
+    char** parte = string_split(argv[1], ".");
     
+    // nombre_log = parte[0];
+    
+    // string_append(".log", nombre_log);
+
+    // log_io = log_create(nombre_log, "IO", 1, LOG_LEVEL_DEBUG);
+
+    log_io = log_create("io.log", "IO", 1, LOG_LEVEL_DEBUG);
+    log_info(log_io, "ya cree el log");
     config_io = armar_config(log_io, argv[1]); // En argv[1] esta el nombre de config pasado por parametro
 
     log_info(log_io, "El nombre de la config es: %s", config_io->nombre);
 
-    sem_init(&sem_ok_escritura_memoria);
-    sem_init(&sem_ok_lectura_memoria);
+    sem_init(&sem_ok_escritura_memoria, 0, 0);
+    sem_init(&sem_ok_lectura_memoria, 0, 0);
 
     // Interfaz* configuracion_fs;
 

@@ -28,6 +28,8 @@ Interfaz *configuracion;
 size_t bitarray_size;
 t_queue* cola_archivos_en_fs;
 
+char* valor_a_mostrar;
+
 void terminar_programa(t_log* log_io, t_config* config_io);
 
 #endif

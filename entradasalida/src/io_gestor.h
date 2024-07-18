@@ -62,5 +62,6 @@ extern size_t bitarray_size;
 
 extern sem_t sem_ok_escritura_memoria;
 extern sem_t sem_ok_lectura_memoria;
+extern char* valor_a_mostrar;
 
 #endif

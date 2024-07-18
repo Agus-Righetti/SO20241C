@@ -106,8 +106,8 @@ typedef enum {
 	IO_RECIBE_TRADUCCION_DE_KERNEL,
 
 	// MEMORIA A IO
-	IO_RECIBE_ULT_OK_STRING_DE_LECTURA,
-	IO_RECIBE_ULT_OK_STRING_DE_ESCRITURA,
+	IO_RECIBE_RESPUESTA_DE_LECTURA_DE_MEMORIA,
+	IO_RECIBE_RESPUESTA_DE_ESCRITURA_DE_MEMORIA,
 
 
 
@@ -192,6 +192,8 @@ typedef struct {
 	sem_t sem_puedo_mandar_operacion;
     sem_t sem_hay_procesos_esperando;
 	pthread_mutex_t mutex_cola;
+	pthread_t hilo_de_escucha_interfaz;
+	pthread_t hilo_de_envio_a_interfaz;
 
 }interfaz_kernel;
 

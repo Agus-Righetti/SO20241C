@@ -9,7 +9,7 @@
 void crear_interfaz(op_code interfaz_nueva, int socket, char* nombre_interfaz)
 {
     //inicializo una nueva interfaz
-    //log_info(log_kernel, "se conecto una interfaz nueva, hola! %s \n", nombre_interfaz);
+    log_info(log_kernel, "se conecto una interfaz nueva, hola! %s \n", nombre_interfaz);
 	interfaz_kernel* nueva_interfaz = malloc(sizeof(interfaz_kernel)); 
 	nueva_interfaz->tipo_interfaz= interfaz_nueva;
 	nueva_interfaz->cola_de_espera = queue_create();
@@ -17,7 +17,7 @@ void crear_interfaz(op_code interfaz_nueva, int socket, char* nombre_interfaz)
     nueva_interfaz->nombre_interfaz = nombre_interfaz;
     sem_init(&nueva_interfaz->sem_puedo_mandar_operacion, 0,1);
     sem_init(&nueva_interfaz->sem_hay_procesos_esperando,0,0);
-    //llega hasta aca, hace sgm fault
+    
 
     //log_info(log_kernel, "estoy por intentar inicializar el mutex");
     pthread_mutex_init(&(nueva_interfaz->mutex_cola), NULL);
@@ -29,18 +29,14 @@ void crear_interfaz(op_code interfaz_nueva, int socket, char* nombre_interfaz)
     pthread_mutex_unlock(&mutex_cola_de_interfaces);
    //log_info(log_kernel, "ya agregue la interfaz a la cola");
 
-	pthread_t hilo_de_escucha_interfaz, hilo_de_envio_a_interfaz; // Creo un hilo
     thread_args_escucha_io args_hilo = {nueva_interfaz}; // En sus args le cargo el la interfaz
-
-
-    //este hilo se quedara escuchando lo que le devuelva la interfaz y hara lo q corresponda con cada proceso q la llamo al recibirlo de nuevo, tendriamos q chequear si la interfaz devuelve un proceso u otra cosa, en cuyo caso tendriamos q sacar el proceso de otro lado para volverlo a poner en ready o lo q sea
-    pthread_create(&hilo_de_escucha_interfaz, NULL, (void*)escucha_interfaz,(void*)&args_hilo);
-    pthread_create(&hilo_de_envio_a_interfaz, NULL, (void*)envio_interfaz,(void*)&args_hilo);
-
+    log_info(log_kernel, "estoy por crear los hilos");
     
-    pthread_join(hilo_de_escucha_interfaz, NULL); 
-    pthread_cancel(hilo_de_envio_a_interfaz); 
-
+    //este hilo se quedara escuchando lo que le devuelva la interfaz y hara lo q corresponda con cada proceso q la llamo al recibirlo de nuevo, tendriamos q chequear si la interfaz devuelve un proceso u otra cosa, en cuyo caso tendriamos q sacar el proceso de otro lado para volverlo a poner en ready o lo q sea
+    pthread_create(&nueva_interfaz->hilo_de_escucha_interfaz, NULL, (void*)escucha_interfaz,(void*)&args_hilo);
+    pthread_create(&nueva_interfaz->hilo_de_envio_a_interfaz, NULL, (void*)envio_interfaz,(void*)&args_hilo);
+    
+    log_info(log_kernel, "ya cree los hilos");
 
     return;
 	
@@ -48,13 +44,17 @@ void crear_interfaz(op_code interfaz_nueva, int socket, char* nombre_interfaz)
 
 void envio_interfaz(thread_args_escucha_io* args)
 {
+    log_info(log_kernel, "Estoy en envio interfaz");
+
     interfaz_kernel* interfaz = args->interfaz;
     argumentos_para_io* args_mandar_a_io;
 
-    //log_info(log_kernel, "Estoy en envio interfaz");
     while(1)
     {
+        
+
         sem_wait(&interfaz->sem_hay_procesos_esperando);
+        log_info(log_kernel, "Estoy en el while de  envio interfaz post sem wait");
         sem_wait(&interfaz->sem_puedo_mandar_operacion);
         pthread_mutex_lock(&interfaz->mutex_cola);
         args_mandar_a_io = queue_pop(interfaz->cola_de_espera);
@@ -66,12 +66,11 @@ void envio_interfaz(thread_args_escucha_io* args)
 
 void escucha_interfaz(thread_args_escucha_io* args)
 {
+    log_info(log_kernel, "estoy en escucha interfaz");
     bool interfaz_conectada = true;
     op_code cod_op;
     interfaz_kernel* interfaz = args->interfaz;
     t_buffer* buffer;
-
-   // log_info(log_kernel, "estoy en escucha interfaz");
 
     while(interfaz_conectada)
     {
@@ -132,6 +131,10 @@ void desconectar_interfaz(interfaz_kernel* interfaz)
     sem_destroy(&interfaz_aux->sem_hay_procesos_esperando);
     pthread_mutex_destroy(&interfaz_aux->mutex_cola);
 
+    pthread_cancel(interfaz_aux->hilo_de_escucha_interfaz);
+    pthread_cancel(interfaz_aux->hilo_de_escucha_interfaz);
+
+
     free(interfaz_aux);
     return;
 }
@@ -154,7 +157,7 @@ void enviar_instruccion_io(int socket, argumentos_para_io* args)
         case IO_STDIN_READ:
         case IO_STDOUT_WRITE:
             //log_info(log_kernel,"entre al agregar al paquete desde STDIN Y OUT");
-            agregar_lista_al_paquete_personalizado(paquete_instruccion, args->registro_direccion, sizeof(t_direccion_fisica));
+            agregar_lista_al_paquete_personalizado(paquete_instruccion, args->direcciones_fisicas, sizeof(t_direccion_fisica));
             agregar_int_al_paquete_personalizado(paquete_instruccion, args->registro_tamano);   
             break;
         case IO_FS_CREATE:
@@ -168,7 +171,7 @@ void enviar_instruccion_io(int socket, argumentos_para_io* args)
         case IO_FS_WRITE:
         case IO_FS_READ:
             agregar_string_al_paquete_personalizado(paquete_instruccion, args->nombre_archivo);
-            agregar_estructura_al_paquete_personalizado(paquete_instruccion, args->registro_direccion, sizeof(t_list));
+            agregar_estructura_al_paquete_personalizado(paquete_instruccion, args->direcciones_fisicas, sizeof(t_list));
             agregar_int_al_paquete_personalizado(paquete_instruccion, args->registro_tamano);
             agregar_int_al_paquete_personalizado(paquete_instruccion, args->registro_puntero_archivo);
             break;
@@ -289,11 +292,11 @@ int io_stdin_read(char* nombre_interfaz, t_list* direcciones_fisicas, uint32_t r
     }
 }
 
-int io_stdout_write(char* nombre_interfaz, t_list* registro_direccion, uint32_t registro_tamano, pcb* proceso)
+int io_stdout_write(char* nombre_interfaz, t_list* direcciones_fisicas, uint32_t registro_tamano, pcb* proceso)
 {
     interfaz_kernel* interfaz = verificar_interfaz(nombre_interfaz, STDOUT);
     argumentos_para_io* args = malloc(sizeof(argumentos_para_io));
-    args->registro_direccion = registro_direccion;
+    args->direcciones_fisicas = direcciones_fisicas;
     args->registro_tamano = registro_tamano;
     args->proceso = proceso;
     args->operacion = IO_STDOUT_WRITE;
@@ -391,7 +394,7 @@ int io_fs_write(char* nombre_interfaz, char* nombre_archivo, t_list*  registro_d
     argumentos_para_io* args = malloc(sizeof(argumentos_para_io));
     args->nombre_archivo = nombre_archivo;
     args->registro_tamano = registro_tamano;
-    args->registro_direccion = registro_direccion;
+    args->direcciones_fisicas = registro_direccion;
     args->registro_puntero_archivo = registro_puntero_archivo;
     args->operacion = IO_FS_WRITE;
     
@@ -417,7 +420,7 @@ int io_fs_read(char* nombre_interfaz, char* nombre_archivo, t_list* registro_dir
     argumentos_para_io* args = malloc(sizeof(argumentos_para_io));
     args->nombre_archivo = nombre_archivo;
     args->registro_tamano = registro_tamano;
-    args->registro_direccion = registro_direccion;
+    args->direcciones_fisicas = registro_direccion;
     args->registro_puntero_archivo = registro_puntero_archivo;
     args->operacion = IO_FS_READ;
     

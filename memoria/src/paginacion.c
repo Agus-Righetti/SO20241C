@@ -681,14 +681,12 @@ void leer_string_io_en_memoria(int pid, t_list* direcciones_fisicas, int tamanio
             memcpy((char*)&valor_leido_reconstruido + bytes_ya_operados, espacio_usuario + despl_esp_usuario, dir_actual->bytes_a_operar); 
             pthread_mutex_unlock(&mutex_espacio_usuario);
 
-            log_info(log_memoria, "PID: %d - Accion: LEER - Direccion fisica: [%d - %d] - Tamaño %d ", pid, dir_actual->nro_marco ,dir_actual->offset, dir_actual->bytes_a_operar);
+            log_info(log_memoria, "PID: <%d> - Accion: <LEER> - Direccion fisica: [%d - %d] - Tamaño %d ", pid, dir_actual->nro_marco ,dir_actual->offset, dir_actual->bytes_a_operar);
 
-            enviar_lectura_string_a_io(pid, dir_actual, valor_leido);
+            // enviar_lectura_string_a_io(pid, dir_actual, valor_leido);
 
             bytes_ya_operados = bytes_ya_operados + dir_actual->bytes_a_operar;
             indice_dir += 1;
-            
-
         } 
         if(cantidad_marcos_por_leer - 1 == indice_dir){
             // es la ultima lectura
@@ -702,7 +700,7 @@ void leer_string_io_en_memoria(int pid, t_list* direcciones_fisicas, int tamanio
 
             log_info(log_memoria, "PID: %d - Accion: LEER - Direccion fisica: [%d - %d] - Tamaño %d ", pid, dir_actual->nro_marco ,dir_actual->offset, dir_actual->bytes_a_operar);
 
-            enviar_lectura_ult_string_a_io(pid, dir_actual, valor_leido, valor_leido_reconstruido);
+            enviar_lectura_ult_string_a_io(valor_leido_reconstruido);
 
         }
 
@@ -710,32 +708,32 @@ void leer_string_io_en_memoria(int pid, t_list* direcciones_fisicas, int tamanio
 
 }
 
-void enviar_lectura_string_a_io(int pid, t_direccion_fisica* dir_actual, char* valor){
+// void enviar_lectura_string_a_io(int pid, t_direccion_fisica* dir_actual, char* valor){
 
-    t_paquete* paquete = crear_paquete_personalizado(IO_RECIBE_LECTURA_STRING);
+//     // t_paquete* paquete = crear_paquete_personalizado(IO_RECIBE_LECTURA_STRING);
 
-    agregar_int_al_paquete_personalizado(paquete, pid);
-    agregar_lista_al_paquete_personalizado(paquete, dir_actual, sizeof(t_direccion_fisica));
-    agregar_string_al_paquete_personalizado(paquete, valor);
+//     // agregar_int_al_paquete_personalizado(paquete, pid);
+//     // agregar_lista_al_paquete_personalizado(paquete, dir_actual, sizeof(t_direccion_fisica));
+//     // agregar_string_al_paquete_personalizado(paquete, valor);
 
-    log_info(log_memoria, "Valor leido: %s", valor);
+//     log_info(log_memoria, "Valor leido: %s", valor);
 
-	enviar_paquete(paquete, socket_cliente_io);
-	eliminar_paquete(paquete);
-}
+// 	// enviar_paquete(paquete, socket_cliente_io);
+// 	// eliminar_paquete(paquete);
+// }
 
 
 void enviar_lectura_ult_string_a_io(char* valor_leido_reconstruido){
 
-    t_paquete* paquete = crear_paquete_personalizado(IO_RECIBE_LECTURA_U_STRING);
+    t_paquete* paquete = crear_paquete_personalizado(IO_RECIBE_RESPUESTA_DE_LECTURA_DE_MEMORIA);
 
     agregar_string_al_paquete_personalizado(paquete, valor_leido_reconstruido);
 
     log_info(log_memoria, "Valor leido reconstruido: %s", valor_leido_reconstruido);
 
 	enviar_paquete(paquete, socket_cliente_io);
-	eliminar_paquete(paquete);
 
+	eliminar_paquete(paquete);
 }
 
 void guardar_string_io_en_memoria (int pid, t_list* direcciones_fisicas, char* valor, int tamanio){
@@ -777,7 +775,7 @@ void guardar_string_io_en_memoria (int pid, t_list* direcciones_fisicas, char* v
 
             log_info(log_memoria, "PID: %d - Accion: ESCRIBIR - Direccion fisica: [%d - %d] - Tamaño %d ", pid, dir_actual->nro_marco ,dir_actual->offset, dir_actual->bytes_a_operar);
 
-            enviar_ok_string_escritura_io(pid, dir_actual, valor_escrito);
+            //enviar_ok_string_escritura_io(pid, dir_actual, valor_escrito);
 
             bytes_ya_operados = bytes_ya_operados + dir_actual->bytes_a_operar;
             indice_dir += 1;
@@ -795,8 +793,7 @@ void guardar_string_io_en_memoria (int pid, t_list* direcciones_fisicas, char* v
 
             log_info(log_memoria, "PID: %d - Accion: ESCRIBIR - Direccion fisica: [%d - %d] - Tamaño %d ", pid, dir_actual->nro_marco ,dir_actual->offset, dir_actual->bytes_a_operar);
 
-            enviar_ult_ok_string_escritura_io(pid, dir_actual, valor_escrito, valor);
-
+            enviar_ult_ok_string_escritura_io();
         }
     }
 }
@@ -804,7 +801,7 @@ void guardar_string_io_en_memoria (int pid, t_list* direcciones_fisicas, char* v
 
 void enviar_ult_ok_string_escritura_io(){
 
-    t_paquete* paquete = crear_paquete_personalizado(IO_RECIBE_ULT_OK_STRING_DE_ESCRITURA);
+    t_paquete* paquete = crear_paquete_personalizado(IO_RECIBE_RESPUESTA_DE_ESCRITURA_DE_MEMORIA);
     // falta aca agregar el valor completo
 
 	enviar_paquete(paquete, socket_cliente_io);

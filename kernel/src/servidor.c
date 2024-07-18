@@ -15,14 +15,14 @@ void server_para_io(){
 
     log_info(log_kernel, "Kernel listo para recibir a IO");
 	int client_io;
-	t_list* lista;
 	t_buffer* buffer;
 	int cod_op;
 
 	while(1)
 	{
+		log_info(log_kernel, "estoy en el while de esperar q se conecte alguien");
 		client_io = esperar_cliente(server_kernel, log_kernel); //espera que se conecte alguna interfaz
-
+		log_info(log_kernel, "ya se conecto alguien nuevo");
     	cod_op = recibir_operacion(client_io); //me habla la interfaz
 
 		switch (cod_op) {
@@ -37,11 +37,14 @@ void server_para_io(){
 			case NUEVA_INTERFAZ: //pedir que manden esto con el nombre de la interfaz
 
 				buffer = recibiendo_paquete_personalizado(client_io);
+				log_info(log_kernel, "se conecto una nueva interfaz");
 				
 				op_code tipo_interfaz = recibir_int_del_buffer(buffer); //va a decir si es gen, stdin, etc
 				//falta iniciar nombre_interfaz
 
 				char* nombre_interfaz = recibir_string_del_buffer(buffer);
+
+				//free(buffer);
 
 				crear_interfaz(tipo_interfaz, client_io, nombre_interfaz);
 				

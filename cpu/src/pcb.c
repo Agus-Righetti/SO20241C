@@ -62,7 +62,7 @@ void enviar_pcb(int conexion, argumentos_cpu* argumentos_a_mandar){
         case IO_STDIN_READ:
 
             agregar_string_al_paquete_personalizado(paquete, argumentos_a_mandar->nombre_interfaz);
-            agregar_lista_al_paquete_personalizado(paquete, argumentos_a_mandar->direcciones_fisicas);
+            agregar_lista_al_paquete_personalizado(paquete, argumentos_a_mandar->direcciones_fisicas, sizeof(t_direccion_fisica));
             agregar_int_al_paquete_personalizado(paquete, argumentos_a_mandar->registro_tamano);
 
             break;
@@ -906,8 +906,8 @@ void instruccion_io_stdin_read(char** parte)
     char* direccion = parte[2];
 
     // Obtener la dirección lógica y el tamaño desde los registros
-    int direccion_logica = obtener_valor_registro_segun_nombre(registros, direccion);
-    int registro_tamano = obtener_valor_registro_segun_nombre(registros, parte[3]);
+    int direccion_logica = obtener_valor_registro_segun_nombre(direccion);
+    int registro_tamano = obtener_valor_registro_segun_nombre(parte[3]);
 
     t_list* direcciones_fisicas = traducir_dl_a_df_completa(direccion_logica, registro_tamano);
     
@@ -941,30 +941,20 @@ void instruccion_io_stdout_write(char **parte) // ESTE NO LO ENTIENDO PORQUE MAN
         return;
     }
 
-    if(strcmp(parte[1], "STDOUT") != 0) 
-    {
-        log_error(log_cpu, "La interfaz indicada no es STDOUT.");
-    }    
-
-    // char *interfaz = parte[1];
-    char *registro_direccion = parte[2]; // Direccion logica
-    char *registro_tamano = parte[3];
-
+    int direccion_logica = obtener_valor_registro_segun_nombre(parte[2]);
+    int tamanio = obtener_valor_registro_segun_nombre(parte[3]);
+     
     // LOG OBLIGATORIO - INSTRUCCIÓN EJECUTADA
     log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s %s", pcb_recibido->pid, parte[0], parte[1], parte[2], parte[3]);
-
-    int valor_registro = *(int*)dictionary_get(registros, registro_tamano);
-    int direccion_logica = *(int*)dictionary_get(registros, registro_direccion);
-    int direccion_fisica = traducir_direccion_logica_a_fisica(direccion_logica);     
-
+  
     argumentos_cpu* args = malloc(sizeof(argumentos_cpu));
     args->nombre_interfaz = parte[1];
-    args->registro_direccion = direccion_fisica;
-    args->registro_tamano = valor_registro;
+    args->direcciones_fisicas = traducir_dl_a_df_completa(direccion_logica , tamanio);
+    args->registro_tamano = tamanio;
 
     //pcb_recibido->program_counter++;
     pcb_recibido->registros->pc++;
-
+    
     args->proceso = pcb_recibido;
     args->operacion = IO_STDOUT_WRITE;
 
@@ -1114,12 +1104,12 @@ void instruccion_io_fs_write(char **parte)
     int registro_tamanio = *(int*)dictionary_get(registros, parte[4]); // Registro que contiene el tamaño de los datos
     int registro_puntero_archivo = *(int*)dictionary_get(registros, parte[5]); // Registro que contiene los datos a escribir
 
-    int direccion_fisica = traducir_direccion_logica_a_fisica(registro_direccion);
+    //int direccion_fisica = traducir_direccion_logica_a_fisica(registro_direccion);
 
     argumentos_cpu* args = malloc(sizeof(argumentos_cpu));
     args->nombre_interfaz = parte[1];
     args->nombre_archivo = parte[2];
-    args->registro_direccion = direccion_fisica; 
+    // args->registro_direccion = direccion_fisica; 
     args->registro_tamano = registro_tamanio;
     args->registro_puntero_archivo = registro_puntero_archivo;
     //pcb_recibido->program_counter++;
@@ -1165,12 +1155,12 @@ void instruccion_io_fs_read(char **parte)
     int registro_tamanio = *(int*)dictionary_get(registros, parte[4]); // Registro que contiene el tamaño de los datos a leer
     int registro_puntero_archivo = *(int*)dictionary_get(registros, parte[5]); // Registro donde se almacenarán los datos leídos
 
-    int direccion_fisica = traducir_direccion_logica_a_fisica(registro_direccion);
+    //int direccion_fisica = traducir_direccion_logica_a_fisica(registro_direccion);
 
     argumentos_cpu* args = malloc(sizeof(argumentos_cpu));
     args->nombre_interfaz = parte[1];
     args->nombre_archivo = parte[2];
-    args->registro_direccion = direccion_fisica;
+    // args->registro_direccion = direccion_fisica;
     args->registro_tamano = registro_tamanio;
     args->registro_puntero_archivo = registro_puntero_archivo;
     //pcb_recibido->program_counter++;

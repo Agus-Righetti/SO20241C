@@ -198,8 +198,10 @@ void atender_io(){
         switch (cod_op_io) {
             
             case IO_PIDE_LECTURA_MEMORIA:
+                
                 log_info(log_memoria, "IO me pide la lectura de un espacio de memoria");
                 buffer = recibiendo_paquete_personalizado(socket_cliente_io);
+                
                 usleep(config_memoria->retardo_respuesta *1000);
                 
                 io_pide_lectura(buffer); 
@@ -208,19 +210,26 @@ void atender_io(){
                 break;
 
             case IO_PIDE_ESCRITURA_MEMORIA:
+                
                 log_info(log_memoria, "IO me pide la escritura de un espacio de memoria");
                 buffer = recibiendo_paquete_personalizado(socket_cliente_io);
+                
                 usleep(config_memoria->retardo_respuesta *1000);
+                
                 io_pide_escritura(buffer);  
+                
                 free(buffer);
+
                 break;
 
             case -1:
+                
                 log_error(log_memoria, "IO se desconecto.");
                 control = 0; 
                 break;
 
             default:
+                
                 log_warning(log_memoria,"Operacion desconocida. No quieras meter la pata");
                 break;
         }

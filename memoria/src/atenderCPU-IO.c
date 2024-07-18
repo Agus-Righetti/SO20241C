@@ -393,10 +393,9 @@ void io_pide_lectura(t_buffer* un_buffer){
         log_error(log_memoria, "Direcciones_fisicas es null");
     }
 
-	char* valor = recibir_estructura_del_buffer(un_buffer);
 	int tamanio = recibir_int_del_buffer(un_buffer);
 
-	guardar_string_io_en_memoria(pid, direcciones_fisicas, valor, tamanio);
+	leer_string_io_en_memoria(pid , direcciones_fisicas, tamanio);
 
 }
 
@@ -409,8 +408,8 @@ void io_pide_escritura(t_buffer* un_buffer){
         log_error(log_memoria, "Direcciones_fisicas es null");
     }
 
-	char* valor = recibir_estructura_del_buffer(un_buffer);
 	int tamanio = recibir_int_del_buffer(un_buffer);
+	char* valor = recibir_string_del_buffer(un_buffer);
 
 	guardar_string_io_en_memoria(pid, direcciones_fisicas, valor, tamanio);
 

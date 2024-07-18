@@ -28,6 +28,4 @@ int io_fs_write(char* nombre_interfaz, char* nombre_archivo, t_list* registro_di
 int io_fs_read(char* nombre_interfaz, char* nombre_archivo, t_list* registro_direccion, int registro_tamano, int registro_puntero_archivo, pcb* proceso);
 
 
-
-
 #endif

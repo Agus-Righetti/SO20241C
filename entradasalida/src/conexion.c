@@ -47,7 +47,7 @@ void atender_kernel()
 
                 direcciones_fisicas = recibir_lista_del_buffer(buffer);
                 registro_tamanio = recibir_int_del_buffer(buffer);
-                ejecutar_instruccion_stdout(registro_direccion, registro_tamanio, pid);
+                ejecutar_instruccion_stdout(direcciones_fisicas, registro_tamanio, pid);
                 break;
             
             case IO_FS_CREATE: // (Interfaz, Nombre Archivo)
@@ -75,7 +75,7 @@ void atender_kernel()
                 direcciones_fisicas = recibir_lista_del_buffer(buffer);
                 registro_tamanio = recibir_int_del_buffer(buffer);
                 registro_puntero_archivo = recibir_int_del_buffer(buffer);
-                manejar_escritura_archivo(nombre_archivo,registro_direccion, registro_tamanio, registro_puntero_archivo, pid);
+                manejar_escritura_archivo(nombre_archivo, direcciones_fisicas, registro_tamanio, registro_puntero_archivo, pid);
                 break;
 
             case IO_FS_READ: // (Interfaz, Nombre Archivo, Registro Dirección, Registro Tamaño, Registro Puntero Archivo)
@@ -140,7 +140,7 @@ void atender_a_memoria()
 {
     t_buffer* buffer;
     int cod_op_io;
-    char* valor_a_mostrar
+    
     while(1)
     {
         cod_op_io = recibir_operacion(conexion_io_memoria);
@@ -149,18 +149,17 @@ void atender_a_memoria()
         switch(cod_op_io) // Segun el codigo de operación actúo 
         {   
             case IO_RECIBE_RESPUESTA_DE_ESCRITURA_DE_MEMORIA: 
+                
                 buffer = recibiendo_paquete_personalizado(conexion_io_memoria); 
                 sem_post(&sem_ok_escritura_memoria);
                 free(buffer);
+                
                 break;
+            
             case IO_RECIBE_RESPUESTA_DE_LECTURA_DE_MEMORIA: // [char*]
 
+                buffer = recibiendo_paquete_personalizado(conexion_io_memoria);
                 valor_a_mostrar = recibir_string_del_buffer(buffer);
-                
-                if(strcmp(config_io->tipo_interfaz, "STDOUT") == 0)
-                {
-                    printf("Valor leído en memoria: %s", valor_a_mostrar);
-                }
                 sem_post(&sem_ok_lectura_memoria);
                 free(buffer->stream);
                 free(buffer);

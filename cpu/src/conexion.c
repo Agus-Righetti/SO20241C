@@ -256,12 +256,6 @@ void atender_kernel()
             case MENSAJE:
                 recibir_mensaje(socket_cliente_kernel, log_cpu);
                 break;
-            // case PAQUETE:
-            //     lista = recibir_paquete(socket_cliente_kernel);
-            //     log_info(log_cpu, "Me llegaron los siguientes valores:\n");
-            //     list_iterate(lista, (void*) iterator);
-            //     list_destroy_and_destroy_elements(lista, free);
-            //     break;
             case PCB_KERNEL_A_CPU: // Execute
 
                 log_info(log_cpu, "Estoy antes de entrar a recibir_pcb()");
@@ -270,15 +264,6 @@ void atender_kernel()
 
                 log_info(log_cpu, "Estoy después de entrar a recibir_pcb()");
 
-                break;
-            case SOLICITAR_TRADUCCION:
-                log_info(log_cpu, "Recibi una solicitud de traducción de dirección lógica a física del Kernel");
-                t_buffer* buffer = recibiendo_paquete_personalizado(socket_cliente_kernel);
-                int direccion_logica = recibir_int_del_buffer(buffer);
-                int direccion_fisica = traducir_direccion_logica_a_fisica(direccion_logica);
-                enviar_direccion_fisica_a_kernel(socket_cliente_kernel, direccion_fisica);
-               // free(buffer->stream);
-                free(buffer);
                 break;
             case EXIT:
                 error_exit(EXIT);
