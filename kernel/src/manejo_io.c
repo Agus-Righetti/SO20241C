@@ -30,19 +30,24 @@ void crear_interfaz(op_code interfaz_nueva, int socket, char* nombre_interfaz)
 	queue_push(cola_interfaces_conectadas, nueva_interfaz); 
     pthread_mutex_unlock(&mutex_cola_de_interfaces);
    //log_info(log_kernel, "ya agregue la interfaz a la cola");
-    thread_args_escucha_io args_hilo = {nueva_interfaz}; // En sus args le cargo el la interfaz
+    thread_args_escucha_io* args_hilo = malloc(sizeof(thread_args_escucha_io));
+    args_hilo->interfaz = nueva_interfaz; // En sus args le cargo el la interfaz
 
 
     log_info(log_kernel, "estoy por crear los hilos");
    // pthread_t hilo_de_escucha_interfaz, hilo_de_envio_a_interfaz;
     //este hilo se quedara escuchando lo que le devuelva la interfaz y hara lo q corresponda con cada proceso q la llamo al recibirlo de nuevo, tendriamos q chequear si la interfaz devuelve un proceso u otra cosa, en cuyo caso tendriamos q sacar el proceso de otro lado para volverlo a poner en ready o lo q sea
-    pthread_create(&nueva_interfaz->hilo_de_escucha_interfaz, NULL, (void*)escucha_interfaz,(void*)&args_hilo);
-    pthread_create(&nueva_interfaz->hilo_de_envio_a_interfaz, NULL, (void*)envio_interfaz,(void*)&args_hilo);
+    pthread_create(&nueva_interfaz->hilo_de_escucha_interfaz, NULL, (void*)escucha_interfaz,(void*)args_hilo);
+    pthread_create(&nueva_interfaz->hilo_de_envio_a_interfaz, NULL, (void*)envio_interfaz,(void*)args_hilo);
+
+    free(args_hilo);
 
     log_info(log_kernel, "ya cree los hilos");
     //aca anda pero no me deja conectar mas de 1 interfaz
     // pthread_join(nueva_interfaz->hilo_de_escucha_interfaz, NULL); 
     // pthread_cancel(nueva_interfaz->hilo_de_envio_a_interfaz); 
+    pthread_detach(nueva_interfaz->hilo_de_escucha_interfaz);
+    //pthread_detach(nueva_interfaz->hilo_de_envio_a_interfaz);
 
     return;
 
@@ -52,12 +57,13 @@ void crear_interfaz(op_code interfaz_nueva, int socket, char* nombre_interfaz)
 
 void envio_interfaz(thread_args_escucha_io* args)
 {
-    log_info(log_kernel, "Estoy en envio interfaz");
+    log_info(log_kernel, "Estoy en envio interfaz, el nombre de la interfaz es: %d", args->interfaz->nombre_interfaz);
+    
+    interfaz_kernel* interfaz = malloc(sizeof(interfaz_kernel));
+    interfaz = args->interfaz;
+    argumentos_para_io* args_mandar_a_io = malloc(sizeof(argumentos_para_io));
 
-    interfaz_kernel* interfaz = args->interfaz;
-    argumentos_para_io* args_mandar_a_io;
-
-    while(interfaz->conectada)
+    while(1)
     {
         
         log_info(log_kernel, "Estoy en el while de  envio interfaz pre sem wait");
@@ -70,6 +76,9 @@ void envio_interfaz(thread_args_escucha_io* args)
         interfaz->proceso_en_interfaz = args_mandar_a_io->proceso;
         enviar_instruccion_io(interfaz->socket,args_mandar_a_io);
     }
+    //el problema es que nunca se ejecutan estos dos de abajo, vamos a tener memory leaks.
+    free(interfaz);
+    free(args_mandar_a_io);
 }
 
 void escucha_interfaz(thread_args_escucha_io* args)
@@ -77,10 +86,12 @@ void escucha_interfaz(thread_args_escucha_io* args)
     log_info(log_kernel, "estoy en escucha interfaz");
     bool interfaz_conectada = true;
     op_code cod_op;
-    interfaz_kernel* interfaz = args->interfaz;
+    interfaz_kernel* interfaz = malloc(sizeof(interfaz_kernel));
+    interfaz = args->interfaz;
     t_buffer* buffer;
+    bool conectada = true;
 
-    while(interfaz->conectada)
+    while(conectada)
     {
         //se queda esperando que la interfaz me mande algo
         cod_op = recibir_operacion(interfaz->socket); //me habla la interfaz
@@ -106,7 +117,7 @@ void escucha_interfaz(thread_args_escucha_io* args)
                 break;
             case -1://se desconecta la interfaz
 
-                interfaz->conectada = false;
+                conectada = false;
                 desconectar_interfaz(interfaz);
 
 				break;
@@ -117,6 +128,9 @@ void escucha_interfaz(thread_args_escucha_io* args)
 			    break;
 	    };
 	}
+    
+    pthread_cancel(interfaz->hilo_de_envio_a_interfaz);
+    free(interfaz);
     return;
 }
 
@@ -133,8 +147,8 @@ void desconectar_interfaz(interfaz_kernel* interfaz)
     pthread_mutex_unlock(&mutex_cola_de_interfaces);
  
  //los cambio a pthread join :P
-    pthread_join(interfaz->hilo_de_escucha_interfaz, NULL); 
-    pthread_join(interfaz->hilo_de_envio_a_interfaz,NULL); 
+    // pthread_join(interfaz->hilo_de_escucha_interfaz, NULL); 
+    // pthread_join(interfaz->hilo_de_envio_a_interfaz,NULL); 
 
     //tengo q mandar estos a procesos a ready o exit???
     queue_destroy(interfaz_aux->cola_de_espera);// faltaria hacer algo con los procesos de la cola de espera
