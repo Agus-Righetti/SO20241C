@@ -243,7 +243,35 @@ t_paquete* crear_paquete_personalizado(op_code code_op){
 
 //AYUDITA DEL CHATI------------------------------------------------------------------
 
-void agregar_lista_al_paquete_personalizado(t_paquete* paquete, t_list* lista, int size_data) {
+// void agregar_lista_al_paquete_personalizado(t_paquete* paquete, t_list* lista, int size_data) {
+//     // Serializar el tamaño de la lista
+//     if (paquete->buffer->size == 0) {
+//         paquete->buffer->stream = malloc(sizeof(int));
+//     } else {
+//         paquete->buffer->stream = realloc(paquete->buffer->stream, 
+//                                           paquete->buffer->size + sizeof(int));
+//     }
+//     memcpy(paquete->buffer->stream + paquete->buffer->size, &(lista->elements_count), sizeof(int));
+//     paquete->buffer->size += sizeof(int);
+
+//     // Serializar cada elemento de la lista
+//     t_link_element* current = lista->head;
+//     while (current != NULL) {
+//         // Redimensionar el buffer para el nuevo elemento
+//         paquete->buffer->stream = realloc(paquete->buffer->stream, 
+//                                           paquete->buffer->size + sizeof(int) + size_data);
+//         // Serializar el tamaño del elemento
+//         memcpy(paquete->buffer->stream + paquete->buffer->size, &size_data, sizeof(int));
+//         // Serializar el elemento
+//         memcpy(paquete->buffer->stream + paquete->buffer->size + sizeof(int), current->data, size_data);
+        
+//         paquete->buffer->size += sizeof(int) + size_data;
+
+//         current = current->next;
+//     }
+// }
+
+void agregar_lista_al_paquete_personalizado(t_paquete* paquete, t_list* lista, int size_data) { //hace lo mismo pero desde las commons
     // Serializar el tamaño de la lista
     if (paquete->buffer->size == 0) {
         paquete->buffer->stream = malloc(sizeof(int));
@@ -251,26 +279,38 @@ void agregar_lista_al_paquete_personalizado(t_paquete* paquete, t_list* lista, i
         paquete->buffer->stream = realloc(paquete->buffer->stream, 
                                           paquete->buffer->size + sizeof(int));
     }
-    memcpy(paquete->buffer->stream + paquete->buffer->size, &(lista->elements_count), sizeof(int));
+	int test = list_size(lista);
+    memcpy(paquete->buffer->stream + paquete->buffer->size, &test, sizeof(int));
     paquete->buffer->size += sizeof(int);
 
     // Serializar cada elemento de la lista
-    t_link_element* current = lista->head;
-    while (current != NULL) {
+    t_list_iterator* iter = list_iterator_create(lista);
+    if (iter == NULL) {
+        printf("\n[ERROR] No se pudo crear el iterador de la lista\n\n");
+        exit(EXIT_FAILURE);
+    }
+
+    while (list_iterator_has_next(iter)) {
+        void* elemento = list_iterator_next(iter);
+        if (elemento == NULL) {
+            printf("\n[ERROR] Elemento nulo encontrado durante la serialización\n\n");
+            list_iterator_destroy(iter);
+            exit(EXIT_FAILURE);
+        }
+
         // Redimensionar el buffer para el nuevo elemento
         paquete->buffer->stream = realloc(paquete->buffer->stream, 
                                           paquete->buffer->size + sizeof(int) + size_data);
         // Serializar el tamaño del elemento
         memcpy(paquete->buffer->stream + paquete->buffer->size, &size_data, sizeof(int));
         // Serializar el elemento
-        memcpy(paquete->buffer->stream + paquete->buffer->size + sizeof(int), current->data, size_data);
+        memcpy(paquete->buffer->stream + paquete->buffer->size + sizeof(int), elemento, size_data);
         
         paquete->buffer->size += sizeof(int) + size_data;
-
-        current = current->next;
     }
-}
 
+    list_iterator_destroy(iter);
+}
 
 // void agregar_lista_al_paquete_personalizado(t_paquete* paquete, t_list* lista) {
     
@@ -402,8 +442,8 @@ int recibir_int_del_buffer(t_buffer* buffer){
 
 	int nuevo_size = buffer->size - sizeof(int);
 	if(nuevo_size == 0){
-		free(buffer->stream);
 		buffer->stream = NULL;
+		free(buffer->stream);
 		buffer->size = 0;
 		return valor_a_devolver;
 	}
@@ -415,7 +455,9 @@ int recibir_int_del_buffer(t_buffer* buffer){
 	}
 	void* nuevo_buffer = malloc(nuevo_size);
 	memcpy(nuevo_buffer, buffer->stream + sizeof(int), nuevo_size);
+	printf("estoy por liberar un buffer->stream en recibir int de buffer\n");
 	free(buffer->stream);
+	printf("ya libere un buffer->stream en recibir int de buffer\n");
 	buffer->stream = nuevo_buffer;
 	buffer->size = nuevo_size;
 
@@ -501,66 +543,285 @@ void* recibir_estructura_del_buffer(t_buffer* buffer){
 	return estructura;
 }
 
-//recibimos la lista del buffer vamos a probar a vet q onda----------------------------------
 
 
-t_list* recibir_lista_del_buffer(t_buffer* buffer,int size_data) {
+// t_list* recibir_lista_del_buffer(t_buffer* buffer,int size_data) {
+//     if (buffer->size == 0) {
+//         printf("\n[ERROR] Al intentar extraer una lista de un t_buffer vacío\n\n");
+//         exit(EXIT_FAILURE);
+//     }
+
+//     if (buffer->size < 0) {
+//         printf("\n[ERROR] Esto es raro. El t_buffer contiene un size NEGATIVO \n\n");
+//         exit(EXIT_FAILURE);
+//     }
+
+//     // Recibir el tamaño de la lista
+//     int size_lista;
+//     memcpy(&size_lista, buffer->stream, size_data);
+
+//     buffer->stream += size_data;
+//     buffer->size -= size_data;
+
+//     // Crear la lista
+//     t_list* lista = malloc(sizeof(t_list));
+//     lista->head = NULL;
+//     lista->elements_count = size_lista;
+
+//     t_link_element** current = &(lista->head);
+
+//     for (int i = 0; i < size_lista; i++) {
+//         // Recibir el tamaño del elemento
+//         int size_elemento;
+//         memcpy(&size_elemento, buffer->stream, size_data);
+
+//         buffer->stream += size_data;
+//         buffer->size -= size_data;
+
+//         if (buffer->size < size_elemento) {
+//             printf("\n[ERROR_LISTA]: BUFFER CON TAMAÑO INSUFICIENTE\n\n");
+//             exit(EXIT_FAILURE);
+//         }
+
+//         // Recibir el elemento
+//         void* elemento = malloc(size_elemento);
+//         memcpy(elemento, buffer->stream, size_elemento);
+
+//         buffer->stream += size_elemento;
+//         buffer->size -= size_elemento;
+
+//         // Agregar el elemento a la lista
+//         t_link_element* nuevo_elemento = malloc(sizeof(t_link_element));
+//         nuevo_elemento->data = elemento;
+//         nuevo_elemento->next = NULL;
+
+//         *current = nuevo_elemento;
+//         current = &(nuevo_elemento->next);
+//     }
+
+//     return lista;
+// }
+
+//sugerenciadel chat
+// t_list* recibir_lista_del_buffer(t_buffer* buffer, int size_data) {
+//     if (buffer->size <= 0) {
+//         printf("\n[ERROR] Al intentar extraer una lista de un t_buffer vacío o corrupto\n\n");
+//         exit(EXIT_FAILURE);
+//     }
+
+//     // Recibir el tamaño de la lista
+//     int size_lista;
+//     if (buffer->size < size_data) {
+//         printf("\n[ERROR] BUFFER CON TAMAÑO INSUFICIENTE PARA LEER EL TAMAÑO DE LA LISTA\n\n");
+//         exit(EXIT_FAILURE);
+//     }
+//     memcpy(&size_lista, buffer->stream, size_data);
+
+//     buffer->stream += size_data;
+//     buffer->size -= size_data;
+
+//     // Crear la lista
+//     t_list* lista = malloc(sizeof(t_list));
+//     if (lista == NULL) {
+//         printf("\n[ERROR] No se pudo asignar memoria para la lista\n\n");
+//         exit(EXIT_FAILURE);
+//     }
+//     lista->head = NULL;
+//     lista->elements_count = size_lista;
+
+//     t_link_element** current = &(lista->head);
+
+//     for (int i = 0; i < size_lista; i++) {
+//         // Recibir el tamaño del elemento
+//         int size_elemento;
+//         if (buffer->size < size_data) {
+//             printf("\n[ERROR_LISTA]: BUFFER CON TAMAÑO INSUFICIENTE PARA LEER EL TAMAÑO DEL ELEMENTO\n\n");
+//             exit(EXIT_FAILURE);
+//         }
+//         memcpy(&size_elemento, buffer->stream, size_data);
+
+//         buffer->stream += size_data;
+//         buffer->size -= size_data;
+
+//         if (buffer->size < size_elemento) {
+//             printf("\n[ERROR_LISTA]: BUFFER CON TAMAÑO INSUFICIENTE PARA LEER EL ELEMENTO\n\n");
+//             exit(EXIT_FAILURE);
+//         }
+
+//         // Recibir el elemento
+//         void* elemento = malloc(size_elemento);
+//         if (elemento == NULL) {
+//             printf("\n[ERROR] No se pudo asignar memoria para el elemento\n\n");
+//             exit(EXIT_FAILURE);
+//         }
+//         memcpy(elemento, buffer->stream, size_elemento);
+
+//         buffer->stream += size_elemento;
+//         buffer->size -= size_elemento;
+
+//         // Agregar el elemento a la lista
+//         t_link_element* nuevo_elemento = malloc(sizeof(t_link_element));
+//         if (nuevo_elemento == NULL) {
+//             printf("\n[ERROR] No se pudo asignar memoria para el nuevo elemento de la lista\n\n");
+//             exit(EXIT_FAILURE);
+//         }
+//         nuevo_elemento->data = elemento;
+//         nuevo_elemento->next = NULL;
+
+//         // Verificar que 'current' sea válido antes de usarlo
+//         if (current == NULL) {
+//             printf("\n[ERROR] El puntero 'current' es NULL\n\n");
+//             exit(EXIT_FAILURE);
+//         }
+
+//         *current = nuevo_elemento;
+//         current = &(nuevo_elemento->next);
+//     }
+
+//     return lista;
+// }
+
+t_list* recibir_lista_del_buffer(t_buffer* buffer, int size_data) {
     if (buffer->size == 0) {
         printf("\n[ERROR] Al intentar extraer una lista de un t_buffer vacío\n\n");
         exit(EXIT_FAILURE);
     }
 
     if (buffer->size < 0) {
-        printf("\n[ERROR] Esto es raro. El t_buffer contiene un size NEGATIVO \n\n");
+        printf("\n[ERROR] Esto es raro. El t_buffer contiene un size NEGATIVO\n\n");
         exit(EXIT_FAILURE);
     }
 
-    // Recibir el tamaño de la lista
+    // Leer el tamaño de la lista
     int size_lista;
-    memcpy(&size_lista, buffer->stream, size_data);
-
-    buffer->stream += size_data;
-    buffer->size -= size_data;
+    if (buffer->size < sizeof(int)) {
+        printf("\n[ERROR] Buffer demasiado pequeño para leer el tamaño de la lista\n\n");
+        exit(EXIT_FAILURE);
+    }
+    memcpy(&size_lista, buffer->stream, sizeof(int));
 
     // Crear la lista
-    t_list* lista = malloc(sizeof(t_list));
-    lista->head = NULL;
-    lista->elements_count = size_lista;
+    t_list* lista = list_create();
+    if (lista == NULL) {
+        printf("\n[ERROR] No se pudo crear la lista\n\n");
+        exit(EXIT_FAILURE);
+    }
 
-    t_link_element** current = &(lista->head);
+    // Avanzar el puntero buffer->stream y ajustar buffer->size
+    void* nuevo_stream = buffer->stream + sizeof(int);
+    int nuevo_size = buffer->size - sizeof(int);
 
     for (int i = 0; i < size_lista; i++) {
-        // Recibir el tamaño del elemento
+        // Leer el tamaño del elemento
         int size_elemento;
-        memcpy(&size_elemento, buffer->stream, size_data);
+        if (nuevo_size < sizeof(int)) {
+            printf("\n[ERROR] Buffer demasiado pequeño para leer el tamaño del elemento\n\n");
+            list_destroy(lista);
+            exit(EXIT_FAILURE);
+        }
+        memcpy(&size_elemento, nuevo_stream, sizeof(int));
+        nuevo_stream += sizeof(int);
+        nuevo_size -= sizeof(int);
 
-        buffer->stream += size_data;
-        buffer->size -= size_data;
-
-        if (buffer->size < size_elemento) {
+        if (nuevo_size < size_elemento) {
             printf("\n[ERROR_LISTA]: BUFFER CON TAMAÑO INSUFICIENTE\n\n");
+            list_destroy(lista);
             exit(EXIT_FAILURE);
         }
 
-        // Recibir el elemento
+        // Leer el elemento
         void* elemento = malloc(size_elemento);
-        memcpy(elemento, buffer->stream, size_elemento);
-
-        buffer->stream += size_elemento;
-        buffer->size -= size_elemento;
+        if (elemento == NULL) {
+            printf("\n[ERROR] No se pudo alocar memoria para el elemento\n\n");
+            list_destroy(lista);
+            exit(EXIT_FAILURE);
+        }
+        memcpy(elemento, nuevo_stream, size_elemento);
+        nuevo_stream += size_elemento;
+        nuevo_size -= size_elemento;
 
         // Agregar el elemento a la lista
-        t_link_element* nuevo_elemento = malloc(sizeof(t_link_element));
-        nuevo_elemento->data = elemento;
-        nuevo_elemento->next = NULL;
-
-        *current = nuevo_elemento;
-        current = &(nuevo_elemento->next);
+        list_add(lista, elemento);
     }
 
+    // Actualizar el stream y size del buffer
+    memmove(buffer->stream, nuevo_stream, nuevo_size);
+    buffer->size = nuevo_size;
+
+    printf("La lista que recibi del buffer tiene %d elementos", list_size(lista));
     return lista;
 }
 
+//capaz esta si///////////////ESTA ERA LA ULTIMA
+
+// t_list* recibir_lista_del_buffer(t_buffer* buffer, int size_data) {
+//     if (buffer->size == 0) {
+//         printf("\n[ERROR] Al intentar extraer una lista de un t_buffer vacío\n\n");
+//         exit(EXIT_FAILURE);
+//     }
+
+//     if (buffer->size < 0) {
+//         printf("\n[ERROR] Esto es raro. El t_buffer contiene un size NEGATIVO\n\n");
+//         exit(EXIT_FAILURE);
+//     }
+
+//     // Leer el tamaño de la lista
+//     int size_lista;
+//     if (buffer->size < sizeof(int)) {
+//         printf("\n[ERROR] Buffer demasiado pequeño para leer el tamaño de la lista\n\n");
+//         exit(EXIT_FAILURE);
+//     }
+//     memcpy(&size_lista, buffer->stream, sizeof(int));
+//     buffer->stream += sizeof(int);
+//     buffer->size -= sizeof(int);
+
+//     // Crear la lista
+//     t_list* lista = list_create();
+//     if (lista == NULL) {
+//         printf("\n[ERROR] No se pudo crear la lista\n\n");
+//         exit(EXIT_FAILURE);
+//     }
+
+//     for (int i = 0; i < size_lista; i++) {
+//         // Leer el tamaño del elemento
+//         int size_elemento;
+//         if (buffer->size < sizeof(int)) {
+//             printf("\n[ERROR] Buffer demasiado pequeño para leer el tamaño del elemento\n\n");
+//             list_destroy(lista);
+//             exit(EXIT_FAILURE);
+//         }
+//         memcpy(&size_elemento, buffer->stream, sizeof(int));
+//         buffer->stream += sizeof(int);
+//         buffer->size -= sizeof(int);
+
+//         if (buffer->size < size_elemento) {
+//             printf("\n[ERROR_LISTA]: BUFFER CON TAMAÑO INSUFICIENTE\n\n");
+//             list_destroy(lista);
+//             exit(EXIT_FAILURE);
+//         }
+
+//         // Leer el elemento
+//         void* elemento = malloc(size_elemento);
+//         if (elemento == NULL) {
+//             printf("\n[ERROR] No se pudo alocar memoria para el elemento\n\n");
+//             list_destroy(lista);
+//             exit(EXIT_FAILURE);
+//         }
+//         memcpy(elemento, buffer->stream, size_elemento);
+//         buffer->stream += size_elemento;
+//         buffer->size -= size_elemento;
+
+//         // Agregar el elemento a la lista
+//         list_add(lista, elemento);
+
+
+        
+
+//     }
+
+// 	printf("La lista que recibi del buffer tiene %d elementos", list_size(lista));
+//     return lista;
+// }
 // t_list* recibir_lista_del_buffer(t_buffer* buffer) {
 //     if(buffer->size == 0){
 //         printf("\n[ERROR] Al intentar extraer una lista de un t_buffer vacio\n\n");

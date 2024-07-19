@@ -62,16 +62,18 @@ void enviar_pcb(int conexion, argumentos_cpu* argumentos_a_mandar){
         case IO_STDIN_READ:
 
             agregar_string_al_paquete_personalizado(paquete, argumentos_a_mandar->nombre_interfaz);
-            agregar_lista_al_paquete_personalizado(paquete, argumentos_a_mandar->direcciones_fisicas, sizeof(t_direccion_fisica));
             agregar_int_al_paquete_personalizado(paquete, argumentos_a_mandar->registro_tamano);
+            agregar_lista_al_paquete_personalizado(paquete, argumentos_a_mandar->direcciones_fisicas, sizeof(t_direccion_fisica));
+            
 
             break;
 
         case IO_STDOUT_WRITE:
 
             agregar_string_al_paquete_personalizado(paquete, argumentos_a_mandar->nombre_interfaz);
-            agregar_lista_al_paquete_personalizado(paquete, argumentos_a_mandar->direcciones_fisicas, sizeof(t_direccion_fisica));
             agregar_int_al_paquete_personalizado(paquete, argumentos_a_mandar->registro_tamano);
+            agregar_lista_al_paquete_personalizado(paquete, argumentos_a_mandar->direcciones_fisicas, sizeof(t_direccion_fisica));
+            
 
             break;
 
@@ -910,6 +912,15 @@ void instruccion_io_stdin_read(char** parte)
     int registro_tamano = obtener_valor_registro_segun_nombre(parte[3]);
 
     t_list* direcciones_fisicas = traducir_dl_a_df_completa(direccion_logica, registro_tamano);
+
+    t_direccion_fisica* dir_fisica;
+
+    log_info(log_cpu , "Voy a mandar %d direcciones fisicas", list_size(direcciones_fisicas));
+    for(int i = 0; i < list_size(direcciones_fisicas); i++)
+    {
+        dir_fisica = list_get(direcciones_fisicas, i);
+        log_info(log_cpu, "El marco de la direccion fisica nro %d es: %d", i, dir_fisica->nro_marco);
+    }
     
     argumentos_cpu* args = malloc(sizeof(argumentos_cpu));
     args->nombre_interfaz = parte[1];
@@ -922,8 +933,8 @@ void instruccion_io_stdin_read(char** parte)
     args->operacion = IO_STDIN_READ;
 
     log_info(log_cpu, "Nombre interfaz: %s", args->nombre_interfaz);
-    log_info(log_cpu, "Registro direccion: %d", args->registro_direccion);
     log_info(log_cpu, "Registro tamanio: %d", args->registro_tamano);
+    log_info(log_cpu, "Este es el tamano de la lista de las direcciones fisicas: %d", list_size(args->direcciones_fisicas));
 
     enviar_pcb(socket_cliente_kernel, args);
     
@@ -959,7 +970,7 @@ void instruccion_io_stdout_write(char **parte) // ESTE NO LO ENTIENDO PORQUE MAN
     args->operacion = IO_STDOUT_WRITE;
 
     log_info(log_cpu, "Nombre interfaz: %s", args->nombre_interfaz);
-    log_info(log_cpu, "Registro direccion: %d", args->registro_direccion);
+    log_info(log_cpu, "El tamanio de la lista de direcciones es: %d", list_size(args->direcciones_fisicas));
     log_info(log_cpu, "Registro tamanio: %d", args->registro_tamano);
 
     enviar_pcb(socket_cliente_kernel, args);

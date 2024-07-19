@@ -23,9 +23,10 @@ void leer_consola(t_list* direccion_fisica, int tamanio, int pid)
     t_paquete* paquete = crear_paquete_personalizado(IO_PIDE_ESCRITURA_MEMORIA); // Queremos que memoria lo guarde
 
     agregar_int_al_paquete_personalizado(paquete, pid);
-    agregar_lista_al_paquete_personalizado(paquete, direccion_fisica, sizeof(t_direccion_fisica));
     agregar_int_al_paquete_personalizado(paquete, tamanio);
     agregar_string_al_paquete_personalizado(paquete, texto);
+    agregar_lista_al_paquete_personalizado(paquete, direccion_fisica, sizeof(t_direccion_fisica));
+    
 
     enviar_paquete(paquete, conexion_io_memoria);
 

@@ -38,15 +38,23 @@ void atender_kernel()
 
             case IO_STDIN_READ: // (Interfaz, Registro Dirección, Registro Tamaño)
 
-                direcciones_fisicas = recibir_lista_del_buffer(buffer, sizeof(t_direccion_fisica));
                 registro_tamanio = recibir_int_del_buffer(buffer);
+                direcciones_fisicas = recibir_lista_del_buffer(buffer, sizeof(t_direccion_fisica));
+
+                t_direccion_fisica* dir_fisica;
+                for(int i = 0; i<list_size(direcciones_fisicas); i++)
+                {
+                    dir_fisica = list_get(direcciones_fisicas, i);
+                    log_info(log_io, "el maeco nro %d es : %d", i,dir_fisica->nro_marco);
+                }
+                
                 leer_consola(direcciones_fisicas, registro_tamanio, pid);
                 break;
 
             case IO_STDOUT_WRITE: // (Interfaz, Registro Dirección, Registro Tamaño)
 
-                direcciones_fisicas = recibir_lista_del_buffer(buffer, sizeof(t_direccion_fisica));
                 registro_tamanio = recibir_int_del_buffer(buffer);
+                direcciones_fisicas = recibir_lista_del_buffer(buffer, sizeof(t_direccion_fisica));
                 ejecutar_instruccion_stdout(direcciones_fisicas, registro_tamanio, pid);
                 break;
             
@@ -91,9 +99,12 @@ void atender_kernel()
                 exit(1);
             
             default:
-                log_error(log_io, "El codigo de operacion no es reconocido :(");
+                log_error(log_io, "El codigo de operacion no es reconocido chauchau :(");
+                exit(1);
                 break;
         }
+
+        free(buffer);
     }
 }
 
@@ -164,9 +175,14 @@ void atender_a_memoria()
                 free(buffer->stream);
                 free(buffer);
                 break;
+            case -1:
+                log_error(log_io, "Memoria se desconecto bye :P");
+                exit(1);
+                break;
             default:
                 log_error(log_io, "El codigo de operacion no es reconocido :(");
                 break;
+            
         }
     }
 

@@ -758,8 +758,14 @@ void recibir_pcb(pcb* proceso) {
                 pcb_recibido = recibir_estructura_del_buffer(buffer);
                 pcb_recibido->registros = recibir_estructura_del_buffer(buffer);
                 nombre_interfaz = recibir_string_del_buffer(buffer);
-                direcciones_fisicas = recibir_lista_del_buffer(buffer, sizeof(t_direccion_fisica));
                 registro_tamano = recibir_int_del_buffer(buffer); //FREE DE INVALID POINTER
+                direcciones_fisicas = recibir_lista_del_buffer(buffer, sizeof(t_direccion_fisica));
+                t_direccion_fisica* dir_fisica;
+                for(int i = 0; i<list_size(direcciones_fisicas); i++)
+                {
+                    dir_fisica = list_get(direcciones_fisicas, i);
+                    log_info(log_kernel, "el maeco nro %d es : %d", i,dir_fisica->nro_marco);
+                }
 
                 actualizar_pcb(proceso, pcb_recibido);
 
@@ -775,8 +781,9 @@ void recibir_pcb(pcb* proceso) {
                 pcb_recibido = recibir_estructura_del_buffer(buffer);
                 pcb_recibido->registros = recibir_estructura_del_buffer(buffer);
                 nombre_interfaz = recibir_string_del_buffer(buffer);
+                registro_tamano = recibir_int_del_buffer(buffer); //FREE DE INVALID POINTER
                 direcciones_fisicas = recibir_lista_del_buffer(buffer, sizeof(t_direccion_fisica));
-                registro_tamano = recibir_int_del_buffer(buffer);
+                
 
                 actualizar_pcb(proceso, pcb_recibido);
 
@@ -912,7 +919,7 @@ void recibir_pcb(pcb* proceso) {
             //log_info(log_kernel,"el quantum que le queda al proceso es de: %d", proceso->quantum);
         };  
     
-    free(buffer->stream); // Libero directamente el buffer, no arme paquete asi que no hace falta
+    //free(buffer->stream);
     free(buffer);
 
     sem_wait(&sem_planificacion_activa); // Si la planificación está activa, dejo que se manden procesos a execute

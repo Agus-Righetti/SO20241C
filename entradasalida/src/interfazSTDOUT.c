@@ -9,8 +9,9 @@ void ejecutar_instruccion_stdout(t_list* direccion_fisica, int tamanio, int pid)
     t_paquete* paquete = crear_paquete_personalizado(IO_PIDE_LECTURA_MEMORIA);
 
     agregar_int_al_paquete_personalizado(paquete, pid);
-    agregar_lista_al_paquete_personalizado(paquete, direccion_fisica, sizeof(t_list));
     agregar_int_al_paquete_personalizado(paquete, tamanio);
+    agregar_lista_al_paquete_personalizado(paquete, direccion_fisica, sizeof(t_list));
+    
 
     enviar_paquete(paquete, conexion_io_memoria);
 

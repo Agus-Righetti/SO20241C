@@ -189,8 +189,9 @@ void enviar_instruccion_io(int socket, argumentos_para_io* args)
         case IO_STDIN_READ:
         case IO_STDOUT_WRITE:
             //log_info(log_kernel,"entre al agregar al paquete desde STDIN Y OUT");
+            agregar_int_al_paquete_personalizado(paquete_instruccion, args->registro_tamano); 
             agregar_lista_al_paquete_personalizado(paquete_instruccion, args->direcciones_fisicas, sizeof(t_direccion_fisica));
-            agregar_int_al_paquete_personalizado(paquete_instruccion, args->registro_tamano);   
+              
             break;
         case IO_FS_CREATE:
         case IO_FS_DELETE:

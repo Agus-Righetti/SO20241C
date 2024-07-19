@@ -387,13 +387,14 @@ void cpu_pide_guardar_string(t_buffer* un_buffer){
 void io_pide_lectura(t_buffer* un_buffer, int socket){
 
 	int pid = recibir_int_del_buffer(un_buffer);
+	int tamanio = recibir_int_del_buffer(un_buffer);
 	t_list* direcciones_fisicas = recibir_lista_del_buffer(un_buffer, sizeof(t_direccion_fisica));
 
 	if(direcciones_fisicas == NULL){
         log_error(log_memoria, "Direcciones_fisicas es null");
     }
 
-	int tamanio = recibir_int_del_buffer(un_buffer);
+	
 
 	leer_string_io_en_memoria(pid , direcciones_fisicas, tamanio, socket);
 
@@ -402,14 +403,20 @@ void io_pide_lectura(t_buffer* un_buffer, int socket){
 void io_pide_escritura(t_buffer* un_buffer, int socket){
 
 	int pid = recibir_int_del_buffer(un_buffer);
+	int tamanio = recibir_int_del_buffer(un_buffer);
+	char* valor = recibir_string_del_buffer(un_buffer);
 	t_list* direcciones_fisicas = recibir_lista_del_buffer(un_buffer , sizeof(t_direccion_fisica));
+
+	t_direccion_fisica* dir_fisica;
+    for(int i = 0; i<list_size(direcciones_fisicas); i++)
+    {
+        dir_fisica = list_get(direcciones_fisicas, i);
+        log_info(log_memoria, "el maeco nro %d es : %d", i,dir_fisica->nro_marco);
+    }
 
 	if(direcciones_fisicas == NULL){
         log_error(log_memoria, "Direcciones_fisicas es null");
     }
-
-	int tamanio = recibir_int_del_buffer(un_buffer);
-	char* valor = recibir_string_del_buffer(un_buffer);
 
 	guardar_string_io_en_memoria(pid, direcciones_fisicas, valor, tamanio, socket);
 

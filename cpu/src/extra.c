@@ -65,29 +65,80 @@ t_direccion_fisica* traducir_una_dl_a_df(int numero_pagina, int desplazamiento, 
    
     t_direccion_fisica* dir_traducida = malloc(sizeof(t_direccion_fisica));
     
-    // 1ero busco en TLB
-    TLB_Entrada* respuesta = buscar(numero_pagina); 
+    if(config_cpu->cantidad_entradas_tlb > 0) // 1ero busco en TLB, solo si la tlb tiene entradas
+    {
+        TLB_Entrada* respuesta = buscar(numero_pagina); 
 
-    if(respuesta->pid != -1) {
-        // Encontro la pagina en la TLB, no hace falta que busque en memoria
+        if(respuesta->pid != -1) {
+            // Encontro la pagina en la TLB, no hace falta que busque en memoria
+            
+            // LOG OBLIGATORIO - TLB HIT
+            log_info(log_cpu, "PID: %d - TLB HIT - Pagina: %d \n \n \n", pcb_recibido->pid, numero_pagina);
+            
+            actualizar_tlb_HIT(pcb_recibido->pid, numero_pagina);
+
+            dir_traducida->nro_marco = respuesta->numero_marco;
+            dir_traducida->offset = desplazamiento;
+            dir_traducida->bytes_a_operar = bytes_operar_pag;
+
+        } else {
+            // No esta en TLB -> tiene que buscar en memoria
+            // LOG OBLIGATORIO - TLB MISS
+            log_info(log_cpu, "PID: %d - TLB MISS - Pagina: %d", pcb_recibido->pid, numero_pagina);
+
+            // Tengo el numero de pag -> hago una consulta a memoria por el marco
+            t_paquete *paquete = crear_paquete_personalizado(CPU_PIDE_MARCO_A_MEMORIA); // [PID, NUMERO DE PAGINA]
+            
+            agregar_int_al_paquete_personalizado(paquete, pcb_recibido->pid);
+            agregar_int_al_paquete_personalizado(paquete, numero_pagina);
+            enviar_paquete(paquete, socket_cliente_cpu);
+
+            log_info(log_cpu, "Esperando marco de memoria...");
+            sem_wait(&sem_tengo_el_marco);
+
+            // LOG OBLIGATORIO - OBTENER MARCO
+            log_info(log_cpu, "PID: %d - OBTENER MARCO - Página: %d - Marco: %d", pcb_recibido->pid, numero_pagina, marco);
         
-        // LOG OBLIGATORIO - TLB HIT
-        log_info(log_cpu, "PID: %d - TLB HIT - Pagina: %d \n \n \n", pcb_recibido->pid, numero_pagina);
-        
-        actualizar_tlb_HIT(pcb_recibido->pid, numero_pagina);
 
-        dir_traducida->nro_marco = respuesta->numero_marco;
-        dir_traducida->offset = desplazamiento;
-        dir_traducida->bytes_a_operar = bytes_operar_pag;
+            // log_info(log_cpu, "Ya paso el semaforo"); 
+            // log_info(log_cpu, "Me llego un marco de memoria: %d", marco);
+            // Agregarlo a la tlb
+            TLB_Entrada* nueva_entrada = malloc(sizeof(TLB_Entrada));
+            
+            
 
-    } else {
-        // No esta en TLB -> tiene que buscar en memoria
-        // LOG OBLIGATORIO - TLB MISS
-        log_info(log_cpu, "PID: %d - TLB MISS - Pagina: %d", pcb_recibido->pid, numero_pagina);
+            //log_info("El pcb_recibido->pid es %d", pcb_recibido->pid);
+            
 
-        // Tengo el numero de pag -> hago una consulta a memoria por el marco
+            
+            nueva_entrada->pid = pcb_recibido->pid;
+            nueva_entrada->numero_pagina = numero_pagina;
+            //log_info(log_cpu, "marco global es %d", marco);
+            
+            nueva_entrada->numero_marco = marco;
+            //log_info(log_cpu, "nueva_entrada->pid es %d", nueva_entrada->pid);
+
+
+            actualizar_tlb(nueva_entrada); 
+            
+            //log_info(log_cpu, "Volvi de actualizar, estoy por poner valores en dir_traducida");
+
+            dir_traducida->nro_marco = marco;
+            dir_traducida->offset = desplazamiento;
+            dir_traducida->bytes_a_operar = bytes_operar_pag;
+
+            log_info(log_cpu, "\n Direccion traducida:");
+            
+            log_info(log_cpu, "dir_traducida->nro_marco: %d", dir_traducida->nro_marco );
+            log_info(log_cpu, "dir_traducida->offset: %d", dir_traducida->offset );
+            log_info(log_cpu, "dir_traducida->bytes_a_operar: %d \n", dir_traducida->bytes_a_operar );
+
+        } 
+
+    }else { //no tengo tlb le pido a memoria directo
+
         t_paquete *paquete = crear_paquete_personalizado(CPU_PIDE_MARCO_A_MEMORIA); // [PID, NUMERO DE PAGINA]
-        
+            
         agregar_int_al_paquete_personalizado(paquete, pcb_recibido->pid);
         agregar_int_al_paquete_personalizado(paquete, numero_pagina);
         enviar_paquete(paquete, socket_cliente_cpu);
@@ -97,42 +148,21 @@ t_direccion_fisica* traducir_una_dl_a_df(int numero_pagina, int desplazamiento, 
 
         // LOG OBLIGATORIO - OBTENER MARCO
         log_info(log_cpu, "PID: %d - OBTENER MARCO - Página: %d - Marco: %d", pcb_recibido->pid, numero_pagina, marco);
-       
 
-        // log_info(log_cpu, "Ya paso el semaforo"); 
-        // log_info(log_cpu, "Me llego un marco de memoria: %d", marco);
-        // Agregarlo a la tlb
-        TLB_Entrada* nueva_entrada = malloc(sizeof(TLB_Entrada));
-        
-        // ************ FALLA ACA ************
-
-        log_info("El pcb_recibido->pid es %d", pcb_recibido->pid);
-        
-
-        
-        nueva_entrada->pid = pcb_recibido->pid;
-        nueva_entrada->numero_pagina = numero_pagina;
-        //log_info(log_cpu, "marco global es %d", marco);
-        
-        nueva_entrada->numero_marco = marco;
-        //log_info(log_cpu, "nueva_entrada->pid es %d", nueva_entrada->pid);
-
-
-        actualizar_tlb(nueva_entrada); 
-        
-        //log_info(log_cpu, "Volvi de actualizar, estoy por poner valores en dir_traducida");
-
-        dir_traducida->nro_marco = nueva_entrada->numero_marco;
+        dir_traducida->nro_marco = marco;
         dir_traducida->offset = desplazamiento;
         dir_traducida->bytes_a_operar = bytes_operar_pag;
 
         log_info(log_cpu, "\n Direccion traducida:");
-        
+            
         log_info(log_cpu, "dir_traducida->nro_marco: %d", dir_traducida->nro_marco );
         log_info(log_cpu, "dir_traducida->offset: %d", dir_traducida->offset );
         log_info(log_cpu, "dir_traducida->bytes_a_operar: %d \n", dir_traducida->bytes_a_operar );
+    }
 
-    } 
+   
+    
+    
     return dir_traducida;
 }
 
