@@ -70,7 +70,7 @@ void enviar_pcb(int conexion, argumentos_cpu* argumentos_a_mandar){
         case IO_STDOUT_WRITE:
 
             agregar_string_al_paquete_personalizado(paquete, argumentos_a_mandar->nombre_interfaz);
-            agregar_int_al_paquete_personalizado(paquete, argumentos_a_mandar->registro_direccion);
+            agregar_lista_al_paquete_personalizado(paquete, argumentos_a_mandar->direcciones_fisicas, sizeof(t_direccion_fisica));
             agregar_int_al_paquete_personalizado(paquete, argumentos_a_mandar->registro_tamano);
 
             break;
