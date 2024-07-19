@@ -15,7 +15,13 @@ int conexion_a_memoria()
     }
     
     log_info(log_io, "Conexion con el servidor MEMORIA creada");
-    enviar_mensaje("Hola MEMORIA soy IO", conexion_io_memoria);
+    //enviar_mensaje("Hola MEMORIA soy IO", conexion_io_memoria);
+
+    t_paquete* paquete = crear_paquete_personalizado(NUEVA_INTERFAZ);
+
+    enviar_paquete(paquete, conexion_io_memoria);
+
+    eliminar_paquete(paquete);
 
     return conexion_io_memoria;
 }

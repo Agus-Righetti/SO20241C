@@ -54,20 +54,35 @@ void server_para_kernel() {
 // ********* SERVER PARA RECIBIR A I/O *********  
 void server_para_io() {
     log_info(log_memoria, "Esperando a I/O...");
-    socket_cliente_io = esperar_cliente(socket_servidor_memoria, log_memoria);
+    int socket_io;
+    t_buffer* buffer;
 
-    int cod_op_io = recibir_operacion(socket_cliente_io);
-    switch (cod_op_io) {
-        case MENSAJE:
-            recibir_mensaje(socket_cliente_io, log_memoria);
-            break;
-        case -1:
-            log_error(log_memoria, "El cliente se desconecto. Terminando servidor");
-            exit(1);
-        default:
-            log_warning(log_memoria,"Operacion desconocida. No quieras meter la pata");
-            break;
+    //armo un while 1 para que se pueda conectar mas de una interfaz
+
+    while(1)
+    {
+        socket_io = esperar_cliente(socket_servidor_memoria, log_memoria);
+
+        int cod_op_io = recibir_operacion(socket_io);
+        switch (cod_op_io) {
+            case MENSAJE:
+                recibir_mensaje(socket_io, log_memoria);
+                break;
+            case NUEVA_INTERFAZ:
+                log_info(log_memoria,"Se conecto una interfaz");
+                crear_hilo_escucha_interfaz(socket_io);
+                buffer = recibiendo_paquete_personalizado(socket_io);
+                free(buffer);
+                break;
+            case -1:
+                log_error(log_memoria, "El cliente se desconecto.");
+                //exit(1);
+            default:
+                log_warning(log_memoria,"Operacion desconocida. No quieras meter la pata");
+                break;
+        }
     }
+    
 }
 
 void enviar_tam_marco_a_cpu(){
@@ -78,3 +93,73 @@ void enviar_tam_marco_a_cpu(){
 	enviar_paquete(paquete, socket_cliente_cpu);
 	eliminar_paquete(paquete);
 }
+
+void crear_hilo_escucha_interfaz(int socket_io)
+{
+    pthread_t hilo_escucha_interfaz;
+
+    pthread_create(&hilo_escucha_interfaz, NULL, (void*)escucha_interfaz,(void*)(intptr_t)socket_io);
+
+    log_info(log_memoria, "Ya cree el hilo de escucha de interfaz");
+
+    pthread_detach(hilo_escucha_interfaz);
+    return;
+}
+
+void escucha_interfaz(void* arg) //es un hilo porque asi puedo escuchar a varias interfaces
+{
+    int socket = (intptr_t)arg;
+
+    bool control = 1;
+    t_buffer* buffer;
+    int cod_op_io;
+
+    while(control){
+
+         log_info(log_memoria, "Estoy esperando q la interfaz me diga algo");
+        cod_op_io = recibir_operacion(socket);
+
+        switch (cod_op_io) {
+            
+            case IO_PIDE_LECTURA_MEMORIA:
+                
+                log_info(log_memoria, "IO me pide la lectura de un espacio de memoria");
+                buffer = recibiendo_paquete_personalizado(socket);
+                
+                usleep(config_memoria->retardo_respuesta *1000);
+                
+                io_pide_lectura(buffer, socket); 
+                
+                free(buffer);
+                break;
+
+            case IO_PIDE_ESCRITURA_MEMORIA:
+                
+                log_info(log_memoria, "IO me pide la escritura de un espacio de memoria");
+                buffer = recibiendo_paquete_personalizado(socket);
+                
+                usleep(config_memoria->retardo_respuesta *1000);
+                
+                io_pide_escritura(buffer, socket);  
+                
+                free(buffer);
+
+                break;
+
+            case -1:
+                
+                log_error(log_memoria, "Una IO se desconecto.");
+                control = 0; 
+                break;
+
+            default:
+                
+                log_warning(log_memoria,"Operacion desconocida. No quieras meter la pata");
+                break;
+        }
+    }
+
+    return ;
+}
+
+

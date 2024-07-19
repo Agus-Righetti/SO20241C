@@ -8,18 +8,22 @@ int main(int argc, char* argv[])
 
     char* nombre_log = string_new();
     char** parte = string_split(argv[1], ".");
+
     
-    // nombre_log = parte[0];
     
-    // string_append(".log", nombre_log);
+    nombre_log = parte[0];
+    
+    string_append(&nombre_log,".log");
 
     // log_io = log_create(nombre_log, "IO", 1, LOG_LEVEL_DEBUG);
+    
+    log_io = log_create(nombre_log, parte[0], 1, LOG_LEVEL_DEBUG);
 
-    log_io = log_create("io.log", "IO", 1, LOG_LEVEL_DEBUG);
-    log_info(log_io, "ya cree el log");
+    //log_info(nombre_log, "esto es nombre del log %s", nombre_log);
+
     config_io = armar_config(log_io, argv[1]); // En argv[1] esta el nombre de config pasado por parametro
 
-    log_info(log_io, "El nombre de la config es: %s", config_io->nombre);
+    //log_info(log_io, "El nombre de la config es: %s", config_io->nombre);
 
     sem_init(&sem_ok_escritura_memoria, 0, 0);
     sem_init(&sem_ok_lectura_memoria, 0, 0);
@@ -67,8 +71,9 @@ int main(int argc, char* argv[])
     return 0;
 }
 
-void terminar_programa(t_log* log_io, t_config* config_io)
+void terminar_programa(t_log* log_io, t_config* config_io, char* nombre_log)
 {
+  free(nombre_log);
   sem_destroy(&sem_ok_escritura_memoria);
   sem_destroy(&sem_ok_lectura_memoria);
     if (log_io != NULL) 

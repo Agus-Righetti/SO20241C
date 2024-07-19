@@ -53,6 +53,8 @@ int main() {
 
     // ************* ESPERO QUE IO SE CONECTE COMO CLIENTE Y CREO HILO PARA ESCUCHA ACTIVA *************
     recibir_escuchar_io();
+    
+
 
     // ********* LIBERO TODO *********
     // Despues armar funcion que haga todo

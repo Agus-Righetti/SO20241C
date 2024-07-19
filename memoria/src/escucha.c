@@ -185,56 +185,57 @@ void atender_kernel(){
     }
 }
 
-// ************* ESCUCHA ACTIVA DE IO*************
-void atender_io(){
-    bool control = 1;
-    t_buffer* buffer;
-    int cod_op_io;
+// ************* ESCUCHA ACTIVA DE IO************* //la comento porque ahora hay otra q es un hilo
+// void atender_io(){
+//     bool control = 1;
+//     t_buffer* buffer;
+//     int cod_op_io;
 
-    while(control){
+//     while(control){
         
-        cod_op_io = recibir_operacion(socket_cliente_io);
+//         cod_op_io = recibir_operacion(socket_cliente_io);
 
-        switch (cod_op_io) {
+//         switch (cod_op_io) {
             
-            case IO_PIDE_LECTURA_MEMORIA:
+//             case IO_PIDE_LECTURA_MEMORIA:
                 
-                log_info(log_memoria, "IO me pide la lectura de un espacio de memoria");
-                buffer = recibiendo_paquete_personalizado(socket_cliente_io);
+//                 log_info(log_memoria, "IO me pide la lectura de un espacio de memoria");
+//                 buffer = recibiendo_paquete_personalizado(socket_cliente_io);
                 
-                usleep(config_memoria->retardo_respuesta *1000);
+//                 usleep(config_memoria->retardo_respuesta *1000);
                 
-                io_pide_lectura(buffer); 
+//                 io_pide_lectura(buffer); 
                 
-                free(buffer);
-                break;
+//                 free(buffer);
+//                 break;
 
-            case IO_PIDE_ESCRITURA_MEMORIA:
+//             case IO_PIDE_ESCRITURA_MEMORIA:
                 
-                log_info(log_memoria, "IO me pide la escritura de un espacio de memoria");
-                buffer = recibiendo_paquete_personalizado(socket_cliente_io);
+//                 log_info(log_memoria, "IO me pide la escritura de un espacio de memoria");
+//                 buffer = recibiendo_paquete_personalizado(socket_cliente_io);
                 
-                usleep(config_memoria->retardo_respuesta *1000);
+//                 usleep(config_memoria->retardo_respuesta *1000);
                 
-                io_pide_escritura(buffer);  
+//                 io_pide_escritura(buffer);  
                 
-                free(buffer);
+//                 free(buffer);
 
-                break;
+//                 break;
 
-            case -1:
+//             case -1:
                 
-                log_error(log_memoria, "IO se desconecto.");
-                control = 0; 
-                break;
+//                 log_error(log_memoria, "IO se desconecto.");
+//                 control = 0; 
+//                 break;
 
-            default:
+//             default:
                 
-                log_warning(log_memoria,"Operacion desconocida. No quieras meter la pata");
-                break;
-        }
-    }
-}
+//                 log_warning(log_memoria,"Operacion desconocida. No quieras meter la pata");
+//                 break;
+//         }
+//     }
+// }
+
 
 
 // *************************************** CPU ***************************************
@@ -252,14 +253,14 @@ void recibir_escuchar_kernel(){
     server_para_kernel();
     pthread_t hilo_escucha_kernel;
     pthread_create(&hilo_escucha_kernel, NULL, (void*)atender_kernel, NULL);
-    pthread_join(hilo_escucha_kernel, NULL);
+    pthread_detach(hilo_escucha_kernel);
 }
 
-// *************************************** IO ***************************************
-// ************* RECIBIR IO COMO CLIENTE, CREAR HILO PARA ESCUCHA ACTIVA *************
+//*************************************** IO ***************************************
+//************* RECIBIR IO COMO CLIENTE, CREAR HILO PARA ESCUCHA ACTIVA *************
 void recibir_escuchar_io(){
-    server_para_io();
+    //server_para_io();
     pthread_t hilo_escucha_io;
-    pthread_create(&hilo_escucha_io, NULL, (void*)atender_io, NULL);
+    pthread_create(&hilo_escucha_io, NULL, (void*)server_para_io, NULL);
     pthread_join(hilo_escucha_io, NULL);
 }

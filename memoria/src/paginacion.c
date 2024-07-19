@@ -639,7 +639,7 @@ void enviar_lectura_ult_string_a_cpu(int pid, t_direccion_fisica* dir_actual, ch
 }
 
 
-void leer_string_io_en_memoria(int pid, t_list* direcciones_fisicas, int tamanio){
+void leer_string_io_en_memoria(int pid, t_list* direcciones_fisicas, int tamanio, int socket){
 
     char* valor_leido = NULL;
 
@@ -700,7 +700,7 @@ void leer_string_io_en_memoria(int pid, t_list* direcciones_fisicas, int tamanio
 
             log_info(log_memoria, "PID: %d - Accion: LEER - Direccion fisica: [%d - %d] - Tamaño %d ", pid, dir_actual->nro_marco ,dir_actual->offset, dir_actual->bytes_a_operar);
 
-            enviar_lectura_ult_string_a_io(valor_leido_reconstruido);
+            enviar_lectura_ult_string_a_io(valor_leido_reconstruido, socket);
 
         }
 
@@ -723,7 +723,7 @@ void leer_string_io_en_memoria(int pid, t_list* direcciones_fisicas, int tamanio
 // }
 
 
-void enviar_lectura_ult_string_a_io(char* valor_leido_reconstruido){
+void enviar_lectura_ult_string_a_io(char* valor_leido_reconstruido, int socket){
 
     t_paquete* paquete = crear_paquete_personalizado(IO_RECIBE_RESPUESTA_DE_LECTURA_DE_MEMORIA);
 
@@ -731,12 +731,12 @@ void enviar_lectura_ult_string_a_io(char* valor_leido_reconstruido){
 
     log_info(log_memoria, "Valor leido reconstruido: %s", valor_leido_reconstruido);
 
-	enviar_paquete(paquete, socket_cliente_io);
+	enviar_paquete(paquete, socket);
 
 	eliminar_paquete(paquete);
 }
 
-void guardar_string_io_en_memoria (int pid, t_list* direcciones_fisicas, char* valor, int tamanio){
+void guardar_string_io_en_memoria (int pid, t_list* direcciones_fisicas, char* valor, int tamanio, int socket){
     
     int cantidad_marcos_por_guardar = list_size(direcciones_fisicas);
 
@@ -759,7 +759,7 @@ void guardar_string_io_en_memoria (int pid, t_list* direcciones_fisicas, char* v
 
         log_info(log_memoria, "PID: %d - Accion: ESCRIBIR - Direccion fisica: [%d - %d] - Tamaño %d ", pid, dir_actual->nro_marco ,dir_actual->offset, dir_actual->bytes_a_operar);
 
-        enviar_ult_ok_string_escritura_cpu(pid, dir_actual, valor, valor);
+        //enviar_ult_ok_string_escritura_cpu(pid, dir_actual, valor, valor);  //esto va aunque estemos en un pedido de io?
 
     } else {
         int bytes_ya_operados = 0;
@@ -793,17 +793,18 @@ void guardar_string_io_en_memoria (int pid, t_list* direcciones_fisicas, char* v
 
             log_info(log_memoria, "PID: %d - Accion: ESCRIBIR - Direccion fisica: [%d - %d] - Tamaño %d ", pid, dir_actual->nro_marco ,dir_actual->offset, dir_actual->bytes_a_operar);
 
-            enviar_ult_ok_string_escritura_io();
+            enviar_ult_ok_string_escritura_io(socket);
         }
     }
 }
 
 
-void enviar_ult_ok_string_escritura_io(){
+void enviar_ult_ok_string_escritura_io(int socket)
+{
 
     t_paquete* paquete = crear_paquete_personalizado(IO_RECIBE_RESPUESTA_DE_ESCRITURA_DE_MEMORIA);
     // falta aca agregar el valor completo
 
-	enviar_paquete(paquete, socket_cliente_io);
+	enviar_paquete(paquete, socket);
 	eliminar_paquete(paquete);
 }

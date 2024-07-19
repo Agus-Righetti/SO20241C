@@ -10,7 +10,8 @@
 // ******* DESARROLLO DE FUNCIONES DE ESCUCHA ACTIVA PARA LOS MODULOS *********
 void atender_cpu();
 void atender_kernel();
-void atender_io();
+// void atender_io();
+
 
 // ******* HILOS PARA ESCUCHA ACTIVA *********
 void recibir_escuchar_cpu();

@@ -1,5 +1,5 @@
-#ifndef ATENDERCPU-IO_H_
-#define ATENDERCPU-IO_H_
+#ifndef ATENDERCPU_IO_H_
+#define ATENDERCPU_IO_H_
 
 #include "m_gestor.h"
 #include "paginacion.h"
@@ -17,13 +17,13 @@ void enviar_una_instruccion_a_cpu(char* instruccion);
 void cpu_pide_leer_1B(int pid, t_list* direcciones_fisicas);
 void cpu_pide_leer_4B(t_buffer* un_buffer);
 void cpu_pide_leer_string(t_buffer* un_buffer);
-void io_pide_lectura(t_buffer* un_buffer);
+void io_pide_lectura(t_buffer* un_buffer, int socket);
 
 // ***************** ESCRITURA DE MEMORIA ************
 void cpu_pide_guardar_1B(t_buffer* un_buffer);
 void cpu_pide_guardar_4B(t_buffer* un_buffer);
 void cpu_pide_guardar_string(t_buffer* un_buffer);
-void io_pide_escritura(t_buffer* un_buffer);
+void io_pide_escritura(t_buffer* un_buffer, int socket);
 
 // **************** ACCESO A TABLA DE PAG ************
 void cpu_pide_numero_de_marco(t_buffer* un_buffer);

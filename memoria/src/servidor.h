@@ -2,6 +2,8 @@
 #define SERVIDOR_H_
 
 #include "m_gestor.h"
+#include "atenderCPU-IO.h"
+
 
 // *************** DECLARACIÓN DE FUNCIONES **********
 // ********* INICIO MEMORIA COMO SERVIDOR *********
@@ -14,5 +16,10 @@ void server_para_io();
 
 // ********* APENAS ESTABLEZCO CONEXION CON CPU ENVIO TAM DE MARCOS *********
 void enviar_tam_marco_a_cpu();
+
+// ********* APENAS SE CONECTA UNA INTERFAZ ARMO UN HILO Q SE QUEDE ESCUCHANDO LO Q PIDE *********
+void crear_hilo_escucha_interfaz(int socket_io);
+void escucha_interfaz(void* arg);
+
 
 #endif

@@ -30,20 +30,23 @@ void crear_interfaz(op_code interfaz_nueva, int socket, char* nombre_interfaz)
 	queue_push(cola_interfaces_conectadas, nueva_interfaz); 
     pthread_mutex_unlock(&mutex_cola_de_interfaces);
    //log_info(log_kernel, "ya agregue la interfaz a la cola");
-    thread_args_escucha_io* args_hilo = malloc(sizeof(thread_args_escucha_io)); //agregue este malloc y su free
-    args_hilo->interfaz = nueva_interfaz; // En sus args le cargo el la interfaz
+    // thread_args_escucha_io* args_hilo = (thread_args_escucha_io*)malloc(sizeof(thread_args_escucha_io)); //agregue este malloc y su free
+    // args_hilo->interfaz = nueva_interfaz; // En sus args le cargo el la interfaz
 
 
    // pthread_t hilo_de_escucha_interfaz, hilo_de_envio_a_interfaz;
     //este hilo se quedara escuchando lo que le devuelva la interfaz y hara lo q corresponda con cada proceso q la llamo al recibirlo de nuevo, tendriamos q chequear si la interfaz devuelve un proceso u otra cosa, en cuyo caso tendriamos q sacar el proceso de otro lado para volverlo a poner en ready o lo q sea
-    pthread_create(&nueva_interfaz->hilo_de_escucha_interfaz, NULL, (void*)escucha_interfaz,(void*)args_hilo);
-    pthread_create(&nueva_interfaz->hilo_de_envio_a_interfaz, NULL, (void*)envio_interfaz,(void*)args_hilo);
+    // pthread_create(&nueva_interfaz->hilo_de_escucha_interfaz, NULL, (void*)escucha_interfaz,(void*)args_hilo);
+    // pthread_create(&nueva_interfaz->hilo_de_envio_a_interfaz, NULL, (void*)envio_interfaz,(void*)args_hilo);
+    pthread_create(&nueva_interfaz->hilo_de_escucha_interfaz, NULL, (void*)escucha_interfaz,(void*)nueva_interfaz);
+    pthread_create(&nueva_interfaz->hilo_de_envio_a_interfaz, NULL, (void*)envio_interfaz,(void*)nueva_interfaz);
 
-    free(args_hilo);
+   // free(args_hilo);
 
     
     //hago detatch para q nadie espere a q este finalice, el cancel del otro lo hago cuando termina este hilo
     pthread_detach(nueva_interfaz->hilo_de_escucha_interfaz);
+    pthread_detach(nueva_interfaz->hilo_de_envio_a_interfaz);
 
 
     return;
@@ -52,42 +55,47 @@ void crear_interfaz(op_code interfaz_nueva, int socket, char* nombre_interfaz)
 	
 }
 
-void envio_interfaz(thread_args_escucha_io* args)
+void envio_interfaz(void* args)
 {
-    
-    interfaz_kernel* interfaz; 
+    //ATENCION!! Problema a solucionar: donde pongo los malloc y los free para que no haya memory leaks
+    //asi como estan ahora los free no se ejecutan nunca
+    //thread_args_escucha_io* argumentos = (thread_args_escucha_io*) args;
+    //interfaz_kernel* interfaz; 
+    interfaz_kernel* interfaz = (interfaz_kernel*) args;
     argumentos_para_io* args_mandar_a_io;
+    //interfaz = malloc(sizeof(interfaz_kernel)); //agregue este malloc y su free
+    //interfaz = args->interfaz;
+    
 
-    while(1)
+    while(interfaz->conectada)
     {
-        
+        log_info(log_kernel, "Esto es interfaz conectada: %d", interfaz->conectada);
         sem_wait(&interfaz->sem_hay_procesos_esperando);
-        interfaz == malloc(sizeof(interfaz_kernel)); //agregue este malloc y su free
-        interfaz = args->interfaz;
-        args_mandar_a_io = malloc(sizeof(argumentos_para_io)); //agregue este malloc y su free
         sem_wait(&interfaz->sem_puedo_mandar_operacion);
         pthread_mutex_lock(&interfaz->mutex_cola);
         args_mandar_a_io = queue_pop(interfaz->cola_de_espera);
         pthread_mutex_unlock(&interfaz->mutex_cola);
         interfaz->proceso_en_interfaz = args_mandar_a_io->proceso;
         enviar_instruccion_io(interfaz->socket,args_mandar_a_io);
-        free(interfaz);
-        free(args_mandar_a_io);
+        
     }
+    
     
 }
 
-void escucha_interfaz(thread_args_escucha_io* args)
+void escucha_interfaz(void* args)
 {
     log_info(log_kernel, "estoy en escucha interfaz");
-    bool interfaz_conectada = true;
+    //thread_args_escucha_io* argumentos = (thread_args_escucha_io*) args;
+    interfaz_kernel* interfaz = (interfaz_kernel*) args;
     op_code cod_op;
-    interfaz_kernel* interfaz = malloc(sizeof(interfaz_kernel)); //agregue este malloc y su free
-    interfaz = args->interfaz;
+   // interfaz_kernel* interfaz = malloc(sizeof(interfaz_kernel)); //agregue este malloc y su free
+    //interfaz = args->interfaz;
     t_buffer* buffer;
-    bool conectada = true;
+    //bool conectada = true;
+    //interfaz->conectada = true;
 
-    while(conectada)
+    while(interfaz->conectada)
     {
         //se queda esperando que la interfaz me mande algo
         cod_op = recibir_operacion(interfaz->socket); //me habla la interfaz
@@ -109,11 +117,13 @@ void escucha_interfaz(thread_args_escucha_io* args)
                 buffer = recibiendo_paquete_personalizado(interfaz->socket);
 
                 free(buffer);
+
+                //argumentos->interfaz->conectada = false;
                 
                 break;
             case -1://se desconecta la interfaz
 
-                conectada = false;
+                interfaz->conectada = false;
                 desconectar_interfaz(interfaz);
 
 				break;
@@ -124,8 +134,8 @@ void escucha_interfaz(thread_args_escucha_io* args)
 			    break;
 	    };
 	}
-    free(interfaz);
-    pthread_cancel(interfaz->hilo_de_envio_a_interfaz);
+    //free(interfaz);
+    //pthread_join(interfaz->hilo_de_envio_a_interfaz);
     
     return;
 }
