@@ -400,12 +400,9 @@ void io_pide_lectura(t_buffer* un_buffer, int socket){
 
 }
 
-void io_pide_escritura(t_buffer* un_buffer, int socket){
+void io_pide_escritura(int socket, int pid, int tamanio, char* valor, t_list* direcciones_fisicas){
 
-	int pid = recibir_int_del_buffer(un_buffer);
-	int tamanio = recibir_int_del_buffer(un_buffer);
-	char* valor = recibir_string_del_buffer(un_buffer);
-	t_list* direcciones_fisicas = recibir_lista_del_buffer(un_buffer , sizeof(t_direccion_fisica));
+	
 
 	t_direccion_fisica* dir_fisica;
     for(int i = 0; i<list_size(direcciones_fisicas); i++)
@@ -419,6 +416,8 @@ void io_pide_escritura(t_buffer* un_buffer, int socket){
     }
 
 	guardar_string_io_en_memoria(pid, direcciones_fisicas, valor, tamanio, socket);
+
+	return;
 
 }
 

@@ -23,7 +23,7 @@ void io_pide_lectura(t_buffer* un_buffer, int socket);
 void cpu_pide_guardar_1B(t_buffer* un_buffer);
 void cpu_pide_guardar_4B(t_buffer* un_buffer);
 void cpu_pide_guardar_string(t_buffer* un_buffer);
-void io_pide_escritura(t_buffer* un_buffer, int socket);
+void io_pide_escritura( int socket, int pid, int tamanio, char* valor, t_list* direcciones_fisicas);
 
 // **************** ACCESO A TABLA DE PAG ************
 void cpu_pide_numero_de_marco(t_buffer* un_buffer);

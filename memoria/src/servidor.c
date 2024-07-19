@@ -116,7 +116,7 @@ void escucha_interfaz(void* arg) //es un hilo porque asi puedo escuchar a varias
 
     while(control){
 
-         log_info(log_memoria, "Estoy esperando q la interfaz me diga algo");
+        log_info(log_memoria, "Estoy esperando q la interfaz me diga algo");
         cod_op_io = recibir_operacion(socket);
 
         switch (cod_op_io) {
@@ -137,10 +137,15 @@ void escucha_interfaz(void* arg) //es un hilo porque asi puedo escuchar a varias
                 
                 log_info(log_memoria, "IO me pide la escritura de un espacio de memoria");
                 buffer = recibiendo_paquete_personalizado(socket);
+
+                int pid = recibir_int_del_buffer(buffer);
+	            int tamanio = recibir_int_del_buffer(buffer);
+	            char* valor = recibir_string_del_buffer(buffer);
+	            t_list* direcciones_fisicas = recibir_lista_del_buffer(buffer , sizeof(t_direccion_fisica));
                 
                 usleep(config_memoria->retardo_respuesta *1000);
                 
-                io_pide_escritura(buffer, socket);  
+                io_pide_escritura(socket, pid, tamanio, valor, direcciones_fisicas);  
                 
                 free(buffer);
 

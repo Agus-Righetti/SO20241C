@@ -442,8 +442,8 @@ int recibir_int_del_buffer(t_buffer* buffer){
 
 	int nuevo_size = buffer->size - sizeof(int);
 	if(nuevo_size == 0){
-		buffer->stream = NULL;
 		free(buffer->stream);
+		buffer->stream = NULL;
 		buffer->size = 0;
 		return valor_a_devolver;
 	}
