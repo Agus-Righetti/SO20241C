@@ -38,14 +38,14 @@ void atender_kernel()
 
             case IO_STDIN_READ: // (Interfaz, Registro Dirección, Registro Tamaño)
 
-                direcciones_fisicas = recibir_lista_del_buffer(buffer);
+                direcciones_fisicas = recibir_lista_del_buffer(buffer, sizeof(t_direccion_fisica));
                 registro_tamanio = recibir_int_del_buffer(buffer);
                 leer_consola(direcciones_fisicas, registro_tamanio, pid);
                 break;
 
             case IO_STDOUT_WRITE: // (Interfaz, Registro Dirección, Registro Tamaño)
 
-                direcciones_fisicas = recibir_lista_del_buffer(buffer);
+                direcciones_fisicas = recibir_lista_del_buffer(buffer, sizeof(t_direccion_fisica));
                 registro_tamanio = recibir_int_del_buffer(buffer);
                 ejecutar_instruccion_stdout(direcciones_fisicas, registro_tamanio, pid);
                 break;
@@ -72,7 +72,7 @@ void atender_kernel()
             case IO_FS_WRITE: // (Interfaz, Nombre Archivo, Registro Dirección, Registro Tamaño, Registro Puntero Archivo)
 
                 nombre_archivo = recibir_string_del_buffer(buffer);
-                direcciones_fisicas = recibir_lista_del_buffer(buffer);
+                direcciones_fisicas = recibir_lista_del_buffer(buffer, sizeof(t_direccion_fisica));
                 registro_tamanio = recibir_int_del_buffer(buffer);
                 registro_puntero_archivo = recibir_int_del_buffer(buffer);
                 manejar_escritura_archivo(nombre_archivo, direcciones_fisicas, registro_tamanio, registro_puntero_archivo, pid);
@@ -81,7 +81,7 @@ void atender_kernel()
             case IO_FS_READ: // (Interfaz, Nombre Archivo, Registro Dirección, Registro Tamaño, Registro Puntero Archivo)
             
                 nombre_archivo = recibir_string_del_buffer(buffer);
-                direcciones_fisicas = recibir_lista_del_buffer(buffer);
+                direcciones_fisicas = recibir_lista_del_buffer(buffer, sizeof(t_direccion_fisica));
                 registro_tamanio = recibir_int_del_buffer(buffer);
                 registro_puntero_archivo = recibir_int_del_buffer(buffer);
                 break;

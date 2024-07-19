@@ -34,7 +34,7 @@ void atender_cpu(){
                 usleep(config_memoria->retardo_respuesta *1000);
             
                 pid = recibir_int_del_buffer(buffer);
-	            direcciones_fisicas = recibir_lista_del_buffer(buffer);
+	            direcciones_fisicas = recibir_lista_del_buffer(buffer, sizeof(t_direccion_fisica));
 
 	            valor_uint_8 = recibir_uint8_del_buffer(buffer);
 
@@ -51,7 +51,7 @@ void atender_cpu(){
                 usleep(config_memoria->retardo_respuesta *1000);
                 
                 pid = recibir_int_del_buffer(buffer);
-	            direcciones_fisicas = recibir_lista_del_buffer(buffer);
+	            direcciones_fisicas = recibir_lista_del_buffer(buffer, sizeof(t_direccion_fisica));
 	            //int tamanio = recibir_int_del_buffer(un_buffer);
                 log_info(log_memoria, "ya recibi la lista del buffer");
 	            valor_uint_32 = recibir_uint32_del_buffer(buffer);
@@ -71,7 +71,7 @@ void atender_cpu(){
                 usleep(config_memoria->retardo_respuesta *1000);
 
                 pid = recibir_int_del_buffer(buffer);
-	            direcciones_fisicas = recibir_lista_del_buffer(buffer);
+	            direcciones_fisicas = recibir_lista_del_buffer(buffer, sizeof(t_direccion_fisica));
 
                 leer_uint8_en_memoria (pid, direcciones_fisicas); // Hago directamente este y listo
 
@@ -89,7 +89,7 @@ void atender_cpu(){
                 usleep(config_memoria->retardo_respuesta *1000);
 
                 pid = recibir_int_del_buffer(buffer);
-	            direcciones_fisicas = recibir_lista_del_buffer(buffer);
+	            direcciones_fisicas = recibir_lista_del_buffer(buffer, sizeof(t_direccion_fisica));
                 
                 if(direcciones_fisicas == NULL){
                     log_error(log_memoria, "Direcciones_fisicas es null");

@@ -256,6 +256,6 @@ char* recibir_string_del_buffer(t_buffer* buffer);
 void* recibir_estructura_del_buffer(t_buffer* buffer);
 uint32_t recibir_uint32_del_buffer(t_buffer* buffer);
 uint8_t recibir_uint8_del_buffer(t_buffer* buffer);
-t_list* recibir_lista_del_buffer(t_buffer* buffer);
+t_list* recibir_lista_del_buffer(t_buffer* buffer, int size_data);
 
 #endif

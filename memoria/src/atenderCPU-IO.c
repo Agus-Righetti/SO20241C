@@ -341,7 +341,7 @@ void enviar_ok_del_resize_a_cpu(){
 
 void cpu_pide_leer_string(t_buffer* un_buffer){
 	int pid = recibir_int_del_buffer(un_buffer);
-	t_list* direcciones_fisicas = recibir_lista_del_buffer(un_buffer);
+	t_list* direcciones_fisicas = recibir_lista_del_buffer(un_buffer, sizeof(t_direccion_fisica));
 
 	if(direcciones_fisicas == NULL){
         log_error(log_memoria, "Direcciones_fisicas es null");
@@ -354,7 +354,7 @@ void cpu_pide_leer_string(t_buffer* un_buffer){
 
 void cpu_pide_guardar_string(t_buffer* un_buffer){    
 	int pid = recibir_int_del_buffer(un_buffer);
-	t_list* direcciones_fisicas = recibir_lista_del_buffer(un_buffer);
+	t_list* direcciones_fisicas = recibir_lista_del_buffer(un_buffer, sizeof(t_direccion_fisica));
 
 	if(direcciones_fisicas == NULL){
         log_error(log_memoria, "Direcciones_fisicas es null");
@@ -387,7 +387,7 @@ void cpu_pide_guardar_string(t_buffer* un_buffer){
 void io_pide_lectura(t_buffer* un_buffer, int socket){
 
 	int pid = recibir_int_del_buffer(un_buffer);
-	t_list* direcciones_fisicas = recibir_lista_del_buffer(un_buffer);
+	t_list* direcciones_fisicas = recibir_lista_del_buffer(un_buffer, sizeof(t_direccion_fisica));
 
 	if(direcciones_fisicas == NULL){
         log_error(log_memoria, "Direcciones_fisicas es null");
@@ -402,7 +402,7 @@ void io_pide_lectura(t_buffer* un_buffer, int socket){
 void io_pide_escritura(t_buffer* un_buffer, int socket){
 
 	int pid = recibir_int_del_buffer(un_buffer);
-	t_list* direcciones_fisicas = recibir_lista_del_buffer(un_buffer);
+	t_list* direcciones_fisicas = recibir_lista_del_buffer(un_buffer , sizeof(t_direccion_fisica));
 
 	if(direcciones_fisicas == NULL){
         log_error(log_memoria, "Direcciones_fisicas es null");

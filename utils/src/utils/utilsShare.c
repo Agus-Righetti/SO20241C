@@ -504,7 +504,7 @@ void* recibir_estructura_del_buffer(t_buffer* buffer){
 //recibimos la lista del buffer vamos a probar a vet q onda----------------------------------
 
 
-t_list* recibir_lista_del_buffer(t_buffer* buffer) {
+t_list* recibir_lista_del_buffer(t_buffer* buffer,int size_data) {
     if (buffer->size == 0) {
         printf("\n[ERROR] Al intentar extraer una lista de un t_buffer vacío\n\n");
         exit(EXIT_FAILURE);
@@ -517,10 +517,10 @@ t_list* recibir_lista_del_buffer(t_buffer* buffer) {
 
     // Recibir el tamaño de la lista
     int size_lista;
-    memcpy(&size_lista, buffer->stream, sizeof(int));
+    memcpy(&size_lista, buffer->stream, size_data);
 
-    buffer->stream += sizeof(int);
-    buffer->size -= sizeof(int);
+    buffer->stream += size_data;
+    buffer->size -= size_data;
 
     // Crear la lista
     t_list* lista = malloc(sizeof(t_list));
@@ -532,10 +532,10 @@ t_list* recibir_lista_del_buffer(t_buffer* buffer) {
     for (int i = 0; i < size_lista; i++) {
         // Recibir el tamaño del elemento
         int size_elemento;
-        memcpy(&size_elemento, buffer->stream, sizeof(int));
+        memcpy(&size_elemento, buffer->stream, size_data);
 
-        buffer->stream += sizeof(int);
-        buffer->size -= sizeof(int);
+        buffer->stream += size_data;
+        buffer->size -= size_data;
 
         if (buffer->size < size_elemento) {
             printf("\n[ERROR_LISTA]: BUFFER CON TAMAÑO INSUFICIENTE\n\n");

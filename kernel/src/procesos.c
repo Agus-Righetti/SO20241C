@@ -758,8 +758,8 @@ void recibir_pcb(pcb* proceso) {
                 pcb_recibido = recibir_estructura_del_buffer(buffer);
                 pcb_recibido->registros = recibir_estructura_del_buffer(buffer);
                 nombre_interfaz = recibir_string_del_buffer(buffer);
-                direcciones_fisicas = recibir_lista_del_buffer(buffer);
-                registro_tamano = recibir_int_del_buffer(buffer); //INVALID POINTER
+                direcciones_fisicas = recibir_lista_del_buffer(buffer, sizeof(t_direccion_fisica));
+                registro_tamano = recibir_int_del_buffer(buffer); //FREE DE INVALID POINTER
 
                 actualizar_pcb(proceso, pcb_recibido);
 
@@ -775,7 +775,7 @@ void recibir_pcb(pcb* proceso) {
                 pcb_recibido = recibir_estructura_del_buffer(buffer);
                 pcb_recibido->registros = recibir_estructura_del_buffer(buffer);
                 nombre_interfaz = recibir_string_del_buffer(buffer);
-                direcciones_fisicas = recibir_lista_del_buffer(buffer);
+                direcciones_fisicas = recibir_lista_del_buffer(buffer, sizeof(t_direccion_fisica));
                 registro_tamano = recibir_int_del_buffer(buffer);
 
                 actualizar_pcb(proceso, pcb_recibido);
@@ -844,7 +844,7 @@ void recibir_pcb(pcb* proceso) {
                 pcb_recibido->registros = recibir_estructura_del_buffer(buffer);
                 nombre_interfaz = recibir_string_del_buffer(buffer);
                 nombre_archivo = recibir_string_del_buffer(buffer);
-                direcciones_fisicas = recibir_lista_del_buffer(buffer);
+                direcciones_fisicas = recibir_lista_del_buffer(buffer, sizeof(t_direccion_fisica));
                 registro_tamano = recibir_int_del_buffer(buffer);
                 registro_puntero_archivo = recibir_int_del_buffer(buffer);
 
@@ -864,7 +864,7 @@ void recibir_pcb(pcb* proceso) {
                 pcb_recibido->registros = recibir_estructura_del_buffer(buffer);
                 nombre_interfaz = recibir_string_del_buffer(buffer);
                 nombre_archivo = recibir_string_del_buffer(buffer);
-                direcciones_fisicas = recibir_lista_del_buffer(buffer);
+                direcciones_fisicas = recibir_lista_del_buffer(buffer, sizeof(t_direccion_fisica));
                 registro_tamano = recibir_int_del_buffer(buffer);
                 registro_puntero_archivo = recibir_int_del_buffer(buffer);
 
