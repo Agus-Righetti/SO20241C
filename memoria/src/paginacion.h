@@ -28,11 +28,11 @@ void enviar_ok_1B_escritura_cpu(int pid, t_direccion_fisica* dir_actual, uint8_t
 
 void guardar_string_en_memoria (int pid, t_list* direcciones_fisicas, char* valor, int tamanio);
 void enviar_ok_string_escritura_cpu(int pid, t_direccion_fisica* dir_actual, char* valor);
-void enviar_ult_ok_string_escritura_cpu(int pid, t_direccion_fisica* dir_actual, char* valor, char* valor_completo);
+void enviar_ult_ok_string_escritura_cpu(int pid, t_direccion_fisica* dir_actual, char* valor); //char* valor_completo);
 
 void leer_string_en_memoria (int pid, t_list* direcciones_fisicas, int tamanio);
 void enviar_lectura_string_a_cpu(int pid, t_direccion_fisica* dir_actual, char* valor);
-void enviar_lectura_ult_string_a_cpu(int pid, t_direccion_fisica* dir_actual, char* valor, char* valor_leido_reconstruido);
+void enviar_lectura_ult_string_a_cpu(int pid, t_direccion_fisica* dir_actual, char* valor);
 
 void guardar_string_io_en_memoria (int pid, t_list* direcciones_fisicas, char* valor, int tamanio, int socket);
 void enviar_ult_ok_string_escritura_io(int socket);

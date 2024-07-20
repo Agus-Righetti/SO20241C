@@ -191,9 +191,9 @@ void atender_memoria() {
                 pid = recibir_int_del_buffer(buffer); // Lo mismo, creo que no hace falta
                 dir_fisica = recibir_estructura_del_buffer(buffer);
                 string_leido = recibir_string_del_buffer(buffer);
-                string_leido_reconstruido = recibir_string_del_buffer(buffer);
+            
                 log_info(log_cpu, "PID: %d - Accion: LEER - Direccion fisica: [%d - %d] - Valor: %s ", pid, dir_fisica->nro_marco ,dir_fisica->offset, string_leido);
-                log_info(log_cpu, "ACCIÓN COMPLETADA: LEER %s EN MEMORIA", string_leido_reconstruido);
+                //log_info(log_cpu, "ACCIÓN COMPLETADA: LEER %s EN MEMORIA", string_leido_reconstruido);
                     
                 free(buffer);
 

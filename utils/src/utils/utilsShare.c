@@ -368,6 +368,7 @@ void agregar_uint32_al_paquete_personalizado(t_paquete* paquete, uint32_t valor)
 	paquete->buffer->size += sizeof(uint32_t);
 }
 
+
 void agregar_uint8_al_paquete_personalizado(t_paquete* paquete, uint8_t valor){
 	if(paquete->buffer->size == 0){
 		paquete->buffer->stream = malloc(sizeof(uint8_t));
@@ -898,6 +899,7 @@ t_list* recibir_lista_del_buffer(t_buffer* buffer, int size_data) {
 
 //     return lista;
 // }
+
 uint32_t recibir_uint32_del_buffer(t_buffer* buffer){
 	if(buffer->size == 0){
 		printf("\n[ERROR] Al intentar extraer un INT de un t_buffer vacio\n\n");
@@ -933,6 +935,7 @@ uint32_t recibir_uint32_del_buffer(t_buffer* buffer){
 
 	return valor_a_devolver;
 }
+
 
 uint8_t recibir_uint8_del_buffer(t_buffer* buffer){
 	if(buffer->size == 0){

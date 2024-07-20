@@ -55,14 +55,14 @@ void paginar_memoria(){
     
 
     // Seteo todo el bitmap en 0, para marcar que están todas libres
-    // for (int i = 0; i < cant_marcos; i++) {
-    //     bitarray_clean_bit(bitmap_marcos, i);
+    for (int i = 0; i < cant_marcos; i++) {
+        bitarray_clean_bit(bitmap_marcos, i);
 
     //     // Armo una lista auxiliar con todos los frames libres
 	// 	t_frame* frame_libre = malloc(sizeof(t_frame));
     //     frame_libre->id = i;
     //     list_add(marcos_libres, frame_libre);
-    // } 
+     } 
 
         // Lo de abajo puesto para testear que funcione
         // bool a = bitarray_test_bit(bitmap_marcos, i);
