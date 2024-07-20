@@ -47,7 +47,7 @@ void atender_kernel()
                     dir_fisica = list_get(direcciones_fisicas, i);
                     log_info(log_io, "el maeco nro %d es : %d", i,dir_fisica->nro_marco);
                 }
-                
+                log_info(log_io, "el tamanio de la lista de direcciones fisicas es: %d", list_size(direcciones_fisicas));
                 leer_consola(direcciones_fisicas, registro_tamanio, pid);
                 break;
 
