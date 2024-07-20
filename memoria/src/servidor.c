@@ -113,6 +113,10 @@ void escucha_interfaz(void* arg) //es un hilo porque asi puedo escuchar a varias
     bool control = 1;
     t_buffer* buffer;
     int cod_op_io;
+    int pid;
+    int tamanio;
+    char* valor;
+    t_list* direcciones_fisicas;
 
     while(control){
 
@@ -125,10 +129,14 @@ void escucha_interfaz(void* arg) //es un hilo porque asi puedo escuchar a varias
                 
                 log_info(log_memoria, "IO me pide la lectura de un espacio de memoria");
                 buffer = recibiendo_paquete_personalizado(socket);
+                pid = recibir_int_del_buffer(buffer);
+	            tamanio = recibir_int_del_buffer(buffer);
+                direcciones_fisicas = recibir_lista_del_buffer(buffer , sizeof(t_direccion_fisica));
                 
                 usleep(config_memoria->retardo_respuesta *1000);
+
                 
-                io_pide_lectura(buffer, socket); 
+                io_pide_lectura(socket,pid, tamanio, direcciones_fisicas); 
                 
                 free(buffer);
                 break;
@@ -138,11 +146,17 @@ void escucha_interfaz(void* arg) //es un hilo porque asi puedo escuchar a varias
                 log_info(log_memoria, "IO me pide la escritura de un espacio de memoria");
                 buffer = recibiendo_paquete_personalizado(socket);
 
-                int pid = recibir_int_del_buffer(buffer);
-	            int tamanio = recibir_int_del_buffer(buffer);
-	            char* valor = recibir_string_del_buffer(buffer);
-	            t_list* direcciones_fisicas = recibir_lista_del_buffer(buffer , sizeof(t_direccion_fisica));
-                
+                pid = recibir_int_del_buffer(buffer);
+	            tamanio = recibir_int_del_buffer(buffer);
+                valor = recibir_string_del_buffer(buffer);
+                direcciones_fisicas = recibir_lista_del_buffer(buffer , sizeof(t_direccion_fisica));
+                t_direccion_fisica* dir;
+                for(int i = 0; i < list_size(direcciones_fisicas); i++)
+                {
+                    dir = list_get(direcciones_fisicas, i);
+                    log_info(log_memoria, "marco q recibi de io %d", dir->nro_marco);
+                    //free(dir);
+                }
                 usleep(config_memoria->retardo_respuesta *1000);
                 
                 io_pide_escritura(socket, pid, tamanio, valor, direcciones_fisicas);  

@@ -670,7 +670,7 @@ void leer_string_io_en_memoria(int pid, t_list *direcciones_fisicas, int tamanio
             dir_actual = list_get(direcciones_fisicas, indice_dir);
 
             pthread_mutex_lock(&mutex_espacio_usuario);
-
+            //SEGM FAULT ACA-----------------------------
             memcpy(valor_leido + bytes_ya_operados, espacio_usuario + despl_esp_usuario, dir_actual->bytes_a_operar);
             memcpy((char *)&valor_leido, espacio_usuario + despl_esp_usuario, dir_actual->bytes_a_operar);
             memcpy((char *)&valor_leido_reconstruido + bytes_ya_operados, espacio_usuario + despl_esp_usuario, dir_actual->bytes_a_operar);
@@ -689,6 +689,7 @@ void leer_string_io_en_memoria(int pid, t_list *direcciones_fisicas, int tamanio
 
             dir_actual = list_get(direcciones_fisicas, indice_dir);
             pthread_mutex_lock(&mutex_espacio_usuario);
+            //SEGM FAULT ACA_---------------------------------------
             memcpy(valor_leido + bytes_ya_operados, espacio_usuario + despl_esp_usuario, dir_actual->bytes_a_operar);
             memcpy((char)&valor_leido, espacio_usuario + despl_esp_usuario, dir_actual->bytes_a_operar);
             memcpy((char)&valor_leido_reconstruido + bytes_ya_operados, espacio_usuario + despl_esp_usuario, dir_actual->bytes_a_operar);

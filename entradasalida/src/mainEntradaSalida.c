@@ -23,6 +23,9 @@ int main(int argc, char* argv[])
 
     config_io = armar_config(log_io, argv[1]); // En argv[1] esta el nombre de config pasado por parametro
 
+    if(strcmp(config_io->tipo_interfaz , "DIALFS") == 0){
+      crear_archivos_gestion_fs();
+    }
     //log_info(log_io, "El nombre de la config es: %s", config_io->nombre);
 
     sem_init(&sem_ok_escritura_memoria, 0, 0);

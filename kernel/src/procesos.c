@@ -797,12 +797,22 @@ void recibir_pcb(pcb* proceso) {
                 buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
                 //fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
                 pcb_recibido = recibir_estructura_del_buffer(buffer);
+
+                log_info(log_kernel, "Recibí un proceso con el PID: <%d>", pcb_recibido->pid);
+
                 pcb_recibido->registros = recibir_estructura_del_buffer(buffer);
                 nombre_interfaz = recibir_string_del_buffer(buffer);
+
+                log_info(log_kernel, "Recibí nombre de interfaz: <%s>", nombre_interfaz);
+
                 nombre_archivo = recibir_string_del_buffer(buffer);
+
+                log_info(log_kernel, "Recibí nombre_archivo: <%s>", nombre_archivo);
 
                 actualizar_pcb(proceso, pcb_recibido);
 
+                log_info(log_kernel, "Recibí todo del CREATE");
+                
                 flag_estado = io_fs_create(nombre_interfaz, nombre_archivo, proceso);
 
                 break;

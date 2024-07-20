@@ -384,17 +384,22 @@ void cpu_pide_guardar_string(t_buffer* un_buffer){
 // Esta instrucción solicita al Kernel que mediante la interfaz seleccionada, se lea desde el archivo a partir del valor del Registro Puntero Archivo la cantidad de bytes indicada por Registro Tamaño y se escriban en la Memoria a partir de la dirección lógica indicada en el Registro Dirección.
 // necesita -> guardar string en memoria
 
-void io_pide_lectura(t_buffer* un_buffer, int socket){
+void io_pide_lectura(int socket, int pid, int tamanio, t_list* direcciones_fisicas){
 
-	int pid = recibir_int_del_buffer(un_buffer);
-	t_list* direcciones_fisicas = recibir_lista_del_buffer(un_buffer, sizeof(t_direccion_fisica));
-	int tamanio = recibir_int_del_buffer(un_buffer);
+	// pid = recibir_int_del_buffer(un_buffer);
+	// direcciones_fisicas = recibir_lista_del_buffer(un_buffer, sizeof(t_direccion_fisica));
+	// tamanio = recibir_int_del_buffer(un_buffer);
+	
+	t_direccion_fisica* dir_fisica;
+    for(int i = 0; i<list_size(direcciones_fisicas); i++)
+    {
+        dir_fisica = list_get(direcciones_fisicas, i);
+        log_info(log_memoria, "el maeco nro %d es : %d", i,dir_fisica->nro_marco);
+    }
 
 	if(direcciones_fisicas == NULL){
         log_error(log_memoria, "Direcciones_fisicas es null");
     }
-
-	
 
 	leer_string_io_en_memoria(pid , direcciones_fisicas, tamanio, socket);
 

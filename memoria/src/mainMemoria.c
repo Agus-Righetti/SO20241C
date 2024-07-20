@@ -15,14 +15,14 @@ int main() {
 
     // ********* INICIALIZO MEMORIA COMO SERVIDOR *********
     inicializar_servidor();
-    char* mi_string = "H";
+    // char* mi_string = "H";
 
-    // Determinar el tamaño del string incluyendo el carácter nulo
-    size_t string_length = strlen(mi_string) + 1;
+    // // Determinar el tamaño del string incluyendo el carácter nulo
+    // size_t string_length = strlen(mi_string) + 1;
 
-    pthread_mutex_lock(&mutex_espacio_usuario);
-    memcpy(espacio_usuario, mi_string, string_length);  
-    pthread_mutex_unlock(&mutex_espacio_usuario);
+    // pthread_mutex_lock(&mutex_espacio_usuario);
+    // memcpy(espacio_usuario, mi_string, string_length);  
+    // pthread_mutex_unlock(&mutex_espacio_usuario);
 
     // ************* ESPERO QUE CPU SE CONECTE COMO CLIENTE Y CREO HILO PARA ESCUCHA ACTIVA *************
     recibir_escuchar_cpu();

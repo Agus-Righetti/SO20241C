@@ -3,6 +3,7 @@
 // IO_FS_CREATE -> Para crear un archivo
 void manejar_creacion_archivo(char* nombre_archivo, int pid) 
 {
+    log_info(log_io, "Entré a CREATE");
     //hago un usleep para lo q tarda
     usleep(config_io->tiempo_unidad_trabajo * 1000);
     FILE* bitmap_file = fopen("bitmap.dat", "rb"); // Abro el "bitmap.dat"
@@ -27,13 +28,27 @@ void manejar_creacion_archivo(char* nombre_archivo, int pid)
     free(bitmap_buffer);
     
     // Armamos la metadata del archivo -------------------------------------
+    //hay q sacarle al archivo el .txt, ahora se llama archivo1.txt
 
-    strcat(nombre_archivo, ".config");
+    char** parte = string_split(nombre_archivo, ".");
+    
+    nombre_archivo = parte[0];
+    
+    string_append(&nombre_archivo,".config");
 
     char *config_file_path = nombre_archivo;
 
+    log_info(log_io, "el nombre del config q voy a crear para el archivo es: %s", config_file_path);
+
     // Crear la configuración desde el archivo
+    //Tenemos q armar el archivo primero
+
+    FILE* archivo_config = fopen(config_file_path, "w");
+    
+    fclose(archivo_config);
+    
     t_config *config = config_create(config_file_path);
+    
     if (config == NULL) 
     {
         fprintf(stderr, "Error: No se pudo cargar el archivo de configuración %s\n", config_file_path);
@@ -53,6 +68,8 @@ void manejar_creacion_archivo(char* nombre_archivo, int pid)
     // Liberar memoria utilizada por la configuración
     config_destroy(config);
 
+    log_info(log_io, "Ya creé el archivo");
+    
     avisar_fin_io_a_kernel();
     
     return;
@@ -107,9 +124,12 @@ void manejar_eliminacion_archivo(char* nombre_archivo, int pid)
 // IO_TRUNCATE
 void manejar_truncado_archivo(char* nombre_archivo, int nuevo_tamanio, int pid)
 {
+    log_info(log_io,"Entre a truncar archivo");
     usleep(config_io->tiempo_unidad_trabajo * 1000);
     
     strcat(nombre_archivo, ".config");
+
+    //log_info(log_io,"este es el nombre");
 
     char *config_file_path = nombre_archivo;
 
@@ -287,8 +307,15 @@ void crear_archivos_gestion_fs()
 {
     // CREO Y DEFINO EL TAMAÑO DEL ARCHIVO bloques.dat
 
+    log_info(log_io, "Entré a CREAR ARCHIVOS DE GESTIÓN");
+
     FILE* bloques_dat = fopen("bloques.dat", "wb");
 
+    log_info(log_io,"ya abri el bloques.dat");
+
+    log_info(log_io, "El block size es: %d", config_io->block_size);
+    log_info(log_io, "El block count es: %d", config_io->block_count);
+    
     if (bloques_dat == NULL) 
     {
         perror("Error al abrir el archivo");
@@ -296,6 +323,8 @@ void crear_archivos_gestion_fs()
     }
 
     int tamanio = config_io->block_size * config_io->block_count;
+
+    log_info(log_io, "Creé el tamaño: %d", tamanio);
 
     // Mueve el puntero al final del archivo para definir su tamaño
     if (fseek(bloques_dat, tamanio - 1, SEEK_SET) != 0) 
@@ -308,7 +337,11 @@ void crear_archivos_gestion_fs()
     // Escribe un byte en la última posición para establecer el tamaño
     fputc('\0', bloques_dat);
 
+    log_info(log_io,"estableci el final del archivo");
+
     fclose(bloques_dat);
+
+    log_info(log_io, "Ya cerré bloques_dat");
 
     // CREO EL ARCHIVO CON EL BITMAP --------------------------------------------------------
 
@@ -319,12 +352,15 @@ void crear_archivos_gestion_fs()
         perror("Error al abrir bitmap.dat");
         return;
     }
-
-    // 1. Calcular el tamaño del bitmap en bytes
+    
+    log_info(log_io,"estoy por crear el bitmap");
+    
     size_t bitmap_size_bytes = (config_io->block_count + 7) / 8;  // 1 bit por bloque
 
-    // 2. Reservar memoria para el bitmap en un buffer
+    
     char* bitmap_buffer = (char*)malloc(bitmap_size_bytes);
+
+    log_info(log_io,"arme el bitmap buffer");
 
     if (bitmap_buffer == NULL) 
     {
@@ -333,15 +369,16 @@ void crear_archivos_gestion_fs()
         return;
     }
 
-    // 3. Inicializar el bitmap en 0 (todos los bloques libres)
+    
     memset(bitmap_buffer, 0, bitmap_size_bytes);
     t_bitarray* bitmap = bitarray_create_with_mode(bitmap_buffer, bitmap_size_bytes, LSB_FIRST);
     
-    // 4. Escribir el bitmap inicializado de vuelta al archivo
+    log_info(log_io,"cree el bitarray");
     fseek(bitmap_file, 0, SEEK_SET);  // Mueve el puntero al inicio del archivo
     fwrite(bitmap_buffer, sizeof(char), bitmap_size_bytes, bitmap_file);
 
-    // 5. Crear el bitarray utilizando la función proporcionada
+    log_info(log_io, "Acabo de escribir sobre el bitmap");
+   
     if (bitmap == NULL) 
     {
         fprintf(stderr, "Error al crear el bitmap\n");
@@ -352,16 +389,22 @@ void crear_archivos_gestion_fs()
 
     free(bitmap_buffer);
     fclose(bitmap_file);
+    
+    log_info(log_io, "Cierro el bitmap");
+
     bitarray_destroy(bitmap);
+    
+    log_info(log_io,"Supuestamente ya cree los archivos de gestion");
     
     // bitarray_set_bit(bitmap, 0);  // Por ejemplo, establece el primer bloque como ocupado
     // bitarray_set_bit(bitmap, 1);  // Y el segundo bloque como ocupado
     // bitarray_clean_bit(bitmap, 0) // Pone el bit número 0 libre
+    return;
 }
 
 char* pasar_a_string(int valor)
 {
-    static char buffer[20]; // Asegúrate de que el tamaño sea suficiente
+    static char buffer[20]; 
     snprintf(buffer, sizeof(buffer), "%d", valor);
     return buffer;
 }
@@ -538,9 +581,9 @@ void compactar(t_bitarray* bitmap)
         
     }
     
-    //falta copiar la info en el archivo bloques.dat
+    
 
-    actualizar_archivo_bloques(buffer);
+    actualizar_archivo_bloques(buffer);//copio lo del buffer en el archivo de bloques.dat
     free(metadata);
 }
 

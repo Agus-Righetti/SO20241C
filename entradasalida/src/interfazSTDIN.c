@@ -7,7 +7,7 @@ void leer_consola(t_list* direccion_fisica, int tamanio, int pid)
     log_info(log_io, "PID: %d - Operacion: STDIN", pid);
 
     char *leido;
-    char *texto;
+    char *texto = malloc(sizeof(char)*(tamanio+1));
     
     // Lee toda la entrada de la consola
     leido = readline("Ingrese el texto: > ");
@@ -27,10 +27,24 @@ void leer_consola(t_list* direccion_fisica, int tamanio, int pid)
     agregar_string_al_paquete_personalizado(paquete, texto);
     agregar_lista_al_paquete_personalizado(paquete, direccion_fisica, sizeof(t_direccion_fisica));
     
+    
 
     enviar_paquete(paquete, conexion_io_memoria);
 
     eliminar_paquete(paquete);
+
+    free(texto);
+
+    t_direccion_fisica* dir;
+
+    for(int i = 0; i < list_size(direccion_fisica); i++)
+    {
+        dir = list_get(direccion_fisica, i);
+        log_info(log_io, "marco q madne a memoria: %d", dir->nro_marco);
+        free(dir);
+    }
+
+    list_destroy(direccion_fisica);
 
     sem_wait(&sem_ok_escritura_memoria);
 

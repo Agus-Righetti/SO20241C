@@ -69,14 +69,17 @@ void envio_interfaz(void* args)
 
     while(interfaz->conectada)
     {
-        log_info(log_kernel, "Esto es interfaz conectada: %d", interfaz->conectada);
+        //log_info(log_kernel, "Esto es interfaz conectada: %d", interfaz->conectada);
         sem_wait(&interfaz->sem_hay_procesos_esperando);
+        log_info(log_kernel, "pase el semaforo de q hay procesos esperando");
         sem_wait(&interfaz->sem_puedo_mandar_operacion);
+        log_info(log_kernel, "pase el semaforo de q puedo madnar una operacion");
         pthread_mutex_lock(&interfaz->mutex_cola);
         args_mandar_a_io = queue_pop(interfaz->cola_de_espera);
         pthread_mutex_unlock(&interfaz->mutex_cola);
         interfaz->proceso_en_interfaz = args_mandar_a_io->proceso;
-        enviar_instruccion_io(interfaz->socket,args_mandar_a_io);
+
+        enviar_instruccion_io(interfaz->socket, args_mandar_a_io);
         
     }
     
@@ -142,6 +145,7 @@ void escucha_interfaz(void* args)
 
 void desconectar_interfaz(interfaz_kernel* interfaz)
 {
+    log_info(log_kernel, "entre a desconectar interfaz");
     interfaz_kernel* interfaz_aux;
     pthread_mutex_lock(&mutex_cola_de_interfaces);
     interfaz_aux = queue_pop(cola_interfaces_conectadas);
@@ -165,7 +169,7 @@ void desconectar_interfaz(interfaz_kernel* interfaz)
     sem_destroy(&interfaz_aux->sem_hay_procesos_esperando);
     pthread_mutex_destroy(&interfaz_aux->mutex_cola);
 
-   log_info(log_kernel, "Interfaz %s desconectada", interfaz_aux->nombre_interfaz);
+    log_info(log_kernel, "Interfaz %s desconectada", interfaz_aux->nombre_interfaz);
 
     free(interfaz_aux);
     return;
@@ -173,12 +177,14 @@ void desconectar_interfaz(interfaz_kernel* interfaz)
 
 void enviar_instruccion_io(int socket, argumentos_para_io* args)
 {
+    log_info(log_kernel, "estoy en envio instruccion io");
+    log_info(log_kernel, "el arg->operacion es: %d", args->operacion);
     t_paquete* paquete_instruccion = crear_paquete_personalizado(args->operacion); // Creo un paquete personalizado con un codop para que IO reconozca lo que le estoy mandando
+    log_info(log_kernel, "ya cree paquete personalizado");
+    t_direccion_fisica* dir;
+    log_info(log_kernel, "El pid del proceso que estoy por meter al paquete es: %d", args->proceso->pid);
     
     agregar_int_al_paquete_personalizado(paquete_instruccion, args->proceso->pid); //le mando el pid del proceso
-    
-    //log_info(log_kernel, "el codop fuera del switch es %d", args->operacion);
-    //log_info(log_kernel, "el numero que tiene IO_GEN_SLEEP es: %d", IO_GEN_SLEEP);
     
     switch (args->operacion)
     {
@@ -191,7 +197,16 @@ void enviar_instruccion_io(int socket, argumentos_para_io* args)
             //log_info(log_kernel,"entre al agregar al paquete desde STDIN Y OUT");
             agregar_int_al_paquete_personalizado(paquete_instruccion, args->registro_tamano); 
             agregar_lista_al_paquete_personalizado(paquete_instruccion, args->direcciones_fisicas, sizeof(t_direccion_fisica));
-              
+            
+            //libero memoria
+            for(int i = 0; i < list_size(args->direcciones_fisicas); i++)
+            {   
+                dir = list_get(args->direcciones_fisicas, i);
+                log_info(log_kernel, "marco a mandar: %d", dir->nro_marco);
+                free(dir);
+            }
+
+            list_destroy(args->direcciones_fisicas);
             break;
         case IO_FS_CREATE:
         case IO_FS_DELETE:
@@ -355,6 +370,7 @@ int io_fs_create(char* nombre_interfaz, char* nombre_archivo, pcb* proceso)
 {
     interfaz_kernel* interfaz = verificar_interfaz(nombre_interfaz, DIALFS);
     argumentos_para_io* args = malloc(sizeof(argumentos_para_io));
+    args->proceso = proceso;
     args->nombre_archivo = nombre_archivo;
     args->operacion = IO_FS_CREATE;
 
@@ -366,6 +382,7 @@ int io_fs_create(char* nombre_interfaz, char* nombre_archivo, pcb* proceso)
         log_info(log_kernel, "PID: <%d> - Bloqueado por: <%s>", proceso->pid, nombre_interfaz);
         pasar_proceso_a_blocked(proceso);
         sem_post(&interfaz->sem_hay_procesos_esperando);
+        log_info(log_kernel, "Ya hice el post del semaforo");
         return -1; //que no haga nada porq ya lo bloquie yo
 
     }else{
@@ -378,6 +395,7 @@ int io_fs_delete(char* nombre_interfaz, char* nombre_archivo, pcb* proceso)
 {
     interfaz_kernel* interfaz = verificar_interfaz(nombre_interfaz, DIALFS);
     argumentos_para_io* args = malloc(sizeof(argumentos_para_io));
+    args->proceso = proceso;
     args->nombre_archivo = nombre_archivo;
     args->operacion = IO_FS_DELETE;
     
@@ -402,6 +420,7 @@ int io_fs_truncate(char* nombre_interfaz, char* nombre_archivo, int registro_tam
     interfaz_kernel* interfaz = verificar_interfaz(nombre_interfaz, DIALFS);
     argumentos_para_io* args = malloc(sizeof(argumentos_para_io));
     args->nombre_archivo = nombre_archivo;
+    args->proceso = proceso;
     args->registro_tamano = registro_tamano;
     args->operacion = IO_FS_TRUNCATE;
     
@@ -425,6 +444,7 @@ int io_fs_write(char* nombre_interfaz, char* nombre_archivo, t_list*  registro_d
 {
     interfaz_kernel* interfaz = verificar_interfaz(nombre_interfaz, DIALFS);
     argumentos_para_io* args = malloc(sizeof(argumentos_para_io));
+    args->proceso = proceso;
     args->nombre_archivo = nombre_archivo;
     args->registro_tamano = registro_tamano;
     args->direcciones_fisicas = registro_direccion;
@@ -453,6 +473,7 @@ int io_fs_read(char* nombre_interfaz, char* nombre_archivo, t_list* registro_dir
     argumentos_para_io* args = malloc(sizeof(argumentos_para_io));
     args->nombre_archivo = nombre_archivo;
     args->registro_tamano = registro_tamano;
+    args->proceso = proceso;
     args->direcciones_fisicas = registro_direccion;
     args->registro_puntero_archivo = registro_puntero_archivo;
     args->operacion = IO_FS_READ;

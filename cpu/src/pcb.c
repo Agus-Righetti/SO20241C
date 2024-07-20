@@ -33,7 +33,7 @@ void recibir_pcb(){
 void enviar_pcb(int conexion, argumentos_cpu* argumentos_a_mandar){
     
     t_paquete *paquete = crear_paquete_personalizado(argumentos_a_mandar->operacion);
-
+    t_direccion_fisica* dir;
     agregar_estructura_al_paquete_personalizado(paquete, argumentos_a_mandar->proceso, sizeof(pcb));
     agregar_estructura_al_paquete_personalizado(paquete, argumentos_a_mandar->proceso->registros, sizeof(registros_cpu));
 
@@ -60,20 +60,20 @@ void enviar_pcb(int conexion, argumentos_cpu* argumentos_a_mandar){
             break;
 
         case IO_STDIN_READ:
-
-            agregar_string_al_paquete_personalizado(paquete, argumentos_a_mandar->nombre_interfaz);
-            agregar_int_al_paquete_personalizado(paquete, argumentos_a_mandar->registro_tamano);
-            agregar_lista_al_paquete_personalizado(paquete, argumentos_a_mandar->direcciones_fisicas, sizeof(t_direccion_fisica));
-            
-
-            break;
-
         case IO_STDOUT_WRITE:
 
             agregar_string_al_paquete_personalizado(paquete, argumentos_a_mandar->nombre_interfaz);
             agregar_int_al_paquete_personalizado(paquete, argumentos_a_mandar->registro_tamano);
             agregar_lista_al_paquete_personalizado(paquete, argumentos_a_mandar->direcciones_fisicas, sizeof(t_direccion_fisica));
-            
+            //libero memoria
+            for(int i = 0; i < list_size(argumentos_a_mandar->direcciones_fisicas); i++)
+            {
+                dir = list_get(argumentos_a_mandar->direcciones_fisicas, i);
+                log_info(log_cpu, "marco q voy a mandar: %d", dir->nro_marco);
+                free(dir);
+            }
+
+            list_destroy(argumentos_a_mandar->direcciones_fisicas);
 
             break;
 
