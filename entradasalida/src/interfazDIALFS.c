@@ -8,11 +8,19 @@ void manejar_creacion_archivo(char* nombre_archivo, int pid)
     usleep(config_io->tiempo_unidad_trabajo * 1000);
 
     FILE* bitmap_file = fopen("bitmap.dat", "rb"); // Abro el "bitmap.dat"
+    
     char *bitmap_buffer = (char*)malloc(bitarray_size);
+
     fread(bitmap_buffer, 1, bitarray_size, bitmap_file);
+
     fclose(bitmap_file);
 
     t_bitarray* bitmap = bitarray_create_with_mode(bitmap_buffer, bitarray_size, LSB_FIRST);
+    
+    // Limpio el bitmap -> lo seteo en 0
+    for (int i = 0; i < bitarray_size; i++) {
+        bitarray_clean_bit(bitmap, i);
+    } 
 
     int index_primer_bloque_libre = bitarray_find_first_clear_bit(bitmap);
 
@@ -24,8 +32,29 @@ void manejar_creacion_archivo(char* nombre_archivo, int pid)
     bitarray_set_bit(bitmap, index_primer_bloque_libre);
 
     bitmap_file = fopen("bitmap.dat", "wb");
+
     fwrite(bitmap_buffer, 1, bitarray_size, bitmap_file);
+    
     fclose(bitmap_file);
+
+    
+
+    FILE *file = fopen("archivo.bin", "rb");
+
+    unsigned char byte;
+    while (fread(&byte, sizeof(unsigned char), 1, file) == 1) {
+        
+        for (int i = 7; i >= 0; i--) {
+            printf("%d", (byte >> i) & 1);
+        }
+        printf(" "); // Para separar los bytes
+    }
+
+    fclose(file);
+
+
+
+
 
     bitarray_destroy(bitmap);
     free(bitmap_buffer);
@@ -129,10 +158,12 @@ void manejar_truncado_archivo(char* nombre_archivo, int nuevo_tamanio, int pid)
     log_info(log_io,"Entre a truncar archivo");
 
     usleep(config_io->tiempo_unidad_trabajo * 1000);
-    
-    strcat(nombre_archivo, ".config");
 
-    //log_info(log_io,"este es el nombre");
+    char** parte = string_split(nombre_archivo, ".");
+    
+    nombre_archivo = parte[0];
+    
+    string_append(&nombre_archivo,".config");
 
     char *config_file_path = nombre_archivo;
 
@@ -156,9 +187,10 @@ void manejar_truncado_archivo(char* nombre_archivo, int nuevo_tamanio, int pid)
 
     char* buffer;
 
-    // FALLA ACA
-    int bloque_inicial = config_get_int_value(config_aux, "BLOQUE_INICIAL");
+    log_info(log_io, "Estoy justo antes de donde fallaba");
+
     int tamanio_original = config_get_int_value(config_aux, "TAMANIO_ARCHIVO");
+    int bloque_inicial = config_get_int_value(config_aux, "BLOQUE_INICIAL");
 
     log_info(log_io, "Bloque inicial: <%d>; Tamaño original: <%d>", bloque_inicial, tamanio_original);
 

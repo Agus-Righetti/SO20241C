@@ -62,12 +62,14 @@ void atender_kernel()
             
             case IO_FS_CREATE: // (Interfaz, Nombre Archivo)
                 
+                log_info(log_io, "Estoy dentro del case de IO_FS_CREATE");
+                
                 nombre_archivo = recibir_string_del_buffer(buffer);
                 manejar_creacion_archivo(nombre_archivo, pid);          
                 break;
                 
             case IO_FS_DELETE: // (Interfaz, Nombre Archivo)
-
+                log_info(log_io, "Estoy dentro del case de IO_FS_DELETE");
                 nombre_archivo = recibir_string_del_buffer(buffer);
                 manejar_eliminacion_archivo(nombre_archivo, pid);
                 break;
@@ -82,6 +84,8 @@ void atender_kernel()
                 break;
 
             case IO_FS_WRITE: // (Interfaz, Nombre Archivo, Registro Dirección, Registro Tamaño, Registro Puntero Archivo)
+                
+                log_info(log_io, "Estoy dentro del case de IO_FS_WRITE");
 
                 nombre_archivo = recibir_string_del_buffer(buffer);
                 direcciones_fisicas = recibir_lista_del_buffer(buffer, sizeof(t_direccion_fisica));
@@ -91,7 +95,8 @@ void atender_kernel()
                 break;
 
             case IO_FS_READ: // (Interfaz, Nombre Archivo, Registro Dirección, Registro Tamaño, Registro Puntero Archivo)
-            
+                log_info(log_io, "Estoy dentro del case de IO_FS_READ");
+
                 nombre_archivo = recibir_string_del_buffer(buffer);
                 direcciones_fisicas = recibir_lista_del_buffer(buffer, sizeof(t_direccion_fisica));
                 registro_tamanio = recibir_int_del_buffer(buffer);
