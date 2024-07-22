@@ -769,14 +769,12 @@ void instruccion_copy_string(char **parte) {
 
     sem_wait(&sem_ok_escritura_string);
 
-
     pcb_recibido->registros->pc++;
     
-    liberar_array_strings(parte);
-
     check_interrupt();
-
-
+   
+    liberar_array_strings(parte);
+    
     return;
 }
 

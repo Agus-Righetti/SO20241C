@@ -456,9 +456,7 @@ int recibir_int_del_buffer(t_buffer* buffer){
 	}
 	void* nuevo_buffer = malloc(nuevo_size);
 	memcpy(nuevo_buffer, buffer->stream + sizeof(int), nuevo_size);
-	printf("estoy por liberar un buffer->stream en recibir int de buffer\n");
 	free(buffer->stream);
-	printf("ya libere un buffer->stream en recibir int de buffer\n");
 	buffer->stream = nuevo_buffer;
 	buffer->size = nuevo_size;
 

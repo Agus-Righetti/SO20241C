@@ -123,6 +123,8 @@ void escucha_interfaz(void* arg) //es un hilo porque asi puedo escuchar a varias
         log_info(log_memoria, "Estoy esperando q la interfaz me diga algo");
         cod_op_io = recibir_operacion(socket);
 
+        log_info(log_memoria, "El codop recibido es: %d", cod_op_io);
+
         switch (cod_op_io) {
             
             case IO_PIDE_LECTURA_MEMORIA:
@@ -151,6 +153,9 @@ void escucha_interfaz(void* arg) //es un hilo porque asi puedo escuchar a varias
                 valor = recibir_string_del_buffer(buffer);
                 direcciones_fisicas = recibir_lista_del_buffer(buffer , sizeof(t_direccion_fisica));
                 t_direccion_fisica* dir;
+                if(direcciones_fisicas == NULL){
+                    log_error(log_memoria, "Direcciones_fisicas es null");
+                }
                 for(int i = 0; i < list_size(direcciones_fisicas); i++)
                 {
                     dir = list_get(direcciones_fisicas, i);
@@ -159,7 +164,7 @@ void escucha_interfaz(void* arg) //es un hilo porque asi puedo escuchar a varias
                 }
                 usleep(config_memoria->retardo_respuesta *1000);
                 
-                io_pide_escritura(socket, pid, tamanio, valor, direcciones_fisicas);  
+                guardar_string_io_en_memoria(pid, direcciones_fisicas, valor, tamanio, socket);
                 
                 free(buffer);
 

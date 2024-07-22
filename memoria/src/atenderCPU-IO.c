@@ -353,18 +353,17 @@ void cpu_pide_leer_string(t_buffer* un_buffer){
 }
 
 void cpu_pide_guardar_string(t_buffer* un_buffer){    
+	
 	int pid = recibir_int_del_buffer(un_buffer);
+	char* valor = recibir_string_del_buffer(un_buffer);
+	
 	t_list* direcciones_fisicas = recibir_lista_del_buffer(un_buffer, sizeof(t_direccion_fisica));
 
 	if(direcciones_fisicas == NULL){
         log_error(log_memoria, "Direcciones_fisicas es null");
     }
 
-	char* valor = recibir_estructura_del_buffer(un_buffer);
-	int tamanio = recibir_int_del_buffer(un_buffer);
-
-	guardar_string_en_memoria(pid, direcciones_fisicas, valor, tamanio);
-
+	guardar_string_en_memoria(pid, direcciones_fisicas, valor);
 }
 
 // ********************************************* IO **********************************************
@@ -406,8 +405,6 @@ void io_pide_lectura(int socket, int pid, int tamanio, t_list* direcciones_fisic
 }
 
 void io_pide_escritura(int socket, int pid, int tamanio, char* valor, t_list* direcciones_fisicas){
-
-	
 
 	t_direccion_fisica* dir_fisica;
     for(int i = 0; i<list_size(direcciones_fisicas); i++)

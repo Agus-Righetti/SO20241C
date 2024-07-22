@@ -240,9 +240,13 @@ void peticion_escritura_string_a_memoria(int pid, t_list* direcciones_fisicas, c
     t_paquete* paquete = crear_paquete_personalizado(CPU_PIDE_GUARDAR_STRING);
 
     agregar_int_al_paquete_personalizado(paquete, pid);
-    agregar_lista_al_paquete_personalizado(paquete, direcciones_fisicas, sizeof(t_direccion_fisica));
     agregar_string_al_paquete_personalizado(paquete, string_por_escribir);
+    //agregar_int_al_paquete_personalizado(paquete, tamanio);
+    // vicky
     
+    agregar_lista_al_paquete_personalizado(paquete, direcciones_fisicas, sizeof(t_direccion_fisica));
+
 	enviar_paquete(paquete, socket_cliente_cpu);
+    log_info(log_cpu, "HICE PETICION DE ESCRITURA DEL STRING");
 	eliminar_paquete(paquete);
 }

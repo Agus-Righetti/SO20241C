@@ -447,13 +447,12 @@ void enviar_ok_1B_escritura_cpu(int pid, t_direccion_fisica *dir_actual, uint8_t
 }
 
 //***********************************************************************************************************************
-void guardar_string_en_memoria(int pid, t_list *direcciones_fisicas, char *valor, int tamanio)
+void guardar_string_en_memoria(int pid, t_list *direcciones_fisicas, char* valor)
 {
 
     int cantidad_marcos_por_guardar = list_size(direcciones_fisicas);
 
-    if (cantidad_marcos_por_guardar == 0)
-    {
+    if (cantidad_marcos_por_guardar == 0) {
         log_error(log_memoria, "ERROR: no hay direcciones físicas para escribir.");
         return;
     }
@@ -464,57 +463,69 @@ void guardar_string_en_memoria(int pid, t_list *direcciones_fisicas, char *valor
     int despl_esp_usuario = dir_actual->nro_marco * config_memoria->tam_pagina + dir_actual->offset;
 
     // Si solo hay una DF -> solo guardo en un marco
-    if (cantidad_marcos_por_guardar == 1)
-    {
+    if (cantidad_marcos_por_guardar == 1) {
 
         pthread_mutex_lock(&mutex_espacio_usuario);
-        memcpy(espacio_usuario + despl_esp_usuario, &valor, tamanio);
+        memcpy(espacio_usuario + despl_esp_usuario, valor, dir_actual->bytes_a_operar);
         pthread_mutex_unlock(&mutex_espacio_usuario);
 
         log_info(log_memoria, "PID: %d - Accion: ESCRIBIR - Direccion fisica: [%d - %d] - Tamaño %d ", pid, dir_actual->nro_marco, dir_actual->offset, dir_actual->bytes_a_operar);
 
-        enviar_ult_ok_string_escritura_cpu(pid, dir_actual, valor); // valor);
+        enviar_ult_ok_string_escritura_cpu(pid, dir_actual, valor);
     }
-    // else
-    // {
-    //     // Voy a tener que hacer mas de una escritura
-    //     int bytes_ya_operados = 0;
-    //     char *valor_escrito;
+    else {
+        // Voy a tener que hacer escrituras en mas de un marco
+        log_info(log_memoria, "EStoy en el caso que tengo que escribir en mas de una direc");
 
-    //     // Tengo que particionar el dato y guardarlo
-    //     while (cantidad_marcos_por_guardar - 1 > indice_dir)
-    //     {
-    //         dir_actual = list_get(direcciones_fisicas, indice_dir);
+        int bytes_ya_operados = 0;
 
-    //         pthread_mutex_lock(&mutex_espacio_usuario);
-    //         memcpy(espacio_usuario + despl_esp_usuario, &valor + bytes_ya_operados, dir_actual->bytes_a_operar);
-    //         memcpy(valor_escrito, &valor + bytes_ya_operados, dir_actual->bytes_a_operar);
-    //         pthread_mutex_unlock(&mutex_espacio_usuario);
+        // Tengo que particionar el dato y guardarlo
+        while (cantidad_marcos_por_guardar - 1 > indice_dir) {
+            dir_actual = list_get(direcciones_fisicas, indice_dir);
+            despl_esp_usuario = dir_actual->nro_marco * config_memoria->tam_pagina + dir_actual->offset;
 
-    //         log_info(log_memoria, "PID: %d - Accion: ESCRIBIR - Direccion fisica: [%d - %d] - Tamaño %d ", pid, dir_actual->nro_marco, dir_actual->offset, dir_actual->bytes_a_operar);
-    //         log_info(log_memoria, "VALOR ESCRITO [%s] ", valor_escrito);
+            log_info(log_memoria, "esto es nro marco de dir_actual: %d", dir_actual->nro_marco);
+            log_info(log_memoria, "esto es bytes a operar de dir_actual: %d", dir_actual->bytes_a_operar);
+            pthread_mutex_lock(&mutex_espacio_usuario);
+            memcpy(espacio_usuario + despl_esp_usuario, valor + bytes_ya_operados, dir_actual->bytes_a_operar);
+            pthread_mutex_unlock(&mutex_espacio_usuario);
 
-    //         enviar_ok_string_escritura_cpu(pid, dir_actual, valor_escrito);
+            char valor_escrito_recien[dir_actual->bytes_a_operar + 1];
+            strncpy(valor_escrito_recien, espacio_usuario + despl_esp_usuario, dir_actual->bytes_a_operar);
+            valor_escrito_recien[dir_actual->bytes_a_operar] = '\0'; // Asegurar terminación nula
 
-    //         bytes_ya_operados = bytes_ya_operados + dir_actual->bytes_a_operar;
-    //         indice_dir += 1;
-    //     }
-    //     if (cantidad_marcos_por_guardar - 1 == indice_dir)
-    //     {
-    //         // es la ultima escritura
-    //         dir_actual = list_get(direcciones_fisicas, indice_dir);
+            log_info(log_memoria, "PID: %d - Accion: ESCRIBIR - Direccion fisica: [%d - %d] - Tamaño %d ", pid, dir_actual->nro_marco, dir_actual->offset, dir_actual->bytes_a_operar);
+            log_info(log_memoria, "acabo de escribir %s", valor_escrito_recien);
 
-    //         pthread_mutex_lock(&mutex_espacio_usuario);
-    //         memcpy(espacio_usuario + despl_esp_usuario, &valor + bytes_ya_operados, dir_actual->bytes_a_operar);
-    //         memcpy(valor_escrito, &valor + bytes_ya_operados, dir_actual->bytes_a_operar);
-    //         pthread_mutex_unlock(&mutex_espacio_usuario);
+        
+            enviar_ok_string_escritura_cpu(pid, dir_actual, valor_escrito_recien);
 
-    //         log_info(log_memoria, "PID: %d - Accion: ESCRIBIR - Direccion fisica: [%d - %d] - Tamaño %d ", pid, dir_actual->nro_marco, dir_actual->offset, dir_actual->bytes_a_operar);
-    //         log_info(log_memoria, "VALOR ESCRITO [%s] ", valor_escrito);
+            bytes_ya_operados = bytes_ya_operados + dir_actual->bytes_a_operar;
+            indice_dir += 1;
+        }
+        if (cantidad_marcos_por_guardar - 1 == indice_dir)
+        {
+            // es la ultima escritura
+            dir_actual = list_get(direcciones_fisicas, indice_dir);
+            despl_esp_usuario = dir_actual->nro_marco * config_memoria->tam_pagina + dir_actual->offset;
 
-    //         enviar_ult_ok_string_escritura_cpu(pid, dir_actual, valor_escrito); // valor);
-    //     }
-    // }
+            log_info(log_memoria, "esto es nro marco de dir_actual: %d", dir_actual->nro_marco);
+            log_info(log_memoria, "esto es bytes a operar de dir_actual: %d", dir_actual->bytes_a_operar);
+
+            pthread_mutex_lock(&mutex_espacio_usuario);
+            memcpy(espacio_usuario + despl_esp_usuario, valor + bytes_ya_operados, dir_actual->bytes_a_operar);
+            pthread_mutex_unlock(&mutex_espacio_usuario);
+
+            char valor_escrito_recien[dir_actual->bytes_a_operar + 1];
+            strncpy(valor_escrito_recien, espacio_usuario + despl_esp_usuario, dir_actual->bytes_a_operar);
+            valor_escrito_recien[dir_actual->bytes_a_operar] = '\0'; // Asegurar terminación nula
+
+            log_info(log_memoria, "PID: %d - Accion: ESCRIBIR - Direccion fisica: [%d - %d] - Tamaño %d ", pid, dir_actual->nro_marco, dir_actual->offset, dir_actual->bytes_a_operar);
+            log_info(log_memoria, "acabo de escribir %s", valor_escrito_recien);
+
+            enviar_ult_ok_string_escritura_cpu(pid, dir_actual, valor);
+        }
+    }
 }
 
 void enviar_ok_string_escritura_cpu(int pid, t_direccion_fisica *dir_actual, char *valor)
@@ -530,7 +541,7 @@ void enviar_ok_string_escritura_cpu(int pid, t_direccion_fisica *dir_actual, cha
     eliminar_paquete(paquete);
 }
 
-void enviar_ult_ok_string_escritura_cpu(int pid, t_direccion_fisica *dir_actual, char *valor) //char *valor_completo)
+void enviar_ult_ok_string_escritura_cpu(int pid, t_direccion_fisica *dir_actual, char* valor) //char *valor_completo)
 {
 
     t_paquete *paquete = crear_paquete_personalizado(CPU_RECIBE_ULT_OK_STRING_DE_ESCRITURA);
@@ -546,90 +557,8 @@ void enviar_ult_ok_string_escritura_cpu(int pid, t_direccion_fisica *dir_actual,
 
 void leer_string_en_memoria(int pid, t_list *direcciones_fisicas, int tamanio) {
 
-    char *valor_leido = malloc(tamanio + 1);
-
-    if (valor_leido == NULL){
-        log_error(log_memoria, "ERROR: en el malloc.");
-        return;
-    }
-
-    int cantidad_marcos_por_leer = list_size(direcciones_fisicas);
-    // segmentation fault aca
-    log_info(log_memoria, "Tengo que leer  %d ", cantidad_marcos_por_leer);
-
-    if (cantidad_marcos_por_leer == 0)
-    {
-        log_error(log_memoria, "ERROR: no hay direcciones físicas para escribir.");
-        free(valor_leido);
-        return;
-    }
-
-    int indice_dir = 0;
-    t_direccion_fisica *dir_actual = list_get(direcciones_fisicas, indice_dir);
-
-    int despl_esp_usuario = dir_actual->nro_marco * config_memoria->tam_pagina + dir_actual->offset;
-
-    // Si solo hay una DF -> solo leo un marco
-    if (cantidad_marcos_por_leer == 1)
-    {
-        log_info(log_memoria, "El desplazamiento de usuario es %s ", despl_esp_usuario);
-        memset(valor_leido, 0, tamanio + 1); // Inicializar la memoria asignada a 0
-
-        pthread_mutex_lock(&mutex_espacio_usuario);
-        memcpy(valor_leido, espacio_usuario + despl_esp_usuario, tamanio);
-        pthread_mutex_unlock(&mutex_espacio_usuario);
-
-        log_info(log_memoria, "PID: %d - Accion: LEER - Direccion fisica: [%d - %d] - Tamaño %d ", pid, dir_actual->nro_marco, dir_actual->offset, dir_actual->bytes_a_operar);
-        log_info(log_memoria, "VALOR LEIDO %s ", valor_leido);
-
-        enviar_lectura_ult_string_a_cpu(pid, dir_actual, valor_leido);
-        free(valor_leido);
-    }
-    // else
-    // {
-    //     int bytes_ya_operados = 0;
-    //     char *valor_leido;
-    //     char *valor_leido_reconstruido;
-
-    //     // Voy a leer el dato de a poco
-    //     while (cantidad_marcos_por_leer - 1 > indice_dir)
-    //     {
-    //         dir_actual = list_get(direcciones_fisicas, indice_dir);
-
-    //         pthread_mutex_lock(&mutex_espacio_usuario);
-    //         memcpy(valor_leido + bytes_ya_operados, espacio_usuario + despl_esp_usuario, dir_actual->bytes_a_operar);
-    //         memcpy((char *)&valor_leido, espacio_usuario + despl_esp_usuario, dir_actual->bytes_a_operar);
-    //         memcpy((char *)&valor_leido_reconstruido + bytes_ya_operados, espacio_usuario + despl_esp_usuario, dir_actual->bytes_a_operar);
-    //         pthread_mutex_unlock(&mutex_espacio_usuario);
-
-    //         log_info(log_memoria, "PID: %d - Accion: LEER - Direccion fisica: [%d - %d] - Tamaño %d ", pid, dir_actual->nro_marco, dir_actual->offset, dir_actual->bytes_a_operar);
-
-    //         enviar_lectura_string_a_cpu(pid, dir_actual, valor_leido);
-
-    //         bytes_ya_operados = bytes_ya_operados + dir_actual->bytes_a_operar;
-    //         indice_dir += 1;
-    //     }
-    //     if (cantidad_marcos_por_leer - 1 == indice_dir)
-    //     {
-    //         // es la ultima lectura
-
-    //         dir_actual = list_get(direcciones_fisicas, indice_dir);
-    //         pthread_mutex_lock(&mutex_espacio_usuario);
-    //         memcpy(valor_leido + bytes_ya_operados, espacio_usuario + despl_esp_usuario, dir_actual->bytes_a_operar);
-    //         memcpy((char)&valor_leido, espacio_usuario + despl_esp_usuario, dir_actual->bytes_a_operar);
-    //         memcpy((char)&valor_leido_reconstruido + bytes_ya_operados, espacio_usuario + despl_esp_usuario, dir_actual->bytes_a_operar);
-    //         pthread_mutex_unlock(&mutex_espacio_usuario);
-
-    //         log_info(log_memoria, "PID: %d - Accion: LEER - Direccion fisica: [%d - %d] - Tamaño %d ", pid, dir_actual->nro_marco, dir_actual->offset, dir_actual->bytes_a_operar);
-
-    //         enviar_lectura_ult_string_a_cpu(pid, dir_actual, valor_leido);
-    //     }
-}
-
-void leer_string_io_en_memoria(int pid, t_list *direcciones_fisicas, int tamanio, int socket)
-{
-
-    char *valor_leido = malloc(sizeof(char) * (tamanio + 1)); // agregue esto
+    char *valor_leido = malloc(sizeof(char) * (tamanio + 1)); 
+    valor_leido[tamanio] = '\0';
 
     int cantidad_marcos_por_leer = list_size(direcciones_fisicas);
 
@@ -646,8 +575,79 @@ void leer_string_io_en_memoria(int pid, t_list *direcciones_fisicas, int tamanio
     int despl_esp_usuario = dir_actual->nro_marco * config_memoria->tam_pagina + dir_actual->offset;
 
     // Si solo hay una DF -> solo leo un marco
-    if (cantidad_marcos_por_leer == 1)
-    {
+    if (cantidad_marcos_por_leer == 1) {
+
+        pthread_mutex_lock(&mutex_espacio_usuario);
+        memcpy(valor_leido, espacio_usuario + despl_esp_usuario, tamanio);
+        pthread_mutex_unlock(&mutex_espacio_usuario);
+
+        log_info(log_memoria, "PID: %d - Accion: LEER - Direccion fisica: [%d - %d] - Tamaño %d ", pid, dir_actual->nro_marco, dir_actual->offset, dir_actual->bytes_a_operar);
+
+        enviar_lectura_ult_string_a_cpu(pid, dir_actual, valor_leido);
+    }
+    else {
+        int bytes_ya_operados = 0;
+
+        // Voy a leer el dato de a poco
+        while (cantidad_marcos_por_leer - 1 > indice_dir) {
+            dir_actual = list_get(direcciones_fisicas, indice_dir);
+            despl_esp_usuario = dir_actual->nro_marco * config_memoria->tam_pagina + dir_actual->offset;
+
+            pthread_mutex_lock(&mutex_espacio_usuario);
+            //SEGM FAULT ACA-----------------------------
+            memcpy(valor_leido + bytes_ya_operados, espacio_usuario + despl_esp_usuario, dir_actual->bytes_a_operar);
+            //memcpy((char *)&valor_leido_reconstruido + bytes_ya_operados, espacio_usuario + despl_esp_usuario, dir_actual->bytes_a_operar);
+            pthread_mutex_unlock(&mutex_espacio_usuario);
+
+            log_info(log_memoria, "PID: <%d> - Accion: <LEER> - Direccion fisica: [%d - %d] - Tamaño %d ", pid, dir_actual->nro_marco, dir_actual->offset, dir_actual->bytes_a_operar);
+            log_info(log_memoria, "Valor leído: %s", valor_leido);
+
+            enviar_lectura_string_a_cpu(pid, dir_actual, valor_leido);
+
+            bytes_ya_operados = bytes_ya_operados + dir_actual->bytes_a_operar;
+            indice_dir += 1;
+        }
+        if (cantidad_marcos_por_leer - 1 == indice_dir)
+        {
+            // es la ultima lectura
+
+            dir_actual = list_get(direcciones_fisicas, indice_dir);
+            despl_esp_usuario = dir_actual->nro_marco * config_memoria->tam_pagina + dir_actual->offset;
+            pthread_mutex_lock(&mutex_espacio_usuario);
+            //SEGM FAULT ACA_---------------------------------------
+            memcpy(valor_leido + bytes_ya_operados, espacio_usuario + despl_esp_usuario, dir_actual->bytes_a_operar);
+            //memcpy((char)&valor_leido_reconstruido + bytes_ya_operados, espacio_usuario + despl_esp_usuario, dir_actual->bytes_a_operar);
+            pthread_mutex_unlock(&mutex_espacio_usuario);
+
+            log_info(log_memoria, "PID: %d - Accion: LEER - Direccion fisica: [%d - %d] - Tamaño %d ", pid, dir_actual->nro_marco, dir_actual->offset, dir_actual->bytes_a_operar);
+            log_info(log_memoria, "Valor leído: %s", valor_leido);
+
+            enviar_lectura_ult_string_a_cpu(pid, dir_actual, valor_leido);
+        }
+    }
+}
+
+void leer_string_io_en_memoria(int pid, t_list *direcciones_fisicas, int tamanio, int socket) {
+
+    char *valor_leido = malloc(sizeof(char) * (tamanio + 1)); 
+    valor_leido[tamanio] = '\0';
+
+    int cantidad_marcos_por_leer = list_size(direcciones_fisicas);
+
+    log_info(log_memoria, "tengo q leer %d marcos", cantidad_marcos_por_leer);
+
+    if (cantidad_marcos_por_leer == 0) {
+        log_error(log_memoria, "ERROR: no hay direcciones físicas para escribir.");
+        return;
+    }
+
+    int indice_dir = 0;
+    t_direccion_fisica *dir_actual = list_get(direcciones_fisicas, indice_dir);
+
+    int despl_esp_usuario = dir_actual->nro_marco * config_memoria->tam_pagina + dir_actual->offset;
+
+    // Si solo hay una DF -> solo leo un marco
+    if (cantidad_marcos_por_leer == 1) {
 
         pthread_mutex_lock(&mutex_espacio_usuario);
         memcpy(valor_leido, espacio_usuario + despl_esp_usuario, tamanio);
@@ -659,42 +659,40 @@ void leer_string_io_en_memoria(int pid, t_list *direcciones_fisicas, int tamanio
     }
     else {
         int bytes_ya_operados = 0;
-        char *valor_leido_reconstruido;
 
         // Voy a leer el dato de a poco
-        while (cantidad_marcos_por_leer - 1 > indice_dir)
-        {
+        while (cantidad_marcos_por_leer - 1 > indice_dir) {
             dir_actual = list_get(direcciones_fisicas, indice_dir);
+            despl_esp_usuario = dir_actual->nro_marco * config_memoria->tam_pagina + dir_actual->offset;
 
             pthread_mutex_lock(&mutex_espacio_usuario);
-            //SEGM FAULT ACA-----------------------------
             memcpy(valor_leido + bytes_ya_operados, espacio_usuario + despl_esp_usuario, dir_actual->bytes_a_operar);
-            memcpy((char *)&valor_leido, espacio_usuario + despl_esp_usuario, dir_actual->bytes_a_operar);
-            memcpy((char *)&valor_leido_reconstruido + bytes_ya_operados, espacio_usuario + despl_esp_usuario, dir_actual->bytes_a_operar);
             pthread_mutex_unlock(&mutex_espacio_usuario);
 
             log_info(log_memoria, "PID: <%d> - Accion: <LEER> - Direccion fisica: [%d - %d] - Tamaño %d ", pid, dir_actual->nro_marco, dir_actual->offset, dir_actual->bytes_a_operar);
-
-            // enviar_lectura_string_a_io(pid, dir_actual, valor_leido);
+            log_info(log_memoria, "Valor leído completo: %s", valor_leido);
+            log_info(log_memoria, "Valor leído parte: %s", valor_leido+bytes_ya_operados);
+            //enviar_lectura_string_a_cpu(pid, dir_actual, valor_leido + bytes_ya_operados);
 
             bytes_ya_operados = bytes_ya_operados + dir_actual->bytes_a_operar;
             indice_dir += 1;
+            
         }
         if (cantidad_marcos_por_leer - 1 == indice_dir)
         {
             // es la ultima lectura
 
             dir_actual = list_get(direcciones_fisicas, indice_dir);
+            despl_esp_usuario = dir_actual->nro_marco * config_memoria->tam_pagina + dir_actual->offset;
             pthread_mutex_lock(&mutex_espacio_usuario);
-            //SEGM FAULT ACA_---------------------------------------
             memcpy(valor_leido + bytes_ya_operados, espacio_usuario + despl_esp_usuario, dir_actual->bytes_a_operar);
-            memcpy((char)&valor_leido, espacio_usuario + despl_esp_usuario, dir_actual->bytes_a_operar);
-            memcpy((char)&valor_leido_reconstruido + bytes_ya_operados, espacio_usuario + despl_esp_usuario, dir_actual->bytes_a_operar);
             pthread_mutex_unlock(&mutex_espacio_usuario);
 
             log_info(log_memoria, "PID: %d - Accion: LEER - Direccion fisica: [%d - %d] - Tamaño %d ", pid, dir_actual->nro_marco, dir_actual->offset, dir_actual->bytes_a_operar);
+            log_info(log_memoria, "Valor leído completo: %s", valor_leido);
+            log_info(log_memoria, "Valor leído parte: %s", valor_leido + bytes_ya_operados);
 
-            enviar_lectura_ult_string_a_io(valor_leido_reconstruido, socket);
+            enviar_lectura_ult_string_a_io(valor_leido, socket);
         }
     }
 }
@@ -720,7 +718,6 @@ void enviar_lectura_ult_string_a_cpu(int pid, t_direccion_fisica *dir_actual, ch
 
     agregar_int_al_paquete_personalizado(paquete, pid);
     agregar_estructura_al_paquete_personalizado(paquete, dir_actual, sizeof(t_direccion_fisica));
-
     agregar_string_al_paquete_personalizado(paquete, valor);
 
     enviar_paquete(paquete, socket_cliente_cpu);
@@ -755,13 +752,11 @@ void enviar_lectura_ult_string_a_io(char *valor_leido_reconstruido, int socket)
     eliminar_paquete(paquete);
 }
 
-void guardar_string_io_en_memoria(int pid, t_list *direcciones_fisicas, char *valor, int tamanio, int socket)
-{
+void guardar_string_io_en_memoria(int pid, t_list *direcciones_fisicas, char *valor, int tamanio, int socket) {
 
     int cantidad_marcos_por_guardar = list_size(direcciones_fisicas);
 
-    if (cantidad_marcos_por_guardar == 0)
-    {
+    if (cantidad_marcos_por_guardar == 0) {
         log_error(log_memoria, "ERROR: no hay direcciones físicas para escribir.");
         return;
     }
@@ -772,8 +767,7 @@ void guardar_string_io_en_memoria(int pid, t_list *direcciones_fisicas, char *va
     int despl_esp_usuario = dir_actual->nro_marco * config_memoria->tam_pagina + dir_actual->offset;
 
     // Si solo hay una DF -> solo guardo en un marco
-    if (cantidad_marcos_por_guardar == 1)
-    {
+    if (cantidad_marcos_por_guardar == 1) {
 
         pthread_mutex_lock(&mutex_espacio_usuario);
         memcpy(espacio_usuario + despl_esp_usuario, valor, tamanio);
@@ -783,24 +777,29 @@ void guardar_string_io_en_memoria(int pid, t_list *direcciones_fisicas, char *va
 
         enviar_ult_ok_string_escritura_io(socket); // esto va aunque estemos en un pedido de io?
     }
-    else
-    {
+    else {
+        // Voy a tener que hacer escrituras en mas de un marco
+        log_info(log_memoria, "EStoy en el caso que tengo que escribir en mas de una direc");
+
         int bytes_ya_operados = 0;
-        char *valor_escrito;
 
         // Tengo que particionar el dato y guardarlo
-        while (cantidad_marcos_por_guardar - 1 > indice_dir)
-        {
+        while (cantidad_marcos_por_guardar - 1 > indice_dir) {
             dir_actual = list_get(direcciones_fisicas, indice_dir);
+            despl_esp_usuario = dir_actual->nro_marco * config_memoria->tam_pagina + dir_actual->offset;
 
             log_info(log_memoria, "esto es nro marco de dir_actual: %d", dir_actual->nro_marco);
             log_info(log_memoria, "esto es bytes a operar de dir_actual: %d", dir_actual->bytes_a_operar);
             pthread_mutex_lock(&mutex_espacio_usuario);
             memcpy(espacio_usuario + despl_esp_usuario, valor + bytes_ya_operados, dir_actual->bytes_a_operar);
-            memcpy(espacio_usuario + despl_esp_usuario, (char *)&valor_escrito + bytes_ya_operados, dir_actual->bytes_a_operar);
             pthread_mutex_unlock(&mutex_espacio_usuario);
 
+            char valor_escrito_recien[dir_actual->bytes_a_operar + 1];
+            strncpy(valor_escrito_recien, espacio_usuario + despl_esp_usuario, dir_actual->bytes_a_operar);
+            valor_escrito_recien[dir_actual->bytes_a_operar] = '\0'; // Asegurar terminación nula
+
             log_info(log_memoria, "PID: %d - Accion: ESCRIBIR - Direccion fisica: [%d - %d] - Tamaño %d ", pid, dir_actual->nro_marco, dir_actual->offset, dir_actual->bytes_a_operar);
+            log_info(log_memoria, "acabo de escribir %s", valor_escrito_recien);
 
             // enviar_ok_string_escritura_io(pid, dir_actual, valor_escrito);
             enviar_ult_ok_string_escritura_io(socket);
@@ -811,16 +810,21 @@ void guardar_string_io_en_memoria(int pid, t_list *direcciones_fisicas, char *va
         {
             // es la ultima escritura
             dir_actual = list_get(direcciones_fisicas, indice_dir);
+            despl_esp_usuario = dir_actual->nro_marco * config_memoria->tam_pagina + dir_actual->offset;
+
             log_info(log_memoria, "esto es nro marco de dir_actual: %d", dir_actual->nro_marco);
             log_info(log_memoria, "esto es bytes a operar de dir_actual: %d", dir_actual->bytes_a_operar);
 
             pthread_mutex_lock(&mutex_espacio_usuario);
-            // Segm fault aca: POSIBLE RAZON bytes_a_esperar es muy grande y se pasa de espacio usuario?
             memcpy(espacio_usuario + despl_esp_usuario, valor + bytes_ya_operados, dir_actual->bytes_a_operar);
-            memcpy(espacio_usuario + despl_esp_usuario, (char *)&valor_escrito + bytes_ya_operados, dir_actual->bytes_a_operar);
             pthread_mutex_unlock(&mutex_espacio_usuario);
 
+            char valor_escrito_recien[dir_actual->bytes_a_operar + 1];
+            strncpy(valor_escrito_recien, espacio_usuario + despl_esp_usuario, dir_actual->bytes_a_operar);
+            valor_escrito_recien[dir_actual->bytes_a_operar] = '\0'; // Asegurar terminación nula
+
             log_info(log_memoria, "PID: %d - Accion: ESCRIBIR - Direccion fisica: [%d - %d] - Tamaño %d ", pid, dir_actual->nro_marco, dir_actual->offset, dir_actual->bytes_a_operar);
+            log_info(log_memoria, "acabo de escribir %s", valor_escrito_recien);
 
             enviar_ult_ok_string_escritura_io(socket);
         }

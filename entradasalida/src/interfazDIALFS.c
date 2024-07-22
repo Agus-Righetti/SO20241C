@@ -6,12 +6,14 @@ void manejar_creacion_archivo(char* nombre_archivo, int pid)
     log_info(log_io, "Entré a CREATE");
     //hago un usleep para lo q tarda
     usleep(config_io->tiempo_unidad_trabajo * 1000);
+
     FILE* bitmap_file = fopen("bitmap.dat", "rb"); // Abro el "bitmap.dat"
     char *bitmap_buffer = (char*)malloc(bitarray_size);
     fread(bitmap_buffer, 1, bitarray_size, bitmap_file);
     fclose(bitmap_file);
 
     t_bitarray* bitmap = bitarray_create_with_mode(bitmap_buffer, bitarray_size, LSB_FIRST);
+
     int index_primer_bloque_libre = bitarray_find_first_clear_bit(bitmap);
 
     if(index_primer_bloque_libre == -1)
@@ -20,6 +22,7 @@ void manejar_creacion_archivo(char* nombre_archivo, int pid)
     }
     
     bitarray_set_bit(bitmap, index_primer_bloque_libre);
+
     bitmap_file = fopen("bitmap.dat", "wb");
     fwrite(bitmap_buffer, 1, bitarray_size, bitmap_file);
     fclose(bitmap_file);
@@ -104,7 +107,7 @@ void manejar_eliminacion_archivo(char* nombre_archivo, int pid)
 
     for(bloque_inicial; bloque_inicial< bloques_ocupados; bloque_inicial ++) 
     {
-        bitarray_clean_bit(bitmap, bloque_inicial); //pongo en cero los bloques ocupados
+        bitarray_clean_bit(bitmap, bloque_inicial); // pongo en cero los bloques ocupados
     }
     
     free(bitmap_buffer);
@@ -113,8 +116,7 @@ void manejar_eliminacion_archivo(char* nombre_archivo, int pid)
 
     bitarray_destroy(bitmap);
 
-    // no borramos los bloques del bloques.dat porque al marcar como libres los bloques en el bitmap
-    // se va a sobreescribir en esos bloques y listo
+    // no borramos los bloques del bloques.dat porque al marcar como libres los bloques en el bitmap se va a sobreescribir en esos bloques y listo
 
     avisar_fin_io_a_kernel();
 
@@ -137,6 +139,8 @@ void manejar_truncado_archivo(char* nombre_archivo, int nuevo_tamanio, int pid)
     FILE* config_archivo = fopen(config_file_path, "r+");
 
     log_info(log_io, "Pude abrir el archivo");
+
+    log_info(log_io, "El path del config que voy a crear es: %s", config_file_path);
 
     t_config* config_aux = config_create(config_file_path);
 
@@ -302,9 +306,149 @@ void manejar_truncado_archivo(char* nombre_archivo, int nuevo_tamanio, int pid)
 void manejar_escritura_archivo(char* nombre_archivo, t_list* direccion_fisica, int tamanio, int puntero_archivo, int pid)
 {
     usleep(config_io->tiempo_unidad_trabajo * 1000);
- 
+    
+    // t_config* config = config_create(nombre_archivo);
+
+    // if (config == NULL) 
+    // {
+    //     log_error(log_io, "Error: No se pudo cargar el archivo de configuración %s\n", nombre_archivo);
+    //     return;
+    // }
+
+    // int bloque_inicial = config_get_int_value(config, "BLOQUE_INICIAL");
+    // int tamanio_archivo = config_get_int_value(config, "TAMANIO_ARCHIVO");
+
+    // config_destroy(config);
+
+    // // Validar que el puntero_archivo esté dentro del tamaño actual del archivo
+    // if (puntero_archivo > tamanio_archivo) 
+    // {
+    //     log_error(log_io, "Error: El puntero de escritura está fuera del tamaño actual del archivo.\n");
+    //     return;
+    // }
+
+    // // Escribir en los bloques correspondientes
+    // int bloque_actual = bloque_inicial;
+    // int bytes_restantes = tamanio;
+
+    // char* bitmap_buffer = obtener_bitmap();
+
+    // t_bitarray* bitmap = bitarray_create_with_mode(bitmap_buffer, bitarray_size, LSB_FIRST);
+    
+    // while (bytes_restantes > 0) 
+    // {
+    //     // Calcular cuántos bytes se pueden escribir en este bloque
+    //     int bytes_a_escribir = min(config_io->block_size, bytes_restantes);
+
+    //     // Escribir los bytes correspondientes en `direccion_fisica`
+    //     list_add(direccion_fisica, bytes_a_escribir);
+
+    //     // Actualizar el bitmap (marcar el bloque como ocupado si no lo estaba)
+        
+    //     bitarray_set_bit(bitmap, bloque_actual); // Marco el bit como ocupado
+        
+    //     free(bitmap_buffer);
+        
+    //     escribir_archivo_con_bitmap(bitmap); // Actualizo el archivo de bitmap
+
+    //     bitarray_destroy(bitmap);
+
+        // Actualizar el tamaño del archivo si es necesario
+
+
+
+        // Mover el puntero_archivo y actualizar `bytes_restantes`
+
+        // Avanzar al siguiente bloque si es necesario
+
+        // Actualizar la metadata del archivo (tamaño, posición de puntero, etc.)
+    // }
+
+    // Guardar la configuración actualizada en el archivo .config
+
+    avisar_fin_io_a_kernel();
     return;
 }
+
+// void manejar_escritura_archivo(char* nombre_archivo, int offset, int size, char* buffer, int pid) {
+
+//     usleep(config_io->tiempo_unidad_trabajo * 1000);
+
+//     strcat(nombre_archivo, ".config");
+
+//     t_config* config_aux = config_create(nombre_archivo);
+
+//     if (config_aux == NULL) {
+//         log_error(log_io, "Error al cargar el archivo de configuración %s", nombre_archivo);
+//         return;
+//     }
+//     // Esto hay que cambiarlo según como lo cambie como en el truncate
+//     int bloque_inicial = config_get_int_value(config_aux, "BLOQUE_INICIAL");
+//     int tamanio_archivo = config_get_int_value(config_aux, "TAMANIO_ARCHIVO");
+
+//     // Leer el contenido del bitmap
+//     char* bitmap_buffer = obtener_bitmap();
+//     t_bitarray* bitmap = bitarray_create_with_mode(bitmap_buffer, bitarray_size, LSB_FIRST);
+
+//     // Calcular los bloques que serán ocupados por la nueva escritura
+//     int bloques_actuales = calcular_bloques_que_ocupa(tamanio_archivo);
+//     int nuevo_tamanio = offset + size;
+//     int bloques_necesarios = calcular_bloques_que_ocupa(nuevo_tamanio);
+
+//     if (bloques_necesarios > bloques_actuales) {
+//         // Necesitamos más bloques
+//         int bloques_adicionales = bloques_necesarios - bloques_actuales;
+//         int bloques_libres = contar_bloques_libres(bitmap);
+
+//         if (bloques_libres < bloques_adicionales) {
+//             log_error(log_io, "No hay suficientes bloques libres para la escritura");
+//             free(bitmap_buffer);
+//             bitarray_destroy(bitmap);
+//             config_destroy(config_aux);
+//             return;
+//         }
+
+//         for (int i = 0; i < bloques_adicionales; i++) {
+//             int bloque_libre = bitarray_find_first_clear_bit(bitmap);
+//             if (bloque_libre == -1) {
+//                 log_error(log_io, "Error al encontrar un bloque libre");
+//                 free(bitmap_buffer);
+//                 bitarray_destroy(bitmap);
+//                 config_destroy(config_aux);
+//                 return;
+//             }
+//             bitarray_set_bit(bitmap, bloque_libre);
+//         }
+
+//         escribir_archivo_con_bitmap(bitmap);
+//     }
+
+//     // Realizar la escritura en los bloques correspondientes
+//     for (int i = 0; i < size; i++) {
+//         int bloque_actual = (offset + i) / config_io->block_size;
+//         int desplazamiento_bloque = (offset + i) % config_io->block_size;
+//         int bloque_fisico = bloque_inicial + bloque_actual;
+
+//         escribir_byte_en_bloque(bloque_fisico, desplazamiento_bloque, buffer[i]);
+//     }
+
+//     // Actualizar el tamaño del archivo si es necesario
+//     if (nuevo_tamanio > tamanio_archivo) {
+//         char* nuevo_tamanio_str = pasar_a_string(nuevo_tamanio);
+//         config_set_value(config_aux, "TAMANIO_ARCHIVO", nuevo_tamanio_str);
+//         config_save(config_aux);
+//         free(nuevo_tamanio_str);
+//     }
+
+//     free(bitmap_buffer);
+//     bitarray_destroy(bitmap);
+//     config_destroy(config_aux);
+
+//     avisar_fin_io_a_kernel();
+// }
+
+
+
 
 // IO_READ 
 void manejar_lectura_archivo(char* nombre_archivo, t_list* direccion_fisica, int tamanio, int puntero_archivo, Interfaz* configuracion_fs)
@@ -366,7 +510,6 @@ void crear_archivos_gestion_fs()
     log_info(log_io,"estoy por crear el bitmap");
     
     size_t bitmap_size_bytes = (config_io->block_count + 7) / 8;  // 1 bit por bloque
-
     
     char* bitmap_buffer = (char*)malloc(bitmap_size_bytes);
 
@@ -381,9 +524,11 @@ void crear_archivos_gestion_fs()
 
     
     memset(bitmap_buffer, 0, bitmap_size_bytes);
+
     t_bitarray* bitmap = bitarray_create_with_mode(bitmap_buffer, bitmap_size_bytes, LSB_FIRST);
     
     log_info(log_io,"cree el bitarray");
+
     fseek(bitmap_file, 0, SEEK_SET);  // Mueve el puntero al inicio del archivo
     fwrite(bitmap_buffer, sizeof(char), bitmap_size_bytes, bitmap_file);
 
@@ -675,4 +820,8 @@ int bitarray_find_first_clear_bit(t_bitarray* bitmap)
         }
     }
     return -1;
+}
+
+int min(int a, int b) {
+    return a < b ? a : b;
 }

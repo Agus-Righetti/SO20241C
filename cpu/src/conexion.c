@@ -215,9 +215,9 @@ void atender_memoria() {
                 buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
                 pid = recibir_int_del_buffer(buffer);
                 dir_fisica = recibir_estructura_del_buffer(buffer);
-                string_leido = recibir_string_del_buffer(buffer);
+                //string_leido = recibir_string_del_buffer(buffer);
                 string_leido_reconstruido = recibir_string_del_buffer(buffer);
-                log_info(log_cpu, "PID: %d - Accion: ESCRIBIR - Direccion fisica: [%d - %d] - Valor: %u ", pid, dir_fisica->nro_marco ,dir_fisica->offset, string_leido);
+                log_info(log_cpu, "PID: %d - Accion: ESCRIBIR - Direccion fisica: [%d - %d] - Valor: %u ", pid, dir_fisica->nro_marco ,dir_fisica->offset, string_leido_reconstruido);
                 log_info(log_cpu, "ACCIÓN COMPLETADA: ESCRIBIR %s EN MEMORIA", string_leido_reconstruido);
 
                 sem_post(&sem_ok_escritura_string);
@@ -303,6 +303,7 @@ void atender_interrupcion() // ACA HAY QUE MANEJAR EL ENVIAR PCB DENTRO DEL SWIT
                 flag_interrupcion = true; // Este flag me marca que HAY una interrupción, entonces desde el final de cada instrucción voy a devolver el pcb a kernel
                 motivo_interrupcion = FIN_DE_QUANTUM;
                 buffer=recibiendo_paquete_personalizado(socket_interrupt_kernel);
+                log_info(log_cpu, "NO PASE");
                 free(buffer);
 
                 break;

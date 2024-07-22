@@ -11,6 +11,8 @@ void leer_consola(t_list* direccion_fisica, int tamanio, int pid)
     
     // Lee toda la entrada de la consola
     leido = readline("Ingrese el texto: > ");
+    
+    log_info(log_io, "El texto fue ingresado correctamente: %s", leido);
 
     // Trunca el texto al tamaño deseado
     strncpy(texto, leido, tamanio);
@@ -27,8 +29,6 @@ void leer_consola(t_list* direccion_fisica, int tamanio, int pid)
     agregar_string_al_paquete_personalizado(paquete, texto);
     agregar_lista_al_paquete_personalizado(paquete, direccion_fisica, sizeof(t_direccion_fisica));
     
-    
-
     enviar_paquete(paquete, conexion_io_memoria);
 
     eliminar_paquete(paquete);

@@ -38,6 +38,8 @@ void atender_kernel()
 
             case IO_STDIN_READ: // (Interfaz, Registro Dirección, Registro Tamaño)
 
+                log_info(log_io, "Estoy en el case IO_STDIN_READ atendiendo a kernel");
+
                 registro_tamanio = recibir_int_del_buffer(buffer);
                 direcciones_fisicas = recibir_lista_del_buffer(buffer, sizeof(t_direccion_fisica));
 
