@@ -96,6 +96,7 @@ void enviar_pcb(int conexion, argumentos_cpu* argumentos_a_mandar){
             agregar_string_al_paquete_personalizado(paquete, argumentos_a_mandar->nombre_interfaz);
             agregar_string_al_paquete_personalizado(paquete, argumentos_a_mandar->nombre_archivo);
             agregar_int_al_paquete_personalizado(paquete, argumentos_a_mandar->registro_tamano);
+            log_info(log_cpu, "El tamaño que estoy metiendo al paquete es: %d", argumentos_a_mandar->registro_tamano);
 
             break;
 
@@ -1064,8 +1065,8 @@ void instruccion_io_fs_truncate(char **parte)
     // LOG OBLIGATORIO - INSTRUCCIÓN EJECUTADA
     log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s %s", pcb_recibido->pid, parte[0], parte[1], parte[2], parte[3]);
     
-    int nuevo_tamanio = *(int*)dictionary_get(registros, parte[3]);
-    
+    int nuevo_tamanio = obtener_valor_registro_segun_nombre(parte[3]);
+
     argumentos_cpu* args = malloc(sizeof(argumentos_cpu));
     args->nombre_interfaz = parte[1];
     args->nombre_archivo = parte[2];

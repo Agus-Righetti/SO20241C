@@ -19,7 +19,7 @@
 #include<pthread.h>          // Biblioteca para hilos
 #include<semaphore.h>        // Biblioteca para semaforos
 #include<math.h>             // Biblioteca para ceil()
-#include <time.h>            // Biblioteca para usar clock()
+#include<time.h>            // Biblioteca para usar clock()
 
 
 // ************* ESTRUCTURAS GLOBALES *************

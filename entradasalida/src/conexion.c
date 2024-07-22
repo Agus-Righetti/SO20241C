@@ -80,6 +80,9 @@ void atender_kernel()
                 
                 nombre_archivo = recibir_string_del_buffer(buffer); 
                 registro_tamanio = recibir_int_del_buffer(buffer);
+
+                log_info(log_io, "El nuevo tamaño que estoy por mandar a la funcion de truncate es: %d", registro_tamanio);
+
                 manejar_truncado_archivo(nombre_archivo, registro_tamanio, pid);
                 break;
 

@@ -656,7 +656,7 @@ void recibir_pcb(pcb* proceso) {
     pcb* pcb_recibido;
 
       switch(codigo_operacion) // Segun el codigo de operacion actuo 
-        {
+      {
             case -1:
                 log_info(log_kernel, "Se desconecto CPU");
                 break;
@@ -838,12 +838,13 @@ void recibir_pcb(pcb* proceso) {
                 temporal_stop(tiempo_de_quantum);
                 
                 buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
-                //fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
                 pcb_recibido = recibir_estructura_del_buffer(buffer);
                 pcb_recibido->registros = recibir_estructura_del_buffer(buffer);
                 nombre_interfaz = recibir_string_del_buffer(buffer);
                 nombre_archivo = recibir_string_del_buffer(buffer);
                 registro_tamano = recibir_int_del_buffer(buffer);
+
+                log_info(log_kernel, "El tamaño recibido para el truncate en kernel es: %d", registro_tamano);
 
                 actualizar_pcb(proceso, pcb_recibido);
 
