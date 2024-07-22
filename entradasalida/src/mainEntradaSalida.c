@@ -9,17 +9,11 @@ int main(int argc, char* argv[])
     char* nombre_log = string_new();
     char** parte = string_split(argv[1], ".");
 
-    
-    
     nombre_log = parte[0];
     
     string_append(&nombre_log,".log");
 
-    // log_io = log_create(nombre_log, "IO", 1, LOG_LEVEL_DEBUG);
-    
     log_io = log_create(nombre_log, parte[0], 1, LOG_LEVEL_DEBUG);
-
-    //log_info(nombre_log, "esto es nombre del log %s", nombre_log);
 
     config_io = armar_config(log_io, argv[1]); // En argv[1] esta el nombre de config pasado por parametro
 
@@ -46,16 +40,13 @@ int main(int argc, char* argv[])
 
     // Las conexiones de sockets acá
 
-    log_info(log_io, "Estoy antes de la conexion a kernel");
     conexion_io_kernel = conexion_a_kernel();
 
     pthread_t hilo_escuchar_memoria;
 
     if(strcmp(config_io->tipo_interfaz, "GENERICA")!=0) //si no es la generica se conecta con memoria
     {
-      log_info(log_io, "Estoy antes de la conexión a memoria");
       conexion_io_memoria = conexion_a_memoria(); 
-      log_info(log_io, "Estoy después de la conexión a memoria");
       hilo_escuchar_memoria = escuchar_memoria();
     }
 
@@ -68,8 +59,6 @@ int main(int argc, char* argv[])
     }
     
     pthread_join(hilo_escuchar_kernel, NULL);
-
-    // terminar_programa(log_io, config_io);
 
     return 0;
 }

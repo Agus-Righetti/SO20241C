@@ -125,6 +125,7 @@ void manejar_eliminacion_archivo(char* nombre_archivo, int pid)
 void manejar_truncado_archivo(char* nombre_archivo, int nuevo_tamanio, int pid)
 {
     log_info(log_io,"Entre a truncar archivo");
+
     usleep(config_io->tiempo_unidad_trabajo * 1000);
     
     strcat(nombre_archivo, ".config");
@@ -135,7 +136,11 @@ void manejar_truncado_archivo(char* nombre_archivo, int nuevo_tamanio, int pid)
 
     FILE* config_archivo = fopen(config_file_path, "r+");
 
+    log_info(log_io, "Pude abrir el archivo");
+
     t_config* config_aux = config_create(config_file_path);
+
+    log_info(log_io, "Pude crear el config");
 
     t_metadata* metadata = malloc(sizeof(t_metadata));
 
@@ -143,10 +148,15 @@ void manejar_truncado_archivo(char* nombre_archivo, int nuevo_tamanio, int pid)
 
     t_bitarray* bitmap = bitarray_create_with_mode(buffer_bitmap, bitarray_size, LSB_FIRST);
 
+    log_info(log_io, "Pude crear el bitmap");
+
     char* buffer;
 
+    // FALLA ACA
     int bloque_inicial = config_get_int_value(config_aux, "BLOQUE_INICIAL");
     int tamanio_original = config_get_int_value(config_aux, "TAMANIO_ARCHIVO");
+
+    log_info(log_io, "Bloque inicial: <%d>; Tamaño original: <%d>", bloque_inicial, tamanio_original);
 
     fclose(config_archivo);
 

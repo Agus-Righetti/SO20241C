@@ -72,6 +72,8 @@ void atender_kernel()
 
             case IO_FS_TRUNCATE: // (Interfaz, Nombre Archivo, Registro Tamaño)
 
+                log_info(log_io, "Estoy dentro del case de IO_FS_TRUNCATE");
+                
                 nombre_archivo = recibir_string_del_buffer(buffer); 
                 registro_tamanio = recibir_int_del_buffer(buffer);
                 manejar_truncado_archivo(nombre_archivo, registro_tamanio, pid);

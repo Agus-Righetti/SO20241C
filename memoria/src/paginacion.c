@@ -80,7 +80,7 @@ t_list *buscar_marcos_libres()
             unFrame->id = base;
             list_add(marcosLibres, unFrame);
         }
-        log_info(log_memoria, "Frame %d -> ocupado", base);
+        //log_info(log_memoria, "Frame %d -> ocupado", base);
 
         base++;
     }
@@ -629,14 +629,13 @@ void leer_string_en_memoria(int pid, t_list *direcciones_fisicas, int tamanio) {
 void leer_string_io_en_memoria(int pid, t_list *direcciones_fisicas, int tamanio, int socket)
 {
 
-    char *valor_leido = malloc(sizeof(char) * tamanio); // agregue esto
+    char *valor_leido = malloc(sizeof(char) * (tamanio + 1)); // agregue esto
 
     int cantidad_marcos_por_leer = list_size(direcciones_fisicas);
 
     log_info(log_memoria, "tengo q leer %d marcos", cantidad_marcos_por_leer);
 
-    if (cantidad_marcos_por_leer == 0)
-    {
+    if (cantidad_marcos_por_leer == 0) {
         log_error(log_memoria, "ERROR: no hay direcciones físicas para escribir.");
         return;
     }
@@ -658,10 +657,8 @@ void leer_string_io_en_memoria(int pid, t_list *direcciones_fisicas, int tamanio
 
         enviar_lectura_ult_string_a_io(valor_leido, socket);
     }
-    else
-    {
+    else {
         int bytes_ya_operados = 0;
-        // char* valor_leido ; //lo comento porq ya esta inicializado arriba
         char *valor_leido_reconstruido;
 
         // Voy a leer el dato de a poco

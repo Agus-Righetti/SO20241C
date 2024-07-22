@@ -213,6 +213,7 @@ void enviar_instruccion_io(int socket, argumentos_para_io* args)
             agregar_string_al_paquete_personalizado(paquete_instruccion, args->nombre_archivo);
             break;
         case IO_FS_TRUNCATE:
+            log_info(log_kernel, "Estoy dentro del case IO_FS_TRUNCATE por meter mas cosas al paquete");
             agregar_string_al_paquete_personalizado(paquete_instruccion, args->nombre_archivo);
             agregar_int_al_paquete_personalizado(paquete_instruccion, args->registro_tamano);
             break;
@@ -229,7 +230,11 @@ void enviar_instruccion_io(int socket, argumentos_para_io* args)
    
     free(args);
 
+    log_info(log_kernel, "Estoy a punto de enviar el paquete");
+
     enviar_paquete(paquete_instruccion, socket); // Envio el paquete a través del socket
+
+    log_info(log_kernel, "Ya envie el paquete");
 
     eliminar_paquete(paquete_instruccion); // Libero el paquete
 

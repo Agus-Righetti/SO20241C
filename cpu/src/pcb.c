@@ -1063,13 +1063,6 @@ void instruccion_io_fs_truncate(char **parte)
         return;
     }
 
-    // if(strcmp(parte[1], "DIALFS") != 0) 
-    // {
-    //     log_error(log_cpu, "La interfaz indicada no es DIALFS.");
-    // }
-    
-    // Log de la ejecucion de la instruccion
-
     // LOG OBLIGATORIO - INSTRUCCIÓN EJECUTADA
     log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s %s", pcb_recibido->pid, parte[0], parte[1], parte[2], parte[3]);
     
@@ -1087,7 +1080,7 @@ void instruccion_io_fs_truncate(char **parte)
     
     log_info(log_cpu, "Nombre interfaz: %s", args->nombre_interfaz);
     log_info(log_cpu, "Nombre archivo: %s", args->nombre_archivo);
-    log_info(log_cpu, "Registro tamanio: %s", args->registro_tamano);
+    log_info(log_cpu, "Registro tamanio: %d", args->registro_tamano);
 
     enviar_pcb(socket_cliente_kernel, args);
 
