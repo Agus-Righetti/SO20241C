@@ -222,7 +222,7 @@ void manejar_truncado_archivo(char* nombre_archivo, int nuevo_tamanio, int pid)
 
         int tamanio_disponible_ult_bloque = config_io->block_size - tamanio_ultimo_bloque;
         
-        if(tamanio_disponible_ult_bloque < bytes_a_agregar) // Si puedo meter 
+        if(tamanio_disponible_ult_bloque < bytes_a_agregar) // Si puedo meter todo lo que tengo en algun bloque ocupado lo hago ahi directamente
         {
             log_info(log_io, "Bytes a agregar: %d", bytes_a_agregar);
 
@@ -352,13 +352,13 @@ void manejar_truncado_archivo(char* nombre_archivo, int nuevo_tamanio, int pid)
                 actualizar_metadata(metadata);
             }
         }else{
+            
             //actualizo el metadata solamente, el bitmap no porq no le agregue bloques
             metadata->tamanio_archivo = nuevo_tamanio;
             metadata->nombre_archivo = nombre_archivo;
             metadata->bloque_inicial = bloque_inicial;
 
             actualizar_metadata(metadata);
-
         }
 
         
@@ -392,13 +392,12 @@ void manejar_truncado_archivo(char* nombre_archivo, int nuevo_tamanio, int pid)
     unsigned char byte_2;
     while (fread(&byte_2, sizeof(unsigned char), 1, file_2) == 1) {
         for (int i = 7; i >= 0; i--) {
-            printf("%d", (byte >> i) & 1);
+            printf("%d", (byte_2 >> i) & 1);
         }
         printf(" "); // Para separar los bytes
     }
 
-    fclose(file);
-
+    fclose(file_2);
     
     avisar_fin_io_a_kernel();
 
