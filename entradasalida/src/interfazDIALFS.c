@@ -142,10 +142,12 @@ void manejar_eliminacion_archivo(char* nombre_archivo, int pid)
         bitarray_clean_bit(bitmap, bloque_inicial); // pongo en cero los bloques ocupados
     }
     
+    //tengo q actualizar el buffer
+    
+    escribir_archivo_con_bitmap(bitmap_buffer); // Actualizamos el archivo de bitmap
+
     free(bitmap_buffer);
     
-    escribir_archivo_con_bitmap(bitmap); // Actualizamos el archivo de bitmap
-
     bitarray_destroy(bitmap);
 
     // no borramos los bloques del bloques.dat porque al marcar como libres los bloques en el bitmap se va a sobreescribir en esos bloques y listo
@@ -221,23 +223,24 @@ void manejar_truncado_archivo(char* nombre_archivo, int nuevo_tamanio, int pid)
         int tamanio_ultimo_bloque = tamanio_original % config_io->block_size;
 
         int tamanio_disponible_ult_bloque = config_io->block_size - tamanio_ultimo_bloque;
+
+        int bytes_a_agregar_en_bloques_enteros = bytes_a_agregar - tamanio_disponible_ult_bloque;
         
         if(tamanio_disponible_ult_bloque < bytes_a_agregar) // Si puedo meter todo lo que tengo en algun bloque ocupado lo hago ahi directamente
         {
-            log_info(log_io, "Bytes a agregar: %d", bytes_a_agregar);
 
-            int resto = tamanio_original % config_io->block_size;
+            log_info(log_io, "Tamanio dispo en el ultimo bloque: %d", tamanio_disponible_ult_bloque);
 
-            log_info(log_io, "Resto: %d", resto);
-
-            if(resto > 0) // si los bloques ocupados no estan ocupados en su totalidad
+            if(tamanio_disponible_ult_bloque > 0) // si los bloques ocupados no estan ocupados en su totalidad
             {
-                bytes_a_agregar = bytes_a_agregar - (config_io->block_size - resto);
+                bytes_a_agregar = bytes_a_agregar - tamanio_disponible_ult_bloque;
             }
+            
+            log_info(log_io, "Bytes a agregar: %d", bytes_a_agregar);
             
             int bloques_necesarios = calcular_bloques_que_ocupa(bytes_a_agregar);
             
-            log_info(log_io, "Bloques necesarios %d", bloques_necesarios);
+            log_info(log_io, "Bloques necesarios %d, (deberian ser 15)", bloques_necesarios);
 
             //verificamos que haya la cantidad de bloques libres en total q necesitamos
 
@@ -329,7 +332,8 @@ void manejar_truncado_archivo(char* nombre_archivo, int nuevo_tamanio, int pid)
                     log_info(log_io, "El bloque de inicio que estoy por mandar a metadata es: %d", bloque_inicial_nuevo);
 
                     // actualizo los dos archivos
-                    escribir_archivo_con_bitmap(bitmap);
+                    //tengo q mandarle el del bitmap_buffer no el bitmap
+                    escribir_archivo_con_bitmap(buffer_bitmap);
                     actualizar_metadata(metadata);
                 }
             }else{
@@ -339,16 +343,17 @@ void manejar_truncado_archivo(char* nombre_archivo, int nuevo_tamanio, int pid)
                 metadata->nombre_archivo = nombre_archivo;
                 metadata->bloque_inicial = bloque_inicial;
 
-                // falta actualizar el bitmap
-
-                bloques_necesarios = calcular_bloques_que_ocupa(nuevo_tamanio);
+                //bloques_necesarios = calcular_bloques_que_ocupa(nuevo_tamanio);
+                log_info(log_io, "los bloques q necesito para agrandar el archivo son: %d" , bloques_necesarios);
+                //CAMBIAMOS ACAAAAAAAAAAAAAAAAAAAAA
 
                 for(int i = bloque_inicial; i < bloques_necesarios; i++)
                 {
                     bitarray_set_bit(bitmap,i);
                 }
 
-                escribir_archivo_con_bitmap(bitmap);
+                //le mando el buffer
+                escribir_archivo_con_bitmap(buffer_bitmap);
                 actualizar_metadata(metadata);
             }
         }else{
@@ -377,7 +382,7 @@ void manejar_truncado_archivo(char* nombre_archivo, int nuevo_tamanio, int pid)
         metadata->nombre_archivo = nombre_archivo;
         metadata->bloque_inicial = bloque_inicial;
 
-        escribir_archivo_con_bitmap(bitmap);
+        escribir_archivo_con_bitmap(buffer_bitmap);
         actualizar_metadata(metadata);
     }
 
@@ -697,11 +702,45 @@ char* obtener_bitmap()
     return bitmap_buffer;
 }
 
-void escribir_archivo_con_bitmap(t_bitarray* bitmap)
+void escribir_archivo_con_bitmap(char* bitmap_buffer)
 {
+
+    log_info(log_io, "el bitmap antes de actualizar es:");
+    
+    FILE *file_2 = fopen("bitmap.dat", "rb");
+
+   // log_info(log_io, "Voy a leer el bitmap");
+
+    unsigned char byte_2;
+    while (fread(&byte_2, sizeof(unsigned char), 1, file_2) == 1) {
+        for (int i = 7; i >= 0; i--) {
+            printf("%d", (byte_2 >> i) & 1);
+        }
+        printf(" "); // Para separar los bytes
+    }
+
+    fclose(file_2);
+
     FILE* bitmap_file = fopen("bitmap.dat", "wb"); 
-    fwrite(bitmap, 1, bitarray_size, bitmap_file);
+    fwrite(bitmap_buffer, 1, bitarray_size, bitmap_file);
     fclose(bitmap_file);
+
+    log_info(log_io, "ya actualice el bitmap ahora es:");
+
+    FILE *file_3 = fopen("bitmap.dat", "rb");
+
+    //log_info(log_io, "Voy a leer el bitmap");
+
+    unsigned char byte_3;
+    while (fread(&byte_3, sizeof(unsigned char), 1, file_3) == 1) {
+        for (int i = 7; i >= 0; i--) {
+            printf("%d", (byte_3 >> i) & 1);
+        }
+        printf(" "); // Para separar los bytes
+    }
+    fclose(file_3);
+
+
     //bitarray_destroy(bitmap);
 }
 
@@ -709,20 +748,11 @@ int buscar_bloques_contiguos_desde_cierto_bloque(int bloque_inicial, int bloques
 {
     int cont_bloques_libres_consecutivos = 0;
 
-    for (int i = bloque_inicial; i < config_io->block_count; i++) 
+    for (int i = bloque_inicial+1; i < config_io->block_count; i++) 
     {
         if (!bitarray_test_bit(bitmap, i)) 
         { // Si el bloque i está libre (bit es 0)
-
-            if (cont_bloques_libres_consecutivos == 0)
-            { // Veo si es el primer bloque 
-                if (i != bloque_inicial) 
-                {
-                    // Si hemos encontrado bloques libres consecutivos, pero no empiezan desde bloque_inicial, reiniciamos
-                    return -1;
-                }
-            }
-
+            
             cont_bloques_libres_consecutivos++; // Incrementa el cont de bloques libres consecutivos
 
             if (cont_bloques_libres_consecutivos == bloques_necesarios) 
@@ -730,7 +760,7 @@ int buscar_bloques_contiguos_desde_cierto_bloque(int bloque_inicial, int bloques
                 return bloque_inicial; // Retorna bloque_inicial si se encontraron suficientes bloques libres consecutivos
             }
         } else {
-            cont_bloques_libres_consecutivos = 0; // Reinicia el cont si se encuentra un bloque ocupado
+            return -1; // Reinicia el cont si se encuentra un bloque ocupado
         }
     }
 

@@ -29,7 +29,7 @@ t_metadata* buscar_archivo_que_inicia_en_bloque(int nro_bloque);
 void actualizar_archivo_bloques(char* buffer);
 void compactar(t_bitarray* bitmap);
 char *agregar_al_final(char *buffer, const char *informacion);
-void escribir_archivo_con_bitmap(t_bitarray* bitmap);
+void escribir_archivo_con_bitmap(char* bitmap_buffer);
 int agregar_info_en_cierto_bloque(int bloque_inicial_nuevo, int cant_bloques , char* buffer);
 char* obtener_bitmap();
 int calcular_bloques_que_ocupa(int tamanio_en_bytes);
