@@ -566,16 +566,9 @@ void crear_archivos_gestion_fs()
         return;
     }
     
-    // memset(bitmap_buffer, 0, bitmap_size_bytes);
+    memset(bitmap_buffer, 0, bitmap_size_bytes);
     // Limpio el bitmap -> lo seteo en 0
     t_bitarray* bitmap = bitarray_create_with_mode(bitmap_buffer, bitmap_size_bytes, LSB_FIRST);
-
-    
-    for (int i = 0; i < bitarray_size; i++) {
-        bitarray_clean_bit(bitmap, i);
-    } 
-    log_info(log_io, "limpie el bitmap struct");
-
     
     log_info(log_io,"cree el bitarray");
 
@@ -836,7 +829,7 @@ void actualizar_metadata(t_metadata* metadata)
     char* tamanio_bloque = pasar_a_string(metadata->tamanio_archivo);
 
     config_set_value(config_archivo, "BLOQUE_INICIAL", bloque_inicial);
-    config_set_value(config_archivo, "TAMANIO_BLOQUE", tamanio_bloque);
+    config_set_value(config_archivo, "TAMANIO_ARCHIVO", tamanio_bloque);
 
     config_save(config_archivo);
 
