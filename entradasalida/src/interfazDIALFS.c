@@ -7,22 +7,25 @@ void manejar_creacion_archivo(char* nombre_archivo, int pid)
     //hago un usleep para lo q tarda
     usleep(config_io->tiempo_unidad_trabajo * 1000);
 
+    log_info(log_io, "Estoy antes de crear el bitmap_file");
+
     FILE* bitmap_file = fopen("bitmap.dat", "rb"); // Abro el "bitmap.dat"
     
     char *bitmap_buffer = (char*)malloc(bitarray_size);
 
-    fread(bitmap_buffer, 1, bitarray_size, bitmap_file);
+    fread(bitmap_buffer, 1, bitarray_size, bitmap_file); // Acá almaceno el contenido del bitmap_file dentro del bitmap_buffer
 
-    fclose(bitmap_file);
+    log_info(log_io, "Pude leer, estoy por cerrar el archivo");
 
-    t_bitarray* bitmap = bitarray_create_with_mode(bitmap_buffer, bitarray_size, LSB_FIRST);
+    fclose(bitmap_file); // Porque ya tengo el contenido en el buffer
+
+    t_bitarray* bitmap = bitarray_create_with_mode(bitmap_buffer, bitarray_size, MSB_FIRST);
     
-    // Limpio el bitmap -> lo seteo en 0
-    for (int i = 0; i < bitarray_size; i++) {
-        bitarray_clean_bit(bitmap, i);
-    } 
+    log_info(log_io, "cree el bitmap (struct)");
 
     int index_primer_bloque_libre = bitarray_find_first_clear_bit(bitmap);
+
+    log_info(log_io, "El index del primer bloque libre al crear un archivo es: %d", index_primer_bloque_libre);
 
     if(index_primer_bloque_libre == -1)
     {
@@ -31,19 +34,22 @@ void manejar_creacion_archivo(char* nombre_archivo, int pid)
     
     bitarray_set_bit(bitmap, index_primer_bloque_libre);
 
+    log_info(log_io, "Estoy por abrir el archivo para escribir");
+
     bitmap_file = fopen("bitmap.dat", "wb");
 
     fwrite(bitmap_buffer, 1, bitarray_size, bitmap_file);
+
+    log_info(log_io, "acabo de escrbir el archivo con los datos del bitmap");
     
     fclose(bitmap_file);
 
-    
+    FILE *file = fopen("bitmap.dat", "rb");
 
-    FILE *file = fopen("archivo.bin", "rb");
+    log_info(log_io, "Pude abrir el archivo");
 
     unsigned char byte;
     while (fread(&byte, sizeof(unsigned char), 1, file) == 1) {
-        
         for (int i = 7; i >= 0; i--) {
             printf("%d", (byte >> i) & 1);
         }
@@ -51,10 +57,6 @@ void manejar_creacion_archivo(char* nombre_archivo, int pid)
     }
 
     fclose(file);
-
-
-
-
 
     bitarray_destroy(bitmap);
     free(bitmap_buffer);
@@ -196,11 +198,17 @@ void manejar_truncado_archivo(char* nombre_archivo, int nuevo_tamanio, int pid)
 
     fclose(config_archivo);
 
+    log_info(log_io, "Nuevo tamaño debería ser 10 y es: %d", nuevo_tamanio);
+
     if(tamanio_original < nuevo_tamanio) // Vamos a tener que bsucar que haya bloques libres para agrandar el tamanio
     {
         int bytes_a_agregar = nuevo_tamanio - tamanio_original;
 
+        log_info(log_io, "Bytes a agregar: %d", bytes_a_agregar);
+
         int resto = tamanio_original % config_io->block_size;
+
+        log_info(log_io, "Resto: %d", resto);
 
         if(resto > 0) // si los bloques ocupados no estan ocupados en su totalidad
         {
@@ -209,10 +217,14 @@ void manejar_truncado_archivo(char* nombre_archivo, int nuevo_tamanio, int pid)
         
         int bloques_necesarios = calcular_bloques_que_ocupa(bytes_a_agregar);
         
+        log_info(log_io, "Bloques necesarios %d", bloques_necesarios);
+
         //verificamos que haya la cantidad de bloques libres en total q necesitamos
 
         int cantidad_bloques_libres = contar_bloques_libres(bitmap);
         
+        log_info(log_io, "Cantidad de bloques libres: %d", cantidad_bloques_libres);
+
         if(cantidad_bloques_libres < bloques_necesarios)
         {
             log_error(log_io, "No se puede realizar la opeacion TRUNCATE, no se posee el espacio necesario");
@@ -553,11 +565,17 @@ void crear_archivos_gestion_fs()
         fclose(bitmap_file);
         return;
     }
+    
+    // memset(bitmap_buffer, 0, bitmap_size_bytes);
+    // Limpio el bitmap -> lo seteo en 0
+    t_bitarray* bitmap = bitarray_create_with_mode(bitmap_buffer, bitmap_size_bytes, LSB_FIRST);
 
     
-    memset(bitmap_buffer, 0, bitmap_size_bytes);
+    for (int i = 0; i < bitarray_size; i++) {
+        bitarray_clean_bit(bitmap, i);
+    } 
+    log_info(log_io, "limpie el bitmap struct");
 
-    t_bitarray* bitmap = bitarray_create_with_mode(bitmap_buffer, bitmap_size_bytes, LSB_FIRST);
     
     log_info(log_io,"cree el bitarray");
 
@@ -848,6 +866,7 @@ int bitarray_find_first_clear_bit(t_bitarray* bitmap)
 
         if (!bitarray_test_bit(bitmap, i)) // Si está vacío el bitmap, entonces devuelvo el índice en el que me encuentro
         {
+            log_info(log_io, "Voy a devolver el indice: %d", i);
             return i;
         }
     }
