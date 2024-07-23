@@ -3,6 +3,7 @@
 
 #include "m_gestor.h"
 #include "atenderCPU-IO.h"
+#include "paginacion.h"
 
 
 // *************** DECLARACIÓN DE FUNCIONES **********

@@ -754,6 +754,7 @@ void enviar_lectura_ult_string_a_io(char *valor_leido_reconstruido, int socket)
 
 void guardar_string_io_en_memoria(int pid, t_list *direcciones_fisicas, char *valor, int tamanio, int socket) {
 
+    log_info(log_memoria, "estoy en guardar_string_io_en_memoria");
     int cantidad_marcos_por_guardar = list_size(direcciones_fisicas);
 
     if (cantidad_marcos_por_guardar == 0) {

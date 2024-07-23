@@ -553,50 +553,73 @@ void manejar_lectura_archivo(char* nombre_archivo, t_list* direccion_fisica, int
     //cambio el nombre del archivo
 
     char** parte = string_split(nombre_archivo, ".");
+
+    log_info(log_io, "ya hice el string split");
     
     nombre_archivo = parte[0];
     
     string_append(&nombre_archivo,".config");
+
+    log_info(log_io, "ya le puse el nombre al archivo es: %s", nombre_archivo);
 
 
     //leemos del archivo 
         
     t_config* config_aux = config_create(nombre_archivo);
 
+    log_info(log_io, "cree la config del archivo %s", nombre_archivo);
+
     int tamanio_archivo = config_get_int_value(config_aux, "TAMANIO_ARCHIVO");
     int bloque_inicial = config_get_int_value(config_aux, "BLOQUE_INICIAL");
 
+    log_info(log_io, "esto es bloque inicial: %d", bloque_inicial);
+    log_info(log_io, "esto es tamanio archivo : %d", tamanio_archivo);
     
 
     config_destroy(config_aux);
 
+    log_info(log_io, "Hice el config_destroy ");
+
     FILE* archivo_bloques = fopen("bloques.dat", "r");
+
+    log_info(log_io, "ya abri el bloques.dat ");
 
     int byte_inicio_bloque = bloque_inicial * config_io->block_size;
 
+    log_info(log_io, "esto es byte inicio bloque: %d", byte_inicio_bloque);
+
     //Pongo el puntero al inicio de los bloques del archivo
     fseek(archivo_bloques, byte_inicio_bloque , SEEK_SET);
-
+    log_info(log_io, "Movi el puntero del archivo al inciio del bloque ");
     //Pongo el puntero en la posicion a partir de la cual quiero leer
     fseek(archivo_bloques, puntero_archivo, SEEK_CUR);
+    log_info(log_io, "Movi el puntero del archivo a donde quiero leer del bloque ");
 
-    char* buffer_datos = malloc(sizeof(char)*tamanio);
+    char* buffer_datos = malloc(sizeof(char)*(tamanio+1));
 
     fread(buffer_datos, sizeof(char), tamanio, archivo_bloques);
 
+    log_info(log_io, "Ya lei, lei esto: %s ", buffer_datos);
+
     fclose(archivo_bloques);
+
+    log_info(log_io, "Ya cerre el archivo de los bloques");
 
 
     // MANDAMOS A MEMORIA para q guarde
 
     t_paquete* paquete = crear_paquete_personalizado(IO_PIDE_ESCRITURA_MEMORIA); // Queremos que memoria lo guarde
 
-    agregar_int_al_paquete_personalizado(paquete, proceso->pid);
+    log_info(log_io, "Ya cree el paquete");
+
+    agregar_int_al_paquete_personalizado(paquete, pid);
     agregar_int_al_paquete_personalizado(paquete, tamanio);
     agregar_string_al_paquete_personalizado(paquete, buffer_datos);
     agregar_lista_al_paquete_personalizado(paquete, direccion_fisica, sizeof(t_direccion_fisica));
     
     enviar_paquete(paquete, conexion_io_memoria);
+
+    log_info(log_io, "ya le mande a memoria");
 
     eliminar_paquete(paquete);
 

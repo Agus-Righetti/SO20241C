@@ -163,6 +163,8 @@ void escucha_interfaz(void* arg) //es un hilo porque asi puedo escuchar a varias
                     //free(dir);
                 }
                 usleep(config_memoria->retardo_respuesta *1000);
+
+                log_info(log_memoria, "Estoy por llamar a guardar string io en memoria");
                 
                 guardar_string_io_en_memoria(pid, direcciones_fisicas, valor, tamanio, socket);
                 
