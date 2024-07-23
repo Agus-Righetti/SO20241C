@@ -189,9 +189,9 @@ void manejar_truncado_archivo(char* nombre_archivo, int nuevo_tamanio, int pid)
 
     FILE* config_archivo = fopen(config_file_path, "r+");
 
-    log_info(log_io, "Pude abrir el archivo");
+    //log_info(log_io, "Pude abrir el archivo");
 
-    log_info(log_io, "El path del config que voy a crear es: %s", config_file_path);
+    //log_info(log_io, "El path del config que voy a crear es: %s", config_file_path);
 
     t_config* config_aux = config_create(config_file_path);
 
@@ -203,7 +203,7 @@ void manejar_truncado_archivo(char* nombre_archivo, int nuevo_tamanio, int pid)
 
     t_bitarray* bitmap = bitarray_create_with_mode(buffer_bitmap, bitarray_size, MSB_FIRST);
 
-    log_info(log_io, "Pude crear el bitmap");
+    //log_info(log_io, "Pude crear el bitmap");
 
     char* buffer;
 
@@ -343,12 +343,12 @@ void manejar_truncado_archivo(char* nombre_archivo, int nuevo_tamanio, int pid)
                 metadata->nombre_archivo = nombre_archivo;
                 metadata->bloque_inicial = bloque_inicial;
 
-                //bloques_necesarios = calcular_bloques_que_ocupa(nuevo_tamanio);
-                log_info(log_io, "los bloques q necesito para agrandar el archivo son: %d" , bloques_necesarios);
-                //CAMBIAMOS ACAAAAAAAAAAAAAAAAAAAAA
 
-                for(int i = bloque_inicial; i < bloques_necesarios; i++)
+                //bloque_inicial + 1 porq el inicial ya esta seteado
+                //bloques_necesarios + bloque_inicial para q sean los necesarios desde el inicial
+                for(int i = bloque_inicial + 1; i < bloques_necesarios + bloque_inicial; i++)
                 {
+                    //log_info(log_io, "esto es el bloque en el q estoy por hacer set %d", i);
                     bitarray_set_bit(bitmap,i);
                 }
 
