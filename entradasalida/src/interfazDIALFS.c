@@ -453,7 +453,7 @@ void manejar_escritura_archivo(char* nombre_archivo, t_list* direccion_fisica, i
     log_info(log_io, "El nombre_archivo es: %s", nombre_archivo);
 
 
-
+    // TODAVIA NO PUDE PROBAR NADA 
 
     FILE* bloques_dat = fopen("bloques.dat", "r+b");
     
@@ -498,32 +498,32 @@ void manejar_escritura_archivo(char* nombre_archivo, t_list* direccion_fisica, i
 
 
     // Abrir el archivo para escribir
-    FILE *archivo = fopen(nombre_archivo, "rb+");
-    if (archivo == NULL) {
-        log_error(log_io, "Error al abrir el archivo");
-        return;
-    }
+    // FILE *archivo = fopen(nombre_archivo, "rb+");
+    // if (archivo == NULL) {
+    //     log_error(log_io, "Error al abrir el archivo");
+    //     return;
+    // }
 
-    log_info(log_io, "Abri el archivo %s", nombre_archivo);
+    // log_info(log_io, "Abri el archivo %s", nombre_archivo);
 
 
-    // Mover el puntero del archivo a la posición indicada por puntero_archivo
-    if (fseek(archivo, puntero_archivo, SEEK_SET) != 0) {
-        log_error(log_io, "Error al mover el puntero del archivo");
-        fclose(archivo);
-        return;
-    }
+    // // Mover el puntero del archivo a la posición indicada por puntero_archivo
+    // if (fseek(archivo, puntero_archivo, SEEK_SET) != 0) {
+    //     log_error(log_io, "Error al mover el puntero del archivo");
+    //     fclose(archivo);
+    //     return;
+    // }
 
-    // Escribir los datos obtenidos en el archivo
-    size_t bytes_escritos = fwrite(valor_a_mostrar, sizeof(char), tamanio, archivo);
-    if (bytes_escritos != tamanio) {
-        log_error(log_io, "Error al escribir en el archivo");
-    }
+    // // Escribir los datos obtenidos en el archivo
+    // size_t bytes_escritos = fwrite(valor_a_mostrar, sizeof(char), tamanio, archivo);
+    // if (bytes_escritos != tamanio) {
+    //     log_error(log_io, "Error al escribir en el archivo");
+    // }
 
-    log_info(log_io, "Escribi el archivo %s", nombre_archivo);
+    // log_info(log_io, "Escribi el archivo %s", nombre_archivo);
 
-    // Cerrar el archivo
-    fclose(archivo);
+    // // Cerrar el archivo
+    // fclose(archivo);
 
 
 

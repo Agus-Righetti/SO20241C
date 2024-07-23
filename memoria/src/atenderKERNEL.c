@@ -91,7 +91,6 @@ t_list* leer_archivo_y_cargar_instrucciones(char* archivo_pseudocodigo) {
 
         t_instruccion_codigo* pseudo_cod = malloc(sizeof(t_instruccion_codigo));
         pseudo_cod->mnemonico = strdup(l_instrucciones[0]);
-        //log_info(log_memoria, "%s", pseudo_cod->mnemonico);
 
         pseudo_cod->primero_parametro = (i > 1) ? strdup(l_instrucciones[1]) : NULL;
         //if(i > 1) log_info(log_memoria, "%s", pseudo_cod->primero_parametro);
@@ -104,18 +103,25 @@ t_list* leer_archivo_y_cargar_instrucciones(char* archivo_pseudocodigo) {
         pseudo_cod->quinto_parametro = (i > 5) ? strdup(l_instrucciones[5]) : NULL;
         //if(i > 5) log_info(log_memoria, "%s", pseudo_cod->quinto_parametro);
 
+        if (i == 6){
+            instruccion_formateada = string_from_format("%s %s %s %s %s %s", pseudo_cod->mnemonico, pseudo_cod->primero_parametro, pseudo_cod->segundo_parametro, pseudo_cod->tercero_parametro, pseudo_cod->cuarto_parametro, pseudo_cod->quinto_parametro);
 
-        if (i == 5) {
+        } else if (i == 5) {
             instruccion_formateada = string_from_format("%s %s %s %s %s", pseudo_cod->mnemonico, pseudo_cod->primero_parametro, pseudo_cod->segundo_parametro, pseudo_cod->tercero_parametro, pseudo_cod->cuarto_parametro);
+
         } else if(i == 4){
             instruccion_formateada = string_from_format("%s %s %s %s", pseudo_cod->mnemonico, pseudo_cod->primero_parametro, pseudo_cod->segundo_parametro, pseudo_cod->tercero_parametro);
+
         } else if(i == 3){
             instruccion_formateada = string_from_format("%s %s %s", pseudo_cod->mnemonico, pseudo_cod->primero_parametro, pseudo_cod->segundo_parametro);
+
         } else if (i == 2) {
             instruccion_formateada = string_from_format("%s %s", pseudo_cod->mnemonico, pseudo_cod->primero_parametro);
+
         } else {
             instruccion_formateada = strdup(pseudo_cod->mnemonico);
         }
+
 
         list_add(instrucciones, instruccion_formateada);
     
