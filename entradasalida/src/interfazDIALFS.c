@@ -935,10 +935,18 @@ char* leer_bloques(int bloque_inicial, int num_bloques)
     // Leer el contenido de los bloques
     char *buffer = malloc(num_bloques * config_io->block_size + 1);
 
+    if(buffer){
+        
+        log_info(log_io , "buffer no es null dsp de hacer el malloc");
+
+    }
+
     fread(buffer, config_io->block_size, num_bloques, archivo);
 
     log_info(log_io,"ya lei y lo puse en el buffer");
     fclose(archivo);
+
+    log_info(log_io, "esto es lo q puse en el buffer q voy a devolver: %s", buffer);
 
     return buffer;
 }
@@ -946,12 +954,25 @@ char* leer_bloques(int bloque_inicial, int num_bloques)
 char *agregar_al_final(char *buffer, char *informacion) 
 {
     log_info(log_io, "estoy en agregar al final");
+    if (informacion == NULL) 
+    {
+        log_error(log_io, "Informacion es null boba");
+        
+    }else log_info(log_io, "informacion no es null tiene : %s", informacion);
+
     if (buffer == NULL) 
     {
+        
         // Si el buffer es NULL, asigna memoria suficiente para la información
         buffer = malloc(strlen(informacion) + 1);  // +1 para el terminador nulo
-        log_info(log_io, "pude hacer el malloc del buffer");
+        if (buffer == NULL) 
+        {
+            log_error(log_io, "Error al asignar memoria");
+            return NULL;
+        }else log_info(log_io, "pude hacer el malloc del buffer");
+
         strcpy(buffer, informacion);
+        free(informacion);
         log_info(log_io, "pude guardar la informacion en el buffer");
     } else {
         // Si el buffer ya contiene datos, realloca memoria para incluir la nueva información
@@ -965,6 +986,7 @@ char *agregar_al_final(char *buffer, char *informacion)
             return NULL;
         }
         strcat(buffer, informacion);
+        free(informacion);
         log_info(log_io, "ya hice el strcat");
         
     }
@@ -976,7 +998,7 @@ void compactar(t_bitarray* bitmap)
 { 
     log_info(log_io, "entre a compactar");
     int tamanio_maximo_de_bloques_dat = config_io->block_count * config_io->block_size;
-    char* buffer ;
+    //char* buffer ;
     int contador_ocupados = 0;
     //No hago el malloc porq buscar archivo q inicia ya devuelve uno con malloc hecho
     t_metadata* metadata; // = malloc(sizeof(t_metadata)); //metadata->nombre_archivo, ->BLOQUE_INICIAL, ->TAMANIO_ARCHIVO
@@ -996,12 +1018,23 @@ void compactar(t_bitarray* bitmap)
             bloques_ocupados = calcular_bloques_que_ocupa(metadata->tamanio_archivo);
             log_info(log_io, "ya calcule los bloques q ocupa son: %d", bloques_ocupados);
             info_bloques = leer_bloques(i , bloques_ocupados);
-            log_info(log_io,"ya tengo la info de los bloques");
-            buffer = agregar_al_final(buffer , info_bloques);
-            log_info(log_io,"ya pude agregar al final");
-            free(info_bloques);
-            log_info(log_io, "ya agregue al final del buffer: ");
             metadata->bloque_inicial = contador_ocupados;
+            if (info_bloques == 0) 
+            {
+                log_info(log_io, "info_bloques es 0, no habia nada en ese archivo");
+            }else {
+                
+                agregar_info_en_cierto_bloque(metadata->bloque_inicial, bloques_ocupados, info_bloques);
+            }
+            //ATENCION FALTA EDITAR LOS BITS COMO OCUPADOS Q CORRESPONDAN 
+            free(info_bloques);
+            //traspaso la info a los nuevos bloques
+            log_info(log_io,"ya tengo la info de los bloques");
+            //buffer = agregar_al_final(buffer , info_bloques);
+            log_info(log_io,"ya pude agregar al final");
+            
+            log_info(log_io, "ya agregue al final del buffer: ");
+            
             actualizar_metadata(metadata);
             
 
@@ -1017,7 +1050,7 @@ void compactar(t_bitarray* bitmap)
     usleep(config_io->retraso_compactacion * 1000); //multiplico por mil porque esta dado en miliseg y necesito microseg
 
     actualizar_archivo_bloques(buffer);//copio lo del buffer en el archivo de bloques.dat
-    free(buffer);
+    //free(buffer);
 
 }
 

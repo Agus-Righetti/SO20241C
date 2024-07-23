@@ -342,7 +342,7 @@ int io_stdin_read(char* nombre_interfaz, t_list* direcciones_fisicas, uint32_t r
     args->proceso = proceso;
     args->operacion = IO_STDIN_READ;
 
-    if(interfaz) // si no devuelve null es porq encontro la interfaz q queria y es del tipo q queria
+    if(strcmp(interfaz->nombre_interfaz, nombre_interfaz) == 0) // si no devuelve null es porq encontro la interfaz q queria y es del tipo q queria
     {
         pthread_mutex_lock(&interfaz->mutex_cola);
         queue_push(interfaz->cola_de_espera, args);
@@ -367,7 +367,7 @@ int io_stdout_write(char* nombre_interfaz, t_list* direcciones_fisicas, uint32_t
     args->proceso = proceso;
     args->operacion = IO_STDOUT_WRITE;
 
-    if(interfaz) // si no devuelve null es porq encontro la interfaz q queria y es del tipo q queria
+    if(strcmp(interfaz->nombre_interfaz, nombre_interfaz) == 0) // si no devuelve null es porq encontro la interfaz q queria y es del tipo q queria
     {
         
         pthread_mutex_lock(&interfaz->mutex_cola);
@@ -392,7 +392,7 @@ int io_fs_create(char* nombre_interfaz, char* nombre_archivo, pcb* proceso)
     args->nombre_archivo = nombre_archivo;
     args->operacion = IO_FS_CREATE;
 
-    if(interfaz) // si no devuelve null es porq encontro la interfaz q queria y es del tipo q queria
+    if(strcmp(interfaz->nombre_interfaz, nombre_interfaz) == 0) // si no devuelve null es porq encontro la interfaz q queria y es del tipo q queria
     {
         pthread_mutex_lock(&interfaz->mutex_cola);
         queue_push(interfaz->cola_de_espera, args);
@@ -417,7 +417,7 @@ int io_fs_delete(char* nombre_interfaz, char* nombre_archivo, pcb* proceso)
     args->nombre_archivo = nombre_archivo;
     args->operacion = IO_FS_DELETE;
     
-    if(interfaz) // si no devuelve null es porq encontro la interfaz q queria y es del tipo q queria
+    if(strcmp(interfaz->nombre_interfaz, nombre_interfaz) == 0) // si no devuelve null es porq encontro la interfaz q queria y es del tipo q queria
     {
         pthread_mutex_lock(&interfaz->mutex_cola);
         queue_push(interfaz->cola_de_espera, args);
@@ -442,7 +442,7 @@ int io_fs_truncate(char* nombre_interfaz, char* nombre_archivo, int registro_tam
     args->registro_tamano = registro_tamano;
     args->operacion = IO_FS_TRUNCATE;
     
-    if(interfaz) // si no devuelve null es porq encontro la interfaz q queria y es del tipo q queria
+    if(strcmp(interfaz->nombre_interfaz, nombre_interfaz) == 0) // si no devuelve null es porq encontro la interfaz q queria y es del tipo q queria
     {
         pthread_mutex_lock(&interfaz->mutex_cola);
         queue_push(interfaz->cola_de_espera, args);
@@ -469,7 +469,7 @@ int io_fs_write(char* nombre_interfaz, char* nombre_archivo, t_list*  registro_d
     args->registro_puntero_archivo = registro_puntero_archivo;
     args->operacion = IO_FS_WRITE;
     
-    if(interfaz) // si no devuelve null es porq encontro la interfaz q queria y es del tipo q queria
+    if(strcmp(interfaz->nombre_interfaz, nombre_interfaz) == 0) // si no devuelve null es porq encontro la interfaz q queria y es del tipo q queria
     {
         pthread_mutex_lock(&interfaz->mutex_cola);
         queue_push(interfaz->cola_de_espera, args);
@@ -498,7 +498,7 @@ int io_fs_read(char* nombre_interfaz, char* nombre_archivo, t_list* direcciones_
     args->registro_puntero_archivo = registro_puntero_archivo;
     args->operacion = IO_FS_READ;
     
-    if(interfaz) // si no devuelve null es porq encontro la interfaz q queria y es del tipo q queria
+    if(strcmp(interfaz->nombre_interfaz, nombre_interfaz) == 0) // si no devuelve null es porq encontro la interfaz q queria y es del tipo q queria
     {
         pthread_mutex_lock(&interfaz->mutex_cola);
         queue_push(interfaz->cola_de_espera, args);
