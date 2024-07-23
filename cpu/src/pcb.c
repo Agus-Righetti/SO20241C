@@ -111,7 +111,6 @@ void enviar_pcb(int conexion, argumentos_cpu* argumentos_a_mandar){
             for(int i = 0; i < list_size(argumentos_a_mandar->direcciones_fisicas); i++)
             {
                 dir = list_get(argumentos_a_mandar->direcciones_fisicas, i);
-                log_info(log_cpu, "marco q voy a mandar: %d", dir->nro_marco);
                 free(dir);
             }
 
@@ -121,11 +120,19 @@ void enviar_pcb(int conexion, argumentos_cpu* argumentos_a_mandar){
         
         case IO_FS_READ:
 
-            agregar_string_al_paquete_personalizado(paquete, argumentos_a_mandar->nombre_interfaz);    
+            agregar_string_al_paquete_personalizado(paquete, argumentos_a_mandar->nombre_interfaz);
             agregar_string_al_paquete_personalizado(paquete, argumentos_a_mandar->nombre_archivo);
-            agregar_int_al_paquete_personalizado(paquete, argumentos_a_mandar->registro_direccion);
             agregar_int_al_paquete_personalizado(paquete, argumentos_a_mandar->registro_tamano);
             agregar_int_al_paquete_personalizado(paquete, argumentos_a_mandar->registro_puntero_archivo);
+            agregar_lista_al_paquete_personalizado(paquete, argumentos_a_mandar->direcciones_fisicas, sizeof(t_direccion_fisica));
+            
+            for(int i = 0; i < list_size(argumentos_a_mandar->direcciones_fisicas); i++)
+            {
+                dir = list_get(argumentos_a_mandar->direcciones_fisicas, i);
+                free(dir);
+            }
+
+            list_destroy(argumentos_a_mandar->direcciones_fisicas);
 
             break;	
         
@@ -1107,13 +1114,6 @@ void instruccion_io_fs_write(char **parte)
 {
     // IO_FS_WRITE Int4 notas.txt AX ECX EDX
 
-    log_info(log_cpu, "Parte: %s", parte[0]);
-    log_info(log_cpu, "Parte: %s", parte[1]);
-    log_info(log_cpu, "Parte: %s", parte[2]);
-    log_info(log_cpu, "Parte: %s", parte[3]);
-    log_info(log_cpu, "Parte: %s", parte[4]);
-    log_info(log_cpu, "Parte: %s", parte[5]);
-
     // Verificar que la cantidad de argumentos sea la correcta
     if (parte[1] == NULL || parte[2] == NULL || parte[3] == NULL || parte[4] == NULL || parte[5] == NULL) 
     {
@@ -1162,41 +1162,34 @@ void instruccion_io_fs_read(char **parte)
         return;
     }
 
-    // if(strcmp(parte[1], "DIALFS") != 0) 
-    // {
-    //     log_error(log_cpu, "La interfaz indicada no es DIALFS.");
-    // }
-
     // LOG OBLIGATORIO - INSTRUCCIÓN EJECUTADA
     log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s %s %s %s", pcb_recibido->pid, parte[0], parte[1], parte[2], parte[3], parte[4], parte[5]);
 
     // // Extrae los parámetros de la instrucción
     // char *interfaz = parte[1];
     // char *nombre_archivo = parte[2];
-    int registro_direccion = *(int*)dictionary_get(registros, parte[3]); // Registro que contiene la posición inicial
-    int registro_tamanio = *(int*)dictionary_get(registros, parte[4]); // Registro que contiene el tamaño de los datos a leer
-    int registro_puntero_archivo = *(int*)dictionary_get(registros, parte[5]); // Registro donde se almacenarán los datos leídos
-
-    //int direccion_fisica = traducir_direccion_logica_a_fisica(registro_direccion);
+    int direccion_logica = obtener_valor_registro_segun_nombre(parte[3]); // Registro que contiene la posición inicial
+    int tamanio = obtener_valor_registro_segun_nombre(parte[4]); // Registro que contiene el tamaño de los datos a leer
+    int posicion_inicial = obtener_valor_registro_segun_nombre(parte[5]); // Registro donde se almacenarán los datos leídos
 
     argumentos_cpu* args = malloc(sizeof(argumentos_cpu));
     args->nombre_interfaz = parte[1];
     args->nombre_archivo = parte[2];
-    // args->registro_direccion = direccion_fisica;
-    args->registro_tamano = registro_tamanio;
-    args->registro_puntero_archivo = registro_puntero_archivo;
-    //pcb_recibido->program_counter++;
-    pcb_recibido->registros->pc++;
+    args->direcciones_fisicas = traducir_dl_a_df_completa(direccion_logica , tamanio);
+    args->registro_tamano = tamanio;
+    args->registro_puntero_archivo = posicion_inicial;
 
+    pcb_recibido->registros->pc++;
+    
     args->proceso = pcb_recibido;
     args->operacion = IO_FS_READ;
-    
+
     log_info(log_cpu, "Nombre interfaz: %s", args->nombre_interfaz);
     log_info(log_cpu, "Nombre archivo: %s", args->nombre_archivo);
-    log_info(log_cpu, "Registro dirección: %s", args->registro_direccion);
-    log_info(log_cpu, "Registro tamanio: %s", args->registro_tamano);
-    log_info(log_cpu, "Registro puntero archivo: %s", args->registro_puntero_archivo);
-    
+    log_info(log_cpu, "Tamaño lista de direcciones: %d", list_size(args->direcciones_fisicas));
+    log_info(log_cpu, "Registro tamanio: %d", args->registro_tamano);
+    log_info(log_cpu, "Registro puntero archivo: %d", args->registro_puntero_archivo);
+
     enviar_pcb(socket_cliente_kernel, args);
     
     liberar_array_strings(parte);

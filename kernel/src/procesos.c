@@ -880,15 +880,18 @@ void recibir_pcb(pcb* proceso) {
                 temporal_stop(tiempo_de_quantum);
                 
                 buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu); // Recibo el PCB normalmente
-                //fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
+
                 pcb_recibido = recibir_estructura_del_buffer(buffer);
                 pcb_recibido->registros = recibir_estructura_del_buffer(buffer);
+
                 nombre_interfaz = recibir_string_del_buffer(buffer);
                 nombre_archivo = recibir_string_del_buffer(buffer);
-                direcciones_fisicas = recibir_lista_del_buffer(buffer, sizeof(t_direccion_fisica));
+
                 registro_tamano = recibir_int_del_buffer(buffer);
                 registro_puntero_archivo = recibir_int_del_buffer(buffer);
 
+                direcciones_fisicas = recibir_lista_del_buffer(buffer, sizeof(t_direccion_fisica));
+                
                 actualizar_pcb(proceso, pcb_recibido);
 
                 flag_estado = io_fs_read(nombre_interfaz, nombre_archivo, direcciones_fisicas, registro_tamano, registro_puntero_archivo, proceso);

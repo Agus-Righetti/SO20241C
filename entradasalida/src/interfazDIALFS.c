@@ -457,178 +457,169 @@ void manejar_escritura_archivo(char* nombre_archivo, t_list* direccion_fisica, i
     log_info(log_io, "Cantidad de caracteres de valor_a_mostrar: %zu", strlen(valor_a_mostrar)); 
     log_info(log_io, "El nombre_archivo es: %s", nombre_archivo);
 
-
-    FILE* bloques_dat = fopen("bloques.dat", "r+b");
+    //escribimos en el archivo lo q traje de memoria
     
-    log_info(log_io, "Acabo de abrir el bloques.dat");
-
-    if (bloques_dat == NULL) {
-        log_error(log_io, "Error al abrir bloques.dat");
-        return;
-    }
-
-    // Mueve el puntero del archivo al offset especificado por puntero_archivo
-    fseek(bloques_dat, puntero_archivo, SEEK_SET);
-
-    size_t bytes_a_escribir = tamanio;
-    size_t bloque_size = config_io->block_size;
-
-    log_info(log_io, "Bytes a escribir: %d", bytes_a_escribir);
-    log_info(log_io, "Tamaño de bloque: %d", bloque_size);
+    char** parte = string_split(nombre_archivo, ".");
     
-    int bytes_operados = 0;
+    nombre_archivo = parte[0];
 
-    while (bytes_a_escribir > 0) {
+    string_append(&nombre_archivo,".config");
 
-        // Calcula la cantidad de datos a escribir en el bloque actual
-        size_t cantidad_a_escribir = (bytes_a_escribir > bloque_size) ? bloque_size : bytes_a_escribir;
+    t_config* config_aux = config_create(nombre_archivo);
 
-        log_info(log_io, "Cantidad a escribir: %d", cantidad_a_escribir);
-        log_info(log_io, "Valor a escribir: %s", valor_a_mostrar + bytes_operados);
+    int tamanio_archivo = config_get_int_value(config_aux, "TAMANIO_ARCHIVO");
+    int bloque_inicial = config_get_int_value(config_aux, "BLOQUE_INICIAL");
+
+    config_destroy(config_aux);
+
+    FILE* archivo_bloques = fopen("bloques.dat", "r+");
+
+    int byte_inicio_bloque = bloque_inicial * config_io->block_size;
+
+    //Pongo el puntero al inicio de los bloques del archivo
+    fseek(archivo_bloques, byte_inicio_bloque , SEEK_SET);
+
+    //Pongo el puntero en la posicion a partir de la cual quiero leer
+    fseek(archivo_bloques, puntero_archivo, SEEK_CUR);
+
+    fwrite(valor_a_mostrar, sizeof(char), tamanio, archivo_bloques);
+
+    fclose(archivo_bloques);
+
+    free(valor_a_mostrar);
+
+    free(parte[0]);
+    free(parte[1]);
+    free(parte);
+    
+    // FILE* bloques_dat = fopen("bloques.dat", "r+b");
+    
+    // log_info(log_io, "Acabo de abrir el bloques.dat");
+
+    // if (bloques_dat == NULL) {
+    //     log_error(log_io, "Error al abrir bloques.dat");
+    //     return;
+    // }
+
+    // // Mueve el puntero del archivo al offset especificado por puntero_archivo
+    // fseek(bloques_dat, puntero_archivo, SEEK_SET);
+
+    // size_t bytes_a_escribir = tamanio;
+    // size_t bloque_size = config_io->block_size;
+
+    // log_info(log_io, "Bytes a escribir: %d", bytes_a_escribir);
+    // log_info(log_io, "Tamaño de bloque: %d", bloque_size);
+    
+    // int bytes_operados = 0;
+
+    // while (bytes_a_escribir > 0) {
+
+    //     // Calcula la cantidad de datos a escribir en el bloque actual
+    //     size_t cantidad_a_escribir = (bytes_a_escribir > bloque_size) ? bloque_size : bytes_a_escribir;
+
+    //     log_info(log_io, "Cantidad a escribir: %d", cantidad_a_escribir);
+    //     log_info(log_io, "Valor a escribir: %s", valor_a_mostrar + bytes_operados);
         
-        fwrite(valor_a_mostrar + bytes_operados , cantidad_a_escribir, 1, bloques_dat);
+    //     fwrite(valor_a_mostrar + bytes_operados , cantidad_a_escribir, 1, bloques_dat);
 
-        // Actualiza el puntero del archivo y la cantidad de bytes restantes
-        puntero_archivo += cantidad_a_escribir;
-        bytes_a_escribir -= cantidad_a_escribir;
-        bytes_operados += cantidad_a_escribir;
+    //     // Actualiza el puntero del archivo y la cantidad de bytes restantes
+    //     puntero_archivo += cantidad_a_escribir;
+    //     bytes_a_escribir -= cantidad_a_escribir;
+    //     bytes_operados += cantidad_a_escribir;
 
-        // Si el archivo es más grande que el tamaño del bloque, mueve el puntero a la siguiente posición
-        fseek(bloques_dat, puntero_archivo, SEEK_SET);
-    }
+    //     // Si el archivo es más grande que el tamaño del bloque, mueve el puntero a la siguiente posición
+    //     fseek(bloques_dat, puntero_archivo, SEEK_SET);
+    // }
 
-    log_info(log_io, "Pude escribir el bloques.dat");
+    // log_info(log_io, "Pude escribir el bloques.dat");
 
-    fclose(bloques_dat);
+    // fclose(bloques_dat);
 
     avisar_fin_io_a_kernel();
 
     return;
 }
 
-// *************************************************************************++
-// *************************************************************************++
-// *************************************************************************++
+// IO_READ 
+void manejar_lectura_archivo(char* nombre_archivo, t_list* direccion_fisica, int tamanio, int puntero_archivo, int pid)
+{
+
+    // IO_FS_READ (Interfaz, Nombre Archivo, Registro Dirección, Registro Tamaño, Registro Puntero Archivo): Esta instrucción solicita al Kernel que mediante la interfaz seleccionada, se lea desde el archivo a partir del valor del Registro Puntero Archivo la cantidad de bytes indicada por Registro Tamaño y se escriban en la Memoria a partir de la dirección lógica indicada en el Registro Dirección.
+
+    usleep(config_io->tiempo_unidad_trabajo * 1000);
+
+    log_info(log_io, "entre a lectura archivo");
+
+    //cambio el nombre del archivo
+
+    char** parte = string_split(nombre_archivo, ".");
+    
+    nombre_archivo = parte[0];
+    
+    string_append(&nombre_archivo,".config");
 
 
+    //leemos del archivo 
+        
+    t_config* config_aux = config_create(nombre_archivo);
 
-// void manejar_escritura_archivo(char* nombre_archivo, char* datos, int tamanio_datos, int pid) 
-// {
-//     log_info(log_io, "Entré a ESCRIBIR");
-
-//     // Simula el tiempo de operación
-//     usleep(config_io->tiempo_unidad_trabajo * 1000);
-
-//     // Divide el nombre del archivo y agrega .config
-//     char** parte = string_split(nombre_archivo, ".");
-//     nombre_archivo = parte[0];
-//     string_append(&nombre_archivo, ".config");
-//     char* config_file_path = nombre_archivo;
-
-//     // Abre el archivo de configuración del archivo
-//     t_config* config_aux = config_create(config_file_path);
-
-//     if (config_aux == NULL) {
-//         log_error(log_io, "Error al abrir el archivo de configuración %s", config_file_path);
-//         return;
-//     }
-
-//     // Obtener el bloque inicial y el tamaño original del archivo
-//     int bloque_inicial = config_get_int_value(config_aux, "BLOQUE_INICIAL");
-//     int tamanio_original = config_get_int_value(config_aux, "TAMANIO_ARCHIVO");
-
-//     log_info(log_io, "Bloque inicial: %d", bloque_inicial);
-//     log_info(log_io, "Tamaño original: %d", tamanio_original);
-
-//     // Obtener el bitmap
-//     char* buffer_bitmap = obtener_bitmap();
-//     t_bitarray* bitmap = bitarray_create_with_mode(buffer_bitmap, bitarray_size, MSB_FIRST);
-
-//     // Calcula los bloques necesarios para almacenar los datos
-//     int bloques_necesarios = calcular_bloques_que_ocupa(tamanio_datos);
-//     log_info(log_io, "Bloques necesarios para los datos: %d", bloques_necesarios);
-
-
-
-
-
-
+    int tamanio_archivo = config_get_int_value(config_aux, "TAMANIO_ARCHIVO");
+    int bloque_inicial = config_get_int_value(config_aux, "BLOQUE_INICIAL");
 
     
 
-//     // Verifica si hay suficiente espacio en el bitmap
-//     int cantidad_bloques_libres = contar_bloques_libres(bitmap);
-//     log_info(log_io, "Cantidad de bloques libres: %d", cantidad_bloques_libres);
+    config_destroy(config_aux);
 
-//     if (cantidad_bloques_libres < bloques_necesarios) {
-//         log_error(log_io, "No hay suficientes bloques libres para escribir los datos");
-//         config_destroy(config_aux);
-//         free(buffer_bitmap);
-//         bitarray_destroy(bitmap);
-//         return;
-//     }
+    FILE* archivo_bloques = fopen("bloques.dat", "r");
 
-//     // Encuentra bloques libres contiguos
-//     int bloque_inicial_nuevo = buscar_bloques_contiguos(bloques_necesarios, bitmap);
-//     if (bloque_inicial_nuevo == -1) {
-//         log_error(log_io, "No hay bloques libres contiguos suficientes para escribir los datos");
-//         config_destroy(config_aux);
-//         free(buffer_bitmap);
-//         bitarray_destroy(bitmap);
-//         return;
-//     }
+    int byte_inicio_bloque = bloque_inicial * config_io->block_size;
 
-//     log_info(log_io, "Bloque inicial nuevo para escribir: %d", bloque_inicial_nuevo);
+    //Pongo el puntero al inicio de los bloques del archivo
+    fseek(archivo_bloques, byte_inicio_bloque , SEEK_SET);
 
-//     // Escribir los datos en los bloques correspondientes
-//     FILE* bloques_dat = fopen("bloques.dat", "rb+");
-//     if (bloques_dat == NULL) {
-//         log_error(log_io, "Error al abrir el archivo bloques.dat");
-//         config_destroy(config_aux);
-//         free(buffer_bitmap);
-//         bitarray_destroy(bitmap);
-//         return;
-//     }
+    //Pongo el puntero en la posicion a partir de la cual quiero leer
+    fseek(archivo_bloques, puntero_archivo, SEEK_CUR);
 
-//     fseek(bloques_dat, bloque_inicial_nuevo * config_io->block_size, SEEK_SET);
-//     fwrite(datos, sizeof(char), tamanio_datos, bloques_dat);
-//     fclose(bloques_dat);
+    char* buffer_datos = malloc(sizeof(char)*tamanio);
 
-//     // Actualizar el bitmap marcando los bloques como ocupados
-//     for (int i = bloque_inicial_nuevo; i < bloque_inicial_nuevo + bloques_necesarios; i++) {
-//         bitarray_set_bit(bitmap, i);
-//     }
+    fread(buffer_datos, sizeof(char), tamanio, archivo_bloques);
 
-//     // Guardar el bitmap actualizado
-//     escribir_archivo_con_bitmap(buffer_bitmap);
-
-//     // Actualizar la metadata del archivo
-//     config_set_value(config_aux, "BLOQUE_INICIAL", pasar_a_string(bloque_inicial_nuevo));
-//     config_set_value(config_aux, "TAMANIO_ARCHIVO", pasar_a_string(tamanio_datos));
-//     config_save(config_aux);
-//     config_destroy(config_aux);
-
-//     // Liberar memoria
-//     free(buffer_bitmap);
-//     bitarray_destroy(bitmap);
-
-//     log_info(log_io, "Datos escritos correctamente en el archivo");
-
-//     avisar_fin_io_a_kernel();
-// }
+    fclose(archivo_bloques);
 
 
+    // MANDAMOS A MEMORIA para q guarde
 
+    t_paquete* paquete = crear_paquete_personalizado(IO_PIDE_ESCRITURA_MEMORIA); // Queremos que memoria lo guarde
 
-// *************************************************************************++
-// *************************************************************************++
-// *************************************************************************++
+    agregar_int_al_paquete_personalizado(paquete, proceso->pid);
+    agregar_int_al_paquete_personalizado(paquete, tamanio);
+    agregar_string_al_paquete_personalizado(paquete, buffer_datos);
+    agregar_lista_al_paquete_personalizado(paquete, direccion_fisica, sizeof(t_direccion_fisica));
+    
+    enviar_paquete(paquete, conexion_io_memoria);
 
+    eliminar_paquete(paquete);
 
-// IO_READ 
-void manejar_lectura_archivo(char* nombre_archivo, t_list* direccion_fisica, int tamanio, int puntero_archivo, Interfaz* configuracion_fs)
-{
-    usleep(config_io->tiempo_unidad_trabajo * 1000);
+    free(buffer_datos);
+
+    t_direccion_fisica* dir;
+
+    for(int i = 0; i < list_size(direccion_fisica); i++)
+    {
+        dir = list_get(direccion_fisica, i);
+        free(dir);
+    }
+
+    list_destroy(direccion_fisica);
+
+    sem_wait(&sem_ok_escritura_memoria);
+
+    free(parte[0]);
+    free(parte[1]);
+    free(parte);
+
+    avisar_fin_io_a_kernel();
+
     return;
 }
 
@@ -636,107 +627,121 @@ void crear_archivos_gestion_fs()
 {
     // CREO Y DEFINO EL TAMAÑO DEL ARCHIVO bloques.dat
 
-    log_info(log_io, "Entré a CREAR ARCHIVOS DE GESTIÓN");
+    FILE* bloques_dat = fopen("bloques.dat", "r");
 
-    FILE* bloques_dat = fopen("bloques.dat", "wb");
+    if(bloques_dat == NULL){
+        // El archivo no existe, se debe crear e inicializar
 
-    log_info(log_io,"ya abri el bloques.dat");
+        FILE* bloques_dat = fopen("bloques.dat", "wb");
 
-    log_info(log_io, "El block size es: %d", config_io->block_size);
-    log_info(log_io, "El block count es: %d", config_io->block_count);
-    
-    if (bloques_dat == NULL) 
-    {
-        perror("Error al abrir el archivo");
-        return;
-    }
+        log_info(log_io,"ya abri el bloques.dat");
 
-    int tamanio = config_io->block_size * config_io->block_count;
+        log_info(log_io, "El block size es: %d", config_io->block_size);
+        log_info(log_io, "El block count es: %d", config_io->block_count);
+        
+        if (bloques_dat == NULL) 
+        {
+            perror("Error al abrir el archivo");
+            return;
+        }
 
-    log_info(log_io, "Creé el tamaño: %d", tamanio);
+        int tamanio = config_io->block_size * config_io->block_count;
 
-    // Mueve el puntero al final del archivo para definir su tamaño
-    if (fseek(bloques_dat, tamanio - 1, SEEK_SET) != 0) 
-    {
-        perror("Error al establecer el tamaño del archivo");
+        log_info(log_io, "Creé el tamaño: %d", tamanio);
+
+        // Mueve el puntero al final del archivo para definir su tamaño
+        if (fseek(bloques_dat, tamanio - 1, SEEK_SET) != 0) 
+        {
+            perror("Error al establecer el tamaño del archivo");
+            fclose(bloques_dat);
+            return;
+        }
+
+        // Escribe un byte en la última posición para establecer el tamaño
+        fputc('\0', bloques_dat);
+
+        log_info(log_io,"estableci el final del archivo");
+
         fclose(bloques_dat);
-        return;
+
+        log_info(log_io, "Ya cerré bloques_dat");
+
+    }else{
+
+        log_info(log_io, "El archivo bloques.dat ya existe");
+        fclose(bloques_dat);
     }
 
-    // Escribe un byte en la última posición para establecer el tamaño
-    fputc('\0', bloques_dat);
-
-    log_info(log_io,"estableci el final del archivo");
-
-    fclose(bloques_dat);
-
-    log_info(log_io, "Ya cerré bloques_dat");
 
     // CREO EL ARCHIVO CON EL BITMAP --------------------------------------------------------
 
-    FILE *bitmap_file = fopen("bitmap.dat", "wb");  // Abre el archivo en modo lectura y escritura binaria
-    
-    if (bitmap_file == NULL) 
-    {
-        perror("Error al abrir bitmap.dat");
-        return;
-    }
-    
-    log_info(log_io,"estoy por crear el bitmap");
-    
-    size_t bitmap_size_bytes = (config_io->block_count + 7) / 8;  // 1 bit por bloque
-    
-    char* bitmap_buffer = (char*)malloc(bitmap_size_bytes);
+    FILE* bitmap_file = fopen("bitmap.dat", "r");
 
-    log_info(log_io,"arme el bitmap buffer");
+    if(bitmap_file == NULL){
 
-    if (bitmap_buffer == NULL) 
-    {
-        perror("Error al reservar memoria para el bitmap");
-        fclose(bitmap_file);
-        return;
-    }
+        // bitmap.dat no existe, tengo que crearlo e inicializarlo
+
+        FILE *bitmap_file = fopen("bitmap.dat", "wb");  // Abre el archivo en modo lectura y escritura binaria
+        
+        if (bitmap_file == NULL) 
+        {
+            perror("Error al abrir bitmap.dat");
+            return;
+        }
+        
+        log_info(log_io,"estoy por crear el bitmap");
+        
+        size_t bitmap_size_bytes = (config_io->block_count + 7) / 8;  // 1 bit por bloque
+        
+        char* bitmap_buffer = (char*)malloc(bitmap_size_bytes);
+
+        log_info(log_io,"arme el bitmap buffer");
+
+        if (bitmap_buffer == NULL) 
+        {
+            perror("Error al reservar memoria para el bitmap");
+            fclose(bitmap_file);
+            return;
+        }
+        
+        memset(bitmap_buffer, 0, bitmap_size_bytes);
+        // Limpio el bitmap -> lo seteo en 0
+        t_bitarray* bitmap = bitarray_create_with_mode(bitmap_buffer, bitmap_size_bytes, MSB_FIRST);
+        
+        log_info(log_io,"cree el bitarray");
+
+        fseek(bitmap_file, 0, SEEK_SET);  // Mueve el puntero al inicio del archivo
+        fwrite(bitmap_buffer, sizeof(char), bitmap_size_bytes, bitmap_file);
+
+        log_info(log_io, "Acabo de escribir sobre el bitmap");
     
-    memset(bitmap_buffer, 0, bitmap_size_bytes);
-    // Limpio el bitmap -> lo seteo en 0
-    t_bitarray* bitmap = bitarray_create_with_mode(bitmap_buffer, bitmap_size_bytes, MSB_FIRST);
-    
-    log_info(log_io,"cree el bitarray");
+        if (bitmap == NULL) 
+        {
+            fprintf(stderr, "Error al crear el bitmap\n");
+            free(bitmap_buffer);
+            fclose(bitmap_file);
+            return;
+        }
 
-    fseek(bitmap_file, 0, SEEK_SET);  // Mueve el puntero al inicio del archivo
-    fwrite(bitmap_buffer, sizeof(char), bitmap_size_bytes, bitmap_file);
-
-    log_info(log_io, "Acabo de escribir sobre el bitmap");
-   
-    if (bitmap == NULL) 
-    {
-        fprintf(stderr, "Error al crear el bitmap\n");
         free(bitmap_buffer);
         fclose(bitmap_file);
-        return;
+        
+        log_info(log_io, "Cierro el bitmap");
+
+        bitarray_destroy(bitmap);
+        
+        log_info(log_io,"Supuestamente ya cree los archivos de gestion");
+        
+        // bitarray_set_bit(bitmap, 0);  // Por ejemplo, establece el primer bloque como ocupado
+        // bitarray_set_bit(bitmap, 1);  // Y el segundo bloque como ocupado
+        // bitarray_clean_bit(bitmap, 0) // Pone el bit número 0 libre
+    }else{
+
+        log_info(log_io, "El bitmap.dat ya existe");
+        fclose(bitmap_file);
     }
-
-    free(bitmap_buffer);
-    fclose(bitmap_file);
-    
-    log_info(log_io, "Cierro el bitmap");
-
-    bitarray_destroy(bitmap);
-    
-    log_info(log_io,"Supuestamente ya cree los archivos de gestion");
-    
-    // bitarray_set_bit(bitmap, 0);  // Por ejemplo, establece el primer bloque como ocupado
-    // bitarray_set_bit(bitmap, 1);  // Y el segundo bloque como ocupado
-    // bitarray_clean_bit(bitmap, 0) // Pone el bit número 0 libre
     return;
 }
-
-// char* pasar_a_string(int valor)
-// {
-//     static char buffer[20]; 
-//     snprintf(buffer, sizeof(buffer), "%d", valor);
-//     return buffer;
-// }
 
 char* pasar_a_string(int valor)
 {
@@ -933,8 +938,7 @@ char *agregar_al_final(char *buffer, const char *informacion)
 // Función para compactar bloques
 void compactar(t_bitarray* bitmap) 
 { 
-    //hago un usleep por el tiempo q me dice la config
-    usleep(config_io->retraso_compactacion * 1000); //multiplico por mil porque esta dado en miliseg y necesito microseg
+    log_info(log_io, "entre a compactar");
     char* buffer;
     int contador_ocupados = 0;
     t_metadata* metadata = malloc(sizeof(t_metadata)); //metadata->nombre_archivo, ->BLOQUE_INICIAL, ->TAMANIO_ARCHIVO
@@ -958,10 +962,11 @@ void compactar(t_bitarray* bitmap)
         
     }
     
-    
+    usleep(config_io->retraso_compactacion * 1000); //multiplico por mil porque esta dado en miliseg y necesito microseg
 
     actualizar_archivo_bloques(buffer);//copio lo del buffer en el archivo de bloques.dat
     free(metadata);
+
 }
 
 void actualizar_archivo_bloques(char* buffer)

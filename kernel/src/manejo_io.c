@@ -485,7 +485,7 @@ int io_fs_write(char* nombre_interfaz, char* nombre_archivo, t_list*  registro_d
     }
 }
 
-int io_fs_read(char* nombre_interfaz, char* nombre_archivo, t_list* registro_direccion, int registro_tamano, int registro_puntero_archivo, pcb* proceso)
+int io_fs_read(char* nombre_interfaz, char* nombre_archivo, t_list* direcciones_fisicas, int registro_tamano, int registro_puntero_archivo, pcb* proceso)
 {
     interfaz_kernel* interfaz = verificar_interfaz(nombre_interfaz, DIALFS);
 
@@ -494,7 +494,7 @@ int io_fs_read(char* nombre_interfaz, char* nombre_archivo, t_list* registro_dir
     args->nombre_archivo = nombre_archivo;
     args->registro_tamano = registro_tamano;
     args->proceso = proceso;
-    args->direcciones_fisicas = registro_direccion;
+    args->direcciones_fisicas = direcciones_fisicas;
     args->registro_puntero_archivo = registro_puntero_archivo;
     args->operacion = IO_FS_READ;
     
