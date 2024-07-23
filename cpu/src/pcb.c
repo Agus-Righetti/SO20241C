@@ -104,9 +104,18 @@ void enviar_pcb(int conexion, argumentos_cpu* argumentos_a_mandar){
 
             agregar_string_al_paquete_personalizado(paquete, argumentos_a_mandar->nombre_interfaz);
             agregar_string_al_paquete_personalizado(paquete, argumentos_a_mandar->nombre_archivo);
-            agregar_int_al_paquete_personalizado(paquete, argumentos_a_mandar->registro_direccion);
             agregar_int_al_paquete_personalizado(paquete, argumentos_a_mandar->registro_tamano);
             agregar_int_al_paquete_personalizado(paquete, argumentos_a_mandar->registro_puntero_archivo);
+            agregar_lista_al_paquete_personalizado(paquete, argumentos_a_mandar->direcciones_fisicas, sizeof(t_direccion_fisica));
+            
+            for(int i = 0; i < list_size(argumentos_a_mandar->direcciones_fisicas); i++)
+            {
+                dir = list_get(argumentos_a_mandar->direcciones_fisicas, i);
+                log_info(log_cpu, "marco q voy a mandar: %d", dir->nro_marco);
+                free(dir);
+            }
+
+            list_destroy(argumentos_a_mandar->direcciones_fisicas);
 
             break;
         
@@ -236,6 +245,8 @@ void interpretar_instruccion_de_memoria()
 
         char** parte = string_split(instruccion_recibida, " "); // Divido la instrucción (que es un string) en partes   
 
+        log_info(log_cpu, "La instruccion recibida es: %s", instruccion_recibida);
+
         int instruccion_enum = (int)(intptr_t)dictionary_get(instrucciones, parte[0]); // Acá se obtiene la instrucción (el enum) a partir del diccionario
 
         switch (instruccion_enum) // Según la instrucción que sea, entonces realizo como tal cada instrucción (execute)
@@ -289,6 +300,12 @@ void interpretar_instruccion_de_memoria()
                 instruccion_io_fs_truncate(parte);
                 break;
             case I_IO_FS_WRITE:
+                log_info(log_cpu, "Parte: %s", parte[0]);
+                log_info(log_cpu, "Parte: %s", parte[1]);
+                log_info(log_cpu, "Parte: %s", parte[2]);
+                log_info(log_cpu, "Parte: %s", parte[3]);
+                log_info(log_cpu, "Parte: %s", parte[4]);
+                log_info(log_cpu, "Parte: %s", parte[5]);
                 instruccion_io_fs_write(parte);
                 break;
             case I_IO_FS_READ:
@@ -1090,6 +1107,13 @@ void instruccion_io_fs_write(char **parte)
 {
     // IO_FS_WRITE Int4 notas.txt AX ECX EDX
 
+    log_info(log_cpu, "Parte: %s", parte[0]);
+    log_info(log_cpu, "Parte: %s", parte[1]);
+    log_info(log_cpu, "Parte: %s", parte[2]);
+    log_info(log_cpu, "Parte: %s", parte[3]);
+    log_info(log_cpu, "Parte: %s", parte[4]);
+    log_info(log_cpu, "Parte: %s", parte[5]);
+
     // Verificar que la cantidad de argumentos sea la correcta
     if (parte[1] == NULL || parte[2] == NULL || parte[3] == NULL || parte[4] == NULL || parte[5] == NULL) 
     {
@@ -1100,30 +1124,47 @@ void instruccion_io_fs_write(char **parte)
     // LOG OBLIGATORIO - INSTRUCCIÓN EJECUTADA
     log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s %s %s %s", pcb_recibido->pid, parte[0], parte[1], parte[2], parte[3], parte[4], parte[5]);
 
-    // // Extrae los parámetros de la instrucción
-    // char *interfaz = parte[1];
-    // char *nombre_archivo = parte[2];
-    int registro_direccion = *(int*)dictionary_get(registros, parte[3]); // Registro que contiene la posición inicial
-    int registro_tamanio = *(int*)dictionary_get(registros, parte[4]); // Registro que contiene el tamaño de los datos
-    int registro_puntero_archivo = *(int*)dictionary_get(registros, parte[5]); // Registro que contiene los datos a escribir
-
-    //int direccion_fisica = traducir_direccion_logica_a_fisica(registro_direccion);
+    int direccion_logica = obtener_valor_registro_segun_nombre(parte[3]);
+    int tamanio = obtener_valor_registro_segun_nombre(parte[4]);
+    int posicion_inicial = obtener_valor_registro_segun_nombre(parte[5]);
 
     argumentos_cpu* args = malloc(sizeof(argumentos_cpu));
     args->nombre_interfaz = parte[1];
     args->nombre_archivo = parte[2];
-    // args->registro_direccion = direccion_fisica; 
-    args->registro_tamano = registro_tamanio;
-    args->registro_puntero_archivo = registro_puntero_archivo;
+    args->direcciones_fisicas = traducir_dl_a_df_completa(direccion_logica , tamanio);
+    args->registro_tamano = tamanio;
+    args->registro_puntero_archivo = posicion_inicial;
+
     //pcb_recibido->program_counter++;
     pcb_recibido->registros->pc++;
-
+    
     args->proceso = pcb_recibido;
     args->operacion = IO_FS_WRITE;
 
+    // // // Extrae los parámetros de la instrucción
+    // // char *interfaz = parte[1];
+    // // char *nombre_archivo = parte[2];
+    // int registro_direccion = *(int*)dictionary_get(registros, parte[3]); // Registro que contiene la posición inicial //// Direccion logica desde donde tiene que leer memoria
+    // int registro_tamanio = *(int*)dictionary_get(registros, parte[4]); // Registro que contiene el tamaño de los datos //// Cantidad de bytes a leer por memoria
+    // int registro_puntero_archivo = *(int*)dictionary_get(registros, parte[5]); // Registro que contiene los datos a escribir //// Posicion a partir de donde se tiene que escribir 
+
+    // //int direccion_fisica = traducir_direccion_logica_a_fisica(registro_direccion);
+
+    // argumentos_cpu* args = malloc(sizeof(argumentos_cpu));
+    // args->nombre_interfaz = parte[1];
+    // args->nombre_archivo = parte[2];
+    // // args->registro_direccion = direccion_fisica; 
+    // args->registro_tamano = registro_tamanio;
+    // args->registro_puntero_archivo = registro_puntero_archivo;
+    // //pcb_recibido->program_counter++;
+    // pcb_recibido->registros->pc++;
+
+    // args->proceso = pcb_recibido;
+    // args->operacion = IO_FS_WRITE;
+
     log_info(log_cpu, "Nombre interfaz: %s", args->nombre_interfaz);
     log_info(log_cpu, "Nombre archivo: %s", args->nombre_archivo);
-    log_info(log_cpu, "Registro dirección: %s", args->registro_direccion);
+    log_info(log_cpu, "Tamaño lista de direcciones: %d", list_size(args->direcciones_fisicas));
     log_info(log_cpu, "Registro tamanio: %s", args->registro_tamano);
     log_info(log_cpu, "Registro puntero archivo: %s", args->registro_puntero_archivo);
 

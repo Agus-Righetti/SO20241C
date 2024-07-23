@@ -5,6 +5,7 @@
 //******************* PIDE UNA INSTRUCCIÓN *************************
 //******************************************************************
 void cpu_pide_instruccion(t_buffer* un_buffer){        //[PID, IP]
+	
 	int pid = recibir_int_del_buffer(un_buffer);
 	//cambie este, ya no es int es uint32
 	uint32_t ip = recibir_uint32_del_buffer(un_buffer);
@@ -19,6 +20,8 @@ void cpu_pide_instruccion(t_buffer* un_buffer){        //[PID, IP]
 	// VER SEGMENTATION FAULT
  	char* instruccion = obtener_instruccion_por_indice(un_proceso->instrucciones, ip);
     
+	log_info(log_memoria, "La instruccion obtenida en memoria es: %s", instruccion);
+
 	//Enviar_instruccion a CPU
 	enviar_una_instruccion_a_cpu(instruccion);
 	sem_post(&sem_lista_procesos);
@@ -60,8 +63,10 @@ bool comparar_pid(int pid, t_proceso* proceso){
 
 char* obtener_instruccion_por_indice(t_list* instrucciones, uint32_t indice_instruccion){
 	char* instruccion_actual;
+
 	if(indice_instruccion >= 0 && indice_instruccion < list_size(instrucciones)){
 		instruccion_actual = list_get(instrucciones, indice_instruccion);
+		log_info(log_memoria, "La instruccion actual es: %s", instruccion_actual);
 		return instruccion_actual;
 	}
 	else{

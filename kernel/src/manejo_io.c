@@ -219,10 +219,23 @@ void enviar_instruccion_io(int socket, argumentos_para_io* args)
             break;
         case IO_FS_WRITE:
         case IO_FS_READ:
+
             agregar_string_al_paquete_personalizado(paquete_instruccion, args->nombre_archivo);
-            agregar_estructura_al_paquete_personalizado(paquete_instruccion, args->direcciones_fisicas, sizeof(t_list));
             agregar_int_al_paquete_personalizado(paquete_instruccion, args->registro_tamano);
             agregar_int_al_paquete_personalizado(paquete_instruccion, args->registro_puntero_archivo);
+
+            agregar_lista_al_paquete_personalizado(paquete_instruccion, args->direcciones_fisicas, sizeof(t_direccion_fisica));
+            
+            //libero memoria
+            for(int i = 0; i < list_size(args->direcciones_fisicas); i++)
+            {   
+                dir = list_get(args->direcciones_fisicas, i);
+                log_info(log_kernel, "marco a mandar: %d", dir->nro_marco);
+                free(dir);
+            }
+
+            list_destroy(args->direcciones_fisicas);
+            
             break;
         default:
             break;
@@ -475,7 +488,9 @@ int io_fs_write(char* nombre_interfaz, char* nombre_archivo, t_list*  registro_d
 int io_fs_read(char* nombre_interfaz, char* nombre_archivo, t_list* registro_direccion, int registro_tamano, int registro_puntero_archivo, pcb* proceso)
 {
     interfaz_kernel* interfaz = verificar_interfaz(nombre_interfaz, DIALFS);
+
     argumentos_para_io* args = malloc(sizeof(argumentos_para_io));
+
     args->nombre_archivo = nombre_archivo;
     args->registro_tamano = registro_tamano;
     args->proceso = proceso;
@@ -497,7 +512,6 @@ int io_fs_read(char* nombre_interfaz, char* nombre_archivo, t_list* registro_dir
         pasar_proceso_a_exit(proceso, INVALID_INTERFACE);
         return 1;//mando el proceso a exit
     }
-
 }
 
 

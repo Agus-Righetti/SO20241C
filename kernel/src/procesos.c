@@ -655,7 +655,7 @@ void recibir_pcb(pcb* proceso) {
     int motivo = -1;
     pcb* pcb_recibido;
 
-      switch(codigo_operacion) // Segun el codigo de operacion actuo 
+    switch(codigo_operacion) // Segun el codigo de operacion actuo 
       {
             case -1:
                 log_info(log_kernel, "Se desconecto CPU");
@@ -860,12 +860,15 @@ void recibir_pcb(pcb* proceso) {
                 //fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
                 pcb_recibido = recibir_estructura_del_buffer(buffer);
                 pcb_recibido->registros = recibir_estructura_del_buffer(buffer);
+
                 nombre_interfaz = recibir_string_del_buffer(buffer);
                 nombre_archivo = recibir_string_del_buffer(buffer);
-                direcciones_fisicas = recibir_lista_del_buffer(buffer, sizeof(t_direccion_fisica));
+
                 registro_tamano = recibir_int_del_buffer(buffer);
                 registro_puntero_archivo = recibir_int_del_buffer(buffer);
 
+                direcciones_fisicas = recibir_lista_del_buffer(buffer, sizeof(t_direccion_fisica));
+                
                 actualizar_pcb(proceso, pcb_recibido);
 
                 flag_estado = io_fs_write(nombre_interfaz, nombre_archivo, direcciones_fisicas, registro_tamano, registro_puntero_archivo, proceso);
