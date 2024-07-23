@@ -314,7 +314,12 @@ void manejar_truncado_archivo(char* nombre_archivo, int nuevo_tamanio, int pid)
                     log_info(log_io, "Hay espacio, no tengo que compactar");
 
                     int bloques_del_tamanio_original = calcular_bloques_que_ocupa(tamanio_original);
-
+                    
+                    if (bloques_del_tamanio_original == 0){
+                        bloques_del_tamanio_original = 1;
+                    }
+                    
+                    // Deberia dar 1 en el caso del FS_1
                     log_info(log_io, "Bloques del tamaño original: %d", bloques_del_tamanio_original);
 
                     buffer = leer_bloques(bloque_inicial, bloques_del_tamanio_original);
@@ -389,7 +394,6 @@ void manejar_truncado_archivo(char* nombre_archivo, int nuevo_tamanio, int pid)
     { 
         int bloques_a_liberar = calcular_bloques_que_ocupa(tamanio_original) - calcular_bloques_que_ocupa(nuevo_tamanio);
         
-
         for(int i = bloque_inicial; i < bloques_a_liberar ; i++ )
         {
             bitarray_clean_bit(bitmap, i);
@@ -450,10 +454,9 @@ void manejar_escritura_archivo(char* nombre_archivo, t_list* direccion_fisica, i
     // Ahora ya tengo los datos que quiero escribir en el archivo en "valor_a_mostrar" (es global)
 
     log_info(log_io, "El valor_a_mostrar es: %s", valor_a_mostrar);
+    log_info(log_io, "Cantidad de caracteres de valor_a_mostrar: %zu", strlen(valor_a_mostrar)); 
     log_info(log_io, "El nombre_archivo es: %s", nombre_archivo);
 
-
-    // TODAVIA NO PUDE PROBAR NADA 
 
     FILE* bloques_dat = fopen("bloques.dat", "r+b");
     
@@ -472,7 +475,8 @@ void manejar_escritura_archivo(char* nombre_archivo, t_list* direccion_fisica, i
 
     log_info(log_io, "Bytes a escribir: %d", bytes_a_escribir);
     log_info(log_io, "Tamaño de bloque: %d", bloque_size);
-
+    
+    int bytes_operados = 0;
 
     while (bytes_a_escribir > 0) {
 
@@ -480,12 +484,14 @@ void manejar_escritura_archivo(char* nombre_archivo, t_list* direccion_fisica, i
         size_t cantidad_a_escribir = (bytes_a_escribir > bloque_size) ? bloque_size : bytes_a_escribir;
 
         log_info(log_io, "Cantidad a escribir: %d", cantidad_a_escribir);
-
-        fwrite(valor_a_mostrar, cantidad_a_escribir, 1, bloques_dat);
+        log_info(log_io, "Valor a escribir: %s", valor_a_mostrar + bytes_operados);
+        
+        fwrite(valor_a_mostrar + bytes_operados , cantidad_a_escribir, 1, bloques_dat);
 
         // Actualiza el puntero del archivo y la cantidad de bytes restantes
         puntero_archivo += cantidad_a_escribir;
         bytes_a_escribir -= cantidad_a_escribir;
+        bytes_operados += cantidad_a_escribir;
 
         // Si el archivo es más grande que el tamaño del bloque, mueve el puntero a la siguiente posición
         fseek(bloques_dat, puntero_archivo, SEEK_SET);
@@ -494,43 +500,6 @@ void manejar_escritura_archivo(char* nombre_archivo, t_list* direccion_fisica, i
     log_info(log_io, "Pude escribir el bloques.dat");
 
     fclose(bloques_dat);
-    
-
-
-    // Abrir el archivo para escribir
-    // FILE *archivo = fopen(nombre_archivo, "rb+");
-    // if (archivo == NULL) {
-    //     log_error(log_io, "Error al abrir el archivo");
-    //     return;
-    // }
-
-    // log_info(log_io, "Abri el archivo %s", nombre_archivo);
-
-
-    // // Mover el puntero del archivo a la posición indicada por puntero_archivo
-    // if (fseek(archivo, puntero_archivo, SEEK_SET) != 0) {
-    //     log_error(log_io, "Error al mover el puntero del archivo");
-    //     fclose(archivo);
-    //     return;
-    // }
-
-    // // Escribir los datos obtenidos en el archivo
-    // size_t bytes_escritos = fwrite(valor_a_mostrar, sizeof(char), tamanio, archivo);
-    // if (bytes_escritos != tamanio) {
-    //     log_error(log_io, "Error al escribir en el archivo");
-    // }
-
-    // log_info(log_io, "Escribi el archivo %s", nombre_archivo);
-
-    // // Cerrar el archivo
-    // fclose(archivo);
-
-
-
-
-
-
-
 
     avisar_fin_io_a_kernel();
 

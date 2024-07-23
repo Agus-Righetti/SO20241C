@@ -1135,38 +1135,16 @@ void instruccion_io_fs_write(char **parte)
     args->registro_tamano = tamanio;
     args->registro_puntero_archivo = posicion_inicial;
 
-    //pcb_recibido->program_counter++;
     pcb_recibido->registros->pc++;
     
     args->proceso = pcb_recibido;
     args->operacion = IO_FS_WRITE;
 
-    // // // Extrae los parámetros de la instrucción
-    // // char *interfaz = parte[1];
-    // // char *nombre_archivo = parte[2];
-    // int registro_direccion = *(int*)dictionary_get(registros, parte[3]); // Registro que contiene la posición inicial //// Direccion logica desde donde tiene que leer memoria
-    // int registro_tamanio = *(int*)dictionary_get(registros, parte[4]); // Registro que contiene el tamaño de los datos //// Cantidad de bytes a leer por memoria
-    // int registro_puntero_archivo = *(int*)dictionary_get(registros, parte[5]); // Registro que contiene los datos a escribir //// Posicion a partir de donde se tiene que escribir 
-
-    // //int direccion_fisica = traducir_direccion_logica_a_fisica(registro_direccion);
-
-    // argumentos_cpu* args = malloc(sizeof(argumentos_cpu));
-    // args->nombre_interfaz = parte[1];
-    // args->nombre_archivo = parte[2];
-    // // args->registro_direccion = direccion_fisica; 
-    // args->registro_tamano = registro_tamanio;
-    // args->registro_puntero_archivo = registro_puntero_archivo;
-    // //pcb_recibido->program_counter++;
-    // pcb_recibido->registros->pc++;
-
-    // args->proceso = pcb_recibido;
-    // args->operacion = IO_FS_WRITE;
-
     log_info(log_cpu, "Nombre interfaz: %s", args->nombre_interfaz);
     log_info(log_cpu, "Nombre archivo: %s", args->nombre_archivo);
     log_info(log_cpu, "Tamaño lista de direcciones: %d", list_size(args->direcciones_fisicas));
-    log_info(log_cpu, "Registro tamanio: %s", args->registro_tamano);
-    log_info(log_cpu, "Registro puntero archivo: %s", args->registro_puntero_archivo);
+    log_info(log_cpu, "Registro tamanio: %d", args->registro_tamano);
+    log_info(log_cpu, "Registro puntero archivo: %d", args->registro_puntero_archivo);
 
     enviar_pcb(socket_cliente_kernel, args);
     
