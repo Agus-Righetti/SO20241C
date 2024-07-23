@@ -98,7 +98,7 @@ void manejar_creacion_archivo(char* nombre_archivo, int pid)
     // Guardar los cambios en el archivo
     config_save(config);
      
-    queue_push(cola_archivos_en_fs, nombre_archivo);
+    queue_push(cola_archivos_en_fs, config_file_path);
 
     // Liberar memoria utilizada por la configuración
     config_destroy(config);
@@ -165,6 +165,24 @@ void manejar_eliminacion_archivo(char* nombre_archivo, int pid)
 
     // no borramos los bloques del bloques.dat porque al marcar como libres los bloques en el bitmap se va a sobreescribir en esos bloques y listo
 
+    //saco el archivo de la cola de archivos en fs
+
+    char* nombre_aux;
+
+    for(int j = 0; j < queue_size(cola_archivos_en_fs); j++)
+    {
+        nombre_aux = queue_pop(cola_archivos_en_fs);
+        if(strcmp(nombre_aux , nombre_archivo) == 0)
+        {
+            j = queue_size(cola_archivos_en_fs) + 1;
+        }else{
+            queue_push(cola_archivos_en_fs, nombre_aux);
+            
+        }
+    }
+    log_info(log_io, "ya saque el archivo de la cola");
+
+    ////
     avisar_fin_io_a_kernel();
 
     return;
@@ -548,52 +566,42 @@ void manejar_lectura_archivo(char* nombre_archivo, t_list* direccion_fisica, int
 
     usleep(config_io->tiempo_unidad_trabajo * 1000);
 
-    log_info(log_io, "entre a lectura archivo");
 
     //cambio el nombre del archivo
 
     char** parte = string_split(nombre_archivo, ".");
 
-    log_info(log_io, "ya hice el string split");
     
     nombre_archivo = parte[0];
     
     string_append(&nombre_archivo,".config");
 
-    log_info(log_io, "ya le puse el nombre al archivo es: %s", nombre_archivo);
 
 
     //leemos del archivo 
         
     t_config* config_aux = config_create(nombre_archivo);
 
-    log_info(log_io, "cree la config del archivo %s", nombre_archivo);
 
     int tamanio_archivo = config_get_int_value(config_aux, "TAMANIO_ARCHIVO");
     int bloque_inicial = config_get_int_value(config_aux, "BLOQUE_INICIAL");
 
-    log_info(log_io, "esto es bloque inicial: %d", bloque_inicial);
-    log_info(log_io, "esto es tamanio archivo : %d", tamanio_archivo);
+    
     
 
     config_destroy(config_aux);
 
-    log_info(log_io, "Hice el config_destroy ");
 
     FILE* archivo_bloques = fopen("bloques.dat", "r");
 
-    log_info(log_io, "ya abri el bloques.dat ");
 
     int byte_inicio_bloque = bloque_inicial * config_io->block_size;
 
-    log_info(log_io, "esto es byte inicio bloque: %d", byte_inicio_bloque);
 
     //Pongo el puntero al inicio de los bloques del archivo
     fseek(archivo_bloques, byte_inicio_bloque , SEEK_SET);
-    log_info(log_io, "Movi el puntero del archivo al inciio del bloque ");
     //Pongo el puntero en la posicion a partir de la cual quiero leer
     fseek(archivo_bloques, puntero_archivo, SEEK_CUR);
-    log_info(log_io, "Movi el puntero del archivo a donde quiero leer del bloque ");
 
     char* buffer_datos = malloc(sizeof(char)*(tamanio+1));
 
@@ -603,14 +611,12 @@ void manejar_lectura_archivo(char* nombre_archivo, t_list* direccion_fisica, int
 
     fclose(archivo_bloques);
 
-    log_info(log_io, "Ya cerre el archivo de los bloques");
 
 
     // MANDAMOS A MEMORIA para q guarde
 
     t_paquete* paquete = crear_paquete_personalizado(IO_PIDE_ESCRITURA_MEMORIA); // Queremos que memoria lo guarde
 
-    log_info(log_io, "Ya cree el paquete");
 
     agregar_int_al_paquete_personalizado(paquete, pid);
     agregar_int_al_paquete_personalizado(paquete, tamanio);
@@ -618,8 +624,6 @@ void manejar_lectura_archivo(char* nombre_archivo, t_list* direccion_fisica, int
     agregar_lista_al_paquete_personalizado(paquete, direccion_fisica, sizeof(t_direccion_fisica));
     
     enviar_paquete(paquete, conexion_io_memoria);
-
-    log_info(log_io, "ya le mande a memoria");
 
     eliminar_paquete(paquete);
 
@@ -918,8 +922,10 @@ int contar_bloques_libres(t_bitarray* bitmap)
 
 char* leer_bloques(int bloque_inicial, int num_bloques) 
 {
+    log_info(log_io,"estoy en leer bloques");
     FILE* archivo = fopen ("bloques.dat", "r+");
     
+    log_info(log_io,"ya abri bloques .dat");
     // Calcular el offset al inicio del primer bloque
     int offset = bloque_inicial * config_io->block_size;
 
@@ -927,26 +933,31 @@ char* leer_bloques(int bloque_inicial, int num_bloques)
     fseek(archivo, offset, SEEK_SET);
 
     // Leer el contenido de los bloques
-    char *buffer = malloc(num_bloques * config_io->block_size);
+    char *buffer = malloc(num_bloques * config_io->block_size + 1);
 
     fread(buffer, config_io->block_size, num_bloques, archivo);
+
+    log_info(log_io,"ya lei y lo puse en el buffer");
     fclose(archivo);
 
     return buffer;
 }
 
-char *agregar_al_final(char *buffer, const char *informacion) 
+char *agregar_al_final(char *buffer, char *informacion) 
 {
+    log_info(log_io, "estoy en agregar al final");
     if (buffer == NULL) 
     {
         // Si el buffer es NULL, asigna memoria suficiente para la información
         buffer = malloc(strlen(informacion) + 1);  // +1 para el terminador nulo
-        
+        log_info(log_io, "pude hacer el malloc del buffer");
         strcpy(buffer, informacion);
+        log_info(log_io, "pude guardar la informacion en el buffer");
     } else {
         // Si el buffer ya contiene datos, realloca memoria para incluir la nueva información
         size_t tam_buffer = strlen(buffer);
         size_t tam_informacion = strlen(informacion);
+        log_info(log_io, "estoy por hacer el realoc");
         buffer = realloc(buffer, tam_buffer + tam_informacion + 1);  // +1 para el terminador nulo
         if (buffer == NULL) 
         {
@@ -954,6 +965,8 @@ char *agregar_al_final(char *buffer, const char *informacion)
             return NULL;
         }
         strcat(buffer, informacion);
+        log_info(log_io, "ya hice el strcat");
+        
     }
     return buffer;
 }
@@ -962,23 +975,39 @@ char *agregar_al_final(char *buffer, const char *informacion)
 void compactar(t_bitarray* bitmap) 
 { 
     log_info(log_io, "entre a compactar");
-    char* buffer;
+    int tamanio_maximo_de_bloques_dat = config_io->block_count * config_io->block_size;
+    char* buffer ;
     int contador_ocupados = 0;
-    t_metadata* metadata = malloc(sizeof(t_metadata)); //metadata->nombre_archivo, ->BLOQUE_INICIAL, ->TAMANIO_ARCHIVO
+    //No hago el malloc porq buscar archivo q inicia ya devuelve uno con malloc hecho
+    t_metadata* metadata; // = malloc(sizeof(t_metadata)); //metadata->nombre_archivo, ->BLOQUE_INICIAL, ->TAMANIO_ARCHIVO
     int bloques_ocupados;
+    char* info_bloques;
     //i recorre cada bloque del bitmap i == un numero de bloque
+    log_info(log_io, "estoy por entrar al for de compactar");
 
     for (int i = 0; i < config_io->block_count; i++) 
     { 
+        log_info(log_io, "estoy en el for de compactar i=%d", i);
         if(bitarray_test_bit(bitmap, i))
         {
+            log_info(log_io, "el bloque nro %d esta ocupado", i);
             metadata = buscar_archivo_que_inicia_en_bloque(i);
+            log_info(log_io, "el nombre del archivo q esta en el bloque %d es: %s", i, metadata->nombre_archivo);
             bloques_ocupados = calcular_bloques_que_ocupa(metadata->tamanio_archivo);
-            buffer = agregar_al_final(buffer , leer_bloques(i , bloques_ocupados));
+            log_info(log_io, "ya calcule los bloques q ocupa son: %d", bloques_ocupados);
+            info_bloques = leer_bloques(i , bloques_ocupados);
+            log_info(log_io,"ya tengo la info de los bloques");
+            buffer = agregar_al_final(buffer , info_bloques);
+            log_info(log_io,"ya pude agregar al final");
+            free(info_bloques);
+            log_info(log_io, "ya agregue al final del buffer: ");
             metadata->bloque_inicial = contador_ocupados;
             actualizar_metadata(metadata);
-            bitarray_set_bit(bitmap,contador_ocupados);
+            
+
             bitarray_clean_bit(bitmap, i);
+            bitarray_set_bit(bitmap,contador_ocupados);
+            
             contador_ocupados ++;
             i += bloques_ocupados - 1;
         }
@@ -988,7 +1017,7 @@ void compactar(t_bitarray* bitmap)
     usleep(config_io->retraso_compactacion * 1000); //multiplico por mil porque esta dado en miliseg y necesito microseg
 
     actualizar_archivo_bloques(buffer);//copio lo del buffer en el archivo de bloques.dat
-    free(metadata);
+    free(buffer);
 
 }
 
@@ -1002,27 +1031,43 @@ void actualizar_archivo_bloques(char* buffer)
 
 t_metadata* buscar_archivo_que_inicia_en_bloque(int nro_bloque)
 {
+    log_info(log_io, "entre a buscar_archivo_q_inicia_en_bloque, el bloque que busco es: %d", nro_bloque);
     t_metadata* meta_aux = malloc(sizeof(t_metadata));
-    meta_aux->nombre_archivo = queue_pop(cola_archivos_en_fs);
-    t_config* config_aux = config_create(meta_aux->nombre_archivo);
-    meta_aux->bloque_inicial = config_get_int_value(config_aux, "BLOQUE_INICIAL");
-    meta_aux->tamanio_archivo = config_get_int_value(config_aux, "TAMANIO_ARCHIVO");
+    t_config* config_aux;
+    // meta_aux->nombre_archivo = queue_pop(cola_archivos_en_fs);
+    // t_config* config_aux = config_create(meta_aux->nombre_archivo);
+    // meta_aux->bloque_inicial = config_get_int_value(config_aux, "BLOQUE_INICIAL");
+    // meta_aux->tamanio_archivo = config_get_int_value(config_aux, "TAMANIO_ARCHIVO");
 
-    while(meta_aux->bloque_inicial != nro_bloque)
+    //while(meta_aux->bloque_inicial != nro_bloque)
+
+    log_info(log_io, "el tamano de la cola de archivos en fs es: %d" ,queue_size(cola_archivos_en_fs));
+    for(int j = 0; j < queue_size(cola_archivos_en_fs); j++)
     {
-        //borro todo lo anterior para poner lo nuevo
-        queue_push(cola_archivos_en_fs, meta_aux->nombre_archivo);
-        config_destroy(config_aux);
-        //vuelvo a buscar en el siguiente archivo
         meta_aux->nombre_archivo = queue_pop(cola_archivos_en_fs);
-
         config_aux = config_create(meta_aux->nombre_archivo);
         meta_aux->bloque_inicial = config_get_int_value(config_aux, "BLOQUE_INICIAL");
         meta_aux->tamanio_archivo = config_get_int_value(config_aux, "TAMANIO_ARCHIVO");
+        log_info(log_io, "esto es meta_aux nombre_Archivo: %s", meta_aux->nombre_archivo);
+        log_info(log_io, "esto es meta_aux bloque inicial: %d", meta_aux->bloque_inicial);
+        log_info(log_io, "esto es meta_aux tamanio_archivo: %d", meta_aux->tamanio_archivo);
+
+        if(meta_aux->bloque_inicial == nro_bloque)
+        {
+            queue_push(cola_archivos_en_fs, meta_aux->nombre_archivo);
+            config_destroy(config_aux);
+            j = queue_size(cola_archivos_en_fs) + 1;
+        }else{
+            queue_push(cola_archivos_en_fs, meta_aux->nombre_archivo);
+            config_destroy(config_aux);
+        }
     }
 
+    
     log_info(log_io, "Encontre la metadata que queria :)");
-    queue_push(cola_archivos_en_fs, meta_aux->nombre_archivo); //vuelvo a agregar el archivo a la cola
+    log_info(log_io, "esto es meta_aux nombre_Archivo: %s", meta_aux->nombre_archivo);
+    log_info(log_io, "esto es meta_aux bloque inicial: %d", meta_aux->bloque_inicial);
+    log_info(log_io, "esto es meta_aux tamanio_archivo: %d", meta_aux->tamanio_archivo);
 
     return meta_aux;
 }
@@ -1042,6 +1087,8 @@ void actualizar_metadata(t_metadata* metadata)
     config_set_value(config_archivo, "TAMANIO_ARCHIVO", tamanio_bloque);
 
     config_save(config_archivo);
+
+    config_destroy(config_archivo);
 
     //fclose(archivo);
 
