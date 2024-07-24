@@ -1,9 +1,9 @@
 #include "mainMemoria.h"
 
-int main() {
+int main(int argc, char* argv[]) {
     // ************* LOG Y CONFIG DE USO GENERAL *************
     log_memoria = log_create("memoria.log", "Memoria", 1, LOG_LEVEL_DEBUG); 
-    config_memoria = armar_config();
+    config_memoria = armar_config(argv[1]);
     
 
     // ************* PAGINACIÓN *************

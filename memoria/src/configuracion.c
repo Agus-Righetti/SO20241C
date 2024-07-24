@@ -1,11 +1,22 @@
 #include "configuracion.h"
 
 // ************* CONFIGURACION *************
-memoria_config* armar_config(){
+memoria_config* armar_config(char* nombre_config){
     t_config* config_aux;
     memoria_config* aux_memoria_config = malloc(sizeof(memoria_config)); // Se inicializa la estructura
 
-    config_aux = config_create("memoria.config");
+
+    char* filepath = string_new();
+
+    string_append(&filepath, "../memoria/config_files/");
+
+    string_append(&filepath, nombre_config);
+
+    config_aux = config_create(filepath);
+
+    free(filepath);
+
+
     if (config_aux == NULL) {
         log_info(log_memoria, "Error: No se pudo crear el config de Memoria");
         exit(1);

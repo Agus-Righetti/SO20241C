@@ -101,8 +101,6 @@ void crear_hilo_escucha_interfaz(int socket_io)
 
     pthread_create(&hilo_escucha_interfaz, NULL, (void*)escucha_interfaz,(void*)(intptr_t)socket_io);
 
-    log_info(log_memoria, "Ya cree el hilo de escucha de interfaz");
-
     pthread_detach(hilo_escucha_interfaz);
     return;
 }
@@ -121,10 +119,7 @@ void escucha_interfaz(void* arg) //es un hilo porque asi puedo escuchar a varias
 
     while(control){
 
-        log_info(log_memoria, "Estoy esperando q la interfaz me diga algo");
         cod_op_io = recibir_operacion(socket);
-
-        log_info(log_memoria, "El codop recibido es: %d", cod_op_io);
 
         switch (cod_op_io) {
             
@@ -165,7 +160,7 @@ void escucha_interfaz(void* arg) //es un hilo porque asi puedo escuchar a varias
                 }
                 usleep(config_memoria->retardo_respuesta *1000);
 
-                log_info(log_memoria, "Estoy por llamar a guardar string io en memoria");
+            
                 
                 guardar_string_io_en_memoria(pid, direcciones_fisicas, valor, tamanio, socket);
                 

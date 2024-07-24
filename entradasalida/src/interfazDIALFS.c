@@ -147,8 +147,6 @@ void manejar_eliminacion_archivo(char* nombre_archivo, int pid)
     int bloque_inicial = config_get_int_value(config_aux, "BLOQUE_INICIAL");
     int tamanio_en_bytes = config_get_int_value(config_aux, "TAMANIO_ARCHIVO");
 
-    log_info(log_io, "Bloque inicial: %d", bloque_inicial);
-    log_info(log_io, "Tamaño en bytes: %d", tamanio_en_bytes);
 
     config_destroy(config_aux);
 
@@ -275,24 +273,20 @@ void manejar_truncado_archivo(char* nombre_archivo, int nuevo_tamanio, int pid)
         if(tamanio_disponible_ult_bloque < bytes_a_agregar) // Si puedo meter todo lo que tengo en algun bloque ocupado lo hago ahi directamente
         {
 
-            //log_info(log_io, "Tamanio dispo en el ultimo bloque: %d", tamanio_disponible_ult_bloque);
 
             if(tamanio_disponible_ult_bloque > 0) // si los bloques ocupados no estan ocupados en su totalidad
             {
                 bytes_a_agregar = bytes_a_agregar - tamanio_disponible_ult_bloque;
             }
             
-            //log_info(log_io, "Bytes a agregar: %d", bytes_a_agregar);
             
             int bloques_necesarios = calcular_bloques_que_ocupa(bytes_a_agregar);
             
-            //log_info(log_io, "Bloques necesarios %d", bloques_necesarios);
 
             //verificamos que haya la cantidad de bloques libres en total q necesitamos
 
             int cantidad_bloques_libres = contar_bloques_libres(bitmap);
             
-            //log_info(log_io, "Cantidad de bloques libres: %d", cantidad_bloques_libres);
 
             if(cantidad_bloques_libres < bloques_necesarios)
             {
@@ -302,21 +296,17 @@ void manejar_truncado_archivo(char* nombre_archivo, int nuevo_tamanio, int pid)
 
             int bloque_inicial_nuevo = buscar_bloques_contiguos_desde_cierto_bloque(bloque_inicial, bloques_necesarios, bitmap);
 
-            //log_info(log_io, "El bloque inicial nuevo es: %d", bloque_inicial_nuevo);
 
             if(bloque_inicial_nuevo == -1) // Devuelve -1, no hay libres desde ese bloque
             {
                 bloques_necesarios = calcular_bloques_que_ocupa(nuevo_tamanio); // Calculo de nuevo, porque van a ser todos desde una nueva posicion
 
-                //log_info(log_io, "Los bloques necesarios para el nuevo tamaño son: %d", bloques_necesarios);
 
                 bloque_inicial_nuevo = buscar_bloques_contiguos(bloques_necesarios, bitmap);
 
-                //log_info(log_io, "El bloque inicial nuevo es: %d", bloque_inicial_nuevo);
                 
                 if(bloque_inicial_nuevo == -1){ // No hay bloques contiguos, necesito compactar si entra
                     
-                    log_info(log_io, "Si entra, entonces tengo que compactar");
 
                     // Primero tenemos q sacar los bloques ocupados y ppner la info en un buffer
                     // dsp compacto y pongo lo q habia sacado actuizando el bitmap
@@ -405,7 +395,6 @@ void manejar_truncado_archivo(char* nombre_archivo, int nuevo_tamanio, int pid)
                 {   
                     // hay bloques contiguos, tengo q ponerlo en esos bloques
 
-                    //log_info(log_io, "Hay espacio, no tengo que compactar");
 
                     int bloques_del_tamanio_original = calcular_bloques_que_ocupa(tamanio_original);
                     
@@ -414,16 +403,13 @@ void manejar_truncado_archivo(char* nombre_archivo, int nuevo_tamanio, int pid)
                     }
                     
                     // Deberia dar 1 en el caso del FS_1
-                    //log_info(log_io, "Bloques del tamaño original: %d", bloques_del_tamanio_original);
 
                     buffer = leer_bloques(bloque_inicial, bloques_del_tamanio_original);
 
-                    //log_info(log_io, "Lo que esta en el buffer es: %s", buffer);
-                    //log_info(log_io, "Bloque inicial: %d", bloque_inicial);
+                    
 
                     for(int i = bloque_inicial; i < bloque_inicial + bloques_del_tamanio_original; i++)
                     {
-                        //log_info(log_io, "Voy a limpiar el indice <%d> del bitmap", i);
                         bitarray_clean_bit(bitmap, i);
                     }
                     
@@ -432,7 +418,6 @@ void manejar_truncado_archivo(char* nombre_archivo, int nuevo_tamanio, int pid)
                     // marco los nuevos bits como ocupados
                     for(int i = bloque_inicial_nuevo; i < bloque_inicial_nuevo + bloques_necesarios; i++)
                     {
-                        //log_info(log_io, "Voy a marcar como ocupado el indice <%d> del bitmap", i);
                         bitarray_set_bit(bitmap, i);
                     }
                     
@@ -460,12 +445,10 @@ void manejar_truncado_archivo(char* nombre_archivo, int nuevo_tamanio, int pid)
                 //bloque_inicial + 1 porq el inicial ya esta seteado
                 //bloques_necesarios + bloque_inicial para q sean los necesarios desde el inicial
 
-                //log_info(log_io, "Los bloques necesarios son: %d", bloques_necesarios);
-                //log_info(log_io, "El bloque inicial es: %d", bloque_inicial);
+               
 
                 for(int i = bloque_inicial + 1; i < bloques_necesarios + bloque_inicial + 1; i++)
                 {
-                    //log_info(log_io, "esto es el bloque en el q estoy por hacer set %d", i);
                     bitarray_set_bit(bitmap,i);
                 }
 
@@ -516,7 +499,6 @@ void manejar_truncado_archivo(char* nombre_archivo, int nuevo_tamanio, int pid)
 
     FILE *file_2 = fopen(path_base_log, "rb");
 
-    log_info(log_io, "Voy a leer el bitmap");
 
     unsigned char byte_2;
     while (fread(&byte_2, sizeof(unsigned char), 1, file_2) == 1) {
@@ -564,9 +546,6 @@ void manejar_escritura_archivo(char* nombre_archivo, t_list* direccion_fisica, i
 
     // Ahora ya tengo los datos que quiero escribir en el archivo en "valor_a_mostrar" (es global)
 
-    // log_info(log_io, "El valor_a_mostrar es: %s", valor_a_mostrar);
-    // log_info(log_io, "Cantidad de caracteres de valor_a_mostrar: %zu", strlen(valor_a_mostrar)); 
-    // log_info(log_io, "El nombre_archivo es: %s", nombre_archivo);
 
     //escribimos en el archivo lo q traje de memoria
     
@@ -676,7 +655,6 @@ void manejar_lectura_archivo(char* nombre_archivo, t_list* direccion_fisica, int
 
     fread(buffer_datos, sizeof(char), tamanio, archivo_bloques);
 
-    log_info(log_io, "Ya lei, lei esto: %s ", buffer_datos);
 
     fclose(archivo_bloques);
 
@@ -735,7 +713,6 @@ void crear_archivos_gestion_fs()
     } else {
         printf("La carpeta ya existe\n");
     }
-    log_info(log_io, "PASE LA CARPETA");
     // CREO Y DEFINO EL TAMAÑO DEL ARCHIVO bloques.dat
 
     char* path_base = malloc(strlen(config_io->path_base_dialfs)+ 25);
@@ -744,21 +721,16 @@ void crear_archivos_gestion_fs()
 
     string_append(&path_base, "/bloques.dat");
 
-    log_info(log_io, "Estoy justo antes del fopen, esto es pathbase: %s", path_base);
 
     FILE* bloques_dat = fopen(path_base, "r");
 
-    log_info(log_io, "Estoy después del fopen");
 
     if(bloques_dat == NULL){
         // El archivo no existe, se debe crear e inicializar
 
         FILE* bloques_dat = fopen(path_base, "wb");
 
-       // log_info(log_io,"ya abri el bloques.dat");
-
-        //log_info(log_io, "El block size es: %d", config_io->block_size);
-        //log_info(log_io, "El block count es: %d", config_io->block_count);
+       
         
         if (bloques_dat == NULL) 
         {
@@ -768,7 +740,6 @@ void crear_archivos_gestion_fs()
 
         int tamanio = config_io->block_size * config_io->block_count;
 
-        //log_info(log_io, "Creé el tamaño: %d", tamanio);
 
         // Mueve el puntero al final del archivo para definir su tamaño
         if (fseek(bloques_dat, tamanio - 1, SEEK_SET) != 0) 
@@ -781,15 +752,12 @@ void crear_archivos_gestion_fs()
         // Escribe un byte en la última posición para establecer el tamaño
         fputc('\0', bloques_dat);
 
-        //log_info(log_io,"estableci el final del archivo");
 
         fclose(bloques_dat);
 
-        //log_info(log_io, "Ya cerré bloques_dat");
 
     }else{
 
-        //log_info(log_io, "El archivo bloques.dat ya existe");
         fclose(bloques_dat);
     }
 
@@ -802,8 +770,7 @@ void crear_archivos_gestion_fs()
 
     string_append(&path_base, "/bitmap.dat");
     
-    log_info(log_io, "Estoy por abrir la carpeta -> %s", path_base);
-
+    
     FILE* bitmap_file = fopen(path_base, "r");
 
     if(bitmap_file == NULL){
@@ -818,8 +785,7 @@ void crear_archivos_gestion_fs()
             return;
         }
         
-        //log_info(log_io,"estoy por crear el bitmap");
-        
+       
         size_t bitmap_size_bytes = (config_io->block_count + 7) / 8;  // 1 bit por bloque
         
         char* bitmap_buffer = (char*)malloc(bitmap_size_bytes);
@@ -837,12 +803,10 @@ void crear_archivos_gestion_fs()
         // Limpio el bitmap -> lo seteo en 0
         t_bitarray* bitmap = bitarray_create_with_mode(bitmap_buffer, bitmap_size_bytes, MSB_FIRST);
         
-        //log_info(log_io,"cree el bitarray");
 
         fseek(bitmap_file, 0, SEEK_SET);  // Mueve el puntero al inicio del archivo
         fwrite(bitmap_buffer, sizeof(char), bitmap_size_bytes, bitmap_file);
 
-        //log_info(log_io, "Acabo de escribir sobre el bitmap");
     
         if (bitmap == NULL) 
         {
@@ -855,18 +819,15 @@ void crear_archivos_gestion_fs()
         free(bitmap_buffer);
         fclose(bitmap_file);
         
-        //log_info(log_io, "Cierro el bitmap");
 
         bitarray_destroy(bitmap);
         
-        //log_info(log_io,"Supuestamente ya cree los archivos de gestion");
         
         // bitarray_set_bit(bitmap, 0);  // Por ejemplo, establece el primer bloque como ocupado
         // bitarray_set_bit(bitmap, 1);  // Y el segundo bloque como ocupado
         // bitarray_clean_bit(bitmap, 0) // Pone el bit número 0 libre
     }else{
 
-        //log_info(log_io, "El bitmap.dat ya existe");
         fclose(bitmap_file);
     }
     log_info(log_io, "TERMINE LA FUNCION COMPLICADA");
@@ -915,7 +876,6 @@ char* obtener_bitmap()
 void escribir_archivo_con_bitmap(char* bitmap_buffer)
 {
 //-------------------------SACAR----------------
-    log_info(log_io, "el bitmap antes de actualizar es:");
 
     char* path_base_log = malloc(strlen(config_io->path_base_dialfs)+ 25);
     strcpy(path_base_log, config_io->path_base_dialfs);
@@ -923,7 +883,6 @@ void escribir_archivo_con_bitmap(char* bitmap_buffer)
 
     FILE *file_2 = fopen(path_base_log, "rb");
 
-   // log_info(log_io, "Voy a leer el bitmap");
 
     unsigned char byte_2;
     while (fread(&byte_2, sizeof(unsigned char), 1, file_2) == 1) {
@@ -954,7 +913,6 @@ void escribir_archivo_con_bitmap(char* bitmap_buffer)
     
     FILE *file_3 = fopen(path_base_log, "rb");
 
-    //log_info(log_io, "Voy a leer el bitmap");
 
     unsigned char byte_3;
     while (fread(&byte_3, sizeof(unsigned char), 1, file_3) == 1) {
@@ -1009,14 +967,11 @@ int buscar_bloques_contiguos(int bloques_necesarios, t_bitarray* bitmap){
             {
                 bloque_inicio = i;
                 
-            //log_info(log_io, "El indice del bloque inicial es -> %d", i);
 
             }
 
             contador_bloques_contiguos++;
 
-            //log_info(log_io, "El contador es -> %d", contador_bloques_contiguos);
-            //log_info(log_io, "Bloques necesarios-> %d", bloques_necesarios);
 
             if (contador_bloques_contiguos == bloques_necesarios)
             {
@@ -1055,7 +1010,6 @@ char* leer_bloques(int bloque_inicial, int num_bloques)
     string_append(&path_base, "/bloques.dat");
     FILE* archivo = fopen (path_base, "r+");
     
-    //log_info(log_io,"ya abri bloques .dat");
     // Calcular el offset al inicio del primer bloque
     int offset = bloque_inicial * config_io->block_size;
 
@@ -1068,19 +1022,16 @@ char* leer_bloques(int bloque_inicial, int num_bloques)
 
     fread(buffer, config_io->block_size, num_bloques, archivo);
 
-    //log_info(log_io,"ya lei y lo puse en el buffer");
     fclose(archivo);
     
     free(path_base);
 
-    //log_info(log_io, "esto es lo q puse en el buffer q voy a devolver: %s", buffer);
 
     return buffer;
 }
 
 char *agregar_al_final(char *buffer, char *informacion) 
 {
-    //log_info(log_io, "estoy en agregar al final");
     
 
     if (buffer == NULL) 
@@ -1143,7 +1094,6 @@ void compactar(int pid)
     
     int tamanio_maximo_de_bloques_dat = config_io->block_count * config_io->block_size;
     
-    log_info(log_io, "El tamaño max de bloques dat es: %d", tamanio_maximo_de_bloques_dat);
     
     //char* buffer ;
     int contador_ocupados = 0;
@@ -1152,54 +1102,34 @@ void compactar(int pid)
     int bloques_ocupados;
     char* info_bloques;
     //i recorre cada bloque del bitmap i == un numero de bloque
-    //log_info(log_io, "estoy por entrar al for de compactar");
 
     for (int i = 0; i < config_io->block_count; i++) 
     { 
 
-        log_info(log_io, "Estoy en el INICIO del FOR, indice: %d", i);
-
         if(bitarray_test_bit(bitmap, i)) //si entro es porq esta ocupado
         {
-            log_info(log_io, "Voy a buscar el archivo q inicia en: %d", i);
             metadata = buscar_archivo_que_inicia_en_bloque(i);
-
-            log_info(log_io, "esto es el nombre del archivo: %s", metadata->nombre_archivo);
-
-            log_info(log_io,"esto es tamanio archivo: %d", metadata->tamanio_archivo);
             
             bloques_ocupados = calcular_bloques_que_ocupa(metadata->tamanio_archivo);
 
-            log_info(log_io, "La cantidad de bloques ocupados es : %d", bloques_ocupados);
-            
             info_bloques = leer_bloques(i , bloques_ocupados);
             
             metadata->bloque_inicial = contador_ocupados;
             
-            log_info(log_io, "El bloque inicial es %d", metadata->bloque_inicial);
-
             agregar_info_en_cierto_bloque(metadata->bloque_inicial, bloques_ocupados, info_bloques);
 
             for(int h = 0; h < bloques_ocupados; h++) 
             {
-                
                 bitarray_set_bit(bitmap, contador_ocupados + h);
-                log_info(log_io, "Acabo de setear a 1 el bit numero: %d", contador_ocupados + h );
                 bitarray_clean_bit(bitmap, i + h); // Limpia los bloques viejos
-                log_info(log_io, "Acabo de setear a 0 el bit numero: %d", i + h );
-                
             }
             
             contador_ocupados += bloques_ocupados;
 
-            log_info(log_io, "El contador de ocupados al final del for es: %d", contador_ocupados);
-
             actualizar_metadata(metadata);
-            
 
             i += bloques_ocupados - 2; //le sacamos un -1
 
-            log_info(log_io, "La variable i al FINAL del for vale: %d", i);
         }
 
         
@@ -1235,7 +1165,6 @@ void actualizar_archivo_bloques(char* buffer)
 t_metadata* buscar_archivo_que_inicia_en_bloque(int nro_bloque)
 {
     //HAAY QUE CAMBIAR TODA, AHORA NO BUSCAMOS EN LA COLA
-    //log_info(log_io, "entre a buscar_archivo_q_inicia_en_bloque, el bloque que busco es: %d", nro_bloque);
     t_metadata* meta_aux = malloc(sizeof(t_metadata));
     meta_aux->nombre_archivo = malloc(sizeof(char)*25);
     t_config* config_aux;
@@ -1251,8 +1180,6 @@ t_metadata* buscar_archivo_que_inicia_en_bloque(int nro_bloque)
             // meta_aux->nombre_archivo = ent->d_name;
             strcpy(meta_aux->nombre_archivo, ent->d_name);
 
-            log_info(log_io, "meta_aux->nombre_archivo: %s", meta_aux->nombre_archivo);
-
             if(strcmp(meta_aux->nombre_archivo, "bloques.dat")!=0 && strcmp(meta_aux->nombre_archivo, "bitmap.dat")!=0 && strcmp(meta_aux->nombre_archivo, "..") != 0 && strcmp(meta_aux->nombre_archivo, ".") != 0)
             {
                 strcpy(path_base, config_io->path_base_dialfs);
@@ -1261,10 +1188,6 @@ t_metadata* buscar_archivo_que_inicia_en_bloque(int nro_bloque)
                 config_aux = config_create(path_base);
                 meta_aux->bloque_inicial = config_get_int_value(config_aux, "BLOQUE_INICIAL");
                 meta_aux->tamanio_archivo = config_get_int_value(config_aux, "TAMANIO_ARCHIVO");
-                log_info(log_io, "esto es meta_aux nombre_Archivo: %s", meta_aux->nombre_archivo);
-                log_info(log_io, "esto es meta_aux bloque inicial: %d", meta_aux->bloque_inicial);
-                log_info(log_io, "esto es meta_aux tamanio_archivo: %d", meta_aux->tamanio_archivo);
-                log_info(log_io, "el numero de bloque es: %d", nro_bloque);
 
                 if(meta_aux->bloque_inicial == nro_bloque)
                 {
@@ -1276,17 +1199,10 @@ t_metadata* buscar_archivo_que_inicia_en_bloque(int nro_bloque)
             }
             
         }
-    }else log_error(log_io , "ERROR AL ABRIR LA PUTA CARPETA");
+    }else log_error(log_io , "ERROR AL ABRIR LA CARPETA");
 
     closedir(dir);
     free(path_base);
-    
-    log_info(log_io, "estoy out del while");
-    
-    log_info(log_io, "Encontre la metadata que queria :)");
-    log_info(log_io, "esto es meta_aux nombre_archivo: %s", meta_aux->nombre_archivo);
-    log_info(log_io, "esto es meta_aux bloque inicial: %d", meta_aux->bloque_inicial);
-    log_info(log_io, "esto es meta_aux tamanio_archivo: %d", meta_aux->tamanio_archivo);
 
     return meta_aux;
 }
@@ -1304,9 +1220,6 @@ void actualizar_metadata(t_metadata* metadata)
 
     char* bloque_inicial = pasar_a_string(metadata->bloque_inicial);
     char* tamanio_bloque = pasar_a_string(metadata->tamanio_archivo);
-
-    // log_info(log_io, "El bloque inicial en metadata (int) es: %d", metadata->bloque_inicial);
-    // log_info(log_io, "El bloque inicial en metadata (string) es: %s", bloque_inicial);
 
     config_set_value(config_archivo, "BLOQUE_INICIAL", bloque_inicial);
     config_set_value(config_archivo, "TAMANIO_ARCHIVO", tamanio_bloque);
@@ -1331,11 +1244,9 @@ int agregar_info_en_cierto_bloque(int bloque_inicial_nuevo, int cant_bloques , c
     string_append(&path_base, "/bloques.dat");
     
     FILE * archivo_bloques = fopen(path_base, "rb+");
-   //log_info(log_io, "ya abri el archivo de bloques para escribir");
     int offset = bloque_inicial_nuevo * config_io->block_size;
     fseek(archivo_bloques, offset, SEEK_SET);
     fwrite(buffer, config_io->block_size, cant_bloques, archivo_bloques);
-    //log_info(log_io, "ya escribi todo piola");
     fclose(archivo_bloques);
     free(path_base);
     free(buffer);
@@ -1346,13 +1257,10 @@ int bitarray_find_first_clear_bit(t_bitarray* bitmap)
 {
     for (int i = 0; i < config_io->block_count; i++)
     {
-        // bitarray_test_bit(bitmap, i) --> Si retorna 0, quiere decir que el bloque esta libre
-        // !bitarray_test_bit(bitmap, i) --> 0 en C es FALSO, !0 es VERDADERO, entonces queremos que entre en el if para que 
-        // retorne el bloque que esta libre
+        
 
         if (!bitarray_test_bit(bitmap, i)) // Si está vacío el bitmap, entonces devuelvo el índice en el que me encuentro
         {
-            log_info(log_io, "Voy a devolver el indice: %d", i);
             return i;
         }
     }

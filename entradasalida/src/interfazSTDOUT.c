@@ -16,9 +16,7 @@ void ejecutar_instruccion_stdout(t_list* direccion_fisica, int tamanio, int pid)
 
     eliminar_paquete(paquete);
 
-    log_info(log_io, "Estoy justo antes del semaforo esperando el okay de memoria");
     sem_wait(&sem_ok_lectura_memoria);
-    log_info(log_io, "Estoy después de haber recibido el okay de memoria, voy a imprimir por pantalla el resultado");
     
     //muestro por pantalla lo que lei de memoria
     log_info(log_io, valor_a_mostrar);

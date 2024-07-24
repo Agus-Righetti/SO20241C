@@ -20,83 +20,48 @@ void crear_interfaz(op_code interfaz_nueva, int socket, char* nombre_interfaz)
     sem_init(&nueva_interfaz->sem_puedo_mandar_operacion, 0,1);
     sem_init(&nueva_interfaz->sem_hay_procesos_esperando,0,0); 
     
-
-    //log_info(log_kernel, "estoy por intentar inicializar el mutex");
     pthread_mutex_init(&(nueva_interfaz->mutex_cola), NULL);
-    //log_info(log_kernel, "ya inicialice el mutex");
 
     //agrego la interfaz a la cola de las q estan conectadas
     pthread_mutex_lock(&mutex_cola_de_interfaces);
 	queue_push(cola_interfaces_conectadas, nueva_interfaz); 
     pthread_mutex_unlock(&mutex_cola_de_interfaces);
-   //log_info(log_kernel, "ya agregue la interfaz a la cola");
-    // thread_args_escucha_io* args_hilo = (thread_args_escucha_io*)malloc(sizeof(thread_args_escucha_io)); //agregue este malloc y su free
-    // args_hilo->interfaz = nueva_interfaz; // En sus args le cargo el la interfaz
 
-
-   // pthread_t hilo_de_escucha_interfaz, hilo_de_envio_a_interfaz;
-    //este hilo se quedara escuchando lo que le devuelva la interfaz y hara lo q corresponda con cada proceso q la llamo al recibirlo de nuevo, tendriamos q chequear si la interfaz devuelve un proceso u otra cosa, en cuyo caso tendriamos q sacar el proceso de otro lado para volverlo a poner en ready o lo q sea
-    // pthread_create(&nueva_interfaz->hilo_de_escucha_interfaz, NULL, (void*)escucha_interfaz,(void*)args_hilo);
-    // pthread_create(&nueva_interfaz->hilo_de_envio_a_interfaz, NULL, (void*)envio_interfaz,(void*)args_hilo);
     pthread_create(&nueva_interfaz->hilo_de_escucha_interfaz, NULL, (void*)escucha_interfaz,(void*)nueva_interfaz);
     pthread_create(&nueva_interfaz->hilo_de_envio_a_interfaz, NULL, (void*)envio_interfaz,(void*)nueva_interfaz);
 
-   // free(args_hilo);
-
-    
     //hago detatch para q nadie espere a q este finalice, el cancel del otro lo hago cuando termina este hilo
     pthread_detach(nueva_interfaz->hilo_de_escucha_interfaz);
     pthread_detach(nueva_interfaz->hilo_de_envio_a_interfaz);
 
-
     return;
-
-
-	
 }
 
 void envio_interfaz(void* args)
 {
-    //ATENCION!! Problema a solucionar: donde pongo los malloc y los free para que no haya memory leaks
-    //asi como estan ahora los free no se ejecutan nunca
-    //thread_args_escucha_io* argumentos = (thread_args_escucha_io*) args;
-    //interfaz_kernel* interfaz; 
     interfaz_kernel* interfaz = (interfaz_kernel*) args;
     argumentos_para_io* args_mandar_a_io;
-    //interfaz = malloc(sizeof(interfaz_kernel)); //agregue este malloc y su free
-    //interfaz = args->interfaz;
-    
 
     while(interfaz->conectada)
     {
         //log_info(log_kernel, "Esto es interfaz conectada: %d", interfaz->conectada);
         sem_wait(&interfaz->sem_hay_procesos_esperando);
-        log_info(log_kernel, "pase el semaforo de q hay procesos esperando");
         sem_wait(&interfaz->sem_puedo_mandar_operacion);
-        log_info(log_kernel, "pase el semaforo de q puedo madnar una operacion");
+
         pthread_mutex_lock(&interfaz->mutex_cola);
         args_mandar_a_io = queue_pop(interfaz->cola_de_espera);
         pthread_mutex_unlock(&interfaz->mutex_cola);
         interfaz->proceso_en_interfaz = args_mandar_a_io->proceso;
 
         enviar_instruccion_io(interfaz->socket, args_mandar_a_io);
-        
     }
-    
-    
 }
 
 void escucha_interfaz(void* args)
 {
-    log_info(log_kernel, "estoy en escucha interfaz");
-    //thread_args_escucha_io* argumentos = (thread_args_escucha_io*) args;
     interfaz_kernel* interfaz = (interfaz_kernel*) args;
     op_code cod_op;
-   // interfaz_kernel* interfaz = malloc(sizeof(interfaz_kernel)); //agregue este malloc y su free
-    //interfaz = args->interfaz;
     t_buffer* buffer;
-    //bool conectada = true;
-    //interfaz->conectada = true;
 
     while(interfaz->conectada)
     {
@@ -137,15 +102,11 @@ void escucha_interfaz(void* args)
 			    break;
 	    };
 	}
-    //free(interfaz);
-    //pthread_join(interfaz->hilo_de_envio_a_interfaz);
-    
     return;
 }
 
 void desconectar_interfaz(interfaz_kernel* interfaz)
 {
-    log_info(log_kernel, "entre a desconectar interfaz");
     interfaz_kernel* interfaz_aux;
     pthread_mutex_lock(&mutex_cola_de_interfaces);
     interfaz_aux = queue_pop(cola_interfaces_conectadas);
@@ -177,24 +138,21 @@ void desconectar_interfaz(interfaz_kernel* interfaz)
 
 void enviar_instruccion_io(int socket, argumentos_para_io* args)
 {
-    log_info(log_kernel, "estoy en envio instruccion io");
-    log_info(log_kernel, "el arg->operacion es: %d", args->operacion);
     t_paquete* paquete_instruccion = crear_paquete_personalizado(args->operacion); // Creo un paquete personalizado con un codop para que IO reconozca lo que le estoy mandando
-    log_info(log_kernel, "ya cree paquete personalizado");
     t_direccion_fisica* dir;
-    log_info(log_kernel, "El pid del proceso que estoy por meter al paquete es: %d", args->proceso->pid);
     
     agregar_int_al_paquete_personalizado(paquete_instruccion, args->proceso->pid); //le mando el pid del proceso
     
     switch (args->operacion)
     {
         case IO_GEN_SLEEP:
-            //log_info(log_kernel,"entre al agregar int al paquete desde io_gen_sleep");
+
             agregar_int_al_paquete_personalizado(paquete_instruccion, args->unidades_de_trabajo);
             break;
+
         case IO_STDIN_READ:
         case IO_STDOUT_WRITE:
-            //log_info(log_kernel,"entre al agregar al paquete desde STDIN Y OUT");
+
             agregar_int_al_paquete_personalizado(paquete_instruccion, args->registro_tamano); 
             agregar_lista_al_paquete_personalizado(paquete_instruccion, args->direcciones_fisicas, sizeof(t_direccion_fisica));
             
@@ -202,7 +160,6 @@ void enviar_instruccion_io(int socket, argumentos_para_io* args)
             for(int i = 0; i < list_size(args->direcciones_fisicas); i++)
             {   
                 dir = list_get(args->direcciones_fisicas, i);
-                log_info(log_kernel, "marco a mandar: %d", dir->nro_marco);
                 free(dir);
             }
 
@@ -213,7 +170,6 @@ void enviar_instruccion_io(int socket, argumentos_para_io* args)
             agregar_string_al_paquete_personalizado(paquete_instruccion, args->nombre_archivo);
             break;
         case IO_FS_TRUNCATE:
-            log_info(log_kernel, "Estoy dentro del case IO_FS_TRUNCATE por meter mas cosas al paquete");
             agregar_string_al_paquete_personalizado(paquete_instruccion, args->nombre_archivo);
             agregar_int_al_paquete_personalizado(paquete_instruccion, args->registro_tamano);
             break;
@@ -230,7 +186,6 @@ void enviar_instruccion_io(int socket, argumentos_para_io* args)
             for(int i = 0; i < list_size(args->direcciones_fisicas); i++)
             {   
                 dir = list_get(args->direcciones_fisicas, i);
-                log_info(log_kernel, "marco a mandar: %d", dir->nro_marco);
                 free(dir);
             }
 
@@ -243,11 +198,7 @@ void enviar_instruccion_io(int socket, argumentos_para_io* args)
    
     free(args);
 
-    log_info(log_kernel, "Estoy a punto de enviar el paquete");
-
     enviar_paquete(paquete_instruccion, socket); // Envio el paquete a través del socket
-
-    log_info(log_kernel, "Ya envie el paquete");
 
     eliminar_paquete(paquete_instruccion); // Libero el paquete
 
@@ -261,7 +212,6 @@ interfaz_kernel* verificar_interfaz(char* nombre_interfaz_buscada, op_code tipo_
 
     if(queue_is_empty(cola_interfaces_conectadas) == false){ // Si la cola no está vacía
 
-        //log_info(log_kernel, "entre al if de q hay interfaces en la cola");
         pthread_mutex_lock(&mutex_cola_de_interfaces);
         aux  = queue_pop(cola_interfaces_conectadas);
         char* primer_nombre = aux->nombre_interfaz;
@@ -283,7 +233,6 @@ interfaz_kernel* verificar_interfaz(char* nombre_interfaz_buscada, op_code tipo_
         //Si llegamos a este punto es porque se encontro la interfaz
         if(aux->tipo_interfaz == tipo_interfaz_buscada)
         {
-            //log_info(log_kernel, "entre al if de q el tipo de interfaz es el q qiero");
             return aux; //La interfaz es del tipo q quiero, la devuelvo
 
         }else{
@@ -299,8 +248,6 @@ interfaz_kernel* verificar_interfaz(char* nombre_interfaz_buscada, op_code tipo_
 int io_gen_sleep(char* nombre_interfaz, int unidades_de_trabajo, pcb* proceso)
 {
 
-    //log_info(log_kernel, "las unidades de trabajo son: %d", unidades_de_trabajo);
-    //log_info(log_kernel, "el nombre de la interfaz es: %s", nombre_interfaz);
     //ante una petición van a esperar una cantidad de unidades de trabajo, cuyo valor va a venir dado en la petición desde el Kernel.
     interfaz_kernel* interfaz = verificar_interfaz(nombre_interfaz, GENERICA);
 
@@ -323,7 +270,6 @@ int io_gen_sleep(char* nombre_interfaz, int unidades_de_trabajo, pcb* proceso)
         return -1; //que no haga nada porq ya lo bloquie yo
 
     }else{
-        log_info(log_kernel, "Si pasas por aca sos muy puto kernel");
         pasar_proceso_a_exit(proceso, INVALID_INTERFACE);
         return -1;//no hago nada porq ya lo finalizo yo
     }
@@ -332,9 +278,7 @@ int io_gen_sleep(char* nombre_interfaz, int unidades_de_trabajo, pcb* proceso)
 
 int io_stdin_read(char* nombre_interfaz, t_list* direcciones_fisicas, uint32_t registro_tamano, pcb* proceso)
 {
-    // Esta instrucción solicita al Kernel que mediante la interfaz ingresada se lea desde el STDIN (Teclado) un valor cuyo tamaño está delimitado por el valor del Registro Tamaño y el mismo se guarde a partir de la Dirección Lógica almacenada en el Registro Dirección.
-    //log_info(log_kernel, "el registro tamano es: %u", registro_tamano);
-    //log_info(log_kernel, "el nombre de la interfaz es: %d", nombre_interfaz);
+    
     interfaz_kernel* interfaz = verificar_interfaz(nombre_interfaz, STDIN);
     argumentos_para_io* args = malloc(sizeof(argumentos_para_io));
     args->direcciones_fisicas = direcciones_fisicas;
@@ -400,7 +344,6 @@ int io_fs_create(char* nombre_interfaz, char* nombre_archivo, pcb* proceso)
         log_info(log_kernel, "PID: <%d> - Bloqueado por: <%s>", proceso->pid, nombre_interfaz);
         pasar_proceso_a_blocked(proceso);
         sem_post(&interfaz->sem_hay_procesos_esperando);
-        log_info(log_kernel, "Ya hice el post del semaforo");
         return -1; //que no haga nada porq ya lo bloquie yo
 
     }else{

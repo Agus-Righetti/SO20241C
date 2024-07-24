@@ -4,7 +4,7 @@
 #include "m_gestor.h"
 
 // *************** DECLARACIÓN DE FUNCIONES **********
-memoria_config* armar_config();
+memoria_config* armar_config(char* nombre_config);
 void paginar_memoria();
 
 #endif

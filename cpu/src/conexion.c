@@ -50,7 +50,7 @@ void atender_memoria() {
                 // free(buffer->stream);
                 free(buffer);
                 enviar_pcb(socket_cliente_kernel, args);
-                log_info(log_cpu, "entre a out of  ");
+                
             
                 
                 break;
@@ -247,7 +247,7 @@ void atender_kernel()
 
     while(1)
     {  
-        log_info(log_cpu, "Estoy en el while de atender kernel");
+        //log_info(log_cpu, "Estoy en el while de atender kernel");
 
         int cod_op_kernel = recibir_operacion(socket_cliente_kernel);
 
@@ -256,15 +256,12 @@ void atender_kernel()
             case MENSAJE:
                 recibir_mensaje(socket_cliente_kernel, log_cpu);
                 break;
+
             case PCB_KERNEL_A_CPU: // Execute
-
-                log_info(log_cpu, "Estoy antes de entrar a recibir_pcb()");
-
+                log_info(log_cpu, "Kernel me envio un PCB");
                 recibir_pcb();
-
-                log_info(log_cpu, "Estoy después de entrar a recibir_pcb()");
-
                 break;
+
             case EXIT:
                 error_exit(EXIT);
                 list_destroy_and_destroy_elements(lista, free); 
@@ -292,24 +289,17 @@ void atender_interrupcion() // ACA HAY QUE MANEJAR EL ENVIAR PCB DENTRO DEL SWIT
             case MENSAJE:
                 recibir_mensaje(socket_interrupt_kernel, log_cpu);
                 break;
-            // case PAQUETE:
-            //     lista = recibir_paquete(socket_interrupt_kernel);
-            //     log_info(log_cpu, "Me llegaron los siguientes valores:\n");
-            //     list_iterate(lista, (void*) iterator);
-            //     break;
                 
             case FIN_DE_QUANTUM:
-                log_info(log_cpu, "Me llego una interrupcion de KERNEL, ahora voy a enviar el pcb");  
                 flag_interrupcion = true; // Este flag me marca que HAY una interrupción, entonces desde el final de cada instrucción voy a devolver el pcb a kernel
                 motivo_interrupcion = FIN_DE_QUANTUM;
                 buffer=recibiendo_paquete_personalizado(socket_interrupt_kernel);
-                log_info(log_cpu, "NO PASE");
+                
                 free(buffer);
 
                 break;
             
             case INTERRUPTED_BY_USER:
-                log_info(log_cpu, "Me llego una interrupcion de KERNEL, ahora voy a enviar el pcb");  
                 flag_interrupcion = true; // Este flag me marca que HAY una interrupción, entonces desde el final de cada instrucción voy a devolver el pcb a kernel
                 motivo_interrupcion = INTERRUPTED_BY_USER;
                 buffer=recibiendo_paquete_personalizado(socket_interrupt_kernel);
@@ -330,7 +320,7 @@ void atender_interrupcion() // ACA HAY QUE MANEJAR EL ENVIAR PCB DENTRO DEL SWIT
 
 pthread_t escuchar_memoria()
 {
-    //log_info(log_cpu, "Estoy escuchando memoria");
+   
     pthread_t hilo_memoria;
 
     pthread_create(&hilo_memoria, NULL, (void*) atender_memoria, NULL);

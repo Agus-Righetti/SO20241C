@@ -4,9 +4,7 @@
 
 int conexion_a_memoria()
 {    
-    log_info(log_io, "entre a conexion memoria");
     conexion_io_memoria = crear_conexion(config_io->ip_memoria, config_io->puerto_memoria);
-    log_info(log_io, "ya cree la conexion con memoria");
 
     if(conexion_io_memoria == -1)
     {
@@ -15,7 +13,6 @@ int conexion_a_memoria()
     }
     
     log_info(log_io, "Conexion con el servidor MEMORIA creada");
-    //enviar_mensaje("Hola MEMORIA soy IO", conexion_io_memoria);
 
     t_paquete* paquete = crear_paquete_personalizado(NUEVA_INTERFAZ);
 
@@ -30,7 +27,6 @@ int conexion_a_memoria()
 
 int conexion_a_kernel()
 {    
-    log_info(log_io, "Entre a conexion kernel");
     conexion_io_kernel = crear_conexion(config_io->ip_kernel, config_io->puerto_kernel);
 
     if(conexion_io_kernel == -1)
@@ -86,7 +82,6 @@ void avisar_fin_io_a_kernel()
     t_paquete* paquete = crear_paquete_personalizado(FIN_OP_IO);
     
     enviar_paquete(paquete, conexion_io_kernel);
-    log_info(log_io, "ya le mande el FIN_OP_IO a kernel");
     eliminar_paquete(paquete);
     return;
 }

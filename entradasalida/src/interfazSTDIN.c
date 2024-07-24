@@ -12,18 +12,14 @@ void leer_consola(t_list* direccion_fisica, int tamanio, int pid)
     // Lee toda la entrada de la consola
     leido = readline("Ingrese el texto: > ");
     
-    log_info(log_io, "El texto fue ingresado correctamente: %s", leido);
 
     // Trunca el texto al tamaño deseado
     strncpy(texto, leido, tamanio);
     texto[tamanio] = '\0'; // Asegura que el texto esté nulo terminado
 
-    log_info(log_io, "Lo que me importa del texto ingresado es:  %s", texto);
-
     free(leido);
 
     t_paquete* paquete = crear_paquete_personalizado(IO_PIDE_ESCRITURA_MEMORIA); // Queremos que memoria lo guarde
-
     agregar_int_al_paquete_personalizado(paquete, pid);
     agregar_int_al_paquete_personalizado(paquete, tamanio);
     agregar_string_al_paquete_personalizado(paquete, texto);
@@ -40,7 +36,6 @@ void leer_consola(t_list* direccion_fisica, int tamanio, int pid)
     for(int i = 0; i < list_size(direccion_fisica); i++)
     {
         dir = list_get(direccion_fisica, i);
-        log_info(log_io, "marco q madne a memoria: %d", dir->nro_marco);
         free(dir);
     }
 

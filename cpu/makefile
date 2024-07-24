@@ -50,10 +50,11 @@ $(sort $(dir $(BIN) $(OBJS))):
 
 .PHONY: start
 start: debug
-	valgrind --tool=none ./$(BIN) $(ARGS)
-# .PHONY: start
-# start: debug
-# 	valgrind --leak-check=full ./$(BIN) $(ARGS)
+	CONFIG_FILE=$(CONFIG_FILE) $(MAKE) run
+
+.PHONY: run
+run:
+	valgrind --tool=none ./$(BIN) $(CONFIG_FILE)
 
 .PHONY: memcheck
 memcheck: debug

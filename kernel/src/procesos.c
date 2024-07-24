@@ -389,11 +389,26 @@ void cambiar_grado_multiprogramacion(char* nuevo_valor_formato_char){
     int valor_semaforo;
     sem_getvalue(&sem_multiprogramacion, &valor_semaforo); // Obtengo el valor actual del semáforo del grado de multiprogramación y lo guardo en valor_semaforo
 
-    while (valor_semaforo > nuevo_valor) // Mientras que el valor de multiprogramación sea mayor que el nuevo
-    {
-        sem_wait(&sem_multiprogramacion); // Le voy restando de a uno al semáforo del grado de multiprogramación
-        sem_getvalue(&sem_multiprogramacion, &valor_semaforo);
-    } 
+    
+    // while (valor_semaforo > nuevo_valor) // Mientras que el valor de multiprogramación sea mayor que el nuevo
+    // {
+    //     sem_wait(&sem_multiprogramacion); // Le voy restando de a uno al semáforo del grado de multiprogramación
+    //     sem_getvalue(&sem_multiprogramacion, &valor_semaforo);
+    // } 
+
+    if (nuevo_valor < valor_semaforo) {
+        while (valor_semaforo > nuevo_valor) {
+            sem_wait(&sem_multiprogramacion); // Reducir el semáforo
+            sem_getvalue(&sem_multiprogramacion, &valor_semaforo);
+        }
+    } else if (nuevo_valor > valor_semaforo) {
+        while (valor_semaforo < nuevo_valor) {
+            sem_post(&sem_multiprogramacion); // Incrementar el semáforo
+            sem_getvalue(&sem_multiprogramacion, &valor_semaforo);
+        }
+    }
+
+
     // Hago eso hasta que el semáforo quede con el mismo valor que el nuevo determinado por parámetro
 }
 
@@ -760,12 +775,6 @@ void recibir_pcb(pcb* proceso) {
                 nombre_interfaz = recibir_string_del_buffer(buffer);
                 registro_tamano = recibir_int_del_buffer(buffer); //FREE DE INVALID POINTER
                 direcciones_fisicas = recibir_lista_del_buffer(buffer, sizeof(t_direccion_fisica));
-                t_direccion_fisica* dir_fisica;
-                for(int i = 0; i<list_size(direcciones_fisicas); i++)
-                {
-                    dir_fisica = list_get(direcciones_fisicas, i);
-                    log_info(log_kernel, "el maeco nro %d es : %d", i,dir_fisica->nro_marco);
-                }
 
                 actualizar_pcb(proceso, pcb_recibido);
 
@@ -798,12 +807,12 @@ void recibir_pcb(pcb* proceso) {
                 //fin = clock(); // Termino el tiempo desde que empece a esperar la recepcion 
                 pcb_recibido = recibir_estructura_del_buffer(buffer);
 
-                log_info(log_kernel, "Recibí un proceso con el PID: <%d>", pcb_recibido->pid);
+                //log_info(log_kernel, "Recibí un proceso con el PID: <%d>", pcb_recibido->pid);
 
                 pcb_recibido->registros = recibir_estructura_del_buffer(buffer);
                 nombre_interfaz = recibir_string_del_buffer(buffer);
 
-                log_info(log_kernel, "Recibí nombre de interfaz: <%s>", nombre_interfaz);
+                //log_info(log_kernel, "Recibí nombre de interfaz: <%s>", nombre_interfaz);
 
                 nombre_archivo = recibir_string_del_buffer(buffer);
 
@@ -811,7 +820,6 @@ void recibir_pcb(pcb* proceso) {
 
                 actualizar_pcb(proceso, pcb_recibido);
 
-                log_info(log_kernel, "Recibí todo del CREATE");
                 
                 flag_estado = io_fs_create(nombre_interfaz, nombre_archivo, proceso);
 
@@ -844,7 +852,6 @@ void recibir_pcb(pcb* proceso) {
                 nombre_archivo = recibir_string_del_buffer(buffer);
                 registro_tamano = recibir_int_del_buffer(buffer);
 
-                log_info(log_kernel, "El tamaño recibido para el truncate en kernel es: %d", registro_tamano);
 
                 actualizar_pcb(proceso, pcb_recibido);
 
@@ -921,7 +928,6 @@ void recibir_pcb(pcb* proceso) {
 
         temporal_destroy(tiempo_de_quantum);//lo destruyo porq lo creo cada vez q mando un proceso
 
-        //log_info(log_kernel, "el tiempo q tardo en recibir es: %d", tiempo_que_tardo_en_recibir);
 
         if(strcmp(config_kernel->algoritmo_planificacion, "RR") == 0 || strcmp(config_kernel->algoritmo_planificacion, "VRR") == 0)
         {
@@ -933,7 +939,6 @@ void recibir_pcb(pcb* proceso) {
         {
             proceso->quantum = proceso->quantum - tiempo_que_tardo_en_recibir; // Le asigno el quantum que le queda disponible
             
-            //log_info(log_kernel,"el quantum que le queda al proceso es de: %d", proceso->quantum);
         };  
     
     //free(buffer->stream);
@@ -1064,7 +1069,6 @@ void accionar_segun_estado(pcb* proceso, int flag, int motivo){
 // ************* PASA EL PROCESO SELECCIONADO A EXIT *************
 void pasar_proceso_a_exit(pcb* proceso, int motivo){
 
-    log_info(log_kernel, "entre a pasar proceso a exit por pid: %d", proceso->pid);
     //En esta funcion faltan liberar los recursos q tenia el proceso
     char* estado_anterior = obtener_char_de_estado(proceso->estado_del_proceso); // Devuelvo el estado como string
 
@@ -1103,11 +1107,9 @@ void pasar_proceso_a_exit(pcb* proceso, int motivo){
 
         recurso_a_liberar = config_kernel->recursos[indice_recurso_a_liberar]; //lo paso a char*
 
-        log_info(log_kernel, "Estoy en pasar a exit el recurso a liberar es: %s", recurso_a_liberar);
 
         hacer_signal(recurso_a_liberar, proceso); //tengo q pasarle a signal el nombre del recurso
 
-        log_info(log_kernel, "hice signal del recurso: %s", recurso_a_liberar);
     }
 
     
@@ -1257,7 +1259,6 @@ void sacar_de_blocked(int pid){
     //sabemos q el proceso esta bloqueado, no sabemos donde
     //busco en las colas de los recursos
 
-    log_info(log_kernel, "entre a sacar de blocked por pid: %d", pid);
 
     pcb* aux;
     int primer_pid;
@@ -1266,13 +1267,11 @@ void sacar_de_blocked(int pid){
 
     for(int i=0 ; i < cantidad_recursos && encontrado == false ;i++)
     {
-        log_info(log_kernel, "estoy buscando en la cola de bloqueados de cada recurso");
         pthread_mutex_lock(&mutex_por_recurso[i]);
         
         if(queue_is_empty(colas_por_recurso[i]) == false)
         {
             aux = queue_pop(colas_por_recurso[i]);
-            log_info(log_kernel, "el aux del indice recurso: %d es el pid:%d", i, aux->pid);
             primer_pid = aux->pid;
             while(aux->pid != pid)
             {
@@ -1286,13 +1285,11 @@ void sacar_de_blocked(int pid){
             }
 
             //queue_push(colas_por_recurso[i], aux); //agregue esto
-            log_info(log_kernel, "Agregue a la cola del recurso indice %d el proceso pid: %d", i, aux->pid);
 
             pthread_mutex_unlock(&mutex_por_recurso[i]);
             if(aux->pid == pid) 
             {
                 encontrado = true;
-                log_info(log_kernel, "encontre el proceso, ya lo saque");
             }
         }
         
@@ -1303,7 +1300,6 @@ void sacar_de_blocked(int pid){
     argumentos_para_io* args_aux ;
     while(encontrado == false)//No lo encontre en las colas por recursos tengo q buscarlo en las interfaces IO
     {
-        log_info(log_kernel, "ya busque entre los bloqueados por recurso pero no encontre, ahora voy a bsucar en bloqueado x interfaz");
         interfaz_aux = queue_pop(cola_interfaces_conectadas);
         pthread_mutex_lock(&interfaz_aux->mutex_cola);
         args_aux = queue_pop(interfaz_aux->cola_de_espera);
@@ -1330,7 +1326,6 @@ void sacar_de_blocked(int pid){
 
     if(encontrado) //si no lo encontre es porq estaba en io
     {
-        log_info(log_kernel, "encontre el proceso, es el: %d", aux->pid);
         pasar_proceso_a_exit(aux, INTERRUPTED_BY_USER);
 
     }else pid_eliminar = pid;
@@ -1349,7 +1344,6 @@ int hacer_signal(char* recurso, pcb* proceso){
 
     int indice_recurso = buscar_indice_recurso_segun_nombre(recurso); // Devuevle -1 si no lo encuentra
 
-    log_info(log_kernel, "Entre a hacer_signal , la instancia del recurso %s es: %d", recurso, config_kernel->instancias_recursos[indice_recurso]);
 
     if(indice_recurso != -1) //Si el recurso existe
     {
@@ -1365,13 +1359,10 @@ int hacer_signal(char* recurso, pcb* proceso){
             
             pthread_mutex_lock(&mutex_por_recurso[indice_recurso]);
 
-            log_info(log_kernel, "El tamaño de la cola bloqueada (antes del pop) del recurso %s es: %d", recurso, queue_size(colas_por_recurso[indice_recurso]));
-            log_info(log_kernel, "El indice que estoy por buscar dentro de la cola es: %d", indice_recurso);
 
             pcb* proceso_desbloqueado = queue_pop(colas_por_recurso[indice_recurso]); // Saco de la cola de blocked de ese recurso
             pthread_mutex_unlock(&mutex_por_recurso[indice_recurso]);
 
-            log_info(log_kernel, "desbloquie el proceso: %d , por hacer signal", proceso_desbloqueado->pid);
 
             queue_push(proceso_desbloqueado->recursos_asignados, (void*)(intptr_t)indice_recurso); // Agrego el recurso a la cola de recursos asignados del proceso
             
@@ -1415,7 +1406,6 @@ int hacer_wait(char* recurso, pcb* proceso){
 
     int indice_recurso = buscar_indice_recurso_segun_nombre(recurso); //devuelve -1 si no lo encuentra
 
-    log_info(log_kernel, "Entre a hacer_wait , la instancia del recurso %s es: %d", recurso, config_kernel->instancias_recursos[indice_recurso]);
 
     if(indice_recurso != -1){ // Si existe el recurso solicitado
         
@@ -1431,8 +1421,6 @@ int hacer_wait(char* recurso, pcb* proceso){
             proceso->estado_del_proceso = BLOCKED; // Bloqueo el proceso
             pthread_mutex_unlock(&proceso->mutex_pcb);
             
-            log_info(log_kernel, "El indice de la cola por recurso que estoy por pushear es: %d", indice_recurso);
-            log_info(log_kernel, "El PID del proceso que estoy por pushear es: %d", proceso->pid);
 
             pthread_mutex_lock(&mutex_por_recurso[indice_recurso]);
             queue_push(colas_por_recurso[indice_recurso], proceso); // Mando a la cola de blocked de ese recurso
@@ -1443,8 +1431,6 @@ int hacer_wait(char* recurso, pcb* proceso){
             log_info(log_kernel, "PID: <%d> - Estado Anterior: <%s> - Estado Actual: <%s>", proceso->pid, estado_anterior, estado_actual);
             log_info(log_kernel, "PID: <%d> - Bloqueado por: <%s>", proceso->pid, recurso);
 
-            log_info(log_kernel, "Bloquee el proceso: %d , por hacer wait", proceso->pid);
-            log_info(log_kernel, "Y el tamaño de la cola bloqueada del recurso %s es: %d", recurso, queue_size(colas_por_recurso[indice_recurso]));
             
         }else{ // Si no lo tengo que bloquear, entonces lo mando a Ready
 
@@ -1524,7 +1510,6 @@ int buscar_indice_recurso_segun_nombre(char* recurso)
     
     for (int i = 0 ; i < cantidad_recursos; i++)
     {
-        //log_info(log_kernel, "El nombre del recurso %d es: %s", i, config_kernel->recursos[i]);
         
         if (strcmp(config_kernel->recursos[i], recurso) == 0) //encontre el recurso
         {
@@ -1643,7 +1628,6 @@ void machear_con_cola_gral(pcb* proceso)
 void actualizar_pcb(pcb* proceso_original, pcb* nuevo)
 {
     proceso_original->registros->pc = nuevo->registros->pc;
-    //proceso_original->estado_del_proceso = nuevo->estado_del_proceso;
     proceso_original->registros->ax = nuevo->registros->ax;
     proceso_original->registros->bx = nuevo->registros->bx;
     proceso_original->registros->cx = nuevo->registros->cx;

@@ -39,15 +39,15 @@ t_list* traducir_dl_a_df_completa(int direccion_logica, int bytes_a_operar) {
         desplazamiento = 0;
         bytes_operar_pag = minimo(bytes_a_operar - bytes_ya_evaluado, tamanio_pagina - desplazamiento);
         
-        log_info(log_cpu, "Bytes a operar -> %d", bytes_a_operar);
-        log_info(log_cpu, "Bytes operados -> %d", bytes_ya_evaluado);
-        log_info(log_cpu, "Bytes de la pagina a operar -> %d", bytes_operar_pag);
+        // log_info(log_cpu, "Bytes a operar -> %d", bytes_a_operar);
+        // log_info(log_cpu, "Bytes operados -> %d", bytes_ya_evaluado);
+        // log_info(log_cpu, "Bytes de la pagina a operar -> %d", bytes_operar_pag);
 
         direccion_fisica_traducida = traducir_una_dl_a_df(numero_pagina, desplazamiento, bytes_operar_pag);
         list_add(direcciones_fisicas, direccion_fisica_traducida);
         bytes_ya_evaluado = bytes_ya_evaluado + bytes_operar_pag;
     }
-    //log_info(log_cpu, "lo  : )");
+
     
     return direcciones_fisicas;
 
@@ -73,7 +73,7 @@ t_direccion_fisica* traducir_una_dl_a_df(int numero_pagina, int desplazamiento, 
             // Encontro la pagina en la TLB, no hace falta que busque en memoria
             
             // LOG OBLIGATORIO - TLB HIT
-            log_info(log_cpu, "PID: %d - TLB HIT - Pagina: %d \n \n \n", pcb_recibido->pid, numero_pagina);
+            log_info(log_cpu, "PID: %d - TLB HIT - Pagina: %d ", pcb_recibido->pid, numero_pagina);
             
             actualizar_tlb_HIT(pcb_recibido->pid, numero_pagina);
 
@@ -127,11 +127,7 @@ t_direccion_fisica* traducir_una_dl_a_df(int numero_pagina, int desplazamiento, 
             dir_traducida->offset = desplazamiento;
             dir_traducida->bytes_a_operar = bytes_operar_pag;
 
-            log_info(log_cpu, "\n Direccion traducida:");
-            
-            log_info(log_cpu, "dir_traducida->nro_marco: %d", dir_traducida->nro_marco );
-            log_info(log_cpu, "dir_traducida->offset: %d", dir_traducida->offset );
-            log_info(log_cpu, "dir_traducida->bytes_a_operar: %d \n", dir_traducida->bytes_a_operar );
+
 
         } 
 
@@ -153,11 +149,7 @@ t_direccion_fisica* traducir_una_dl_a_df(int numero_pagina, int desplazamiento, 
         dir_traducida->offset = desplazamiento;
         dir_traducida->bytes_a_operar = bytes_operar_pag;
 
-        log_info(log_cpu, "\n Direccion traducida:");
-            
-        log_info(log_cpu, "dir_traducida->nro_marco: %d", dir_traducida->nro_marco );
-        log_info(log_cpu, "dir_traducida->offset: %d", dir_traducida->offset );
-        log_info(log_cpu, "dir_traducida->bytes_a_operar: %d \n", dir_traducida->bytes_a_operar );
+
     }
 
    
@@ -179,17 +171,16 @@ bool es_Registro_de_1B(const char* registro) {
 
 void peticion_lectura_a_memoria(op_code code_op, int pid, t_list* direcciones_fisicas){
 
-    //log_info(log_cpu, "estoy dentro de peticion lectura a memoria");
+    
     t_paquete* paquete = crear_paquete_personalizado(code_op);
 
-    //log_info(log_cpu, "Direccion fisica = %d", direcciones_fisicas);
 
     agregar_int_al_paquete_personalizado(paquete, pid);
     agregar_lista_al_paquete_personalizado(paquete, direcciones_fisicas, sizeof(t_direccion_fisica));
-    //log_info(log_cpu, "estoy por enviar la peticion de lectura");
+  
 
 	enviar_paquete(paquete, socket_cliente_cpu);
-    //log_info(log_cpu, "ya mande la peticion a memoria");
+
 	eliminar_paquete(paquete);
 
     return;
@@ -241,12 +232,11 @@ void peticion_escritura_string_a_memoria(int pid, t_list* direcciones_fisicas, c
 
     agregar_int_al_paquete_personalizado(paquete, pid);
     agregar_string_al_paquete_personalizado(paquete, string_por_escribir);
-    //agregar_int_al_paquete_personalizado(paquete, tamanio);
-    // vicky
+   
     
     agregar_lista_al_paquete_personalizado(paquete, direcciones_fisicas, sizeof(t_direccion_fisica));
 
 	enviar_paquete(paquete, socket_cliente_cpu);
-    log_info(log_cpu, "HICE PETICION DE ESCRITURA DEL STRING");
+   
 	eliminar_paquete(paquete);
 }

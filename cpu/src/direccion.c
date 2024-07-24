@@ -2,16 +2,16 @@
 
 TLB_Entrada* buscar(int numero_pagina) 
 {
-    //log_info(log_cpu, "Entre a buscar");
+
     for(int i = 0; i < cantidad_entradas_tlb ; i++) 
     {
-        //log_info(log_cpu, "FOR estoy en la entrada %d", tlb->entradas[i].numero_pagina);
+        
         
         if(tlb->entradas[i].numero_pagina == numero_pagina && tlb->entradas[i].pid == pcb_recibido->pid){
             return &tlb->entradas[i];
         }
     }
-    //log_info(log_cpu, "No encontre, lo mando vacio");
+   
 
     TLB_Entrada *entrada_vacia = malloc(sizeof(TLB_Entrada));
 
@@ -97,7 +97,7 @@ void actualizar_tlb(TLB_Entrada* nueva_entrada)
             log_error(log_cpu, "Algoritmo de reemplazo de TLB no soportado: %d", algoritmo_tlb);
         }
     }
-    //log_info(log_cpu, "Pude actualizar");
+    
     
     
 

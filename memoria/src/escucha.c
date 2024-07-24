@@ -16,48 +16,37 @@ void atender_cpu(){
         switch (cod_op_cpu) {
 
             case CPU_PIDE_INSTRUCCION_A_MEMORIA:
-
-                usleep(config_memoria->retardo_respuesta *1000);
                 log_info(log_memoria, "CPU me pide una instruccion");
+                usleep(config_memoria->retardo_respuesta *1000);
+    
                 buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
 				cpu_pide_instruccion(buffer);
-                //log_info(log_memoria, "Mande instruccion");
                 free(buffer);
                 break;
 
             case CPU_PIDE_GUARDAR_REGISTRO_1B:
-
-
+        
                 log_info(log_memoria, "CPU me pide guardar un byte en memoria");
-                buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
-                
                 usleep(config_memoria->retardo_respuesta *1000);
-            
+                buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
                 pid = recibir_int_del_buffer(buffer);
 	            direcciones_fisicas = recibir_lista_del_buffer(buffer, sizeof(t_direccion_fisica));
-
 	            valor_uint_8 = recibir_uint8_del_buffer(buffer);
-
             	guardar_uint8_en_memoria (pid, direcciones_fisicas, valor_uint_8);
 				// cpu_pide_guardar_1B(buffer);
-
                 free(buffer);
-                
                 break;
 
             case CPU_PIDE_GUARDAR_REGISTRO_4B:
-
                 log_info(log_memoria, "CPU me pide guardar cuatro bytes en memoria");
-                buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
                 usleep(config_memoria->retardo_respuesta *1000);
                 
+                buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);                
                 pid = recibir_int_del_buffer(buffer);
 	            direcciones_fisicas = recibir_lista_del_buffer(buffer, sizeof(t_direccion_fisica));
 	            //int tamanio = recibir_int_del_buffer(un_buffer);
-                log_info(log_memoria, "ya recibi la lista del buffer");
 	            valor_uint_32 = recibir_uint32_del_buffer(buffer);
-	            log_info(log_memoria, "ya recibi el uint32 del buffer");
-
+	            
 	            guardar_uint32_en_memoria (pid, direcciones_fisicas, valor_uint_32);
 
 				//cpu_pide_guardar_4B(buffer);
@@ -67,11 +56,11 @@ void atender_cpu(){
                 break;
 
             case CPU_PIDE_LEER_REGISTRO_1B:
-            
-                log_info(log_memoria, "CPU me pide leer un byte en memoria");
-                buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
                 
+                log_info(log_memoria, "CPU me pide leer un byte en memoria");
                 usleep(config_memoria->retardo_respuesta *1000);
+                buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
+            
 
                 pid = recibir_int_del_buffer(buffer);
 	            direcciones_fisicas = recibir_lista_del_buffer(buffer, sizeof(t_direccion_fisica));
@@ -87,9 +76,8 @@ void atender_cpu(){
 
             case CPU_PIDE_LEER_REGISTRO_4B:
                 log_info(log_memoria, "CPU me pide leer cuatro bytes en memoria");
-                buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
-
                 usleep(config_memoria->retardo_respuesta *1000);
+                buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
 
                 pid = recibir_int_del_buffer(buffer);
 	            direcciones_fisicas = recibir_lista_del_buffer(buffer, sizeof(t_direccion_fisica));

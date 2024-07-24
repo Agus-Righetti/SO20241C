@@ -20,10 +20,11 @@ void cpu_pide_instruccion(t_buffer* un_buffer){        //[PID, IP]
 	// VER SEGMENTATION FAULT
  	char* instruccion = obtener_instruccion_por_indice(un_proceso->instrucciones, ip);
     
-	log_info(log_memoria, "La instruccion obtenida en memoria es: %s", instruccion);
+	//log_info(log_memoria, "La instruccion obtenida en memoria es: %s", instruccion);
 
 	//Enviar_instruccion a CPU
 	enviar_una_instruccion_a_cpu(instruccion);
+	log_info(log_memoria, "Proceso: <<%d>> - Instruccion: <<%s>> enviada a CPU con exito", pid, instruccion);
 	sem_post(&sem_lista_procesos);
 	
     //log_info(log_memoria, "Instruccion enviada a CPU");
@@ -84,7 +85,7 @@ void enviar_una_instruccion_a_cpu(char* instruccion){
 
 	enviar_paquete(paquete, socket_cliente_cpu);
 
-	log_info(log_memoria, "Instruccion: <<%s>> enviada a CPU con exito", instruccion);
+	
 	eliminar_paquete(paquete);
 }
 
@@ -129,8 +130,8 @@ int obtener_marco_segun_pagina (int pid, int nro_pag){
 		log_error(log_memoria, "Se intento hacer un mov antes de un rezise");
 	}
 	
-	log_info(log_memoria, "La tabla de paginas tiene: %d paginas ", list_size(un_proceso->tabla_paginas));
-	log_info(log_memoria, "Necesito la pagina nro: %d", nro_pag);
+	//log_info(log_memoria, "La tabla de paginas tiene: %d paginas ", list_size(un_proceso->tabla_paginas));
+	//log_info(log_memoria, "Necesito la pagina nro: %d", nro_pag);
 	
 	// 2ndo controlo que el nro de pag sea valido
 	if(nro_pag > list_size(un_proceso->tabla_paginas)){
@@ -186,15 +187,23 @@ void cpu_pide_resize(t_buffer* un_buffer){          // [PID, TAMAÑO NUEVO] -> [
 			
 			// CASO 2 -> tengo que eliminar paginar
 			int cantidad_pag_a_reducir = ceil ((double)tamanio_a_reducir / (double)config_memoria->tam_pagina);
-			
+			log_info(log_memoria, "Cantidad de paginas a reducir %d", cantidad_pag_a_reducir);
+
+			int tamanioc = list_size(mi_proceso->tabla_paginas) - 1;
 			while (cantidad_pag_a_reducir > 0){
 				// Empiezo eliminando ultima pag
-				t_pagina* pag_a_eliminar = list_remove(mi_proceso->tabla_paginas, list_size(mi_proceso->tabla_paginas));
+				
+				log_info(log_memoria, "EL tamanio de la talba de paginas es: %d", tamanioc);
+
+				t_pagina* pag_a_eliminar = list_remove(mi_proceso->tabla_paginas, tamanioc);
+				log_info(log_memoria, "SAque una pag ");
+
 				liberar_marco(pag_a_eliminar->frame);
 
 				cantidad_pag_a_reducir --;
+				tamanioc -- ;
 			}
-
+			
 
 			mi_proceso->tamanio = tamanio_nuevo;
 			mi_proceso->tam_usado_ult_pag = config_memoria->tam_pagina - ((list_size(mi_proceso->tabla_paginas)*config_memoria->tam_pagina) - mi_proceso->tamanio);
@@ -214,13 +223,25 @@ void cpu_pide_resize(t_buffer* un_buffer){          // [PID, TAMAÑO NUEVO] -> [
 		// Hay dos casos:
 		// CASO 1 -> quiero ampliar pero no llego a agregar una pagina
 
-		log_info(log_memoria, "tam pagina: %d", config_memoria->tam_pagina);
-		log_info(log_memoria, "tama usado: %d", mi_proceso->tam_usado_ult_pag);
-		log_info(log_memoria, "tam a aumentar: %d", tamanio_a_aumentar);
+		// log_info(log_memoria, "tam pagina: %d", config_memoria->tam_pagina);
+		// log_info(log_memoria, "tama usado: %d", mi_proceso->tam_usado_ult_pag);
+		// log_info(log_memoria, "tam a aumentar: %d", tamanio_a_aumentar);
 		
-		log_info(log_memoria, "La resta da: %d", config_memoria->tam_pagina - mi_proceso->tam_usado_ult_pag);
+		// log_info(log_memoria, "La resta da: %d", config_memoria->tam_pagina - mi_proceso->tam_usado_ult_pag);
 		
-		if((config_memoria->tam_pagina - mi_proceso->tam_usado_ult_pag) >= tamanio_a_aumentar){
+		if((config_memoria->tam_pagina - mi_proceso->tam_usado_ult_pag) >= tamanio_a_aumentar){	
+
+			if(list_is_empty(mi_proceso->tabla_paginas)){
+				t_list* marcos_libres = buscar_marcos_libres();
+				t_frame* marco_por_usar = list_get(marcos_libres, 0); // AGARRO EL PRIMERO QUE ENCUENTRO EN LA LISTA DE LIBRES
+
+				ocupar_marco(marco_por_usar->id);
+		
+				t_pagina* pagina = crear_pagina(marco_por_usar);
+				// Creo la pagina
+				agregar_pag_a_tabla(mi_proceso, pagina);
+
+			}
 			//                 espacio libre de ult pag                 <= lo que quiero agregar
 			// NO TENGO QUE AGREGAR UNA PAGINA -> HAY LUGAR EN LA ULTIMA
 
@@ -228,7 +249,7 @@ void cpu_pide_resize(t_buffer* un_buffer){          // [PID, TAMAÑO NUEVO] -> [
 			// Actualizo el tamaño usado de la ultima pagina 
 			mi_proceso->tam_usado_ult_pag = mi_proceso->tam_usado_ult_pag + tamanio_a_aumentar;
 			enviar_ok_del_resize_a_cpu();
-
+			
 		} else {
 			// CASO 2 -> tengo que agregar paginas
 			int cantidad_pag_a_aumentar = ceil ((double)tamanio_a_aumentar / (double)config_memoria->tam_pagina);
@@ -398,7 +419,7 @@ void io_pide_lectura(int socket, int pid, int tamanio, t_list* direcciones_fisic
     for(int i = 0; i<list_size(direcciones_fisicas); i++)
     {
         dir_fisica = list_get(direcciones_fisicas, i);
-        log_info(log_memoria, "el maeco nro %d es : %d", i,dir_fisica->nro_marco);
+        //log_info(log_memoria, "el maeco nro %d es : %d", i,dir_fisica->nro_marco);
     }
 
 	if(direcciones_fisicas == NULL){
@@ -415,7 +436,7 @@ void io_pide_escritura(int socket, int pid, int tamanio, char* valor, t_list* di
     for(int i = 0; i<list_size(direcciones_fisicas); i++)
     {
         dir_fisica = list_get(direcciones_fisicas, i);
-        log_info(log_memoria, "el maeco nro %d es : %d", i,dir_fisica->nro_marco);
+        //log_info(log_memoria, "el maeco nro %d es : %d", i,dir_fisica->nro_marco);
     }
 
 	if(direcciones_fisicas == NULL){
@@ -428,3 +449,6 @@ void io_pide_escritura(int socket, int pid, int tamanio, char* valor, t_list* di
 
 }
 
+void destroy_element(void *element) {
+	free(element);
+}
