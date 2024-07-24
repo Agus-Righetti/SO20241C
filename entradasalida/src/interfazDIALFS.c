@@ -309,12 +309,43 @@ void manejar_truncado_archivo(char* nombre_archivo, int nuevo_tamanio, int pid)
                     {
                         bitarray_clean_bit(bitmap, i);
                     }
-
-                    compactar(bitmap); // compactar actualiza el bloques.dat y el bitmap
                     
+                    //cierro todo y actualizo hasta ahora para q agarre el actualizado en compactar
+                    escribir_archivo_con_bitmap(buffer_bitmap);
+                    free(buffer_bitmap);
+                    bitarray_destroy(bitmap);
+
+                    compactar(); // compactar actualiza el bloques.dat y el bitmap
+                    
+
+                    //obtengo el bitmap actualizado dsp de compactar
+
+                    buffer_bitmap = obtener_bitmap();
+
+                    bitmap = bitarray_create_with_mode(buffer_bitmap, bitarray_size, MSB_FIRST);
+
+                    log_info(log_io, "esto es el bitmap dsp de compactar:");
+//----------------------------------------------------------------------------------------------
+                    FILE *file_aux = fopen("bitmap.dat", "rb");
+
+                    unsigned char byte_aux;
+                    while (fread(&byte_aux, sizeof(unsigned char), 1, file_aux) == 1) {
+                        for (int i = 7; i >= 0; i--) {
+                            printf("%d", (byte_aux >> i) & 1);
+                        }
+                        printf(" "); // Para separar los bytes
+                    }
+
+                    fclose(file_aux);
+//----------------------------------------------------------------------------------------------
                     // tenemos q agregar al final lo q esta en el buffer
 
                     bloque_inicial_nuevo = buscar_bloques_contiguos(bloques_necesarios, bitmap);
+                    
+                    if(bloque_inicial_nuevo == -1)
+                    {
+                        log_warning(log_io, "pero la puta madre me devuelve -1 y yo ya compacte");
+                    }
 
                     agregar_info_en_cierto_bloque(bloque_inicial_nuevo, bloques_necesarios, buffer);
 
@@ -925,7 +956,7 @@ char* leer_bloques(int bloque_inicial, int num_bloques)
     log_info(log_io,"estoy en leer bloques");
     FILE* archivo = fopen ("bloques.dat", "r+");
     
-    log_info(log_io,"ya abri bloques .dat");
+    //log_info(log_io,"ya abri bloques .dat");
     // Calcular el offset al inicio del primer bloque
     int offset = bloque_inicial * config_io->block_size;
 
@@ -943,10 +974,10 @@ char* leer_bloques(int bloque_inicial, int num_bloques)
 
     fread(buffer, config_io->block_size, num_bloques, archivo);
 
-    log_info(log_io,"ya lei y lo puse en el buffer");
+    //log_info(log_io,"ya lei y lo puse en el buffer");
     fclose(archivo);
 
-    log_info(log_io, "esto es lo q puse en el buffer q voy a devolver: %s", buffer);
+    //log_info(log_io, "esto es lo q puse en el buffer q voy a devolver: %s", buffer);
 
     return buffer;
 }
@@ -994,8 +1025,12 @@ char *agregar_al_final(char *buffer, char *informacion)
 }
 
 // Función para compactar bloques
-void compactar(t_bitarray* bitmap) 
+void compactar() 
 { 
+    char* buffer_bitmap = obtener_bitmap();
+
+    t_bitarray* bitmap = bitarray_create_with_mode(buffer_bitmap, bitarray_size, MSB_FIRST);
+
     log_info(log_io, "entre a compactar");
     int tamanio_maximo_de_bloques_dat = config_io->block_count * config_io->block_size;
     //char* buffer ;
@@ -1005,13 +1040,14 @@ void compactar(t_bitarray* bitmap)
     int bloques_ocupados;
     char* info_bloques;
     //i recorre cada bloque del bitmap i == un numero de bloque
-    log_info(log_io, "estoy por entrar al for de compactar");
+    //log_info(log_io, "estoy por entrar al for de compactar");
 
     for (int i = 0; i < config_io->block_count; i++) 
     { 
-        log_info(log_io, "estoy en el for de compactar i=%d", i);
+        //log_info(log_io, "estoy en el for de compactar i=%d", i);
         if(bitarray_test_bit(bitmap, i))
         {
+            //bitarray_clean_bit(bitmap, i); //lo seteo como vacio
             log_info(log_io, "el bloque nro %d esta ocupado", i);
             metadata = buscar_archivo_que_inicia_en_bloque(i);
             log_info(log_io, "el nombre del archivo q esta en el bloque %d es: %s", i, metadata->nombre_archivo);
@@ -1019,39 +1055,47 @@ void compactar(t_bitarray* bitmap)
             log_info(log_io, "ya calcule los bloques q ocupa son: %d", bloques_ocupados);
             info_bloques = leer_bloques(i , bloques_ocupados);
             metadata->bloque_inicial = contador_ocupados;
-            if (info_bloques == 0) 
+            if (strlen(info_bloques)==0) 
             {
-                log_info(log_io, "info_bloques es 0, no habia nada en ese archivo");
+                log_info(log_io, " no habia nada en ese archivo(info bloques)");
             }else {
-                
+
+                log_info(log_io, "info_bloques tiene algo, pongo lo de ese archivo en el bloque");
                 agregar_info_en_cierto_bloque(metadata->bloque_inicial, bloques_ocupados, info_bloques);
             }
-            //ATENCION FALTA EDITAR LOS BITS COMO OCUPADOS Q CORRESPONDAN 
-            free(info_bloques);
-            //traspaso la info a los nuevos bloques
-            log_info(log_io,"ya tengo la info de los bloques");
-            //buffer = agregar_al_final(buffer , info_bloques);
-            log_info(log_io,"ya pude agregar al final");
+           
+
+            // for(int h = metadata->bloque_inicial; h < bloques_ocupados + metadata->bloque_inicial+1; h++)
+            // {
+            //     //seteo cada bit de los q ahora estan ocupados como ocupados
+            //     log_info(log_io, "seteo el bit %d como ocupado", h);
+            //     bitarray_set_bit(bitmap,h);
+            //     contador_ocupados ++;
+            // }
+
+            for(int h = 0; h < bloques_ocupados; h++) 
+            {
+                bitarray_set_bit(bitmap, contador_ocupados + h);
+                bitarray_clean_bit(bitmap, i + h); // Limpia los bloques viejos
+            }
             
-            log_info(log_io, "ya agregue al final del buffer: ");
+            contador_ocupados += bloques_ocupados;
             
             actualizar_metadata(metadata);
-            
 
-            bitarray_clean_bit(bitmap, i);
-            bitarray_set_bit(bitmap,contador_ocupados);
-            
-            contador_ocupados ++;
             i += bloques_ocupados - 1;
         }
         
     }
+    //actualizo el archivo de bitmap
+    escribir_archivo_con_bitmap(buffer_bitmap);
+    bitarray_destroy(bitmap);
+    free(buffer_bitmap);
     
+
     usleep(config_io->retraso_compactacion * 1000); //multiplico por mil porque esta dado en miliseg y necesito microseg
-
-    actualizar_archivo_bloques(buffer);//copio lo del buffer en el archivo de bloques.dat
-    //free(buffer);
-
+    log_info(log_io, "ya compacte man");
+    return ;
 }
 
 void actualizar_archivo_bloques(char* buffer)
@@ -1131,9 +1175,11 @@ void actualizar_metadata(t_metadata* metadata)
 int agregar_info_en_cierto_bloque(int bloque_inicial_nuevo, int cant_bloques , char* buffer)
 {
     FILE * archivo_bloques = fopen("bloques.dat", "rb+");
+   //log_info(log_io, "ya abri el archivo de bloques para escribir");
     int offset = bloque_inicial_nuevo * config_io->block_size;
     fseek(archivo_bloques, offset, SEEK_SET);
     fwrite(buffer, config_io->block_size, cant_bloques, archivo_bloques);
+    //log_info(log_io, "ya escribi todo piola");
     fclose(archivo_bloques);
     free(buffer);
     return 1;
