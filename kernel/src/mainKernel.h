@@ -48,6 +48,7 @@ sem_t destruir_hilo_interrupcion;
 sem_t sem_puedo_mandar_a_cpu;
 sem_t sem_cola_prioridad_vrr;
 sem_t sem_planificacion_activa;
+sem_t sem_hay_algo_en_ready;
 
 t_queue** colas_por_recurso;
 pthread_mutex_t** mutex_por_recurso;

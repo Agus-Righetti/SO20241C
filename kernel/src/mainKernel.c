@@ -41,6 +41,7 @@ int main(int argc, char* argv[])
     sem_init(&sem_cola_prioridad_vrr,0,0);
     sem_init(&sem_puedo_mandar_a_cpu,0,1);
     sem_init(&sem_planificacion_activa,0,1);
+    sem_init(&sem_hay_algo_en_ready,0,0); 
 
 
 
@@ -125,6 +126,7 @@ int main(int argc, char* argv[])
     sem_destroy(&sem_puedo_mandar_a_cpu);
     sem_destroy(&sem_cola_prioridad_vrr);
     sem_destroy(&sem_planificacion_activa);
+    sem_destroy(&sem_hay_algo_en_ready); 
 
     liberar_conexion(conexion_kernel_cpu);
     liberar_conexion(interrupcion_kernel_cpu);

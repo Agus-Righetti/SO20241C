@@ -111,7 +111,8 @@ void enviar_proceso_a_cpu(){
     while(1){ // Para estar constantemente intentando enviar un proceso
 
        sem_wait(&sem_puedo_mandar_a_cpu); // Espero si ya hay otro proceso ejecutando en CPU (solo se ejecuta de a un proceso)
-            
+       sem_wait(&sem_hay_algo_en_ready); 
+
         pcb* proceso_seleccionado;
         if((strcmp(config_kernel->algoritmo_planificacion, "VRR") == 0) && (queue_is_empty(cola_prioridad_vrr) == false))
         { 
@@ -192,6 +193,7 @@ void pasar_procesos_de_new_a_ready(){
         hacer_el_log_obligatorio_de_ingreso_a_ready(proceso_a_mandar_a_ready);
 
         sem_post(&sem_cola_de_ready); // Agrego 1 al semaforo contador de la cola
+        sem_post(&sem_hay_algo_en_ready);
     }
 }
 
@@ -250,35 +252,12 @@ void iniciar_proceso(char* path ){
     enviar_paquete(paquete_path, conexion_kernel_memoria);
     eliminar_paquete(paquete_path);
 
-    // Si el grado de multiprogramacion me lo permite, modifico el estado a READY
-    // int multiprogramacion_actual;
-    // sem_getvalue(&sem_multiprogramacion, &multiprogramacion_actual); // Obtengo valor del grado de multiprogramacion
-    
-    // if (multiprogramacion_actual > 0 )
-    // {   
-    //     //Chequeo si tengo lugar para aceptar otro proceso en base al grado de multiprogramacion actual q tengo
-        
-    //     // Modifico el estado del proceso - Uso semaforo porque es una variable que tocan muchos hilos
-    //     pthread_mutex_lock(&nuevo_pcb->mutex_pcb);
-    //     nuevo_pcb->estado_del_proceso = READY; 
-    //     pthread_mutex_unlock(&nuevo_pcb->mutex_pcb);
-
-    //     // Ingreso el proceso a la cola de READY - Tambien semaforo porque es seccion critica 
-    //     pthread_mutex_lock(&mutex_cola_de_ready);
-    //     queue_push(cola_de_ready,nuevo_pcb);
-    //     pthread_mutex_unlock(&mutex_cola_de_ready);
-    //     sem_post(&sem_cola_de_ready); //Agrego 1 al semaforo contador
-        
-    //     //Bajo el grado de programacion actual, ya que agregue un proceso mas a ready
-    //     sem_wait(&sem_multiprogramacion); //Resto 1 al grado de multiprogramacion
-
-    // }else {
-        // Si no hay espacio para un nuevo proceso en ready lo sumo a la cola de NEW - Semaforo SC
-        pthread_mutex_lock(&mutex_cola_de_new);
-        queue_push(cola_de_new,nuevo_pcb);
-        pthread_mutex_unlock(&mutex_cola_de_new);
-        sem_post(&sem_cola_de_new);
-    //}
+ 
+    pthread_mutex_lock(&mutex_cola_de_new);
+    queue_push(cola_de_new,nuevo_pcb);
+    pthread_mutex_unlock(&mutex_cola_de_new);
+    sem_post(&sem_cola_de_new);
+   
 }
 
 // ************* MUESTRA EN FORMA DE TABLA EN QUÉ ESTADO SE ENCUENTRA CADA PROCESO ACTUALMENTE ************* 
@@ -1039,6 +1018,7 @@ void accionar_segun_estado(pcb* proceso, int flag, int motivo){
                 hacer_el_log_obligatorio_de_ingreso_a_ready_prioridad(proceso);
                 
                 sem_post(&sem_cola_prioridad_vrr);
+                sem_post(&sem_hay_algo_en_ready);
 
             }else{ // Si no le queda quantum
 
@@ -1050,6 +1030,7 @@ void accionar_segun_estado(pcb* proceso, int flag, int motivo){
                 hacer_el_log_obligatorio_de_ingreso_a_ready(proceso);
                 
                 sem_post(&sem_cola_de_ready);
+                sem_post(&sem_hay_algo_en_ready);
 
             }
         } else{ // No estoy en vrr, siempre madno a cola de Ready normal
@@ -1061,6 +1042,7 @@ void accionar_segun_estado(pcb* proceso, int flag, int motivo){
             hacer_el_log_obligatorio_de_ingreso_a_ready(proceso);
             
             sem_post(&sem_cola_de_ready);
+            sem_post(&sem_hay_algo_en_ready);
         };
     }
     return;
