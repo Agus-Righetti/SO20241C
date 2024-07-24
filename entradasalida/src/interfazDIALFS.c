@@ -343,11 +343,37 @@ void manejar_truncado_archivo(char* nombre_archivo, int nuevo_tamanio, int pid)
                     //obtengo el bitmap actualizado dsp de compactar
 
                     buffer_bitmap = obtener_bitmap();
+                    
 
                     bitmap = bitarray_create_with_mode(buffer_bitmap, bitarray_size, MSB_FIRST);
 
-                    log_info(log_io, "esto es el bitmap dsp de compactar:");
-            //---------------------------SACAR-------------------------------------------------------------------
+                    bloque_inicial_nuevo = buscar_bloques_contiguos(bloques_necesarios, bitmap);
+                    
+                    if(bloque_inicial_nuevo == -1)
+                    {
+                        log_warning(log_io, "Sigue sin haber espacio contiguo");
+                    }
+
+                    int bloques_que_ocupa_nuevo = calcular_bloques_que_ocupa(nuevo_tamanio);
+
+                    for(int i = bloque_inicial_nuevo; i < bloque_inicial_nuevo + bloques_que_ocupa_nuevo; i++)
+                    {
+                        
+                        bitarray_set_bit(bitmap, i);
+                    }
+
+                    escribir_archivo_con_bitmap(buffer_bitmap);
+                    free(buffer_bitmap);
+                    agregar_info_en_cierto_bloque(bloque_inicial_nuevo, bloques_necesarios, buffer);
+
+                    // tenemos q actualizar el config del archivo con el tamano y bloque inicial
+                    metadata->nombre_archivo = nombre_archivo;
+                    metadata->bloque_inicial = bloque_inicial_nuevo;
+                    metadata->tamanio_archivo = nuevo_tamanio;
+
+                    actualizar_metadata(metadata);
+
+//----------------------------------------------------------------------------------------------
                     path_base_log = malloc(strlen(config_io->path_base_dialfs)+ 25);
 
                     strcpy(path_base_log, config_io->path_base_dialfs);
@@ -373,23 +399,7 @@ void manejar_truncado_archivo(char* nombre_archivo, int nuevo_tamanio, int pid)
                     free(path_base_log);
 
             //----------------------------------------------------------------------------------------------
-                    // tenemos q agregar al final lo q esta en el buffer
-
-                    bloque_inicial_nuevo = buscar_bloques_contiguos(bloques_necesarios, bitmap);
                     
-                    if(bloque_inicial_nuevo == -1)
-                    {
-                        log_warning(log_io, "Sigue sin haber espacio contiguo");
-                    }
-
-                    agregar_info_en_cierto_bloque(bloque_inicial_nuevo, bloques_necesarios, buffer);
-
-                    // tenemos q actualizar el config del archivo con el tamano y bloque inicial
-                    metadata->nombre_archivo = nombre_archivo;
-                    metadata->bloque_inicial = bloque_inicial_nuevo;
-                    metadata->tamanio_archivo = nuevo_tamanio;
-
-                    actualizar_metadata(metadata);
                 }
                 else
                 {   
@@ -436,6 +446,7 @@ void manejar_truncado_archivo(char* nombre_archivo, int nuevo_tamanio, int pid)
                     // actualizo los dos archivos
                     //tengo q mandarle el del bitmap_buffer no el bitmap
                     escribir_archivo_con_bitmap(buffer_bitmap);
+                    free(buffer_bitmap);
                     actualizar_metadata(metadata);
                 }
             }else{
@@ -460,6 +471,7 @@ void manejar_truncado_archivo(char* nombre_archivo, int nuevo_tamanio, int pid)
 
                 //le mando el buffer
                 escribir_archivo_con_bitmap(buffer_bitmap);
+                free(buffer_bitmap);
                 actualizar_metadata(metadata);
             }
         }else{
@@ -478,7 +490,7 @@ void manejar_truncado_archivo(char* nombre_archivo, int nuevo_tamanio, int pid)
     { 
         int bloques_a_liberar = calcular_bloques_que_ocupa(tamanio_original) - calcular_bloques_que_ocupa(nuevo_tamanio);
         
-        for(int i = bloque_inicial; i < bloques_a_liberar ; i++ )
+        for(int i = bloque_inicial; i < bloque_inicial + bloques_a_liberar ; i++ )
         {
             bitarray_clean_bit(bitmap, i);
         }
@@ -488,11 +500,13 @@ void manejar_truncado_archivo(char* nombre_archivo, int nuevo_tamanio, int pid)
         metadata->bloque_inicial = bloque_inicial;
 
         escribir_archivo_con_bitmap(buffer_bitmap);
+        free(buffer_bitmap);
         actualizar_metadata(metadata);
     }
 
+    
     config_destroy(config_aux);
-    free(buffer_bitmap);
+    //free(buffer_bitmap);
     bitarray_destroy(bitmap);
 
     //----------------------SACAR-----------------------
@@ -1192,6 +1206,7 @@ void compactar(int pid)
     }
     //actualizo el archivo de bitmap
     escribir_archivo_con_bitmap(buffer_bitmap);
+    
     bitarray_destroy(bitmap);
     free(buffer_bitmap);
     
