@@ -63,7 +63,6 @@ io_config* armar_config(t_log* log_io, char* nombre_config)
             log_info(log_io, "El block size es: %d", aux_io_config->block_size);
             log_info(log_io, "El block count es: %d", aux_io_config->block_count);
             
-            cola_archivos_en_fs = queue_create();
             
             break;
 

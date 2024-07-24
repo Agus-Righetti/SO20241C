@@ -42,6 +42,7 @@ void atender_cpu(){
 				// cpu_pide_guardar_1B(buffer);
 
                 free(buffer);
+                
                 break;
 
             case CPU_PIDE_GUARDAR_REGISTRO_4B:
@@ -61,6 +62,8 @@ void atender_cpu(){
 
 				//cpu_pide_guardar_4B(buffer);
                 free(buffer);
+                list_destroy(direcciones_fisicas);
+
                 break;
 
             case CPU_PIDE_LEER_REGISTRO_1B:

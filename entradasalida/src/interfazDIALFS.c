@@ -10,14 +10,21 @@ void manejar_creacion_archivo(char* nombre_archivo, int pid)
     //hago un usleep para lo q tarda
     usleep(config_io->tiempo_unidad_trabajo * 1000);
 
+    char* path_base = malloc(strlen(config_io->path_base_dialfs)+ 25);
 
-    FILE* bitmap_file = fopen("bitmap.dat", "rb"); // Abro el "bitmap.dat"
+    strcpy(path_base, config_io->path_base_dialfs);
 
-    char *bitmap_buffer = (char*)malloc(bitarray_size);
+    string_append(&path_base, "/bitmap.dat");
 
-    fread(bitmap_buffer, 1, bitarray_size, bitmap_file); // Acá almaceno el contenido del bitmap_file dentro del bitmap_buffer
+    FILE* bitmap_file = fopen(path_base, "rb"); // Abro el "bitmap.dat"
 
-    fclose(bitmap_file); // Porque ya tengo el contenido en el buffer
+    // char *bitmap_buffer = (char*)malloc(bitarray_size);
+
+    // fread(bitmap_buffer, 1, bitarray_size, bitmap_file); // Acá almaceno el contenido del bitmap_file dentro del bitmap_buffer
+
+    // fclose(bitmap_file); // Porque ya tengo el contenido en el buffer
+
+    char* bitmap_buffer = obtener_bitmap();
 
     t_bitarray* bitmap = bitarray_create_with_mode(bitmap_buffer, bitarray_size, MSB_FIRST);
     
@@ -30,18 +37,17 @@ void manejar_creacion_archivo(char* nombre_archivo, int pid)
     
     bitarray_set_bit(bitmap, index_primer_bloque_libre);
 
-
-    bitmap_file = fopen("bitmap.dat", "wb");
+    bitmap_file = fopen(path_base, "wb");
 
     fwrite(bitmap_buffer, 1, bitarray_size, bitmap_file);
 
-    
     fclose(bitmap_file);
+
 
     //----------------------------------------------------------------
     //sacar este log
 
-    FILE *file = fopen("bitmap.dat", "rb");
+    FILE *file = fopen(path_base, "rb");
 
 
     unsigned char byte;
@@ -53,6 +59,9 @@ void manejar_creacion_archivo(char* nombre_archivo, int pid)
     }
 
     fclose(file);
+
+    free(path_base);
+
     //----------------------------------------------------------------
 
     bitarray_destroy(bitmap);
@@ -67,8 +76,14 @@ void manejar_creacion_archivo(char* nombre_archivo, int pid)
     
     string_append(&nombre_archivo,".config");
 
-    char *config_file_path = nombre_archivo;
+    path_base = malloc(strlen(config_io->path_base_dialfs)+ 25);
 
+    strcpy(path_base, config_io->path_base_dialfs);
+
+    string_append(&path_base, "/");
+    string_append(&path_base, nombre_archivo);
+
+    char *config_file_path = path_base;
 
     // Crear la configuración desde el archivo
     //Tenemos q armar el archivo primero
@@ -93,11 +108,12 @@ void manejar_creacion_archivo(char* nombre_archivo, int pid)
     // Guardar los cambios en el archivo
     config_save(config);
      
-    queue_push(cola_archivos_en_fs, config_file_path);
 
     // Liberar memoria utilizada por la configuración
     config_destroy(config);
     
+    free(path_base);
+
     avisar_fin_io_a_kernel();
     
     return;
@@ -116,11 +132,15 @@ void manejar_eliminacion_archivo(char* nombre_archivo, int pid)
     nombre_archivo = parte[0];
 
     string_append(&nombre_archivo,".config");
-    
-    char *config_file_path = nombre_archivo;
 
-    // FILE* config_archivo = fopen(config_file_path, "r+");
-    // strcat(nombre_archivo, ".config");
+    char* path_base = malloc(strlen(config_io->path_base_dialfs)+ 25);
+
+    strcpy(path_base, config_io->path_base_dialfs);
+
+    string_append(&path_base, "/");
+    string_append(&path_base, nombre_archivo);
+    
+    char *config_file_path = path_base;
 
     t_config* config_aux = config_create(config_file_path);
     
@@ -132,8 +152,7 @@ void manejar_eliminacion_archivo(char* nombre_archivo, int pid)
 
     config_destroy(config_aux);
 
-    remove(nombre_archivo); // Elimino el archivo de metadata
-
+    remove(config_file_path); // Elimino el archivo de metadata
     
     // Creamos un bitmap a partir del archivo y lo editamos
 
@@ -162,19 +181,21 @@ void manejar_eliminacion_archivo(char* nombre_archivo, int pid)
 
     char* nombre_aux;
 
-    for(int j = 0; j < queue_size(cola_archivos_en_fs); j++)
-    {
-        nombre_aux = queue_pop(cola_archivos_en_fs);
-        if(strcmp(nombre_aux , nombre_archivo) == 0)
-        {
-            j = queue_size(cola_archivos_en_fs) + 1;
-        }else{
-            queue_push(cola_archivos_en_fs, nombre_aux);
+    // for(int j = 0; j < queue_size(cola_archivos_en_fs); j++)
+    // {
+    //     nombre_aux = queue_pop(cola_archivos_en_fs);
+    //     if(strcmp(nombre_aux , nombre_archivo) == 0)
+    //     {
+    //         j = queue_size(cola_archivos_en_fs) + 1;
+    //     }else{
+    //         queue_push(cola_archivos_en_fs, nombre_aux);
             
-        }
-    }
+    //     }
+    // }
 
     ////
+
+    free(path_base);
     avisar_fin_io_a_kernel();
 
     return;
@@ -189,7 +210,12 @@ void manejar_truncado_archivo(char* nombre_archivo, int nuevo_tamanio, int pid)
     usleep(config_io->tiempo_unidad_trabajo * 1000);
 
 //----------------------SACAR ESTE LOG-----------------
-    FILE *file = fopen("bitmap.dat", "rb");
+
+    char* path_base_log = malloc(strlen(config_io->path_base_dialfs)+ 25);
+    strcpy(path_base_log, config_io->path_base_dialfs);
+    string_append(&path_base_log, "/bitmap.dat");
+    
+    FILE *file = fopen(path_base_log, "rb");
 
     unsigned char byte;
     while (fread(&byte, sizeof(unsigned char), 1, file) == 1) {
@@ -201,9 +227,9 @@ void manejar_truncado_archivo(char* nombre_archivo, int nuevo_tamanio, int pid)
 
     fclose(file);
 
+    free(path_base_log);
+
 //----------------------SACAR ESTE LOG-----------------
-
-
 
     char** parte = string_split(nombre_archivo, ".");
     
@@ -211,7 +237,13 @@ void manejar_truncado_archivo(char* nombre_archivo, int nuevo_tamanio, int pid)
     
     string_append(&nombre_archivo,".config");
 
-    char *config_file_path = nombre_archivo;
+    char* path_base = malloc(strlen(config_io->path_base_dialfs)+ 25);
+    strcpy(path_base, config_io->path_base_dialfs);
+
+    string_append(&path_base, "/");
+    string_append(&path_base, nombre_archivo);
+
+    char *config_file_path = path_base;
 
     FILE* config_archivo = fopen(config_file_path, "r+");
 
@@ -315,19 +347,32 @@ void manejar_truncado_archivo(char* nombre_archivo, int nuevo_tamanio, int pid)
                     bitmap = bitarray_create_with_mode(buffer_bitmap, bitarray_size, MSB_FIRST);
 
                     log_info(log_io, "esto es el bitmap dsp de compactar:");
-//---------------------------SACAR-------------------------------------------------------------------
-                    FILE *file_aux = fopen("bitmap.dat", "rb");
+            //---------------------------SACAR-------------------------------------------------------------------
+                    path_base_log = malloc(strlen(config_io->path_base_dialfs)+ 25);
+
+                    strcpy(path_base_log, config_io->path_base_dialfs);
+
+                    string_append(&path_base_log, "/bitmap.dat");
+
+                    FILE *file_aux = fopen(path_base_log, "rb");
 
                     unsigned char byte_aux;
+
                     while (fread(&byte_aux, sizeof(unsigned char), 1, file_aux) == 1) {
                         for (int i = 7; i >= 0; i--) {
+                            
                             printf("%d", (byte_aux >> i) & 1);
+                                            
                         }
+
                         printf(" "); // Para separar los bytes
+
                     }
 
                     fclose(file_aux);
-//----------------------------------------------------------------------------------------------
+                    free(path_base_log);
+
+            //----------------------------------------------------------------------------------------------
                     // tenemos q agregar al final lo q esta en el buffer
 
                     bloque_inicial_nuevo = buscar_bloques_contiguos(bloques_necesarios, bitmap);
@@ -451,8 +496,11 @@ void manejar_truncado_archivo(char* nombre_archivo, int nuevo_tamanio, int pid)
     bitarray_destroy(bitmap);
 
     //----------------------SACAR-----------------------
+    path_base_log = malloc(strlen(config_io->path_base_dialfs)+ 25);
+    strcpy(path_base_log, config_io->path_base_dialfs);    
+    string_append(&path_base_log, "/bitmap.dat");
 
-    FILE *file_2 = fopen("bitmap.dat", "rb");
+    FILE *file_2 = fopen(path_base_log, "rb");
 
     log_info(log_io, "Voy a leer el bitmap");
 
@@ -465,11 +513,15 @@ void manejar_truncado_archivo(char* nombre_archivo, int nuevo_tamanio, int pid)
     }
 
     fclose(file_2);
+    
+    free(path_base_log);
 
     //---------------------------------------------
 
     
     avisar_fin_io_a_kernel();
+
+    free(path_base);
 
     return;
 }   
@@ -508,16 +560,30 @@ void manejar_escritura_archivo(char* nombre_archivo, t_list* direccion_fisica, i
     
     nombre_archivo = parte[0];
 
+    char* path_base = malloc(strlen(config_io->path_base_dialfs)+ 25);
+    strcpy(path_base, config_io->path_base_dialfs);
+
     string_append(&nombre_archivo,".config");
 
-    t_config* config_aux = config_create(nombre_archivo);
+    string_append(&path_base, "/");
+
+    string_append(&path_base, nombre_archivo);
+
+    t_config* config_aux = config_create(path_base);
 
     int tamanio_archivo = config_get_int_value(config_aux, "TAMANIO_ARCHIVO");
     int bloque_inicial = config_get_int_value(config_aux, "BLOQUE_INICIAL");
 
     config_destroy(config_aux);
+    
+    
+    free(path_base);
+    path_base = malloc(strlen(config_io->path_base_dialfs)+ 25);
+   strcpy(path_base, config_io->path_base_dialfs);
 
-    FILE* archivo_bloques = fopen("bloques.dat", "r+");
+    string_append(&path_base, "/bloques.dat");
+
+    FILE* archivo_bloques = fopen(path_base, "r+");
 
     int byte_inicio_bloque = bloque_inicial * config_io->block_size;
 
@@ -531,12 +597,12 @@ void manejar_escritura_archivo(char* nombre_archivo, t_list* direccion_fisica, i
 
     fclose(archivo_bloques);
 
+    free(path_base);
     free(valor_a_mostrar);
 
     free(parte[0]);
     free(parte[1]);
     free(parte);
-    
 
     avisar_fin_io_a_kernel();
 
@@ -559,32 +625,33 @@ void manejar_lectura_archivo(char* nombre_archivo, t_list* direccion_fisica, int
 
     char** parte = string_split(nombre_archivo, ".");
 
-    
     nombre_archivo = parte[0];
     
     string_append(&nombre_archivo,".config");
 
-
+    char* path_base = malloc(strlen(config_io->path_base_dialfs)+ 25);
+    strcpy(path_base, config_io->path_base_dialfs);
+    string_append(&path_base, "/");
+    string_append(&path_base, nombre_archivo);
 
     //leemos del archivo 
         
-    t_config* config_aux = config_create(nombre_archivo);
-
+    t_config* config_aux = config_create(path_base);
 
     int tamanio_archivo = config_get_int_value(config_aux, "TAMANIO_ARCHIVO");
     int bloque_inicial = config_get_int_value(config_aux, "BLOQUE_INICIAL");
 
-    
-    
-
     config_destroy(config_aux);
 
+    free(path_base);
+    path_base = malloc(strlen(config_io->path_base_dialfs)+ 25);
+    strcpy(path_base, config_io->path_base_dialfs);
+    
+    string_append(&path_base, "/bloques.dat");
 
-    FILE* archivo_bloques = fopen("bloques.dat", "r");
-
+    FILE* archivo_bloques = fopen(path_base, "r");
 
     int byte_inicio_bloque = bloque_inicial * config_io->block_size;
-
 
     //Pongo el puntero al inicio de los bloques del archivo
     fseek(archivo_bloques, byte_inicio_bloque , SEEK_SET);
@@ -599,12 +666,11 @@ void manejar_lectura_archivo(char* nombre_archivo, t_list* direccion_fisica, int
 
     fclose(archivo_bloques);
 
-
+    free(path_base);
 
     // MANDAMOS A MEMORIA para q guarde
 
     t_paquete* paquete = crear_paquete_personalizado(IO_PIDE_ESCRITURA_MEMORIA); // Queremos que memoria lo guarde
-
 
     agregar_int_al_paquete_personalizado(paquete, pid);
     agregar_int_al_paquete_personalizado(paquete, tamanio);
@@ -640,14 +706,40 @@ void manejar_lectura_archivo(char* nombre_archivo, t_list* direccion_fisica, int
 
 void crear_archivos_gestion_fs()
 {
+    // Creo la carpeta en caso de que no existe
+    struct stat st = {0};
+    
+    // Verificar si la carpeta ya existe
+    if (stat(config_io->path_base_dialfs, &st) == -1) {
+        // Crear la carpeta
+        if (mkdir(config_io->path_base_dialfs, 0777) == -1) {
+            perror("Error al crear la carpeta");
+            exit(EXIT_FAILURE);
+        } else {
+            printf("Carpeta creada exitosamente\n");
+        }
+    } else {
+        printf("La carpeta ya existe\n");
+    }
+    log_info(log_io, "PASE LA CARPETA");
     // CREO Y DEFINO EL TAMAÑO DEL ARCHIVO bloques.dat
 
-    FILE* bloques_dat = fopen("bloques.dat", "r");
+    char* path_base = malloc(strlen(config_io->path_base_dialfs)+ 25);
+
+    strcpy(path_base, config_io->path_base_dialfs);
+
+    string_append(&path_base, "/bloques.dat");
+
+    log_info(log_io, "Estoy justo antes del fopen, esto es pathbase: %s", path_base);
+
+    FILE* bloques_dat = fopen(path_base, "r");
+
+    log_info(log_io, "Estoy después del fopen");
 
     if(bloques_dat == NULL){
         // El archivo no existe, se debe crear e inicializar
 
-        FILE* bloques_dat = fopen("bloques.dat", "wb");
+        FILE* bloques_dat = fopen(path_base, "wb");
 
        // log_info(log_io,"ya abri el bloques.dat");
 
@@ -656,7 +748,7 @@ void crear_archivos_gestion_fs()
         
         if (bloques_dat == NULL) 
         {
-            perror("Error al abrir el archivo");
+            log_error(log_io, "Error al abrir el archivo");
             return;
         }
 
@@ -667,7 +759,7 @@ void crear_archivos_gestion_fs()
         // Mueve el puntero al final del archivo para definir su tamaño
         if (fseek(bloques_dat, tamanio - 1, SEEK_SET) != 0) 
         {
-            perror("Error al establecer el tamaño del archivo");
+            log_error(log_io,"Error al establecer el tamaño del archivo");
             fclose(bloques_dat);
             return;
         }
@@ -688,19 +780,27 @@ void crear_archivos_gestion_fs()
     }
 
 
-    // CREO EL ARCHIVO CON EL BITMAP --------------------------------------------------------
+    free(path_base);
 
-    FILE* bitmap_file = fopen("bitmap.dat", "r");
+    // CREO EL ARCHIVO CON EL BITMAP --------------------------------------------------------
+    path_base = malloc(strlen(config_io->path_base_dialfs)+ 25);
+    strcpy(path_base, config_io->path_base_dialfs);
+
+    string_append(&path_base, "/bitmap.dat");
+    
+    log_info(log_io, "Estoy por abrir la carpeta -> %s", path_base);
+
+    FILE* bitmap_file = fopen(path_base, "r");
 
     if(bitmap_file == NULL){
 
         // bitmap.dat no existe, tengo que crearlo e inicializarlo
 
-        FILE *bitmap_file = fopen("bitmap.dat", "wb");  // Abre el archivo en modo lectura y escritura binaria
+        FILE *bitmap_file = fopen(path_base, "wb");  // Abre el archivo en modo lectura y escritura binaria
         
         if (bitmap_file == NULL) 
         {
-            perror("Error al abrir bitmap.dat");
+            log_error(log_io, "Error al abrir bitmap.dat");
             return;
         }
         
@@ -755,6 +855,8 @@ void crear_archivos_gestion_fs()
         //log_info(log_io, "El bitmap.dat ya existe");
         fclose(bitmap_file);
     }
+    log_info(log_io, "TERMINE LA FUNCION COMPLICADA");
+    free(path_base);
     return;
 }
 
@@ -780,13 +882,19 @@ int calcular_bloques_que_ocupa(int bytes)
 
 char* obtener_bitmap()
 {
-    FILE* bitmap_file = fopen("bitmap.dat", "rb"); 
+    char* path_base = malloc(strlen(config_io->path_base_dialfs)+ 25);
+    strcpy(path_base, config_io->path_base_dialfs);
+
+    string_append(&path_base, "/bitmap.dat");
+    
+    FILE* bitmap_file = fopen(path_base, "rb"); 
 
     //bitarray_size = (config_io->block_count + 7) / 8;
 
     char *bitmap_buffer = (char *)malloc(bitarray_size);
     fread(bitmap_buffer, 1, bitarray_size, bitmap_file);
     fclose(bitmap_file);
+    free(path_base);
     return bitmap_buffer;
 }
 
@@ -795,7 +903,11 @@ void escribir_archivo_con_bitmap(char* bitmap_buffer)
 //-------------------------SACAR----------------
     log_info(log_io, "el bitmap antes de actualizar es:");
 
-    FILE *file_2 = fopen("bitmap.dat", "rb");
+    char* path_base_log = malloc(strlen(config_io->path_base_dialfs)+ 25);
+    strcpy(path_base_log, config_io->path_base_dialfs);
+    string_append(&path_base_log, "/bitmap.dat");
+
+    FILE *file_2 = fopen(path_base_log, "rb");
 
    // log_info(log_io, "Voy a leer el bitmap");
 
@@ -808,17 +920,25 @@ void escribir_archivo_con_bitmap(char* bitmap_buffer)
     }
 
     fclose(file_2);
+    
 //-----------------------------------------
 
-    FILE* bitmap_file = fopen("bitmap.dat", "wb"); 
+    char* path_base = malloc(strlen(config_io->path_base_dialfs)+ 25);
+    strcpy(path_base, config_io->path_base_dialfs);
+    string_append(&path_base, "/bitmap.dat");
+
+    FILE* bitmap_file = fopen(path_base, "wb"); 
     fwrite(bitmap_buffer, 1, bitarray_size, bitmap_file);
     fclose(bitmap_file);
+    free(path_base);
 
 //--------------------SACAR---------------------
 
     log_info(log_io, "ya actualice el bitmap ahora es:");
-
-    FILE *file_3 = fopen("bitmap.dat", "rb");
+    path_base_log = malloc(strlen(config_io->path_base_dialfs)+ 25);
+    strcpy(path_base_log, config_io->path_base_dialfs);
+    
+    FILE *file_3 = fopen(path_base_log, "rb");
 
     //log_info(log_io, "Voy a leer el bitmap");
 
@@ -830,6 +950,7 @@ void escribir_archivo_con_bitmap(char* bitmap_buffer)
         printf(" "); // Para separar los bytes
     }
     fclose(file_3);
+    free(path_base_log);
 
 //-----------------------------------------
 
@@ -914,7 +1035,11 @@ int contar_bloques_libres(t_bitarray* bitmap)
 
 char* leer_bloques(int bloque_inicial, int num_bloques) 
 {
-    FILE* archivo = fopen ("bloques.dat", "r+");
+    char* path_base = malloc(strlen(config_io->path_base_dialfs)+ 25);
+    strcpy(path_base, config_io->path_base_dialfs);
+    
+    string_append(&path_base, "/bloques.dat");
+    FILE* archivo = fopen (path_base, "r+");
     
     //log_info(log_io,"ya abri bloques .dat");
     // Calcular el offset al inicio del primer bloque
@@ -931,6 +1056,8 @@ char* leer_bloques(int bloque_inicial, int num_bloques)
 
     //log_info(log_io,"ya lei y lo puse en el buffer");
     fclose(archivo);
+    
+    free(path_base);
 
     //log_info(log_io, "esto es lo q puse en el buffer q voy a devolver: %s", buffer);
 
@@ -977,8 +1104,33 @@ void compactar(int pid)
     char* buffer_bitmap = obtener_bitmap();
 
     t_bitarray* bitmap = bitarray_create_with_mode(buffer_bitmap, bitarray_size, MSB_FIRST);
+    
+    //--------------------------------__SACAR-----------------------------
+    log_info(log_io, "BITMAP ANTES DE COMPACTAR");
 
+    char* path_base_log = malloc(strlen(config_io->path_base_dialfs)+ 25);
+    strcpy(path_base_log, config_io->path_base_dialfs);
+    
+    string_append(&path_base_log, "/bitmap.dat");
+
+    FILE *file_aux = fopen(path_base_log, "rb");
+
+    unsigned char byte_aux;
+    while (fread(&byte_aux, sizeof(unsigned char), 1, file_aux) == 1) {
+        for (int i = 7; i >= 0; i--) {
+            printf("%d", (byte_aux >> i) & 1);
+        }
+        printf(" "); // Para separar los bytes
+    }
+
+    fclose(file_aux);   
+    free(path_base_log); 
+    //------------------------------------------------------------------------
+    
     int tamanio_maximo_de_bloques_dat = config_io->block_count * config_io->block_size;
+    
+    log_info(log_io, "El tamaño max de bloques dat es: %d", tamanio_maximo_de_bloques_dat);
+    
     //char* buffer ;
     int contador_ocupados = 0;
     //No hago el malloc porq buscar archivo q inicia ya devuelve uno con malloc hecho
@@ -990,28 +1142,52 @@ void compactar(int pid)
 
     for (int i = 0; i < config_io->block_count; i++) 
     { 
-        //log_info(log_io, "estoy en el for de compactar i=%d", i);
-        if(bitarray_test_bit(bitmap, i))
+
+        log_info(log_io, "Estoy en el INICIO del FOR, indice: %d", i);
+
+        if(bitarray_test_bit(bitmap, i)) //si entro es porq esta ocupado
         {
+            log_info(log_io, "Voy a buscar el archivo q inicia en: %d", i);
             metadata = buscar_archivo_que_inicia_en_bloque(i);
+
+            log_info(log_io, "esto es el nombre del archivo: %s", metadata->nombre_archivo);
+
+            log_info(log_io,"esto es tamanio archivo: %d", metadata->tamanio_archivo);
+            
             bloques_ocupados = calcular_bloques_que_ocupa(metadata->tamanio_archivo);
+
+            log_info(log_io, "La cantidad de bloques ocupados es : %d", bloques_ocupados);
+            
             info_bloques = leer_bloques(i , bloques_ocupados);
+            
             metadata->bloque_inicial = contador_ocupados;
             
+            log_info(log_io, "El bloque inicial es %d", metadata->bloque_inicial);
+
             agregar_info_en_cierto_bloque(metadata->bloque_inicial, bloques_ocupados, info_bloques);
 
             for(int h = 0; h < bloques_ocupados; h++) 
             {
+                
                 bitarray_set_bit(bitmap, contador_ocupados + h);
+                log_info(log_io, "Acabo de setear a 1 el bit numero: %d", contador_ocupados + h );
                 bitarray_clean_bit(bitmap, i + h); // Limpia los bloques viejos
+                log_info(log_io, "Acabo de setear a 0 el bit numero: %d", i + h );
+                
             }
             
             contador_ocupados += bloques_ocupados;
 
-            actualizar_metadata(metadata);
+            log_info(log_io, "El contador de ocupados al final del for es: %d", contador_ocupados);
 
-            i += bloques_ocupados - 1;
+            actualizar_metadata(metadata);
+            
+
+            i += bloques_ocupados - 2; //le sacamos un -1
+
+            log_info(log_io, "La variable i al FINAL del for vale: %d", i);
         }
+
         
     }
     //actualizo el archivo de bitmap
@@ -1029,59 +1205,87 @@ void compactar(int pid)
 
 void actualizar_archivo_bloques(char* buffer)
 {
-    FILE * archivo_bloques = fopen("bloques.dat", "rb+");
+
+    char* path_base = malloc(strlen(config_io->path_base_dialfs)+ 25);
+
+    strcpy(path_base, config_io->path_base_dialfs);
+    string_append(&path_base, "/bloques.dat");
+    FILE * archivo_bloques = fopen(path_base, "rb+");
     fwrite(buffer, config_io->block_count * config_io->block_size, 1, archivo_bloques);
     fclose(archivo_bloques);
     free(buffer);
+    free(path_base);
 }
 
 t_metadata* buscar_archivo_que_inicia_en_bloque(int nro_bloque)
 {
+    //HAAY QUE CAMBIAR TODA, AHORA NO BUSCAMOS EN LA COLA
     //log_info(log_io, "entre a buscar_archivo_q_inicia_en_bloque, el bloque que busco es: %d", nro_bloque);
     t_metadata* meta_aux = malloc(sizeof(t_metadata));
+    meta_aux->nombre_archivo = malloc(sizeof(char)*25);
     t_config* config_aux;
-    // meta_aux->nombre_archivo = queue_pop(cola_archivos_en_fs);
-    // t_config* config_aux = config_create(meta_aux->nombre_archivo);
-    // meta_aux->bloque_inicial = config_get_int_value(config_aux, "BLOQUE_INICIAL");
-    // meta_aux->tamanio_archivo = config_get_int_value(config_aux, "TAMANIO_ARCHIVO");
-
-    //while(meta_aux->bloque_inicial != nro_bloque)
-
-    //log_info(log_io, "el tamano de la cola de archivos en fs es: %d" ,queue_size(cola_archivos_en_fs));
-    for(int j = 0; j < queue_size(cola_archivos_en_fs); j++)
-    {
-        meta_aux->nombre_archivo = queue_pop(cola_archivos_en_fs);
-        config_aux = config_create(meta_aux->nombre_archivo);
-        meta_aux->bloque_inicial = config_get_int_value(config_aux, "BLOQUE_INICIAL");
-        meta_aux->tamanio_archivo = config_get_int_value(config_aux, "TAMANIO_ARCHIVO");
-        // log_info(log_io, "esto es meta_aux nombre_Archivo: %s", meta_aux->nombre_archivo);
-        // log_info(log_io, "esto es meta_aux bloque inicial: %d", meta_aux->bloque_inicial);
-        // log_info(log_io, "esto es meta_aux tamanio_archivo: %d", meta_aux->tamanio_archivo);
-
-        if(meta_aux->bloque_inicial == nro_bloque)
-        {
-            queue_push(cola_archivos_en_fs, meta_aux->nombre_archivo);
-            config_destroy(config_aux);
-            j = queue_size(cola_archivos_en_fs) + 1;
-        }else{
-            queue_push(cola_archivos_en_fs, meta_aux->nombre_archivo);
-            config_destroy(config_aux);
-        }
-    }
-
+    struct dirent *ent; //entrada del directorio
+    char* path_base = malloc(strlen(config_io->path_base_dialfs)+ 25);
+    // strcpy(path_base, config_io->path_base_dialfs);
     
-    // log_info(log_io, "Encontre la metadata que queria :)");
-    // log_info(log_io, "esto es meta_aux nombre_Archivo: %s", meta_aux->nombre_archivo);
-    // log_info(log_io, "esto es meta_aux bloque inicial: %d", meta_aux->bloque_inicial);
-    // log_info(log_io, "esto es meta_aux tamanio_archivo: %d", meta_aux->tamanio_archivo);
+    DIR* dir;
+    if(dir = opendir(config_io->path_base_dialfs))
+    {
+        while ((ent = readdir(dir)) != NULL) {
+            
+            // meta_aux->nombre_archivo = ent->d_name;
+            strcpy(meta_aux->nombre_archivo, ent->d_name);
+
+            log_info(log_io, "meta_aux->nombre_archivo: %s", meta_aux->nombre_archivo);
+
+            if(strcmp(meta_aux->nombre_archivo, "bloques.dat")!=0 && strcmp(meta_aux->nombre_archivo, "bitmap.dat")!=0 && strcmp(meta_aux->nombre_archivo, "..") != 0 && strcmp(meta_aux->nombre_archivo, ".") != 0)
+            {
+                strcpy(path_base, config_io->path_base_dialfs);
+                string_append(&path_base, "/");
+                string_append(&path_base, meta_aux->nombre_archivo);
+                config_aux = config_create(path_base);
+                meta_aux->bloque_inicial = config_get_int_value(config_aux, "BLOQUE_INICIAL");
+                meta_aux->tamanio_archivo = config_get_int_value(config_aux, "TAMANIO_ARCHIVO");
+                log_info(log_io, "esto es meta_aux nombre_Archivo: %s", meta_aux->nombre_archivo);
+                log_info(log_io, "esto es meta_aux bloque inicial: %d", meta_aux->bloque_inicial);
+                log_info(log_io, "esto es meta_aux tamanio_archivo: %d", meta_aux->tamanio_archivo);
+                log_info(log_io, "el numero de bloque es: %d", nro_bloque);
+
+                if(meta_aux->bloque_inicial == nro_bloque)
+                {
+                    //encontre el q queria
+                    config_destroy(config_aux);
+                    break;
+                    
+                }else config_destroy(config_aux);
+            }
+            
+        }
+    }else log_error(log_io , "ERROR AL ABRIR LA PUTA CARPETA");
+
+    closedir(dir);
+    free(path_base);
+    
+    log_info(log_io, "estoy out del while");
+    
+    log_info(log_io, "Encontre la metadata que queria :)");
+    log_info(log_io, "esto es meta_aux nombre_archivo: %s", meta_aux->nombre_archivo);
+    log_info(log_io, "esto es meta_aux bloque inicial: %d", meta_aux->bloque_inicial);
+    log_info(log_io, "esto es meta_aux tamanio_archivo: %d", meta_aux->tamanio_archivo);
 
     return meta_aux;
 }
 
 void actualizar_metadata(t_metadata* metadata)
 {
-    //FILE* archivo = fopen(metadata->nombre_archivo ,"r+");
-    t_config* config_archivo = config_create(metadata->nombre_archivo);
+    char* path_base = malloc(strlen(config_io->path_base_dialfs)+ 25);
+
+    strcpy(path_base, config_io->path_base_dialfs);
+
+    string_append(&path_base, "/");
+    string_append(&path_base, metadata->nombre_archivo);
+
+    t_config* config_archivo = config_create(path_base);
 
     char* bloque_inicial = pasar_a_string(metadata->bloque_inicial);
     char* tamanio_bloque = pasar_a_string(metadata->tamanio_archivo);
@@ -1096,20 +1300,29 @@ void actualizar_metadata(t_metadata* metadata)
 
     config_destroy(config_archivo);
 
+    free(path_base);
+
     //fclose(archivo);
 
+    free(metadata->nombre_archivo);
     free(metadata);
 }
 
 int agregar_info_en_cierto_bloque(int bloque_inicial_nuevo, int cant_bloques , char* buffer)
 {
-    FILE * archivo_bloques = fopen("bloques.dat", "rb+");
+    char* path_base = malloc(strlen(config_io->path_base_dialfs)+ 25);
+    strcpy(path_base, config_io->path_base_dialfs);
+
+    string_append(&path_base, "/bloques.dat");
+    
+    FILE * archivo_bloques = fopen(path_base, "rb+");
    //log_info(log_io, "ya abri el archivo de bloques para escribir");
     int offset = bloque_inicial_nuevo * config_io->block_size;
     fseek(archivo_bloques, offset, SEEK_SET);
     fwrite(buffer, config_io->block_size, cant_bloques, archivo_bloques);
     //log_info(log_io, "ya escribi todo piola");
     fclose(archivo_bloques);
+    free(path_base);
     free(buffer);
     return 1;
 }

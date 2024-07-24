@@ -253,7 +253,7 @@ void cpu_pide_resize(t_buffer* un_buffer){          // [PID, TAMAÑO NUEVO] -> [
 					// Elijo el marco en el que voy a guardar
 					t_frame* marco_por_usar = list_get(marcos_libres, posicion); // AGARRO EL PRIMERO QUE ENCUENTRO EN LA LISTA DE LIBRES
 					ocupar_marco(marco_por_usar->id);
-					//log_info(log_memoria, "ENTRE AL WHILE!!!!!!!!!!11111");
+					
 					t_pagina* pagina = crear_pagina(marco_por_usar);
 
 

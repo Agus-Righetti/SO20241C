@@ -20,7 +20,9 @@
 #include<semaphore.h>        // Biblioteca para semaforos
 #include<math.h>             // Biblioteca para ceil()
 #include<time.h>            // Biblioteca para usar clock()
-
+#include<dirent.h>			//Biblioteca para manejar directorios
+#include<sys/stat.h>
+#include<sys/types.h>
 
 // ************* ESTRUCTURAS GLOBALES *************
 // ************* CODIGOS DE OPERACION *************

@@ -26,7 +26,6 @@ int conexion_io_memoria;
 Interfaz *configuracion;
 
 size_t bitarray_size;
-t_queue* cola_archivos_en_fs;
 
 char* valor_a_mostrar;
 

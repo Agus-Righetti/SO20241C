@@ -57,7 +57,6 @@ extern pcb* proceso;
 extern int conexion_io_kernel;
 extern int conexion_io_memoria;
 
-extern t_queue* cola_archivos_en_fs;
 extern size_t bitarray_size;
 
 extern sem_t sem_ok_escritura_memoria;

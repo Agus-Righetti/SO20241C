@@ -4,6 +4,7 @@ int main() {
     // ************* LOG Y CONFIG DE USO GENERAL *************
     log_memoria = log_create("memoria.log", "Memoria", 1, LOG_LEVEL_DEBUG); 
     config_memoria = armar_config();
+    
 
     // ************* PAGINACIÓN *************
     paginar_memoria();
@@ -28,9 +29,10 @@ int main() {
 
 
     // ********* LIBERO TODO *********
-    // Despues armar funcion que haga todo
-    
 	log_destroy(log_memoria);
+    free(config_memoria);
+    free(espacio_usuario);
+    //free(espacio_bitarray);
 
     // Chequear que esto este bien
     liberar_conexion(socket_cliente_io);
@@ -38,13 +40,14 @@ int main() {
     liberar_conexion(socket_cliente_kernel);
 
     list_destroy(lista_procesos_recibidos);
-	free(config_memoria);
+
     bitarray_destroy(bitmap_marcos);
     pthread_mutex_destroy(&mutex_bitmap_marcos);
     pthread_mutex_destroy(&mutex_espacio_usuario);
     
-    free(espacio_usuario);
     sem_destroy(&sem_lista_procesos);
 
+    
+    
     return EXIT_SUCCESS;
 }
