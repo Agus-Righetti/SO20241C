@@ -6,6 +6,18 @@ int iniciar_servidor(char* puerto, t_log* logger)
 {
 	// Preparamos al receptor para recibir mensajes
 	int socket_servidor;
+
+// Cansado de que tu TP no conecte cuando lo ejecutás por segunda vez? da broken pipe, o simplemente rompe. Esperás 5-10 mins y de repente vuelve a andar bien? 
+ 
+// Meté esto después de la declaración de tu socket y antes de bindearlo/conectarlo 
+ 
+// if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &(int){1}, sizeof(int)) < 0) 
+//     error("setsockopt(SO_REUSEADDR) failed");
+
+// // siendo sockfd tu socket. 
+
+// Voilá. Tu socket ya se puede reutilizar sin esperar.
+
 	struct addrinfo hints, *servinfo;
 
 	memset(&hints, 0, sizeof(hints));
@@ -15,9 +27,14 @@ int iniciar_servidor(char* puerto, t_log* logger)
 
 	getaddrinfo(NULL, puerto, &hints, &servinfo);
 
+
 	// Creamos el socket de escucha del servidor
 	socket_servidor = socket(servinfo->ai_family, servinfo->ai_socktype, servinfo->ai_protocol);
 
+	if (setsockopt(socket_servidor, SOL_SOCKET, SO_REUSEADDR, &(int){1}, sizeof(int)) < 0) 
+	{
+    	log_error(logger, "setsockopt(SO_REUSEADDR) failed 2");
+	}
 	// Asociamos el socket a un puerto
 	//chequear que no sea -1
 	bind(socket_servidor, servinfo->ai_addr, servinfo->ai_addrlen);

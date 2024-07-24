@@ -9,7 +9,7 @@ io_config* armar_config(t_log* log_io, char* nombre_config)
 
     char* filepath = string_new();
 
-    string_append(&filepath, "../entradasalida/interfaces/");
+    string_append(&filepath, "../entradasalida/config_files/");
 
     string_append(&filepath, nombre_config);
 

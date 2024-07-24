@@ -7,6 +7,7 @@ void inicializar_servidor(){
         log_info(log_memoria, "Error: No se pudo iniciar Memoria como servidor");
         exit(1);
     }
+
     log_info(log_memoria, "Memoria lista para recibir clientes");
 }
 

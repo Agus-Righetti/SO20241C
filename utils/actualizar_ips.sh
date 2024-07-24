@@ -1,4 +1,7 @@
 #!/bin/bash
+#Para usar: 
+#chmod +x actualizar_ips.sh
+#./actualizar_ips.sh <memoria/kernel/cpu/entradasalida> <ip memoria> <ip cpu> <ip kernel>
 
 # Verifica si se han proporcionado los argumentos necesarios
 if [ $# -ne 4 ]; then

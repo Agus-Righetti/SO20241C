@@ -6,6 +6,7 @@
 void server_para_io(){
 	
     int server_kernel = iniciar_servidor(config_kernel->puerto_escucha, log_kernel);
+
 	
 	if (server_kernel == -1)
     {
