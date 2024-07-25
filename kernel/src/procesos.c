@@ -397,25 +397,31 @@ void finalizar_proceso(char* pid_formato_char){
 
     int pid = atoi(pid_formato_char); // Paso a int el pid mandado por consola
     bool no_esta_en_el_sistema = false; // Hago un flag para saber si el proceso se encuentra en el sistema o no
+    pcb* aux;
+    //log_info(log_kernel, "el tamanio de la cola gral en finalizar_proceso es : %d", queue_size(cola_general_de_procesos));
 
     pthread_mutex_lock(&mutex_cola_general_de_procesos); // Bloqueo la cola general
 
-    pcb* aux = queue_pop(cola_general_de_procesos); 
-    
-    int primer_pid = aux->pid;
-
-    while(pid != aux->pid) // Después de recorrer toda la cola en aux nos queda el proceso correspondiente a ese pid
+    if(queue_size(cola_general_de_procesos)>0)
     {
-        queue_push(cola_general_de_procesos, aux);
-        aux = queue_pop(cola_general_de_procesos);
-        if (aux->pid == primer_pid)
-        {
-            no_esta_en_el_sistema = true; // Si no encuentro el pid en toda la cola general de procesos, entonces marco que no lo encontré
-            break;
-        }
-    }
+        aux = queue_pop(cola_general_de_procesos); 
+    
+        int primer_pid = aux->pid;
 
-    queue_push(cola_general_de_procesos, aux);
+        while(pid != aux->pid) // Después de recorrer toda la cola en aux nos queda el proceso correspondiente a ese pid
+        {
+            queue_push(cola_general_de_procesos, aux);
+            aux = queue_pop(cola_general_de_procesos);
+            if (aux->pid == primer_pid)
+            {
+                no_esta_en_el_sistema = true; // Si no encuentro el pid en toda la cola general de procesos, entonces marco que no lo encontré
+                break;
+            }
+        }
+
+        queue_push(cola_general_de_procesos, aux);
+    }
+   
     pthread_mutex_unlock(&mutex_cola_general_de_procesos); // Desbloqueo la cola general
  
     if (no_esta_en_el_sistema == false){ // Si sí está en el sistema, entonces lo voy a sacar de su respectiva cola, y posteriormente será enviado a exit
@@ -585,7 +591,6 @@ void enviar_pcb(pcb* proceso) {
 void crear_hilo_proceso(pcb* proceso){
 
     // Funcion llamada por enviar_proceso_a_cpu
-
     pthread_t hilo_recibe_proceso, hilo_interrupcion; // Creo un hilo
     thread_args_procesos_kernel args_hilo = {proceso}; // En sus args le cargo el proceso
 
@@ -600,14 +605,20 @@ void crear_hilo_proceso(pcb* proceso){
     {
 
         // Si el algoritmo de planificacion es RR o VRR entonces permito la posibilidad de recibirlo por interrupcion de fin de quantum
-
+        //log_info(log_kernel,"Estoy por crear los hilos de interrrupcion y recibir proceso");
         pthread_create(&hilo_recibe_proceso, NULL, (void*)recibir_pcb_hilo,(void*)&args_hilo); // Recibir pcb normalmente
         pthread_create(&hilo_interrupcion, NULL, (void*)algoritmo_round_robin,(void*)&args_hilo); // Recibir pcb por interrupcion de fin de quantum
             
-        pthread_join(hilo_recibe_proceso, NULL); // Espero que termine de recibir normalmente
-            
+       
+        pthread_detach(hilo_interrupcion); 
+        //log_info(log_kernel, "hice el detatch, estoy esperando en el semaforo");
+
         sem_wait(&destruir_hilo_interrupcion);
         pthread_cancel(hilo_interrupcion); 
+
+       // log_info(log_kernel, "ya hice el cancel");
+        pthread_join(hilo_recibe_proceso, NULL);
+        
 
     }else {
         log_error(log_kernel, "Estan mal las configs capo");
@@ -637,6 +648,12 @@ void recibir_pcb(pcb* proceso) {
 
     int codigo_operacion = recibir_operacion(conexion_kernel_cpu); // Recibo el codigo de operacion para ver como actúo según eso
 
+     if(strcmp(config_kernel->algoritmo_planificacion, "RR") == 0 || strcmp(config_kernel->algoritmo_planificacion, "VRR") == 0)
+    {
+        //VER SI FUNCA
+        sem_post(&destruir_hilo_interrupcion);
+    }   
+
     int flag_estado; // Declaro un flag que me va a servir para manejar el estado del proceso posteriormente
     char* recurso;
     char* nombre_interfaz;
@@ -652,7 +669,7 @@ void recibir_pcb(pcb* proceso) {
     switch(codigo_operacion) // Segun el codigo de operacion actuo 
       {
             case -1:
-                log_info(log_kernel, "Se desconecto CPU");
+                log_error(log_kernel, "Se desconecto CPU");
                 break;
             case FIN_DE_QUANTUM: 
                 temporal_stop(tiempo_de_quantum);
@@ -907,12 +924,8 @@ void recibir_pcb(pcb* proceso) {
 
         temporal_destroy(tiempo_de_quantum);//lo destruyo porq lo creo cada vez q mando un proceso
 
-
-        if(strcmp(config_kernel->algoritmo_planificacion, "RR") == 0 || strcmp(config_kernel->algoritmo_planificacion, "VRR") == 0)
-        {
-            //VER SI FUNCA
-            sem_post(&destruir_hilo_interrupcion);
-        }
+       
+        
 
         if(strcmp(config_kernel->algoritmo_planificacion, "VRR") == 0) // Si estoy recibiendo a traves del algoritmo VRR
         {
@@ -939,13 +952,13 @@ void algoritmo_round_robin (void* arg){
     // La interrupcion y otro que siemp este esperando a q cpu le mande el pcb
     thread_args_procesos_kernel*args = (thread_args_procesos_kernel*)arg;
     pcb* proceso_actual = args->proceso;
-
+    //log_info(log_kernel, "estoy en algoritmo round robin por hacer el sleep");
     usleep((proceso_actual->quantum)*1000); // Acá usamos el quantum del proceso, asi podemos reutilziar la funcion para VRR
-    if(!interrupcion_por_fin_de_proceso){ // Si no tengo que finalizar el proceso por pedido de usuario
+    //if(!interrupcion_por_fin_de_proceso){ // Si no tengo que finalizar el proceso por pedido de usuario
 
         desalojar_proceso_hilo(args, FIN_DE_QUANTUM); // Entonces lo desalojo por el algoritmo de planificación
         
-    }else sem_post(&destruir_hilo_interrupcion); // Sino se maneja el desalojo en otro lado
+    //}//else sem_post(&destruir_hilo_interrupcion); // Sino se maneja el desalojo en otro lado
     
     return;
 }
@@ -1217,7 +1230,9 @@ void sacar_de_execute(int pid){
     //Si un proceso esta en execute hay que mandar la interrupcion para que cpu devuelva el proceso
     // Busco el proceso para mandarselo a desalojar proceso
 
-    interrupcion_por_fin_de_proceso = true;
+    log_info(log_kernel, "estoy en sacar de execute");
+
+    //interrupcion_por_fin_de_proceso = true;
 
     pthread_mutex_lock(&mutex_cola_general_de_procesos);
     pcb* aux  = queue_pop(cola_general_de_procesos);
@@ -1230,7 +1245,7 @@ void sacar_de_execute(int pid){
     
     pthread_mutex_unlock(&mutex_cola_general_de_procesos);
 
-    sem_post(&destruir_hilo_interrupcion);
+    //sem_post(&destruir_hilo_interrupcion);
     
     desalojar_proceso(aux, INTERRUPTED_BY_USER);
     
