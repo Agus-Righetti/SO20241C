@@ -161,22 +161,24 @@ int crear_conexion(char *ip, char *puerto)
 
 	//conectamos el socket del cliente con el del servidor
 
+	if (socket_cliente == -1) {
+        perror("Error al crear el socket");
+        freeaddrinfo(server_info);
+        return -1;
+    }
 	
 	int conexion = connect(socket_cliente, server_info->ai_addr, server_info->ai_addrlen);
 	
-	// COMENTAR LAS SIGUIENTES LINEAS SI QUEREMOS PROBAR UN MODULO SOLO
-	 if (conexion == -1){
-	 	printf("ERROR DE CONEXION\n");
-	 	printf("Esperando 5 segundos para buscar al cliente...\n");
-     	sleep(5);
-	 	connect(socket_cliente, server_info->ai_addr, server_info->ai_addrlen);
-	 	if (connect(socket_cliente, server_info->ai_addr, server_info->ai_addrlen) == -1){
-	 		perror("Error al intentar conectar");
-         	exit(1);
-	 	}
-	 }
 
-	freeaddrinfo(server_info);
+	if (conexion == -1) {
+        perror("Error al conectar");
+        close(socket_cliente);
+        freeaddrinfo(server_info);
+        return -1;
+    }
+
+    freeaddrinfo(server_info);
+    
 	//send_handshake(socket_cliente);
 	return socket_cliente;
 }
