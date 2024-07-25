@@ -41,7 +41,9 @@ extern sem_t sem_ok_escritura;
 extern sem_t sem_string_memoria;
 extern sem_t sem_ok_escritura_string;
 
-extern int socket_servidor_cpu;
+//extern int socket_servidor_cpu;
+extern int socket_servidor_dispatch;
+extern int socket_servidor_interrupt;
 extern int socket_cliente_kernel;
 extern int socket_servidor_memoria;
 extern int socket_cliente_cpu;

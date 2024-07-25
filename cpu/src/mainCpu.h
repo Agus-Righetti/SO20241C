@@ -14,7 +14,9 @@ cpu_config* config_cpu;
 int tamanio_pagina;
 
 int socket_servidor_memoria; 
-int socket_servidor_cpu;
+//int socket_servidor_cpu;
+int socket_servidor_dispatch;
+int socket_servidor_interrupt;
 int socket_cliente_kernel;
 int socket_cliente_cpu;
 int socket_interrupt_kernel;
