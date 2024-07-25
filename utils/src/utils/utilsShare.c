@@ -466,7 +466,7 @@ int recibir_int_del_buffer(t_buffer* buffer){
 		return valor_a_devolver;
 	}
 	if(nuevo_size < 0){
-		printf("\n[ERROR_INT]: BUFFER CON TAMAÑO NEGATIVO\n\n");
+		printf("\n[ERROR_INT]: BUFFER CON TAMANIO NEGATIVO\n\n");
 		//free(valor_a_devolver);
 		//return 0;
 		exit(EXIT_FAILURE);
@@ -506,7 +506,7 @@ char* recibir_string_del_buffer(t_buffer* buffer){
 		return string;
 	}
 	if(nuevo_size < 0){
-		printf("\n[ERROR_STRING]: BUFFER CON TAMAÑO NEGATIVO\n\n");
+		printf("\n[ERROR_STRING]: BUFFER CON TAMANIO NEGATIVO\n\n");
 		free(string);
 		//return "[ERROR]: BUFFER CON TAMAÑO NEGATIVO";
 		exit(EXIT_FAILURE);
@@ -545,7 +545,7 @@ void* recibir_estructura_del_buffer(t_buffer* buffer){
 		return estructura;
 	}
 	if(nuevo_size < 0){
-		printf("\nBUFFER CON TAMAÑO NEGATIVO\n\n");
+		printf("\nBUFFER CON TAMANIO NEGATIVO\n\n");
 		//free(estructura);
 		//return "";
 		exit(EXIT_FAILURE);
@@ -711,7 +711,7 @@ t_list* recibir_lista_del_buffer(t_buffer* buffer, int size_data) {
     // Leer el tamaño de la lista
     int size_lista;
     if (buffer->size < sizeof(int)) {
-        printf("\n[ERROR] Buffer demasiado pequeño para leer el tamaño de la lista\n\n");
+        printf("\n[ERROR] Buffer demasiado pequenio para leer el tamanio de la lista\n\n");
         exit(EXIT_FAILURE);
     }
     memcpy(&size_lista, buffer->stream, sizeof(int));
@@ -731,7 +731,7 @@ t_list* recibir_lista_del_buffer(t_buffer* buffer, int size_data) {
         // Leer el tamaño del elemento
         int size_elemento;
         if (nuevo_size < sizeof(int)) {
-            printf("\n[ERROR] Buffer demasiado pequeño para leer el tamaño del elemento\n\n");
+            printf("\n[ERROR] Buffer demasiado pequenio para leer el tamanio del elemento\n\n");
             list_destroy(lista);
             exit(EXIT_FAILURE);
         }
@@ -740,7 +740,7 @@ t_list* recibir_lista_del_buffer(t_buffer* buffer, int size_data) {
         nuevo_size -= sizeof(int);
 
         if (nuevo_size < size_elemento) {
-            printf("\n[ERROR_LISTA]: BUFFER CON TAMAÑO INSUFICIENTE\n\n");
+            printf("\n[ERROR_LISTA]: BUFFER CON TAMANIO INSUFICIENTE\n\n");
             list_destroy(lista);
             exit(EXIT_FAILURE);
         }
@@ -937,7 +937,7 @@ uint32_t recibir_uint32_del_buffer(t_buffer* buffer){
 		return valor_a_devolver;
 	}
 	if(nuevo_size < 0){
-		printf("\n[ERROR_uint32_t]: BUFFER CON TAMAÑO NEGATIVO\n\n");
+		printf("\n[ERROR_uint32_t]: BUFFER CON TAMANIO NEGATIVO\n\n");
 		//free(valor_a_devolver);
 		//return 0;
 		exit(EXIT_FAILURE);
@@ -974,7 +974,7 @@ uint8_t recibir_uint8_del_buffer(t_buffer* buffer){
 		return valor_a_devolver;
 	}
 	if(nuevo_size < 0){
-		printf("\n[ERROR_uint8_t]: BUFFER CON TAMAÑO NEGATIVO\n\n");
+		printf("\n[ERROR_uint8_t]: BUFFER CON TAMANIO NEGATIVO\n\n");
 		//free(valor_a_devolver);
 		//return 0;
 		exit(EXIT_FAILURE);

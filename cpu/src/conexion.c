@@ -23,7 +23,7 @@ void atender_memoria() {
                 recibir_mensaje(socket_cliente_cpu, log_cpu);
                 break;
                 
-            case CPU_RECIBE_TAMAÑO_PAGINA_DE_MEMORIA:
+            case CPU_RECIBE_TAMANIO_PAGINA_DE_MEMORIA:
                 buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
                 tamanio_pagina = recibir_int_del_buffer(buffer);
                 free(buffer);
@@ -42,7 +42,7 @@ void atender_memoria() {
                 break;
 
             case CPU_RECIBE_OUT_OF_MEMORY_DE_MEMORIA: // VACIO
-                log_info(log_cpu, "No se pudo ajustar el tamaño del proceso. Out of Memory.");    
+                log_info(log_cpu, "No se pudo ajustar el tamanio del proceso. Out of Memory.");    
                 argumentos_cpu* args = malloc(sizeof(argumentos_cpu));
                 args->proceso = pcb_recibido; //Este proceso es global, no deberia ser global
                 args->operacion = OUT_OF_MEMORY;
@@ -68,7 +68,7 @@ void atender_memoria() {
                 break; 
 
             case CPU_RECIBE_OK_DEL_RESIZE:
-                log_info(log_cpu, "El tamaño del proceso se ajusto correctamente");
+                log_info(log_cpu, "El tamanio del proceso se ajusto correctamente");
                 buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
                 // free(buffer->stream);
                 free(buffer);

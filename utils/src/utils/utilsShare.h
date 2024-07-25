@@ -83,7 +83,7 @@ typedef enum {
 
 	// MEMORIA A CPU
 	CPU_RECIBE_INSTRUCCION_DE_MEMORIA,     // [Instruccion] -> [String, String, String, String, String]
-	CPU_RECIBE_TAMAÑO_PAGINA_DE_MEMORIA,   // [Tam_pagina] -> [Int]
+	CPU_RECIBE_TAMANIO_PAGINA_DE_MEMORIA,   // [Tam_pagina] -> [Int]
 	CPU_RECIBE_OUT_OF_MEMORY_DE_MEMORIA,   // VACIO
 	CPU_RECIBE_OK_DEL_RESIZE,              // VACIO 
 	CPU_RECIBE_NUMERO_DE_MARCO_DE_MEMORIA, // [NUMERO DE MARCO] -> [Int]

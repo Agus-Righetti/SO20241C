@@ -89,7 +89,7 @@ void enviar_pcb(int conexion, argumentos_cpu* argumentos_a_mandar){
             agregar_string_al_paquete_personalizado(paquete, argumentos_a_mandar->nombre_interfaz);
             agregar_string_al_paquete_personalizado(paquete, argumentos_a_mandar->nombre_archivo);
             agregar_int_al_paquete_personalizado(paquete, argumentos_a_mandar->registro_tamano);
-            log_info(log_cpu, "El tamaño que estoy metiendo al paquete es: %d", argumentos_a_mandar->registro_tamano);
+            log_info(log_cpu, "El tamanio que estoy metiendo al paquete es: %d", argumentos_a_mandar->registro_tamano);
 
             break;
 
@@ -684,7 +684,7 @@ void instruccion_resize(char **parte) {
     // Verificar si se proporcionó el tamaño como parámetro
     if (parte[1] == NULL) 
     {
-        log_error(log_cpu, "Error: Se debe proporcionar un tamaño para la instrucción RESIZE\n");
+        log_error(log_cpu, "Error: Se debe proporcionar un tamanio para la instrucción RESIZE\n");
         return;
     }
 
@@ -724,7 +724,7 @@ void instruccion_copy_string(char **parte) {
     // Verificar si se proporcionó el tamaño como parámetro
     if (parte[1] == NULL) 
     {
-        log_error(log_cpu, "Error: Se debe proporcionar un tamaño para la instrucción COPY_STRING\n");
+        log_error(log_cpu, "Error: Se debe proporcionar un tamanio para la instrucción COPY_STRING\n");
         return;
     }
 
@@ -901,9 +901,9 @@ void instruccion_io_stdin_read(char** parte)
     args->direcciones_fisicas = direcciones_fisicas;
     args->registro_tamano = registro_tamano;
 
-    log_info(log_cpu, "nombre_interfaz: %s", args->nombre_interfaz);
-    log_info(log_cpu, "tamaño de direcciones fisicas: %d", list_size(args->direcciones_fisicas));
-    log_info(log_cpu, "registro_tamano: %d", args->registro_tamano);
+    // log_info(log_cpu, "nombre_interfaz: %s", args->nombre_interfaz);
+    // log_info(log_cpu, "tamaño de direcciones fisicas: %d", list_size(args->direcciones_fisicas));
+    // log_info(log_cpu, "registro_tamano: %d", args->registro_tamano);
 
     pcb_recibido->registros->pc++;
 
@@ -940,9 +940,9 @@ void instruccion_io_stdout_write(char **parte) // ESTE NO LO ENTIENDO PORQUE MAN
     args->direcciones_fisicas = traducir_dl_a_df_completa(direccion_logica , tamanio);
     args->registro_tamano = tamanio;
 
-    log_info(log_cpu, "nombre_interfaz: %s", args->nombre_interfaz);
-    log_info(log_cpu, "tamaño de direcciones fisicas: %d", list_size(args->direcciones_fisicas));
-    log_info(log_cpu, "registro_tamano: %d", args->registro_tamano);
+    // log_info(log_cpu, "nombre_interfaz: %s", args->nombre_interfaz);
+    // log_info(log_cpu, "tamaño de direcciones fisicas: %d", list_size(args->direcciones_fisicas));
+    // log_info(log_cpu, "registro_tamano: %d", args->registro_tamano);
 
     //pcb_recibido->program_counter++;
     pcb_recibido->registros->pc++;

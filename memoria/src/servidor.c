@@ -87,7 +87,7 @@ void server_para_io() {
 }
 
 void enviar_tam_marco_a_cpu(){
-    t_paquete* paquete = crear_paquete_personalizado(CPU_RECIBE_TAMAÑO_PAGINA_DE_MEMORIA);
+    t_paquete* paquete = crear_paquete_personalizado(CPU_RECIBE_TAMANIO_PAGINA_DE_MEMORIA);
 
 	agregar_int_al_paquete_personalizado(paquete,config_memoria->tam_pagina);
 
