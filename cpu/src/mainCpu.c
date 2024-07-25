@@ -57,8 +57,8 @@ int main(int argc, char* argv[])
 	terminar_programa();
 	
 	liberar_conexion(socket_cliente_kernel);
-	liberar_conexion(socket_cpu_dispatch);
-    	liberar_conexion(socket_cpu_interrupt);
+	liberar_conexion(socket_servidor_dispatch);
+    	liberar_conexion(socket_servidor_interrupt);
 	return EXIT_SUCCESS;
 }
 
