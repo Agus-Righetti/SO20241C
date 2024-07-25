@@ -142,47 +142,58 @@ void* serializar_paquete(t_paquete* paquete, int bytes)
 	return magic;
 }
 
-int crear_conexion(char *ip, char *puerto)
-{
-	struct addrinfo hints;
-	struct addrinfo *server_info;
 
-	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = AF_INET;
-	hints.ai_socktype = SOCK_STREAM;
-	hints.ai_flags = AI_PASSIVE;
+int crear_conexion(char *ip, char *puerto) {
+    struct addrinfo hints;
+    struct addrinfo *server_info;
+    struct addrinfo *p;
+    int socket_cliente;
+    int conexion;
+    int status;
 
-	getaddrinfo(ip, puerto, &hints, &server_info);
+    // Inicializamos la estructura hints
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_INET;       // IPv4
+    hints.ai_socktype = SOCK_STREAM; // TCP
+    hints.ai_flags = 0;              // No usamos flags adicionales
 
-	// creamos el socket del cliente
-	int socket_cliente = socket(server_info->ai_family,
-								server_info->ai_socktype,
-								server_info->ai_protocol);
-
-	//conectamos el socket del cliente con el del servidor
-
-	if (socket_cliente == -1) {
-        perror("Error al crear el socket");
-        freeaddrinfo(server_info);
-        return -1;
-    }
-	
-	int conexion = connect(socket_cliente, server_info->ai_addr, server_info->ai_addrlen);
-	
-
-	if (conexion == -1) {
-        perror("Error al conectar");
-        close(socket_cliente);
-        freeaddrinfo(server_info);
+    // Obtenemos información de la dirección del servidor
+    if ((status = getaddrinfo(ip, puerto, &hints, &server_info)) != 0) {
+        fprintf(stderr, "Error en getaddrinfo: %s\n", gai_strerror(status));
         return -1;
     }
 
+    // Recorremos las direcciones posibles
+    for (p = server_info; p != NULL; p = p->ai_next) {
+        // Creamos el socket del cliente
+        socket_cliente = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
+        if (socket_cliente == -1) {
+            perror("Error al crear el socket");
+            continue; // Intentamos con la siguiente dirección
+        }
+
+        // Conectamos el socket del cliente con el del servidor
+        if (connect(socket_cliente, p->ai_addr, p->ai_addrlen) == -1) {
+            perror("Error al conectar");
+            close(socket_cliente);
+            continue; // Intentamos con la siguiente dirección
+        }
+
+        // Conexión exitosa
+        break;
+    }
+
+    // Liberamos la memoria de la información de la dirección
     freeaddrinfo(server_info);
-    
-	//send_handshake(socket_cliente);
-	return socket_cliente;
-}
 
+    // Verificamos si hemos salido del loop sin éxito
+    if (p == NULL) {
+        fprintf(stderr, "Error: No se pudo conectar a ningún servidor\n");
+        return -1;
+    }
+
+    return socket_cliente;
+}
 void enviar_mensaje(char* mensaje, int socket_cliente)
 {
 	t_paquete* paquete = malloc(sizeof(t_paquete));
