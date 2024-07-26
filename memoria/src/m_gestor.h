@@ -64,5 +64,6 @@ extern int cant_marcos;
 extern pthread_mutex_t mutex_bitmap_marcos;
 extern pthread_mutex_t mutex_espacio_usuario;
 extern sem_t sem_lista_procesos;
+extern sem_t sem_primero;
 
 #endif
