@@ -19,7 +19,9 @@ void iniciar_estructura_para_un_proceso_nuevo(t_buffer* buffer){
 	list_add(lista_procesos_recibidos, proceso_nuevo);
 
 	log_info(log_memoria, "PROCESO CREADO CON ÉXITO");
+	sem_post(&sem_primero);
     sem_post(&sem_lista_procesos);
+	
 
 	// Podriamos mandar un mensaje para chequear que llegó
 }
