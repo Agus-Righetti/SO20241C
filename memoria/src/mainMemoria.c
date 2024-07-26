@@ -48,6 +48,8 @@ int main(int argc, char* argv[]) {
     pthread_mutex_destroy(&mutex_espacio_usuario);
     
     sem_destroy(&sem_lista_procesos);
+sem_destroy(&sem_primero);
+	
 
     
     
