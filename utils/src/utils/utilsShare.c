@@ -789,7 +789,7 @@ t_list* recibir_lista_del_buffer(t_buffer* buffer, int size_data) {
     memmove(buffer->stream, nuevo_stream, nuevo_size);
     buffer->size = nuevo_size;
 
-    printf("La lista que recibi del buffer tiene %d elementos", list_size(lista));
+    //printf("La lista que recibi del buffer tiene %d elementos", list_size(lista));
     return lista;
 }
 
