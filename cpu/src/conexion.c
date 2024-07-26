@@ -129,7 +129,7 @@ void atender_memoria() {
                 pid = recibir_int_del_buffer(buffer);
                 dir_fisica = recibir_estructura_del_buffer(buffer);
                 valor_escrito = recibir_uint8_del_buffer(buffer);
-mal
+//mal
                 log_info(log_cpu, "PID: %d - Accion: ESCRIBIR - Direccion fisica: [%d - %d] - Valor: %u ", pid, dir_fisica->nro_marco ,dir_fisica->offset, valor_escrito);
                 log_info(log_cpu, "ACCIÓN COMPLETADA: ESCRIBIR %u EN MEMORIA", valor_escrito);
                 
