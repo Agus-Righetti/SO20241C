@@ -10,6 +10,7 @@ int main(int argc, char* argv[]) {
     paginar_memoria();
     pthread_mutex_init(&mutex_bitmap_marcos, NULL);
     pthread_mutex_init(&mutex_espacio_usuario, NULL);
+    pthread_mutex_init(&mutex_lista_procesos, NULL);
 
     // ************ LISTA PROCESOS ************
     sem_init(&sem_lista_procesos, 0, 1);
@@ -46,9 +47,10 @@ int main(int argc, char* argv[]) {
     bitarray_destroy(bitmap_marcos);
     pthread_mutex_destroy(&mutex_bitmap_marcos);
     pthread_mutex_destroy(&mutex_espacio_usuario);
+    pthread_mutex_destroy(&mutex_lista_procesos);
     
     sem_destroy(&sem_lista_procesos);
-sem_destroy(&sem_primero);
+    sem_destroy(&sem_primero);
 	
 
     

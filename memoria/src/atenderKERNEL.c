@@ -15,8 +15,8 @@ void iniciar_estructura_para_un_proceso_nuevo(t_buffer* buffer){
 	// Crear un proceso
 	t_proceso* proceso_nuevo = crear_proceso(pid, path);
 
-	//Agregar a la lista de procesos 
-	list_add(lista_procesos_recibidos, proceso_nuevo);
+	// //Agregar a la lista de procesos 
+	// list_add(lista_procesos_recibidos, proceso_nuevo);
 
 	log_info(log_memoria, "PROCESO CREADO CON ÉXITO");
 	sem_post(&sem_primero);
@@ -35,13 +35,22 @@ t_proceso* crear_proceso(int pid, char* path_instruc){
 	proceso_nuevo->instrucciones = NULL;
     proceso_nuevo->tabla_paginas = list_create();
     proceso_nuevo->tam_usado_ult_pag = 0;
+    sem_init(&proceso_nuevo->sem_instrucciones, 0, 0);
 
     log_info(log_memoria, "PID: <%d> - Tamaño: <%d>", proceso_nuevo->pid, list_size(proceso_nuevo->tabla_paginas));
-    
-	// Cargo instrucciones
-	proceso_nuevo->instrucciones = leer_archivo_y_cargar_instrucciones(proceso_nuevo->path);
+    //Agregar a la lista de procesos 
 
-	return proceso_nuevo;
+    pthread_mutex_lock(&mutex_lista_procesos);
+	list_add(lista_procesos_recibidos, proceso_nuevo);
+    pthread_mutex_unlock(&mutex_lista_procesos);
+
+    t_proceso* mi_proceso = obtener_proceso_por_id(pid);
+	// Cargo instrucciones -> aca tengo que sacar el proceso de la lista y volverlo a poner
+    
+	mi_proceso->instrucciones = leer_archivo_y_cargar_instrucciones(mi_proceso->path);
+    sem_post(&mi_proceso->sem_instrucciones);
+
+	return mi_proceso;
 }
 //********** LEE EL ARCHIVO Y CARGA LAS INSTRUCCIONES EN UNA LISTA (LAS INSTRUCCIONES LAS DEJA DEL TIPO "t_instruccion_codigo")
 t_list* leer_archivo_y_cargar_instrucciones(char* archivo_pseudocodigo) {

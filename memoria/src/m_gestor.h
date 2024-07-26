@@ -22,6 +22,7 @@ typedef struct{
 	t_list* instrucciones;
     t_list* tabla_paginas;
     int tam_usado_ult_pag;
+    sem_t sem_instrucciones;
 } t_proceso;
 
 // ************ ESTRUCTURA DE UNA INSTRUCCION *******
@@ -65,5 +66,6 @@ extern pthread_mutex_t mutex_bitmap_marcos;
 extern pthread_mutex_t mutex_espacio_usuario;
 extern sem_t sem_lista_procesos;
 extern sem_t sem_primero;
+extern pthread_mutex_t mutex_lista_procesos;
 
 #endif

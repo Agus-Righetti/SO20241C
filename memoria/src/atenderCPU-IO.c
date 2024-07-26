@@ -7,47 +7,47 @@
 void cpu_pide_instruccion(t_buffer* un_buffer){        //[PID, IP]
 	
 	int pid = recibir_int_del_buffer(un_buffer);
-	//cambie este, ya no es int es uint32
 	uint32_t ip = recibir_uint32_del_buffer(un_buffer);
 
-	//log_info(log_memoria, "estoy antes del semaforo");
 	sem_wait(&sem_primero);
 	sem_wait(&sem_lista_procesos);
+
     //tengo que obtener proceso buscando con los PID
     t_proceso* un_proceso = obtener_proceso_por_id(pid);
+	sem_wait(&un_proceso->sem_instrucciones);
 
 	//Obtener Instruccion especifica
-	
-	// VER SEGMENTATION FAULT
  	char* instruccion = obtener_instruccion_por_indice(un_proceso->instrucciones, ip);
     
-	//log_info(log_memoria, "La instruccion obtenida en memoria es: %s", instruccion);
-
 	//Enviar_instruccion a CPU
 	enviar_una_instruccion_a_cpu(instruccion);
+	sem_post(&un_proceso->sem_instrucciones);
 	log_info(log_memoria, "Proceso: <<%d>> - Instruccion: <<%s>> enviada a CPU con exito", pid, instruccion);
 	sem_post(&sem_lista_procesos);
 	sem_post(&sem_primero);
-	
-    //log_info(log_memoria, "Instruccion enviada a CPU");
+
 }
 
 t_proceso* obtener_proceso_por_id(int pid){
 	int i = 0;
+	pthread_mutex_lock(&mutex_lista_procesos);
 
 	while(i < list_size(lista_procesos_recibidos)){
-		
+
 		if(comparar_pid(pid, list_get(lista_procesos_recibidos, i)) == 1){
 
 
 			t_proceso* proceso = list_get(lista_procesos_recibidos, i);
 			//log_info(log_memoria, "PID por buscar: %d. Proceso: %d", pid, proceso->pid);
 			// return lista_procesos_recibidos[i];
+			pthread_mutex_unlock(&mutex_lista_procesos);
 			return proceso;
 		}
 
 		i ++;
 	}
+
+	pthread_mutex_unlock(&mutex_lista_procesos);
 
 	log_error(log_memoria, "ERROR: Proceso %d no encontrado", pid);
 
@@ -417,12 +417,12 @@ void io_pide_lectura(int socket, int pid, int tamanio, t_list* direcciones_fisic
 	// direcciones_fisicas = recibir_lista_del_buffer(un_buffer, sizeof(t_direccion_fisica));
 	// tamanio = recibir_int_del_buffer(un_buffer);
 	
-	t_direccion_fisica* dir_fisica;
-    for(int i = 0; i<list_size(direcciones_fisicas); i++)
-    {
-        dir_fisica = list_get(direcciones_fisicas, i);
-        //log_info(log_memoria, "el maeco nro %d es : %d", i,dir_fisica->nro_marco);
-    }
+	// t_direccion_fisica* dir_fisica;
+    // for(int i = 0; i<list_size(direcciones_fisicas); i++)
+    // {
+    //     dir_fisica = list_get(direcciones_fisicas, i);
+    //     //log_info(log_memoria, "el maeco nro %d es : %d", i,dir_fisica->nro_marco);
+    // }
 
 	if(direcciones_fisicas == NULL){
         log_error(log_memoria, "Direcciones_fisicas es null");
@@ -434,12 +434,12 @@ void io_pide_lectura(int socket, int pid, int tamanio, t_list* direcciones_fisic
 
 void io_pide_escritura(int socket, int pid, int tamanio, char* valor, t_list* direcciones_fisicas){
 
-	t_direccion_fisica* dir_fisica;
-    for(int i = 0; i<list_size(direcciones_fisicas); i++)
-    {
-        dir_fisica = list_get(direcciones_fisicas, i);
-        //log_info(log_memoria, "el maeco nro %d es : %d", i,dir_fisica->nro_marco);
-    }
+	// t_direccion_fisica* dir_fisica;
+    // for(int i = 0; i<list_size(direcciones_fisicas); i++)
+    // {
+    //     dir_fisica = list_get(direcciones_fisicas, i);
+    //     //log_info(log_memoria, "el maeco nro %d es : %d", i,dir_fisica->nro_marco);
+    // }
 
 	if(direcciones_fisicas == NULL){
         log_error(log_memoria, "Direcciones_fisicas es null");

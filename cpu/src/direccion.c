@@ -94,7 +94,7 @@ void actualizar_tlb(TLB_Entrada* nueva_entrada)
         } 
         else 
         {
-            log_error(log_cpu, "Algoritmo de reemplazo de TLB no soportado: %d", algoritmo_tlb);
+            log_error(log_cpu, "Algoritmo de reemplazo de TLB no soportado: %s", algoritmo_tlb);
         }
     }
     

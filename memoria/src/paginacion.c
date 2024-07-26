@@ -259,8 +259,6 @@ void enviar_lectura_ult_4B_a_cpu(int pid, t_direccion_fisica *dir_actual, uint32
 
 void guardar_uint32_en_memoria(int pid, t_list *direcciones_fisicas, uint32_t valor)
 {
-    // Creo un puntero al dato por guardar, para poder operar
-    void *valor_puntero = &valor;
 
     int cantidad_marcos_por_guardar = list_size(direcciones_fisicas);
 
@@ -310,7 +308,7 @@ void guardar_uint32_en_memoria(int pid, t_list *direcciones_fisicas, uint32_t va
         log_info(log_memoria, "EScribi en la 1 %u ", parte1);
 
         enviar_ok_4B_escritura_cpu(pid, dir_actual, valor);
-        int bytes_ya_operados = dir_actual->bytes_a_operar;
+        //int bytes_ya_operados = dir_actual->bytes_a_operar;
 
         dir_actual = list_get(direcciones_fisicas, 1);
         despl_esp_usuario = dir_actual->nro_marco * config_memoria->tam_pagina + dir_actual->offset;
@@ -329,43 +327,6 @@ void guardar_uint32_en_memoria(int pid, t_list *direcciones_fisicas, uint32_t va
     {
         log_info(log_memoria, "VICKY NO CONTEMPLO ESTE CASO ");
         log_info(log_memoria, "MATAME ");
-
-        //                  ---------------------------------------   ANTES ------------------------------------------------
-        //     int bytes_ya_operados = 0;
-        //     //uint32_t valor_escrito ;
-
-        //     // Tengo que particionar el dato y guardarlo
-        //    while (cantidad_marcos_por_guardar - 1 > indice_dir){
-        //         dir_actual = list_get(direcciones_fisicas, indice_dir);
-
-        //         pthread_mutex_lock(&mutex_espacio_usuario);
-        //         memcpy(espacio_usuario + despl_esp_usuario, valor_puntero + bytes_ya_operados, dir_actual->bytes_a_operar);
-        //         //memcpy(espacio_usuario + despl_esp_usuario, (uint32_t*)&valor_escrito + bytes_ya_operados, dir_actual->bytes_a_operar);
-        //         pthread_mutex_unlock(&mutex_espacio_usuario);
-        //         log_info(log_memoria, "PID: %d - Accion: ESCRIBIR - Direccion fisica: [%d - %d] - Tamaño %d ", pid, dir_actual->nro_marco ,dir_actual->offset, dir_actual->bytes_a_operar);
-
-        //         log_info(log_memoria, "VAlor escrito: %d ", pid, dir_actual->nro_marco ,dir_actual->offset, dir_actual->bytes_a_operar);
-
-        //         enviar_ok_4B_escritura_cpu(pid, dir_actual, (uint32_t)(valor_puntero + bytes_ya_operados));
-
-        //         bytes_ya_operados = bytes_ya_operados + dir_actual->bytes_a_operar;
-        //         indice_dir += 1;
-
-        //     }
-        //     if (cantidad_marcos_por_guardar - 1 == indice_dir){
-        //         dir_actual = list_get(direcciones_fisicas, indice_dir);
-
-        //         // es la ultima escritura
-        //         pthread_mutex_lock(&mutex_espacio_usuario);
-        //         memcpy(espacio_usuario + despl_esp_usuario, valor_puntero + bytes_ya_operados, dir_actual->bytes_a_operar);
-        //         //memcpy(espacio_usuario + despl_esp_usuario, (uint32_t*)&valor_escrito + bytes_ya_operados, dir_actual->bytes_a_operar);
-        //         pthread_mutex_unlock(&mutex_espacio_usuario);
-
-        //         log_info(log_memoria, "PID: %d - Accion: ESCRIBIR - Direccion fisica: [%d - %d] - Tamaño %d ", pid, dir_actual->nro_marco ,dir_actual->offset, dir_actual->bytes_a_operar);
-
-        //         enviar_ult_ok_4B_escritura_cpu(pid, dir_actual,  (uint32_t)(valor_puntero + bytes_ya_operados), valor);
-
-        //     }
     }
 }
 
