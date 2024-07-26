@@ -11,6 +11,7 @@ void cpu_pide_instruccion(t_buffer* un_buffer){        //[PID, IP]
 	uint32_t ip = recibir_uint32_del_buffer(un_buffer);
 
 	//log_info(log_memoria, "estoy antes del semaforo");
+	sem_wait(&sem_primero);
 	sem_wait(&sem_lista_procesos);
     //tengo que obtener proceso buscando con los PID
     t_proceso* un_proceso = obtener_proceso_por_id(pid);
@@ -26,6 +27,7 @@ void cpu_pide_instruccion(t_buffer* un_buffer){        //[PID, IP]
 	enviar_una_instruccion_a_cpu(instruccion);
 	log_info(log_memoria, "Proceso: <<%d>> - Instruccion: <<%s>> enviada a CPU con exito", pid, instruccion);
 	sem_post(&sem_lista_procesos);
+	sem_post(&sem_primero);
 	
     //log_info(log_memoria, "Instruccion enviada a CPU");
 }
