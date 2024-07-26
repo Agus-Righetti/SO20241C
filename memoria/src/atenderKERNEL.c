@@ -50,8 +50,6 @@ void crear_proceso(int pid, char* path_instruc){
 	mi_proceso->instrucciones = leer_archivo_y_cargar_instrucciones(mi_proceso->path);
     sem_post(&mi_proceso->sem_instrucciones);
 
-    free(proceso_nuevo);
-    free(mi_proceso);
 
 }
 //********** LEE EL ARCHIVO Y CARGA LAS INSTRUCCIONES EN UNA LISTA (LAS INSTRUCCIONES LAS DEJA DEL TIPO "t_instruccion_codigo")
