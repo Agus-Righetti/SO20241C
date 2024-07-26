@@ -68,6 +68,32 @@ int main(int argc, char* argv[])
 
     // ************* Esto es para funcionar como cliente con el CPU *************
     conexion_kernel_cpu = conexion_a_cpu(log_kernel, config_kernel);
+
+    int handy = recibir_operacion(conexion_kernel_cpu);
+        switch (handy) {
+
+            case HAND:
+                log_info(log_kernel, "CONEXION DISPATCH CREADA");
+                t_buffer* buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu);
+                sem_post(&sem_puertos);
+
+                free(buffer);
+                break;
+
+ 
+            case -1:
+                log_error(log_kernel, "CPU se desconecto.");
+            
+                break;
+
+            default:
+                log_warning(log_kernel,"Operacion desconocida. No quieras meter la pata");
+                break;
+        }
+    
+
+
+
     interrupcion_kernel_cpu = interrupcion_a_cpu(log_kernel, config_kernel);
 
     // ************* Esto es para funcionar como cliente con la Memoria *************

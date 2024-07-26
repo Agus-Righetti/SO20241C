@@ -10,8 +10,6 @@ int conexion_a_cpu(t_log* log_kernel, kernel_config* config_kernel){
     }
     log_info(log_kernel , "Conexión con el servidor CPU creada con éxito");
     enviar_mensaje("Hola CPU, soy Kernel",conexion_kernel_cpu);
-    
-    sem_post(&sem_puertos);
 
     return conexion_kernel_cpu;
 }

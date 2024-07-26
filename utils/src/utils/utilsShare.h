@@ -48,6 +48,8 @@ typedef enum {
 	DIRECCION_FISICA,
 	DEVOLVER_TRADUCCION,
 
+	HAND,
+
 	// Instruccioniones de I/O
 	IO_GEN_SLEEP, 
 	IO_STDIN_READ,

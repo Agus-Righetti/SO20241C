@@ -14,6 +14,10 @@ void server_para_kernel() // Atiendo al cliente
 	log_info(log_cpu, "Esperando a KERNEL...");
 
     socket_cliente_kernel = esperar_cliente(socket_servidor_dispatch, log_cpu);
+    
+    t_paquete paquete = crear_paquete_personalizado(HAND);
+    enviar_paquete(paquete, socket_cliente_kernel);
+    eliminar_paquete(paquete);
 }
 
 // Server para recibir interrupciones de Kernel ---------------------------------------------------------------------------------------
