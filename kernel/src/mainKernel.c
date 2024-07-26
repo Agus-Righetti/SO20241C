@@ -43,6 +43,8 @@ int main(int argc, char* argv[])
     sem_init(&sem_planificacion_activa,0,1);
     sem_init(&sem_hay_algo_en_ready,0,0); 
 
+    sem_init(&sem_puertos, 0,0);
+
 
 
     // ************* Creo el log y el config del kernel para uso general *************

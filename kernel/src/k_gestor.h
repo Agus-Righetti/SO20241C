@@ -65,6 +65,8 @@ extern sem_t sem_cola_prioridad_vrr;
 extern sem_t sem_planificacion_activa;
 extern sem_t sem_hay_algo_en_ready;
 
+extern sem_t sem_puertos;
+
 extern t_queue **colas_por_recurso;
 extern pthread_mutex_t **mutex_por_recurso;
 
