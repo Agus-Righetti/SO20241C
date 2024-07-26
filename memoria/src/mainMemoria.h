@@ -35,5 +35,6 @@ int cant_marcos;
 pthread_mutex_t mutex_bitmap_marcos;
 pthread_mutex_t mutex_espacio_usuario;
 sem_t sem_lista_procesos;
+sem_t sem_primero;
 
 #endif
