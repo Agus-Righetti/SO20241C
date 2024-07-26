@@ -54,7 +54,6 @@ void server_para_kernel() {
 
 // ********* SERVER PARA RECIBIR A I/O *********  
 void server_para_io() {
-    log_info(log_memoria, "Esperando a I/O...");
     int socket_io;
     t_buffer* buffer;
 
@@ -125,7 +124,6 @@ void escucha_interfaz(void* arg) //es un hilo porque asi puedo escuchar a varias
             
             case IO_PIDE_LECTURA_MEMORIA:
                 
-                log_info(log_memoria, "IO me pide la lectura de un espacio de memoria");
                 buffer = recibiendo_paquete_personalizado(socket);
                 pid = recibir_int_del_buffer(buffer);
 	            tamanio = recibir_int_del_buffer(buffer);
@@ -141,7 +139,6 @@ void escucha_interfaz(void* arg) //es un hilo porque asi puedo escuchar a varias
 
             case IO_PIDE_ESCRITURA_MEMORIA:
                 
-                log_info(log_memoria, "IO me pide la escritura de un espacio de memoria");
                 buffer = recibiendo_paquete_personalizado(socket);
 
                 pid = recibir_int_del_buffer(buffer);
@@ -155,7 +152,6 @@ void escucha_interfaz(void* arg) //es un hilo porque asi puedo escuchar a varias
                 for(int i = 0; i < list_size(direcciones_fisicas); i++)
                 {
                     dir = list_get(direcciones_fisicas, i);
-                    log_info(log_memoria, "marco q recibi de io %d", dir->nro_marco);
                     //free(dir);
                 }
                 usleep(config_memoria->retardo_respuesta *1000);

@@ -73,13 +73,10 @@ int main(int argc, char* argv[])
         switch (handy) {
 
             case HAND:
-                log_info(log_kernel, "CONEXION DISPATCH CREADA");
                 t_buffer* buffer = recibiendo_paquete_personalizado(conexion_kernel_cpu);
                 sem_post(&sem_puertos);
-
                 free(buffer);
                 break;
-
  
             case -1:
                 log_error(log_kernel, "CPU se desconecto.");
@@ -100,13 +97,11 @@ int main(int argc, char* argv[])
     conexion_kernel_memoria = conexion_a_memoria(log_kernel, config_kernel);
     // ************* Esto es para funcionar como servidor para el I/O *************
     
-    log_info(log_kernel, "Estoy justo antes de server_para_io");
     pthread_t thread_escucha_conexion_io = hilo_io();
     
     //server_para_io(config_kernel, log_kernel);
 
     //************* HILO CONSOLA *************
-    log_info(log_kernel, "Estoy por crear el hilo consola");
     pthread_t thread_consola = hilo_consola ();
 
     //*************HILO GESTOR DE LOS PROCESOS A ENVIAR A CPU*************

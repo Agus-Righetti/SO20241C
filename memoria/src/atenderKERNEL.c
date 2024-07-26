@@ -95,7 +95,7 @@ t_list* leer_archivo_y_cargar_instrucciones(char* archivo_pseudocodigo) {
     	}
     	//-----------------------------------------------
         char** l_instrucciones = string_split(linea_instruccion, " ");
-        log_info(log_memoria, "Instruccion: [%s]", linea_instruccion);
+        //log_info(log_memoria, "Instruccion: [%s]", linea_instruccion);
         while (l_instrucciones[i]) {
         	i++;
         }

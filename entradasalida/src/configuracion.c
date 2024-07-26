@@ -35,22 +35,18 @@ io_config* armar_config(t_log* log_io, char* nombre_config)
     switch (obtener_tipo_interfaz(tipo_interfaz))
     {
         case GENERICA:
-
-            log_info(log_io, "soy generica");
             aux_io_config->tiempo_unidad_trabajo = config_get_int_value(config_aux, "TIEMPO_UNIDAD_TRABAJO");
             break;
             
         case STDIN:
         case STDOUT:
             
-            log_info(log_io, "soy STDIN o STDOUT");
             aux_io_config->ip_memoria = strdup(config_get_string_value(config_aux, "IP_MEMORIA"));
             aux_io_config->puerto_memoria = strdup(config_get_string_value(config_aux, "PUERTO_MEMORIA"));
             break; // Con este break STDIN tambien recibe lo de STDOUT
 
         case DIALFS:
 
-            log_info(log_io, "soy DIALFS");
             aux_io_config->ip_memoria = strdup(config_get_string_value(config_aux, "IP_MEMORIA"));
             aux_io_config->puerto_memoria = strdup(config_get_string_value(config_aux, "PUERTO_MEMORIA"));
             aux_io_config->tiempo_unidad_trabajo = config_get_int_value(config_aux, "TIEMPO_UNIDAD_TRABAJO");
@@ -60,8 +56,6 @@ io_config* armar_config(t_log* log_io, char* nombre_config)
             aux_io_config->retraso_compactacion = config_get_int_value(config_aux, "RETRASO_COMPACTACION");
             bitarray_size = (aux_io_config->block_count + 7) / 8;
             
-            log_info(log_io, "El block size es: %d", aux_io_config->block_size);
-            log_info(log_io, "El block count es: %d", aux_io_config->block_count);
             
             
             break;

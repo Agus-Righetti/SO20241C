@@ -812,7 +812,6 @@ void recibir_pcb(pcb* proceso) {
 
                 nombre_archivo = recibir_string_del_buffer(buffer);
 
-                log_info(log_kernel, "Recibí nombre_archivo: <%s>", nombre_archivo);
 
                 actualizar_pcb(proceso, pcb_recibido);
 
@@ -952,7 +951,6 @@ void algoritmo_round_robin (void* arg){
     // La interrupcion y otro que siemp este esperando a q cpu le mande el pcb
     thread_args_procesos_kernel*args = (thread_args_procesos_kernel*)arg;
     pcb* proceso_actual = args->proceso;
-    //log_info(log_kernel, "estoy en algoritmo round robin por hacer el sleep");
     usleep((proceso_actual->quantum)*1000); // Acá usamos el quantum del proceso, asi podemos reutilziar la funcion para VRR
     //if(!interrupcion_por_fin_de_proceso){ // Si no tengo que finalizar el proceso por pedido de usuario
 
@@ -1230,7 +1228,6 @@ void sacar_de_execute(int pid){
     //Si un proceso esta en execute hay que mandar la interrupcion para que cpu devuelva el proceso
     // Busco el proceso para mandarselo a desalojar proceso
 
-    log_info(log_kernel, "estoy en sacar de execute");
 
     //interrupcion_por_fin_de_proceso = true;
 

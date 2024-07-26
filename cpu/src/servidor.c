@@ -31,6 +31,5 @@ void interrupcion_para_kernel()
         exit(1);
     }
 
-	log_info(log_cpu, "CPU listo para recibir interrupcion de Kernel");
     socket_interrupt_kernel = esperar_cliente(socket_servidor_interrupt, log_cpu);
 }

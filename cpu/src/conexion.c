@@ -50,15 +50,12 @@ void atender_memoria() {
                 // free(buffer->stream);
                 free(buffer);
                 enviar_pcb(socket_cliente_kernel, args);
-                
-            
-                
+                                
                 break;
 
             case CPU_RECIBE_NUMERO_DE_MARCO_DE_MEMORIA:
                 buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
                 marco = recibir_int_del_buffer(buffer);
-                //log_info(log_cpu, "me llego el marco: ,%d", marco);
                 
                 sem_post(&sem_tengo_el_marco);
             
@@ -117,8 +114,7 @@ void atender_memoria() {
                 valor_reconstruido = recibir_uint32_del_buffer(buffer);
                 log_info(log_cpu, "PID: %d - Accion: LEER - Direccion fisica: [%d - %d] - Valor: %u ", pid, dir_fisica->nro_marco ,dir_fisica->offset, valor_leido_de_memoria_32);
                 log_info(log_cpu, "ACCIÓN COMPLETADA: LEER %u EN MEMORIA", valor_reconstruido);
-                // control = 1;
-                //free(buffer->stream);
+
                 
                 free(buffer);
 
@@ -133,7 +129,7 @@ void atender_memoria() {
                 pid = recibir_int_del_buffer(buffer);
                 dir_fisica = recibir_estructura_del_buffer(buffer);
                 valor_escrito = recibir_uint8_del_buffer(buffer);
-
+mal
                 log_info(log_cpu, "PID: %d - Accion: ESCRIBIR - Direccion fisica: [%d - %d] - Valor: %u ", pid, dir_fisica->nro_marco ,dir_fisica->offset, valor_escrito);
                 log_info(log_cpu, "ACCIÓN COMPLETADA: ESCRIBIR %u EN MEMORIA", valor_escrito);
                 
@@ -148,6 +144,7 @@ void atender_memoria() {
                 buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
                 pid = recibir_int_del_buffer(buffer);
                 dir_fisica = recibir_estructura_del_buffer(buffer);
+        
                 valor_escrito = recibir_uint32_del_buffer(buffer);
                 log_info(log_cpu, "PID: %d - Accion: ESCRIBIR - Direccion fisica: [%d - %d] - Valor: %u ", pid, dir_fisica->nro_marco ,dir_fisica->offset, valor_escrito);
                 
@@ -165,7 +162,7 @@ void atender_memoria() {
                 valor_completo = recibir_uint32_del_buffer(buffer);
                 log_info(log_cpu, "PID: %d - Accion: ESCRIBIR - Direccion fisica: [%d - %d] - Valor: %u ", pid, dir_fisica->nro_marco ,dir_fisica->offset, valor_escrito);
                 log_info(log_cpu, "ACCIÓN COMPLETADA: ESCRIBIR %u EN MEMORIA", valor_completo);
-                //control = 1;
+        
                 free(buffer);
 
                 sem_post(&sem_ok_escritura);
@@ -258,7 +255,6 @@ void atender_kernel()
                 break;
 
             case PCB_KERNEL_A_CPU: // Execute
-                log_info(log_cpu, "Kernel me envio un PCB");
                 recibir_pcb();
                 break;
 

@@ -16,7 +16,6 @@ void atender_cpu(){
         switch (cod_op_cpu) {
 
             case CPU_PIDE_INSTRUCCION_A_MEMORIA:
-                log_info(log_memoria, "CPU me pide una instruccion");
                 usleep(config_memoria->retardo_respuesta *1000);
     
                 buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
@@ -26,7 +25,6 @@ void atender_cpu(){
 
             case CPU_PIDE_GUARDAR_REGISTRO_1B:
         
-                log_info(log_memoria, "CPU me pide guardar un byte en memoria");
                 usleep(config_memoria->retardo_respuesta *1000);
                 buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
                 pid = recibir_int_del_buffer(buffer);
@@ -38,7 +36,6 @@ void atender_cpu(){
                 break;
 
             case CPU_PIDE_GUARDAR_REGISTRO_4B:
-                log_info(log_memoria, "CPU me pide guardar cuatro bytes en memoria");
                 usleep(config_memoria->retardo_respuesta *1000);
                 
                 buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);                
@@ -57,7 +54,6 @@ void atender_cpu(){
 
             case CPU_PIDE_LEER_REGISTRO_1B:
                 
-                log_info(log_memoria, "CPU me pide leer un byte en memoria");
                 usleep(config_memoria->retardo_respuesta *1000);
                 buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
             
@@ -75,7 +71,6 @@ void atender_cpu(){
                 break;
 
             case CPU_PIDE_LEER_REGISTRO_4B:
-                log_info(log_memoria, "CPU me pide leer cuatro bytes en memoria");
                 usleep(config_memoria->retardo_respuesta *1000);
                 buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
 
@@ -94,7 +89,6 @@ void atender_cpu(){
 
             case CPU_PIDE_MARCO_A_MEMORIA:
             // ME DAN UNA PAG RESPONDO NUMERO DE MARCO
-                log_info(log_memoria, "CPU consulta un marco segun una pagina");
                 buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
                 usleep(config_memoria->retardo_respuesta *1000);
 				cpu_pide_numero_de_marco(buffer);
@@ -102,7 +96,6 @@ void atender_cpu(){
                 break;
 
             case CPU_MANDA_RESIZE_A_MEMORIA: 
-                log_info(log_memoria, "CPU me pide un resize de un proceso");
                 buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
                 usleep(config_memoria->retardo_respuesta *1000);
                 cpu_pide_resize(buffer); 
@@ -110,7 +103,6 @@ void atender_cpu(){
                 break; 
 
             case CPU_PIDE_LEER_STRING:
-                log_info(log_memoria, "CPU me pide leer un string");
                 buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
                 usleep(config_memoria->retardo_respuesta *1000);
                 
@@ -120,7 +112,6 @@ void atender_cpu(){
                 
 
             case CPU_PIDE_GUARDAR_STRING:
-                log_info(log_memoria, "CPU me pide guardar un string");
                 buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
                 usleep(config_memoria->retardo_respuesta *1000);
                 cpu_pide_guardar_string(buffer); 
@@ -149,7 +140,6 @@ void atender_kernel(){
         cod_op_kernel = recibir_operacion(socket_cliente_kernel);
         switch (cod_op_kernel) {
             case CREACION_PROCESO_KERNEL_A_MEMORIA:
-                log_info(log_memoria, "Kernel pide creacion de un nuevo proceso");
                 buffer = recibiendo_paquete_personalizado(socket_cliente_kernel);
                 usleep(config_memoria->retardo_respuesta *1000);
 				iniciar_estructura_para_un_proceso_nuevo(buffer);
@@ -157,7 +147,6 @@ void atender_kernel(){
                 break;
 
             case FINALIZAR_PROCESO_KERNEL_A_MEMORIA:
-                log_info(log_memoria, "Kernel quiere finalizar un proceso");
                 buffer = recibiendo_paquete_personalizado(socket_cliente_kernel);
                 usleep(config_memoria->retardo_respuesta *1000);
 				liberar_memoria_proceso(buffer);

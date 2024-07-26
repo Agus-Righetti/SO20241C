@@ -32,7 +32,6 @@ void agregar_pag_a_tabla(t_proceso *proceso, t_pagina *pagina)
 
     list_add(proceso->tabla_paginas, pagina);
 
-    //log_info(log_memoria, "Agregue una pagina a la tabla: %d", list_size(proceso->tabla_paginas));
 }
 
 bool hay_lugar_en_memoria(int paginasNecesarias)
@@ -129,7 +128,7 @@ void leer_uint8_en_memoria(int pid, t_list *direcciones_fisicas)
     pthread_mutex_unlock(&mutex_espacio_usuario);
 
     log_info(log_memoria, "PID: %d - Accion: LEER - Direccion fisica: [%d - %d] - Tamaño %d ", pid, dir_actual->nro_marco, dir_actual->offset, dir_actual->bytes_a_operar);
-    log_info(log_memoria, "Valor leido: %d ", valor_leido);
+    log_info(log_memoria, "Valor leido: << %u >> ", valor_leido);
 
     enviar_lectura_1B_a_cpu(pid, dir_actual, valor_leido);
 }
@@ -142,8 +141,6 @@ void enviar_lectura_1B_a_cpu(int pid, t_direccion_fisica *dir_actual, uint8_t va
     agregar_int_al_paquete_personalizado(paquete, pid);
     agregar_estructura_al_paquete_personalizado(paquete, dir_actual, sizeof(t_direccion_fisica));
     agregar_uint8_al_paquete_personalizado(paquete, valor);
-
-    log_info(log_memoria, "Enviando lectura a CPU...");
 
     enviar_paquete(paquete, socket_cliente_cpu);
     eliminar_paquete(paquete);
@@ -178,6 +175,7 @@ void leer_uint32_en_memoria(int pid, t_list *direcciones_fisicas)
         pthread_mutex_unlock(&mutex_espacio_usuario);
 
         log_info(log_memoria, "PID: %d - Accion: LEER - Direccion fisica: [%d - %d] - Tamaño %d ", pid, dir_actual->nro_marco, dir_actual->offset, dir_actual->bytes_a_operar);
+        log_info(log_memoria, "Valor leido: << %u >> ", valor_leido);
 
         enviar_lectura_ult_4B_a_cpu(pid, dir_actual, valor_leido, valor_leido);
     }
@@ -191,28 +189,29 @@ void leer_uint32_en_memoria(int pid, t_list *direcciones_fisicas)
         memcpy(&parte1, espacio_usuario + despl_esp_usuario, 2);
         pthread_mutex_unlock(&mutex_espacio_usuario);
 
-        //log_info(log_memoria, "DEsplazamiento usuario 1 %d ", despl_esp_usuario);
         log_info(log_memoria, "PID: %d - Accion: LEER - Direccion fisica: [%d - %d] - Tamaño %d ", pid, dir_actual->nro_marco, dir_actual->offset, dir_actual->bytes_a_operar);
-        log_info(log_memoria, "VAlor leido parte 1 %u ", parte1);
+        log_info(log_memoria, "Valor leido: << %u >> ", parte1);
+
 
         enviar_lectura_4B_a_cpu(pid, dir_actual, (uint32_t)parte1);
 
         dir_actual = list_get(direcciones_fisicas, 1);
 
         despl_esp_usuario = dir_actual->nro_marco * config_memoria->tam_pagina + dir_actual->offset;
-        //log_info(log_memoria, "DEsplazamiento usuario 2 %d ", despl_esp_usuario);
 
         pthread_mutex_lock(&mutex_espacio_usuario);
         memcpy(&parte2, espacio_usuario + despl_esp_usuario, sizeof(uint16_t));
         pthread_mutex_unlock(&mutex_espacio_usuario);
 
         log_info(log_memoria, "PID: %d - Accion: LEER - Direccion fisica: [%d - %d] - Tamaño %d ", pid, dir_actual->nro_marco, dir_actual->offset, dir_actual->bytes_a_operar);
-        log_info(log_memoria, "VAlor leido parte 2 %u ", parte2);
+        log_info(log_memoria, "Valor leido: << %u >> ", parte2);
+
 
         // Reconstruir el uint32_t combinando las dos partes
         uint32_t valor_reconstruido = ((uint32_t)parte1 << 16) | (uint32_t)parte2;
 
-        //log_info(log_memoria, "VAlor REALLLL %u ", valor_reconstruido);
+        log_info(log_memoria, "Valor leido reconstruido: << %u >> ", valor_reconstruido);
+
 
         enviar_lectura_ult_4B_a_cpu(pid, dir_actual, (uint32_t)parte2, valor_reconstruido);
     }
@@ -282,6 +281,7 @@ void guardar_uint32_en_memoria(int pid, t_list *direcciones_fisicas, uint32_t va
         pthread_mutex_unlock(&mutex_espacio_usuario);
 
         log_info(log_memoria, "PID: %d - Accion: ESCRIBIR - Direccion fisica: [%d - %d] - Tamaño %d ", pid, dir_actual->nro_marco, dir_actual->offset, dir_actual->bytes_a_operar);
+        log_info(log_memoria, "Valor escrito: << %u >> ", valor);
 
         // faltaria hacer el caso en el que hay un error y no se manda
         enviar_ult_ok_4B_escritura_cpu(pid, dir_actual, valor, valor);
@@ -289,39 +289,34 @@ void guardar_uint32_en_memoria(int pid, t_list *direcciones_fisicas, uint32_t va
     else if (cantidad_marcos_por_guardar == 2)
     {
         // Significa que tengo que leer de dos marcos distintos
-        //log_info(log_memoria, "REGISTRO: %u", valor);
 
         uint16_t parte1 = (uint16_t)(valor >> 16); // Primeros 16 bits
-        //log_info(log_memoria, "PARTE 1 %u ", parte1);
 
         uint16_t parte2 = (uint16_t)(valor & 0xFFFF); // Últimos 16 bits
-        //log_info(log_memoria, "PARTE 2 %u ", parte2);
 
-        // uint8_t *byte_puntero = (uint8_t*)&valor;
 
         pthread_mutex_lock(&mutex_espacio_usuario);
         memcpy(espacio_usuario + despl_esp_usuario, &parte1, 2);
         pthread_mutex_unlock(&mutex_espacio_usuario);
 
-        //log_info(log_memoria, "Desplazamiento usuario 1 %d ", despl_esp_usuario);
         log_info(log_memoria, "PID: %d - Accion: ESCRIBIR - Direccion fisica: [%d - %d] - Tamaño %d ", pid, dir_actual->nro_marco, dir_actual->offset, dir_actual->bytes_a_operar);
-        log_info(log_memoria, "EScribi en la 1 %u ", parte1);
+        log_info(log_memoria, "Valor escrito: << %u >> ", parte1);
+
 
         enviar_ok_4B_escritura_cpu(pid, dir_actual, valor);
-        //int bytes_ya_operados = dir_actual->bytes_a_operar;
 
         dir_actual = list_get(direcciones_fisicas, 1);
         despl_esp_usuario = dir_actual->nro_marco * config_memoria->tam_pagina + dir_actual->offset;
-        //log_info(log_memoria, "Desplazamiento usuario 2 %d ", despl_esp_usuario);
 
         pthread_mutex_lock(&mutex_espacio_usuario);
         memcpy(espacio_usuario + despl_esp_usuario, &parte2, 2);
         pthread_mutex_unlock(&mutex_espacio_usuario);
 
         log_info(log_memoria, "PID: %d - Accion: ESCRIBIR - Direccion fisica: [%d - %d] - Tamaño %d ", pid, dir_actual->nro_marco, dir_actual->offset, dir_actual->bytes_a_operar);
-        log_info(log_memoria, "EScribi en la 2 %u ", parte2);
+        log_info(log_memoria, "Valor escrito: << %u >> ", parte2);
+        log_info(log_memoria, "Valor escrito completo: << %u >> ", valor);
 
-        enviar_ult_ok_4B_escritura_cpu(pid, dir_actual, valor, valor);
+        enviar_ult_ok_4B_escritura_cpu(pid, dir_actual, (uint32_t)parte2, valor);
     }
     else
     {
@@ -339,7 +334,6 @@ void enviar_ok_4B_escritura_cpu(int pid, t_direccion_fisica *dir_actual, uint32_
     agregar_estructura_al_paquete_personalizado(paquete, dir_actual, sizeof(t_direccion_fisica));
     agregar_uint32_al_paquete_personalizado(paquete, valor);
 
-    // log_info(log_memoria, "Valor escrito: %u", valor);
 
     enviar_paquete(paquete, socket_cliente_cpu);
     eliminar_paquete(paquete);
@@ -355,7 +349,6 @@ void enviar_ult_ok_4B_escritura_cpu(int pid, t_direccion_fisica *dir_actual, uin
     agregar_uint32_al_paquete_personalizado(paquete, valor);
     agregar_uint32_al_paquete_personalizado(paquete, valor_completo);
 
-    // log_info(log_memoria, "Valor escrito: %u", valor);
 
     enviar_paquete(paquete, socket_cliente_cpu);
     eliminar_paquete(paquete);
@@ -363,9 +356,6 @@ void enviar_ult_ok_4B_escritura_cpu(int pid, t_direccion_fisica *dir_actual, uin
 
 void guardar_uint8_en_memoria(int pid, t_list *direcciones_fisicas, uint8_t valor)
 {
-    // podria revisar que este dentro de su espacio -> ver
-
-    //log_info(log_memoria, "Entre a guardar_uint8_en_memoria");
 
     // Creo un puntero al dato por guardar, para poder operar
     void *valor_puntero = &valor;
@@ -434,7 +424,6 @@ void guardar_string_en_memoria(int pid, t_list *direcciones_fisicas, char* valor
     }
     else {
         // Voy a tener que hacer escrituras en mas de un marco
-        log_info(log_memoria, "EStoy en el caso que tengo que escribir en mas de una direc");
 
         int bytes_ya_operados = 0;
 
@@ -454,7 +443,7 @@ void guardar_string_en_memoria(int pid, t_list *direcciones_fisicas, char* valor
             valor_escrito_recien[dir_actual->bytes_a_operar] = '\0'; // Asegurar terminación nula
 
             log_info(log_memoria, "PID: %d - Accion: ESCRIBIR - Direccion fisica: [%d - %d] - Tamaño %d ", pid, dir_actual->nro_marco, dir_actual->offset, dir_actual->bytes_a_operar);
-            log_info(log_memoria, "acabo de escribir %s", valor_escrito_recien);
+            //log_info(log_memoria, "acabo de escribir %s", valor_escrito_recien);
 
         
             enviar_ok_string_escritura_cpu(pid, dir_actual, valor_escrito_recien);
@@ -480,7 +469,7 @@ void guardar_string_en_memoria(int pid, t_list *direcciones_fisicas, char* valor
             valor_escrito_recien[dir_actual->bytes_a_operar] = '\0'; // Asegurar terminación nula
 
             log_info(log_memoria, "PID: %d - Accion: ESCRIBIR - Direccion fisica: [%d - %d] - Tamaño %d ", pid, dir_actual->nro_marco, dir_actual->offset, dir_actual->bytes_a_operar);
-            log_info(log_memoria, "acabo de escribir %s", valor_escrito_recien);
+            //log_info(log_memoria, "acabo de escribir %s", valor_escrito_recien);
 
             enviar_ult_ok_string_escritura_cpu(pid, dir_actual, valor);
         }
@@ -759,7 +748,7 @@ void guardar_string_io_en_memoria(int pid, t_list *direcciones_fisicas, char *va
             valor_escrito_recien[dir_actual->bytes_a_operar] = '\0'; // Asegurar terminación nula
 
             log_info(log_memoria, "PID: %d - Accion: ESCRIBIR - Direccion fisica: [%d - %d] - Tamaño %d ", pid, dir_actual->nro_marco, dir_actual->offset, dir_actual->bytes_a_operar);
-            log_info(log_memoria, "acabo de escribir %s", valor_escrito_recien);
+            //log_info(log_memoria, "acabo de escribir %s", valor_escrito_recien);
 
             // enviar_ok_string_escritura_io(pid, dir_actual, valor_escrito);
             enviar_ult_ok_string_escritura_io(socket);

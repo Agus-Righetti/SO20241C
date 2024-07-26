@@ -30,7 +30,6 @@ void server_para_io(){
 			case NUEVA_INTERFAZ: //pedir que manden esto con el nombre de la interfaz
 
 				buffer = recibiendo_paquete_personalizado(client_io);
-				log_info(log_kernel, "se conecto una nueva interfaz");
 				
 				op_code tipo_interfaz = recibir_int_del_buffer(buffer); //va a decir si es gen, stdin, etc
 				//falta iniciar nombre_interfaz

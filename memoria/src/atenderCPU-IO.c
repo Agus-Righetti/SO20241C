@@ -36,10 +36,7 @@ t_proceso* obtener_proceso_por_id(int pid){
 
 		if(comparar_pid(pid, list_get(lista_procesos_recibidos, i)) == 1){
 
-
 			t_proceso* proceso = list_get(lista_procesos_recibidos, i);
-			//log_info(log_memoria, "PID por buscar: %d. Proceso: %d", pid, proceso->pid);
-			// return lista_procesos_recibidos[i];
 			pthread_mutex_unlock(&mutex_lista_procesos);
 			return proceso;
 		}
@@ -69,12 +66,10 @@ char* obtener_instruccion_por_indice(t_list* instrucciones, uint32_t indice_inst
 
 	if(indice_instruccion >= 0 && indice_instruccion < list_size(instrucciones)){
 		instruccion_actual = list_get(instrucciones, indice_instruccion);
-		log_info(log_memoria, "La instruccion actual es: %s", instruccion_actual);
 		return instruccion_actual;
 	}
 	else{
 		log_error(log_memoria, "Nro de Instruccion <%d> NO VALIDA", indice_instruccion);
-		//exit(EXIT_FAILURE);
 		return NULL;
 	}
 }
@@ -112,7 +107,7 @@ void cpu_pide_numero_de_marco(t_buffer* un_buffer){        // [PID, NUMERO DE PA
 	// Busco el numero de marco
 	int marco = obtener_marco_segun_pagina (pid, nro_pag);
 	if(marco != -1){
-		log_info(log_memoria, "PID: <%d> - Pagina: <%d> - Marco: <%d>\n", pid, nro_pag, marco);
+		log_info(log_memoria, "PID: <%d> - Pagina: <%d> - Marco: <%d>", pid, nro_pag, marco);
 		enviar_marco_consultado_a_cpu(marco);
 	}
 
@@ -121,19 +116,15 @@ void cpu_pide_numero_de_marco(t_buffer* un_buffer){        // [PID, NUMERO DE PA
 int obtener_marco_segun_pagina (int pid, int nro_pag){
 	// Busco el proceso en mi lista de procesos
 	t_proceso* un_proceso = obtener_proceso_por_id(pid);
-
-	// log_info(log_memoria, "Encontre el proceso! es el pid %d", un_proceso->pid);
 	// Si sigue, es porque encontró el proceso
 	// Tengo que buscar en la tabla de páginas del proceso, si la página está
 
 	// 1ero controlo si esta vacia
 	if (list_is_empty(un_proceso->tabla_paginas)){
-		log_info(log_memoria, "La tabla de paginas esta vacia");
-		log_error(log_memoria, "Se intento hacer un mov antes de un rezise");
+		log_error(log_memoria, "La tabla de paginas esta vacia");
+		log_error(log_memoria, "Se intento acceder a un espacio de memoria antes de asignarle un tamaño.");
 	}
 	
-	//log_info(log_memoria, "La tabla de paginas tiene: %d paginas ", list_size(un_proceso->tabla_paginas));
-	//log_info(log_memoria, "Necesito la pagina nro: %d", nro_pag);
 	
 	// 2ndo controlo que el nro de pag sea valido
 	if(nro_pag > list_size(un_proceso->tabla_paginas)){
@@ -143,8 +134,7 @@ int obtener_marco_segun_pagina (int pid, int nro_pag){
 
 
 	t_pagina* una_pagina = list_get(un_proceso->tabla_paginas, nro_pag);
-	
-	//log_info(log_memoria, "Aca -> %d ", una_pagina->frame);
+
 
 	// NO PUEDE HABER PAGE FAULT NO HAY MEMORIA VIRTUAL
 	
@@ -189,16 +179,14 @@ void cpu_pide_resize(t_buffer* un_buffer){          // [PID, TAMAÑO NUEVO] -> [
 			
 			// CASO 2 -> tengo que eliminar paginar
 			int cantidad_pag_a_reducir = ceil ((double)tamanio_a_reducir / (double)config_memoria->tam_pagina);
-			log_info(log_memoria, "Cantidad de paginas a reducir %d", cantidad_pag_a_reducir);
+			log_info(log_memoria, "Cantidad de paginas a eliminar: %d", cantidad_pag_a_reducir);
 
 			int tamanioc = list_size(mi_proceso->tabla_paginas) - 1;
 			while (cantidad_pag_a_reducir > 0){
 				// Empiezo eliminando ultima pag
-				
-				log_info(log_memoria, "EL tamanio de la talba de paginas es: %d", tamanioc);
 
 				t_pagina* pag_a_eliminar = list_remove(mi_proceso->tabla_paginas, tamanioc);
-				log_info(log_memoria, "SAque una pag ");
+
 
 				liberar_marco(pag_a_eliminar->frame);
 
@@ -220,16 +208,10 @@ void cpu_pide_resize(t_buffer* un_buffer){          // [PID, TAMAÑO NUEVO] -> [
 		int tamanio_a_aumentar = tamanio_nuevo - mi_proceso->tamanio;
 
 		// LOG OBLIGATORIO PARA AMPLIACION
-		log_info(log_memoria, "PID: <%d> - Tamaño Actual: <%d> - Tamaño a aumentar: <%d>\n", pid, mi_proceso->tamanio, tamanio_a_aumentar);
+		log_info(log_memoria, "PID: <%d> - Tamaño Actual: <%d> - Tamaño a aumentar: <%d>", pid, mi_proceso->tamanio, tamanio_a_aumentar);
 
 		// Hay dos casos:
 		// CASO 1 -> quiero ampliar pero no llego a agregar una pagina
-
-		// log_info(log_memoria, "tam pagina: %d", config_memoria->tam_pagina);
-		// log_info(log_memoria, "tama usado: %d", mi_proceso->tam_usado_ult_pag);
-		// log_info(log_memoria, "tam a aumentar: %d", tamanio_a_aumentar);
-		
-		// log_info(log_memoria, "La resta da: %d", config_memoria->tam_pagina - mi_proceso->tam_usado_ult_pag);
 		
 		if((config_memoria->tam_pagina - mi_proceso->tam_usado_ult_pag) >= tamanio_a_aumentar){	
 
@@ -255,8 +237,6 @@ void cpu_pide_resize(t_buffer* un_buffer){          // [PID, TAMAÑO NUEVO] -> [
 		} else {
 			// CASO 2 -> tengo que agregar paginas
 			int cantidad_pag_a_aumentar = ceil ((double)tamanio_a_aumentar / (double)config_memoria->tam_pagina);
-			log_info(log_memoria, "Tengo que agregar paginas");
-			log_info(log_memoria, "Agrego:  %d  PAGINAS", cantidad_pag_a_aumentar);
 
 			// Primero verifico que haya lugar en memoria
 			bool lugar = hay_lugar_en_memoria(cantidad_pag_a_aumentar);
@@ -270,7 +250,6 @@ void cpu_pide_resize(t_buffer* un_buffer){          // [PID, TAMAÑO NUEVO] -> [
 				// busco los marcos libres
 				t_list* marcos_libres = buscar_marcos_libres();
 
-				log_info(log_memoria, "Hay lugar disponible");
 				int posicion = 0;
 				while (cantidad_pag_a_aumentar > 0){
 					// Elijo el marco en el que voy a guardar
@@ -295,14 +274,12 @@ void cpu_pide_resize(t_buffer* un_buffer){          // [PID, TAMAÑO NUEVO] -> [
 		}
 	}
 
-	log_info(log_memoria, "Resize terminado");
 
 	return;
 }
 
 void enviar_out_of_memory_a_cpu(){ 
 	t_paquete* paquete = crear_paquete_personalizado(CPU_RECIBE_OUT_OF_MEMORY_DE_MEMORIA);
-	log_info(log_memoria, "Enviando OUT OF MEMORY a CPU");
 
 	enviar_paquete(paquete, socket_cliente_cpu);
 	eliminar_paquete(paquete);

@@ -89,7 +89,6 @@ void enviar_pcb(int conexion, argumentos_cpu* argumentos_a_mandar){
             agregar_string_al_paquete_personalizado(paquete, argumentos_a_mandar->nombre_interfaz);
             agregar_string_al_paquete_personalizado(paquete, argumentos_a_mandar->nombre_archivo);
             agregar_int_al_paquete_personalizado(paquete, argumentos_a_mandar->registro_tamano);
-            log_info(log_cpu, "El tamanio que estoy metiendo al paquete es: %d", argumentos_a_mandar->registro_tamano);
 
             break;
 
@@ -243,7 +242,6 @@ void interpretar_instruccion_de_memoria()
 
         char** parte = string_split(instruccion_recibida, " "); // Divido la instrucción (que es un string) en partes   
 
-        log_info(log_cpu, "La instruccion recibida es: %s", instruccion_recibida);
 
         int instruccion_enum = (int)(intptr_t)dictionary_get(instrucciones, parte[0]); // Acá se obtiene la instrucción (el enum) a partir del diccionario
 
@@ -326,7 +324,6 @@ void instruccion_set(char **parte) {
     log_info(log_cpu, "PID: <%d> - Ejecutando: %s - %s %s", pcb_recibido->pid, parte[0], parte[1], parte[2]);
     //log_info(log_cpu, "esto es pc antes de ejecutar: %u", pcb_recibido->registros->pc);
 
-    log_info(log_cpu, "El valor de EAX antes del SET es: %u", pcb_recibido->registros->eax);
     
     char *registro = parte[1];
     if(es_Registro_de_1B(registro)){
@@ -337,12 +334,9 @@ void instruccion_set(char **parte) {
 
         if (valor_registro == NULL)
         {
-            log_info(log_cpu, "Error: El registro %s no se encontró en el diccionario.", registro);
+            log_error(log_cpu, "Error: El registro %s no se encontró en el diccionario.", registro);
             return;
         }
-        // SEGMENTATION FAULT RECURRENTE
-        //  REVISAR GRUPO, incorporamos otra variable, puede estar solucionado
-        // log_info(log_cpu, "Registro: %s - Valor inicial: %u", registro, valor_registro_imprimir);
 
         if (parte[2] == NULL)
         {
@@ -360,12 +354,12 @@ void instruccion_set(char **parte) {
         uint32_t* valor_registro = dictionary_get(registros, parte[1]);
 
         if (valor_registro == NULL) {
-            log_info(log_cpu, "Error: El registro %s no se encontró en el diccionario.", registro);
+            log_error(log_cpu, "Error: El registro %s no se encontró en el diccionario.", registro);
             return;
         }
 
         if (parte[2] == NULL) {
-            log_info(log_cpu, "Error: parte[2] es NULL.");
+            log_error(log_cpu, "Error: parte[2] es NULL.");
             return;
         }
 
@@ -374,17 +368,13 @@ void instruccion_set(char **parte) {
         log_info(log_cpu, "Registro: <%s> - Valor final: <%u>", registro, (uint32_t)atoi(parte[2]));
     }
     
-    log_info(log_cpu, "El valor de EAX dsps del SET es: %u", pcb_recibido->registros->eax);
 
 	// Aumento el PC
-    //pcb_recibido->program_counter++; 
     pcb_recibido->registros->pc++;
 
-    //log_info(log_cpu, "esto es pc dsp de ejecutar, antes de check interrupt: %u", pcb_recibido->registros->pc);
     
     check_interrupt();
     
-    //log_info(log_cpu, "esto es pc dsp de checkinterrupt: %u", pcb_recibido->registros->pc);
     
     liberar_array_strings(parte);
 
@@ -406,11 +396,9 @@ void instruccion_mov_in(char **parte) {
     char *registro_direccion = parte[2]; // Direccion logica
     int direccion_logica = obtener_valor_registro_segun_nombre(registro_direccion);
     
-    //log_info(log_cpu, "la direccion logica es: %d", direccion_logica);
     
     char *registro_dato = parte[1];
 
-    //log_info(log_cpu, "El registro_dato es %s", registro_dato);
 
     t_list* direcciones_fisicas = malloc(sizeof(t_list));
 
@@ -453,8 +441,6 @@ void instruccion_mov_in(char **parte) {
     
     // Aumento el PC para que lea la proxima instruccion
     //pcb_recibido->program_counter++;
-    int valor_eax = obtener_valor_registro_segun_nombre("EAX");
-    log_info(log_cpu, "El valor del registro EAX: %d", valor_eax);
     
     pcb_recibido->registros->pc++;
 
@@ -472,7 +458,6 @@ void instruccion_mov_out(char **parte) {
 
     // LOG OBLIGATORIO - INSTRUCCIÓN EJECUTADA
     log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s", pcb_recibido->pid, parte[0], parte[1], parte[2]);
-    log_info(log_cpu, "El valor de EAX antes del MOV OUT es: %u", pcb_recibido->registros->eax);
     // Leo el registro de datos
     char *registro_dato = parte[2];
 
@@ -480,18 +465,13 @@ void instruccion_mov_out(char **parte) {
     // ver por que lo tratan como un char
     char *registro_direccion = parte[1]; // Direccion logica
 
-    log_info(log_cpu, "El registro es  %s", registro_direccion);
-    log_info(log_cpu, "EAX es: %d", pcb_recibido->registros->eax);
-
     int direccion_logica = obtener_valor_registro_segun_nombre(registro_direccion);
     
-    log_info(log_cpu, "La direccion logica es: %d", direccion_logica);
     
     t_list* direcciones_fisicas;
 
     if(es_Registro_de_1B(registro_dato))
     {
-        //log_info(log_cpu, "Llegue a la traduccion");
 
         direcciones_fisicas = traducir_dl_a_df_completa(direccion_logica, 1);
         
@@ -508,8 +488,7 @@ void instruccion_mov_out(char **parte) {
     {
         // la escritura sera de 4 bytes
         direcciones_fisicas = traducir_dl_a_df_completa(direccion_logica, 4);
-        int vicky = list_size(direcciones_fisicas);
-        log_info(log_cpu, "Escrituras por hacer -> %d", vicky);
+
 
         t_direccion_fisica* dir1 = list_get(direcciones_fisicas, 0);
        
@@ -527,7 +506,6 @@ void instruccion_mov_out(char **parte) {
 
     log_info(log_cpu, "Esperando que el valor se escriba en memoria...");
 
-    log_info(log_cpu, "El valor de EAX dsp del MOV OUT es: %u", pcb_recibido->registros->eax);
 
     sem_wait(&sem_ok_escritura);
 
@@ -569,7 +547,6 @@ void instruccion_sum(char **parte) {
     char *registro_destino = parte[1];
     char *registro_origen = parte[2];
 
-    log_info(log_cpu, "El valor de EAX antes del sum es: %u", pcb_recibido->registros->eax);
 
     if(es_Registro_de_1B(registro_destino) && es_Registro_de_1B(registro_origen)){
         // Hago la suma de 1B
@@ -590,9 +567,7 @@ void instruccion_sum(char **parte) {
         *puntero_registro_destino = valor_registro_origen + valor_registro_destino;
     }
 
-    log_info(log_cpu, "El valor de EAX dsp del sum es: %u", pcb_recibido->registros->eax);
     
-    //pcb_recibido->program_counter++;
     pcb_recibido->registros->pc++;
 
     liberar_array_strings(parte);
@@ -894,16 +869,13 @@ void instruccion_io_stdin_read(char** parte)
     //     dir_fisica = list_get(direcciones_fisicas, i);
     // }
     
-    log_info(log_cpu, "Estoy por crear los argumentos");
 
     argumentos_cpu* args = malloc(sizeof(argumentos_cpu));
     args->nombre_interfaz = parte[1];
     args->direcciones_fisicas = direcciones_fisicas;
     args->registro_tamano = registro_tamano;
 
-    // log_info(log_cpu, "nombre_interfaz: %s", args->nombre_interfaz);
-    // log_info(log_cpu, "tamaño de direcciones fisicas: %d", list_size(args->direcciones_fisicas));
-    // log_info(log_cpu, "registro_tamano: %d", args->registro_tamano);
+  
 
     pcb_recibido->registros->pc++;
 
@@ -932,19 +904,14 @@ void instruccion_io_stdout_write(char **parte) // ESTE NO LO ENTIENDO PORQUE MAN
     // LOG OBLIGATORIO - INSTRUCCIÓN EJECUTADA
     log_info(log_cpu, "PID: %d - Ejecutando: %s - %s %s %s", pcb_recibido->pid, parte[0], parte[1], parte[2], parte[3]);
   
-    log_info(log_cpu, "Estoy por crear los argumentos");
   
     argumentos_cpu* args = malloc(sizeof(argumentos_cpu));
     args->nombre_interfaz = parte[1];
-    log_info(log_cpu, "EStoy antes de traducir");
     args->direcciones_fisicas = traducir_dl_a_df_completa(direccion_logica , tamanio);
     args->registro_tamano = tamanio;
 
-    // log_info(log_cpu, "nombre_interfaz: %s", args->nombre_interfaz);
-    // log_info(log_cpu, "tamaño de direcciones fisicas: %d", list_size(args->direcciones_fisicas));
-    // log_info(log_cpu, "registro_tamano: %d", args->registro_tamano);
 
-    //pcb_recibido->program_counter++;
+
     pcb_recibido->registros->pc++;
     
     args->proceso = pcb_recibido;
@@ -984,7 +951,6 @@ void instruccion_io_fs_create(char **parte)
     args->proceso = pcb_recibido;
     args->operacion = IO_FS_CREATE;
     
-    log_info(log_cpu, "EStoy antes de mandar el PCB");
     
     enviar_pcb(socket_cliente_kernel, args);
 

@@ -8,7 +8,7 @@ int conexion_a_cpu(t_log* log_kernel, kernel_config* config_kernel){
         log_info(log_kernel , "ERROR: No se pudo establecer la conexión Kernel-CPU");
         exit(1);
     }
-    log_info(log_kernel , "Conexión con el servidor CPU creada con éxito");
+    log_info(log_kernel , "Conexion dispatch creada.");
     enviar_mensaje("Hola CPU, soy Kernel",conexion_kernel_cpu);
 
     return conexion_kernel_cpu;
@@ -23,7 +23,8 @@ int interrupcion_a_cpu(t_log* log_kernel, kernel_config* config_kernel){
         log_info(log_kernel , "ERROR: No se pudo establecer la interrupcion Kernel-CPU");
         exit(1);
     }
-    log_info(log_kernel , "Interrupcion de Kernel a CPU");
+    log_info(log_kernel , "Conexion interrupt creada.");
+    log_info(log_kernel , "Conexión con el servidor CPU creada con éxito");
     enviar_mensaje("Se establecio conexion con CPU a traves del puerto Interrupt",interrupcion_kernel_cpu);
     return interrupcion_kernel_cpu;
 }

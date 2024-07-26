@@ -47,20 +47,20 @@ void manejar_creacion_archivo(char* nombre_archivo, int pid)
     //----------------------------------------------------------------
     //sacar este log
 
-    FILE *file = fopen(path_base, "rb");
+    // FILE *file = fopen(path_base, "rb");
 
 
-    unsigned char byte;
-    while (fread(&byte, sizeof(unsigned char), 1, file) == 1) {
-        for (int i = 7; i >= 0; i--) {
-            printf("%d", (byte >> i) & 1);
-        }
-        printf(" "); // Para separar los bytes
-    }
+    // unsigned char byte;
+    // while (fread(&byte, sizeof(unsigned char), 1, file) == 1) {
+    //     for (int i = 7; i >= 0; i--) {
+    //         printf("%d", (byte >> i) & 1);
+    //     }
+    //     printf(" "); // Para separar los bytes
+    // }
 
-    fclose(file);
+    // fclose(file);
 
-    free(path_base);
+    // free(path_base);
 
     //----------------------------------------------------------------
 
@@ -209,23 +209,23 @@ void manejar_truncado_archivo(char* nombre_archivo, int nuevo_tamanio, int pid)
 
 //----------------------SACAR ESTE LOG-----------------
 
-    char* path_base_log = malloc(strlen(config_io->path_base_dialfs)+ 25);
-    strcpy(path_base_log, config_io->path_base_dialfs);
-    string_append(&path_base_log, "/bitmap.dat");
+    // char* path_base_log = malloc(strlen(config_io->path_base_dialfs)+ 25);
+    // strcpy(path_base_log, config_io->path_base_dialfs);
+    // string_append(&path_base_log, "/bitmap.dat");
     
-    FILE *file = fopen(path_base_log, "rb");
+    // FILE *file = fopen(path_base_log, "rb");
 
-    unsigned char byte;
-    while (fread(&byte, sizeof(unsigned char), 1, file) == 1) {
-        for (int i = 7; i >= 0; i--) {
-            printf("%d", (byte >> i) & 1);
-        }
-        printf(" "); // Para separar los bytes
-    }
+    // unsigned char byte;
+    // while (fread(&byte, sizeof(unsigned char), 1, file) == 1) {
+    //     for (int i = 7; i >= 0; i--) {
+    //         printf("%d", (byte >> i) & 1);
+    //     }
+    //     printf(" "); // Para separar los bytes
+    // }
 
-    fclose(file);
+    // fclose(file);
 
-    free(path_base_log);
+    // free(path_base_log);
 
 //----------------------SACAR ESTE LOG-----------------
 
@@ -364,29 +364,29 @@ void manejar_truncado_archivo(char* nombre_archivo, int nuevo_tamanio, int pid)
                     actualizar_metadata(metadata);
 
 //----------------------------------------------------------------------------------------------
-                    path_base_log = malloc(strlen(config_io->path_base_dialfs)+ 25);
+                    // path_base_log = malloc(strlen(config_io->path_base_dialfs)+ 25);
 
-                    strcpy(path_base_log, config_io->path_base_dialfs);
+                    // strcpy(path_base_log, config_io->path_base_dialfs);
 
-                    string_append(&path_base_log, "/bitmap.dat");
+                    // string_append(&path_base_log, "/bitmap.dat");
 
-                    FILE *file_aux = fopen(path_base_log, "rb");
+                    // FILE *file_aux = fopen(path_base_log, "rb");
 
-                    unsigned char byte_aux;
+                    // unsigned char byte_aux;
 
-                    while (fread(&byte_aux, sizeof(unsigned char), 1, file_aux) == 1) {
-                        for (int i = 7; i >= 0; i--) {
+                    // while (fread(&byte_aux, sizeof(unsigned char), 1, file_aux) == 1) {
+                    //     for (int i = 7; i >= 0; i--) {
                             
-                            printf("%d", (byte_aux >> i) & 1);
+                    //         printf("%d", (byte_aux >> i) & 1);
                                             
-                        }
+                    //     }
 
-                        printf(" "); // Para separar los bytes
+                    //     printf(" "); // Para separar los bytes
 
-                    }
+                    // }
 
-                    fclose(file_aux);
-                    free(path_base_log);
+                    // fclose(file_aux);
+                    // free(path_base_log);
 
             //----------------------------------------------------------------------------------------------
                     
@@ -493,24 +493,24 @@ void manejar_truncado_archivo(char* nombre_archivo, int nuevo_tamanio, int pid)
     bitarray_destroy(bitmap);
 
     //----------------------SACAR-----------------------
-    path_base_log = malloc(strlen(config_io->path_base_dialfs)+ 25);
-    strcpy(path_base_log, config_io->path_base_dialfs);    
-    string_append(&path_base_log, "/bitmap.dat");
+    // path_base_log = malloc(strlen(config_io->path_base_dialfs)+ 25);
+    // strcpy(path_base_log, config_io->path_base_dialfs);    
+    // string_append(&path_base_log, "/bitmap.dat");
 
-    FILE *file_2 = fopen(path_base_log, "rb");
+    // FILE *file_2 = fopen(path_base_log, "rb");
 
 
-    unsigned char byte_2;
-    while (fread(&byte_2, sizeof(unsigned char), 1, file_2) == 1) {
-        for (int i = 7; i >= 0; i--) {
-            printf("%d", (byte_2 >> i) & 1);
-        }
-        printf(" "); // Para separar los bytes
-    }
+    // unsigned char byte_2;
+    // while (fread(&byte_2, sizeof(unsigned char), 1, file_2) == 1) {
+    //     for (int i = 7; i >= 0; i--) {
+    //         printf("%d", (byte_2 >> i) & 1);
+    //     }
+    //     printf(" "); // Para separar los bytes
+    // }
 
-    fclose(file_2);
+    // fclose(file_2);
     
-    free(path_base_log);
+    // free(path_base_log);
 
     //---------------------------------------------
 
@@ -830,7 +830,6 @@ void crear_archivos_gestion_fs()
 
         fclose(bitmap_file);
     }
-    log_info(log_io, "TERMINE LA FUNCION COMPLICADA");
     free(path_base);
     return;
 }
@@ -842,7 +841,7 @@ char* pasar_a_string(int valor)
     {
         snprintf(buffer, 20, "%d", valor);
     } else {
-        log_info(log_io, "ERORRRRR");
+        log_error(log_io, "Error.");
     }
     return buffer;
 }
@@ -877,22 +876,22 @@ void escribir_archivo_con_bitmap(char* bitmap_buffer)
 {
 //-------------------------SACAR----------------
 
-    char* path_base_log = malloc(strlen(config_io->path_base_dialfs)+ 25);
-    strcpy(path_base_log, config_io->path_base_dialfs);
-    string_append(&path_base_log, "/bitmap.dat");
+    // char* path_base_log = malloc(strlen(config_io->path_base_dialfs)+ 25);
+    // strcpy(path_base_log, config_io->path_base_dialfs);
+    // string_append(&path_base_log, "/bitmap.dat");
 
-    FILE *file_2 = fopen(path_base_log, "rb");
+    // FILE *file_2 = fopen(path_base_log, "rb");
 
 
-    unsigned char byte_2;
-    while (fread(&byte_2, sizeof(unsigned char), 1, file_2) == 1) {
-        for (int i = 7; i >= 0; i--) {
-            printf("%d", (byte_2 >> i) & 1);
-        }
-        printf(" "); // Para separar los bytes
-    }
+    // unsigned char byte_2;
+    // while (fread(&byte_2, sizeof(unsigned char), 1, file_2) == 1) {
+    //     for (int i = 7; i >= 0; i--) {
+    //         printf("%d", (byte_2 >> i) & 1);
+    //     }
+    //     printf(" "); // Para separar los bytes
+    // }
 
-    fclose(file_2);
+    // fclose(file_2);
     
 //-----------------------------------------
 
@@ -907,22 +906,21 @@ void escribir_archivo_con_bitmap(char* bitmap_buffer)
 
 //--------------------SACAR---------------------
 
-    log_info(log_io, "ya actualice el bitmap ahora es:");
-    path_base_log = malloc(strlen(config_io->path_base_dialfs)+ 25);
-    strcpy(path_base_log, config_io->path_base_dialfs);
+    // path_base_log = malloc(strlen(config_io->path_base_dialfs)+ 25);
+    // strcpy(path_base_log, config_io->path_base_dialfs);
     
-    FILE *file_3 = fopen(path_base_log, "rb");
+    // FILE *file_3 = fopen(path_base_log, "rb");
 
 
-    unsigned char byte_3;
-    while (fread(&byte_3, sizeof(unsigned char), 1, file_3) == 1) {
-        for (int i = 7; i >= 0; i--) {
-            printf("%d", (byte_3 >> i) & 1);
-        }
-        printf(" "); // Para separar los bytes
-    }
-    fclose(file_3);
-    free(path_base_log);
+    // unsigned char byte_3;
+    // while (fread(&byte_3, sizeof(unsigned char), 1, file_3) == 1) {
+    //     for (int i = 7; i >= 0; i--) {
+    //         printf("%d", (byte_3 >> i) & 1);
+    //     }
+    //     printf(" "); // Para separar los bytes
+    // }
+    // fclose(file_3);
+    // free(path_base_log);
 
 //-----------------------------------------
 
@@ -1071,25 +1069,24 @@ void compactar(int pid)
     t_bitarray* bitmap = bitarray_create_with_mode(buffer_bitmap, bitarray_size, MSB_FIRST);
     
     //--------------------------------__SACAR-----------------------------
-    log_info(log_io, "BITMAP ANTES DE COMPACTAR");
 
-    char* path_base_log = malloc(strlen(config_io->path_base_dialfs)+ 25);
-    strcpy(path_base_log, config_io->path_base_dialfs);
+    // char* path_base_log = malloc(strlen(config_io->path_base_dialfs)+ 25);
+    // strcpy(path_base_log, config_io->path_base_dialfs);
     
-    string_append(&path_base_log, "/bitmap.dat");
+    // string_append(&path_base_log, "/bitmap.dat");
 
-    FILE *file_aux = fopen(path_base_log, "rb");
+    // FILE *file_aux = fopen(path_base_log, "rb");
 
-    unsigned char byte_aux;
-    while (fread(&byte_aux, sizeof(unsigned char), 1, file_aux) == 1) {
-        for (int i = 7; i >= 0; i--) {
-            printf("%d", (byte_aux >> i) & 1);
-        }
-        printf(" "); // Para separar los bytes
-    }
+    // unsigned char byte_aux;
+    // while (fread(&byte_aux, sizeof(unsigned char), 1, file_aux) == 1) {
+    //     for (int i = 7; i >= 0; i--) {
+    //         printf("%d", (byte_aux >> i) & 1);
+    //     }
+    //     printf(" "); // Para separar los bytes
+    // }
 
-    fclose(file_aux);   
-    free(path_base_log); 
+    // fclose(file_aux);   
+    // free(path_base_log); 
     //------------------------------------------------------------------------
     
     int tamanio_maximo_de_bloques_dat = config_io->block_count * config_io->block_size;

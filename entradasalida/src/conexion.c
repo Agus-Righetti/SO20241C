@@ -9,7 +9,6 @@ pthread_t escuchar_memoria()
 
 void atender_kernel()
 {
-    log_info(log_io, "estoy en atender kernel");
     int cod_op_io;
 
     // Recibimos de kernel una operacion de ES
@@ -38,7 +37,6 @@ void atender_kernel()
 
             case IO_STDIN_READ: // (Interfaz, Registro Dirección, Registro Tamaño)
 
-                log_info(log_io, "Estoy en el case IO_STDIN_READ atendiendo a kernel");
 
                 registro_tamanio = recibir_int_del_buffer(buffer);
                 direcciones_fisicas = recibir_lista_del_buffer(buffer, sizeof(t_direccion_fisica));
@@ -47,7 +45,6 @@ void atender_kernel()
                 for(int i = 0; i<list_size(direcciones_fisicas); i++)
                 {
                     dir_fisica = list_get(direcciones_fisicas, i);
-                    log_info(log_io, "el maeco nro %d es : %d", i,dir_fisica->nro_marco);
                 }
                 
                 leer_consola(direcciones_fisicas, registro_tamanio, pid);
@@ -62,33 +59,28 @@ void atender_kernel()
             
             case IO_FS_CREATE: // (Interfaz, Nombre Archivo)
                 
-                log_info(log_io, "Estoy dentro del case de IO_FS_CREATE");
                 
                 nombre_archivo = recibir_string_del_buffer(buffer);
                 manejar_creacion_archivo(nombre_archivo, pid);          
                 break;
                 
             case IO_FS_DELETE: // (Interfaz, Nombre Archivo)
-                log_info(log_io, "Estoy dentro del case de IO_FS_DELETE");
                 nombre_archivo = recibir_string_del_buffer(buffer);
                 manejar_eliminacion_archivo(nombre_archivo, pid);
                 break;
 
             case IO_FS_TRUNCATE: // (Interfaz, Nombre Archivo, Registro Tamaño)
 
-                log_info(log_io, "Estoy dentro del case de IO_FS_TRUNCATE");
                 
                 nombre_archivo = recibir_string_del_buffer(buffer); 
                 registro_tamanio = recibir_int_del_buffer(buffer);
 
-                log_info(log_io, "El nuevo tamaño que estoy por mandar a la funcion de truncate es: %d", registro_tamanio);
 
                 manejar_truncado_archivo(nombre_archivo, registro_tamanio, pid);
                 break;
 
             case IO_FS_WRITE: // (Interfaz, Nombre Archivo, Registro Dirección, Registro Tamaño, Registro Puntero Archivo)
                 
-                log_info(log_io, "Estoy dentro del case de IO_FS_WRITE");
 
                 nombre_archivo = recibir_string_del_buffer(buffer);
                 registro_tamanio = recibir_int_del_buffer(buffer);
@@ -102,7 +94,6 @@ void atender_kernel()
 
             case IO_FS_READ: // (Interfaz, Nombre Archivo, Registro Dirección, Registro Tamaño, Registro Puntero Archivo)
                 
-                log_info(log_io, "Estoy dentro del case de IO_FS_READ");
 
                 nombre_archivo = recibir_string_del_buffer(buffer);
                 registro_tamanio = recibir_int_del_buffer(buffer);

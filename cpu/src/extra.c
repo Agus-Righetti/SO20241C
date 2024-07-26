@@ -38,11 +38,6 @@ t_list* traducir_dl_a_df_completa(int direccion_logica, int bytes_a_operar) {
         numero_pagina = numero_pagina + 1;
         desplazamiento = 0;
         bytes_operar_pag = minimo(bytes_a_operar - bytes_ya_evaluado, tamanio_pagina - desplazamiento);
-        
-        // log_info(log_cpu, "Bytes a operar -> %d", bytes_a_operar);
-        // log_info(log_cpu, "Bytes operados -> %d", bytes_ya_evaluado);
-        // log_info(log_cpu, "Bytes de la pagina a operar -> %d", bytes_operar_pag);
-
         direccion_fisica_traducida = traducir_una_dl_a_df(numero_pagina, desplazamiento, bytes_operar_pag);
         list_add(direcciones_fisicas, direccion_fisica_traducida);
         bytes_ya_evaluado = bytes_ya_evaluado + bytes_operar_pag;
@@ -100,28 +95,22 @@ t_direccion_fisica* traducir_una_dl_a_df(int numero_pagina, int desplazamiento, 
             log_info(log_cpu, "PID: %d - OBTENER MARCO - Página: %d - Marco: %d", pcb_recibido->pid, numero_pagina, marco);
         
 
-            // log_info(log_cpu, "Ya paso el semaforo"); 
-            // log_info(log_cpu, "Me llego un marco de memoria: %d", marco);
             // Agregarlo a la tlb
             TLB_Entrada* nueva_entrada = malloc(sizeof(TLB_Entrada));
             
             
 
-            //log_info("El pcb_recibido->pid es %d", pcb_recibido->pid);
             
 
             
             nueva_entrada->pid = pcb_recibido->pid;
             nueva_entrada->numero_pagina = numero_pagina;
-            //log_info(log_cpu, "marco global es %d", marco);
             
             nueva_entrada->numero_marco = marco;
-            //log_info(log_cpu, "nueva_entrada->pid es %d", nueva_entrada->pid);
 
 
             actualizar_tlb(nueva_entrada); 
             
-            //log_info(log_cpu, "Volvi de actualizar, estoy por poner valores en dir_traducida");
 
             dir_traducida->nro_marco = marco;
             dir_traducida->offset = desplazamiento;

@@ -52,9 +52,11 @@ extern bool flag_interrupcion;          // flag para chequear interrupciones o p
 extern int motivo_interrupcion;
 extern sem_t sem_tengo_el_marco;
 extern int marco;
-extern uint8_t valor_leido_de_memoria_8;  
+extern uint8_t valor_leido_de_memoria_8;
+
 extern uint32_t valor_leido_de_memoria_32;  
 extern uint32_t valor_reconstruido;  
+
 extern char* string_leido;
 extern char* string_leido_reconstruido;
 
