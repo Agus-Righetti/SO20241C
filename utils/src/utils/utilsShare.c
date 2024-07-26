@@ -37,11 +37,23 @@ int iniciar_servidor(char* puerto, t_log* logger)
 	}
 	// Asociamos el socket a un puerto
 	//chequear que no sea -1
-	bind(socket_servidor, servinfo->ai_addr, servinfo->ai_addrlen);
+	if(bind(socket_servidor, servinfo->ai_addr, servinfo->ai_addrlen) == -1)
+	{
+		log_error(logger, "No se pudo hacer correctamente el bind");
+		log_error(logger, "Terminando servidor ...");
+		exit(1);
+	}
+
+	
 
 	// Escuchamos las conexiones entrantes
 	//chequear que no sea -1
-	listen(socket_servidor, SOMAXCONN);
+	if(listen(socket_servidor, SOMAXCONN) == -1)
+	{
+		log_error(logger, "No se pudo hacer correctamente el listen");
+		log_error(logger, "Terminando servidor ...");
+		exit(1);
+	}
 
 	freeaddrinfo(servinfo);
 	log_trace(logger, "Listo para escuchar a mi cliente");
