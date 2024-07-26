@@ -7,7 +7,7 @@
 // *************** DECLARACIÓN DE FUNCIONES **********
 //**************** INICIAR_PROCESO *******************
 void iniciar_estructura_para_un_proceso_nuevo(t_buffer* buffer);
-t_proceso* crear_proceso(int pid, char* path_instruc);
+void crear_proceso(int pid, char* path_instruc);
 t_list* leer_archivo_y_cargar_instrucciones(char* archivo_pseudocodigo); 
 
 //**************** FINALIZAR_PROCESO *******************

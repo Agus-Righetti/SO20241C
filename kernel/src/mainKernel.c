@@ -48,7 +48,7 @@ int main(int argc, char* argv[])
 
 
     // ************* Creo el log y el config del kernel para uso general *************
-    log_kernel = log_create("kernel.log", "Kernel", 1, LOG_LEVEL_DEBUG);
+    log_kernel = log_create("kernel.log", "Kernel", 1, LOG_LEVEL_INFO);
     config_kernel = armar_config(log_kernel, argv[1]);
 
     // ************* creo las colas por recursos con sus mutex *************

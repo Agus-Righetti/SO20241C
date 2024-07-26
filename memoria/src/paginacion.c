@@ -395,7 +395,6 @@ void guardar_uint8_en_memoria(int pid, t_list *direcciones_fisicas, uint8_t valo
 
 void enviar_ok_1B_escritura_cpu(int pid, t_direccion_fisica *dir_actual, uint8_t valor)
 {
-
     t_paquete *paquete = crear_paquete_personalizado(CPU_RECIBE_OK_1B_DE_ESCRITURA);
 
     agregar_int_al_paquete_personalizado(paquete, pid);

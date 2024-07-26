@@ -19,7 +19,7 @@ void ejecutar_instruccion_stdout(t_list* direccion_fisica, int tamanio, int pid)
     sem_wait(&sem_ok_lectura_memoria);
     
     //muestro por pantalla lo que lei de memoria
-    log_info(log_io, valor_a_mostrar);
+    log_info(log_io, "%s", valor_a_mostrar);
 
     avisar_fin_io_a_kernel();
 }

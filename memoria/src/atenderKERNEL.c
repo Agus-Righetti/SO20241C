@@ -13,7 +13,7 @@ void iniciar_estructura_para_un_proceso_nuevo(t_buffer* buffer){
     log_info(log_memoria, "Proceso %d recibido, direccion del path: %s", pid, path);
 
 	// Crear un proceso
-	t_proceso* proceso_nuevo = crear_proceso(pid, path);
+	crear_proceso(pid, path);
 
 	// //Agregar a la lista de procesos 
 	// list_add(lista_procesos_recibidos, proceso_nuevo);
@@ -26,7 +26,7 @@ void iniciar_estructura_para_un_proceso_nuevo(t_buffer* buffer){
 	// Podriamos mandar un mensaje para chequear que llegó
 }
 
-t_proceso* crear_proceso(int pid, char* path_instruc){
+void crear_proceso(int pid, char* path_instruc){
 	t_proceso* proceso_nuevo = malloc(sizeof(t_proceso));
 
 	proceso_nuevo->pid = pid;
@@ -50,7 +50,9 @@ t_proceso* crear_proceso(int pid, char* path_instruc){
 	mi_proceso->instrucciones = leer_archivo_y_cargar_instrucciones(mi_proceso->path);
     sem_post(&mi_proceso->sem_instrucciones);
 
-	return mi_proceso;
+    free(proceso_nuevo);
+    free(mi_proceso);
+
 }
 //********** LEE EL ARCHIVO Y CARGA LAS INSTRUCCIONES EN UNA LISTA (LAS INSTRUCCIONES LAS DEJA DEL TIPO "t_instruccion_codigo")
 t_list* leer_archivo_y_cargar_instrucciones(char* archivo_pseudocodigo) {

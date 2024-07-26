@@ -6,7 +6,7 @@ int main(int argc, char* argv[])
     
 	// Log y config de uso general ----------------------------------------------------------------------------------------------------
 
-	log_cpu = log_create("cpu.log", "CPU", 1, LOG_LEVEL_DEBUG);
+	log_cpu = log_create("cpu.log", "CPU", 1, LOG_LEVEL_INFO);
 	config_cpu = armar_config(argv[1]);
 
 	inicializar_tlb();

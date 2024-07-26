@@ -13,7 +13,7 @@ int main(int argc, char* argv[])
     
     string_append(&nombre_log,".log");
 
-    log_io = log_create(nombre_log, parte[0], 1, LOG_LEVEL_DEBUG);
+    log_io = log_create(nombre_log, parte[0], 1, LOG_LEVEL_INFO);
 
     config_io = armar_config(log_io, argv[1]); // En argv[1] esta el nombre de config pasado por parametro
 
