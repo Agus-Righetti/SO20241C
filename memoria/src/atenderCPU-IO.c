@@ -165,7 +165,7 @@ void cpu_pide_resize(t_buffer* un_buffer){          // [PID, TAMAÑO NUEVO] -> [
 		int tamanio_a_reducir = mi_proceso->tamanio - tamanio_nuevo;
 
 		// LOG OBLIGATORIO PARA REDUCCION 
-		log_info(log_memoria, "PID: <%d> - Tamaño Actual: <%d> - Tamaño a Reducir: <%d>\n", pid, mi_proceso->tamanio, tamanio_a_reducir);
+		log_info(log_memoria, "PID: <%d> - Tamaño Actual: <%d> - Tamaño a Reducir: <%d>", pid, mi_proceso->tamanio, tamanio_a_reducir);
 
 		// Hay dos casos:
 		// CASO 1 -> no tengo que eliminar paginas porque el tamaño usado en la ultima pagina es mayor al que quiero reducir 
@@ -242,7 +242,7 @@ void cpu_pide_resize(t_buffer* un_buffer){          // [PID, TAMAÑO NUEVO] -> [
 			bool lugar = hay_lugar_en_memoria(cantidad_pag_a_aumentar);
 			if (lugar == 0){
 				// NO HAY ESPACIO -> no puedo guardar el proceso
-				log_info(log_memoria, "OUT OF MEMORY \n Proceso PID: <%d> - NO PUDO COMPLETAR EL RESIZE", pid);
+				log_info(log_memoria, "Proceso PID: < %d > - NO PUDO COMPLETAR EL RESIZE POR OUT OF MEMORY", pid);
 				enviar_out_of_memory_a_cpu();
 
 			} else{

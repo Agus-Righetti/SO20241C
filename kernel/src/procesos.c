@@ -522,9 +522,9 @@ void detener_planificacion() {
     if (planificacion_activa) {
         planificacion_activa = 0;
         sem_wait(&sem_planificacion_activa);
-        log_info(log_kernel, "Planificación detenida \n");
+        log_info(log_kernel, "Planificación detenida.");
     } else {
-        log_info(log_kernel, "La planificación ya se encuentra detenida \n");
+        log_info(log_kernel, "La planificación ya se encuentra detenida.");
     }
     pthread_mutex_unlock(&mutex_planificacion_activa);
 }
@@ -535,9 +535,9 @@ void iniciar_planificacion() {
     if (!planificacion_activa) {
         planificacion_activa = 1;
         sem_post(&sem_planificacion_activa);
-        log_info(log_kernel, "Planificación reanudada \n");
+        log_info(log_kernel, "Planificación reanudada.");
     } else {
-        log_info(log_kernel, "La planificación ya se encuentra iniciada \n");
+        log_info(log_kernel, "La planificación ya se encuentra iniciada.");
     }
     pthread_mutex_unlock(&mutex_planificacion_activa);
 }

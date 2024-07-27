@@ -82,7 +82,6 @@ void atender_memoria() {
 
                 log_info(log_cpu, "PID: %d - Accion: LEER - Direccion fisica: [%d - %d] - Valor: %u ", pid, dir_fisica->nro_marco ,dir_fisica->offset, valor_leido_de_memoria_8);
                 log_info(log_cpu, "ACCIÓN COMPLETADA: LEER %u EN MEMORIA", valor_leido_de_memoria_8);
-                // free(buffer->stream);
                 free(buffer);
 
                 sem_post(&sem_valor_leido_de_memoria);
@@ -97,7 +96,6 @@ void atender_memoria() {
                 dir_fisica = recibir_estructura_del_buffer(buffer);
                 valor_leido_de_memoria_32 = recibir_uint32_del_buffer(buffer);
                 log_info(log_cpu, "PID: %d - Accion: LEER - Direccion fisica: [%d - %d] - Valor: %u ", pid, dir_fisica->nro_marco ,dir_fisica->offset, valor_leido_de_memoria_32);
-                //free(buffer->stream);
                 free(buffer);
 
                 sem_post(&sem_valor_leido_de_memoria);
@@ -129,7 +127,7 @@ void atender_memoria() {
                 pid = recibir_int_del_buffer(buffer);
                 dir_fisica = recibir_estructura_del_buffer(buffer);
                 valor_escrito = recibir_uint8_del_buffer(buffer);
-//mal
+
                 log_info(log_cpu, "PID: %d - Accion: ESCRIBIR - Direccion fisica: [%d - %d] - Valor: %u ", pid, dir_fisica->nro_marco ,dir_fisica->offset, valor_escrito);
                 log_info(log_cpu, "ACCIÓN COMPLETADA: ESCRIBIR %u EN MEMORIA", valor_escrito);
                 
@@ -145,8 +143,8 @@ void atender_memoria() {
                 pid = recibir_int_del_buffer(buffer);
                 dir_fisica = recibir_estructura_del_buffer(buffer);
         
-                valor_escrito = recibir_uint32_del_buffer(buffer);
-                log_info(log_cpu, "PID: %d - Accion: ESCRIBIR - Direccion fisica: [%d - %d] - Valor: %u ", pid, dir_fisica->nro_marco ,dir_fisica->offset, valor_escrito);
+                valor_leido_de_memoria_32 = recibir_uint32_del_buffer(buffer);
+                log_info(log_cpu, "PID: %d - Accion: ESCRIBIR - Direccion fisica: [%d - %d] - Valor: %u ", pid, dir_fisica->nro_marco ,dir_fisica->offset, valor_leido_de_memoria_32);
                 
                 free(buffer);
 
@@ -158,10 +156,10 @@ void atender_memoria() {
                 buffer = recibiendo_paquete_personalizado(socket_cliente_cpu);
                 pid = recibir_int_del_buffer(buffer);
                 dir_fisica = recibir_estructura_del_buffer(buffer);
-                valor_escrito = recibir_uint32_del_buffer(buffer);
-                valor_completo = recibir_uint32_del_buffer(buffer);
-                log_info(log_cpu, "PID: %d - Accion: ESCRIBIR - Direccion fisica: [%d - %d] - Valor: %u ", pid, dir_fisica->nro_marco ,dir_fisica->offset, valor_escrito);
-                log_info(log_cpu, "ACCIÓN COMPLETADA: ESCRIBIR %u EN MEMORIA", valor_completo);
+                valor_leido_de_memoria_32 = recibir_uint32_del_buffer(buffer);
+                valor_reconstruido = recibir_uint32_del_buffer(buffer);
+                log_info(log_cpu, "PID: %d - Accion: ESCRIBIR - Direccion fisica: [%d - %d] - Valor: %u ", pid, dir_fisica->nro_marco ,dir_fisica->offset, valor_leido_de_memoria_32);
+                log_info(log_cpu, "ACCIÓN COMPLETADA: ESCRIBIR %u EN MEMORIA", valor_reconstruido);
         
                 free(buffer);
 

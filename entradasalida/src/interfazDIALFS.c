@@ -96,7 +96,7 @@ void manejar_creacion_archivo(char* nombre_archivo, int pid)
     
     if (config == NULL) 
     {
-        fprintf(stderr, "Error: No se pudo cargar el archivo de configuración %s\n", config_file_path);
+        fprintf(stderr, "Error: No se pudo cargar el archivo de configuración: %s\n", config_file_path);
         return;
     }
 

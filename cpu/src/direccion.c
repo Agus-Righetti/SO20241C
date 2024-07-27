@@ -38,7 +38,7 @@ void actualizar_tlb(TLB_Entrada* nueva_entrada)
         actualizar_tlb_libre(nueva_entrada->pid, nueva_entrada->numero_pagina);
 
         log_info(log_cpu, "No tuve que hacer reemplazos en TLB -> habia lugar");
-        log_info(log_cpu, "TLB -> [Proceso: %d - Pag: %d - Marco: %d] agregada \n \n \n", tlb->entradas[cantidad_entradas_tlb-tlb->cantidad_entradas_libres].pid, tlb->entradas[cantidad_entradas_tlb-tlb->cantidad_entradas_libres].numero_pagina, tlb->entradas[cantidad_entradas_tlb-tlb->cantidad_entradas_libres].numero_marco);
+        log_info(log_cpu, "TLB -> [Proceso: %d - Pag: %d - Marco: %d] agregada", tlb->entradas[cantidad_entradas_tlb-tlb->cantidad_entradas_libres].pid, tlb->entradas[cantidad_entradas_tlb-tlb->cantidad_entradas_libres].numero_pagina, tlb->entradas[cantidad_entradas_tlb-tlb->cantidad_entradas_libres].numero_marco);
         
         tlb->cantidad_entradas_libres--;
     } 
@@ -54,7 +54,7 @@ void actualizar_tlb(TLB_Entrada* nueva_entrada)
                 tlb->entradas[i] = tlb->entradas[i + 1];
             }
             tlb->entradas[cantidad_entradas_tlb - 1] = *nueva_entrada;     
-            log_info(log_cpu, "TLB -> [Proceso: %d - Pag: %d - Marco: %d] agregada \n \n \n", tlb->entradas[cantidad_entradas_tlb - 1].pid, tlb->entradas[cantidad_entradas_tlb - 1].numero_pagina, tlb->entradas[cantidad_entradas_tlb - 1].numero_marco);
+            log_info(log_cpu, "TLB -> [Proceso: %d - Pag: %d - Marco: %d] agregada", tlb->entradas[cantidad_entradas_tlb - 1].pid, tlb->entradas[cantidad_entradas_tlb - 1].numero_pagina, tlb->entradas[cantidad_entradas_tlb - 1].numero_marco);
    
         } 
         else if (strcmp(algoritmo_tlb, "LRU") == 0) 
@@ -108,7 +108,6 @@ void actualizar_tlb_HIT(int pid, int numero_pagina){
     if (strcmp(algoritmo_tlb, "LRU") == 0) {
         // TENGO QUE ACTUALIZAR EL USO LRU
 
-        log_info(log_cpu, "Actualizando usos de TLB...");
     
         for (int i = 0; i < cantidad_entradas_tlb; i++) {
             
@@ -129,7 +128,7 @@ void actualizar_tlb_libre(int pid, int numero_pagina){
     if (strcmp(algoritmo_tlb, "LRU") == 0) {
         // TENGO QUE ACTUALIZAR EL USO LRU
 
-        log_info(log_cpu, "Actualizando usos de TLB...");
+        //log_info(log_cpu, "Actualizando usos de TLB...");
     
         for (int i = 0; i < cantidad_entradas_tlb; i++) {
             

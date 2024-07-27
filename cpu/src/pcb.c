@@ -510,12 +510,9 @@ void instruccion_mov_out(char **parte) {
     sem_wait(&sem_ok_escritura);
 
 
-
     // Aumento el PC para que lea la proxima instruccion
-	//pcb_recibido->program_counter++;
     pcb_recibido->registros->pc++;
     
-
 
     liberar_array_strings(parte);
 
